@@ -1,0 +1,438 @@
+/* ================= RESET ================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #0a0a0f;
+    color: #ffffff;
+}
+
+/* ================= VARIABLES ================= */
+:root {
+    --morado: #7b2cff;
+    --naranja: #ff6a00;
+    --bg: #0a0a0f;
+    --card: #111122;
+    --gris: #ccc;
+}
+
+/* ================= CONTAINER ================= */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* ================= NAVBAR MINIMALISTA ================= */
+
+
+/* LOGO */
+.logo {
+    width: 120px; /* ajusta a gusto */
+    height: auto;
+    object-fit: contain;
+}
+/* CONTENEDOR */
+.menu {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    background: rgba(10, 10, 15, 0.75);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* LOGO / MARCA */
+.menu a:first-child {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--gris);
+    text-decoration: none;
+    letter-spacing: 1px;
+}
+
+/* NAV */
+.navbar ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+/* LINKS */
+.navbar a {
+    text-decoration: none;
+    color: #ccc;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* EFECTO UNDERLINE ANIMADO */
+.navbar a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -5px;
+    width: 0%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--morado), var(--naranja));
+    transition: 0.3s;
+}
+
+/* HOVER */
+.navbar a:hover {
+    color: #fff;
+}
+
+.navbar a:hover::after {
+    width: 100%;
+}
+
+/* LINK ACTIVO (opcional si lo usas después) */
+.navbar a.active {
+    color: var(--morado);
+}
+
+.navbar a.active::after {
+    width: 100%;
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* TABLET */
+@media (max-width: 900px) {
+    .navbar ul {
+        gap: 15px;
+    }
+}
+
+/* MÓVIL */
+@media (max-width: 600px) {
+
+    .menu {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+    }
+
+    .navbar ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .navbar a {
+        font-size: 13px;
+    }
+}
+/* ================= HEADER ================= */
+.header-content {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.header-content h1 {
+    font-size: 60px;
+    color: var(--gris);
+    text-shadow: 0 0 20px var(--morado);
+}
+
+.header-content p {
+    margin: 15px 0 25px;
+    color: var(--gris);
+}
+
+/* ================= BOTONES ================= */
+.btn {
+    display: inline-block;
+    padding: 12px 25px;
+    background: var(--morado);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    margin: 5px;
+    transition: 0.3s;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: var(--naranja);
+    box-shadow: 0 0 15px var(--naranja);
+}
+
+/* ================= SECCIONES ================= */
+section {
+    margin: 60px 0;
+}
+
+/* ================= TITULOS ================= */
+h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--morado);
+    text-shadow: 0 0 10px var(--morado);
+}
+
+h3 {
+    margin-bottom: 10px;
+}
+
+/* ================= GRID ================= */
+.rosters-grid,
+.features-grid,
+.roster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+/* ================= TARJETAS ================= */
+.card, .feature, .roster-box {
+    background: var(--card);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    transition: 0.3s;
+    border: 1px solid transparent;
+}
+
+.card:hover,
+.feature:hover,
+.roster-box:hover {
+    transform: translateY(-6px);
+    border: 1px solid var(--naranja);
+    box-shadow: 0 0 20px var(--naranja);
+}
+
+/* ================= IMAGENES ================= */
+.card img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+/* ================= TEXTO ================= */
+p {
+    color: var(--gris);
+    text-align: center;
+}
+
+/* ================= COMMUNITY ================= */
+.home-community {
+    background: linear-gradient(90deg, #140024, #1f003d);
+    padding: 50px 0;
+    text-align: center;
+}
+
+/* ================= FRASES ================= */
+.home-quote,
+.community-quote {
+    text-align: center;
+    padding: 40px 0;
+    background: #0f0f1a;
+}
+
+.quote-content h2 {
+    font-size: 40px;
+}
+
+.quote-content p {
+    color: var(--naranja);
+}
+
+/* ================= ROSTERS INFO ================= */
+.roster-info {
+    margin-top: 30px;
+    background: var(--card);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.roster-info ul {
+    list-style: none;
+}
+
+.roster-info li {
+    margin: 10px 0;
+}
+
+/* ================= BOTONES EXTRA ================= */
+.roster-buttons {
+    margin-top: 20px;
+}
+
+/* ================= LINKS ================= */
+.links-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* ================= FOOTER MINIMALISTA ================= */
+.footer {
+    margin-top: 60px;
+    padding: 25px 20px;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: #0a0a0f;
+}
+
+/* TEXTO */
+.footer p {
+    font-size: 14px;
+    color: #888;
+    letter-spacing: 1px;
+}
+
+/* DESTACAR MARCA */
+.footer p span {
+    color: var(--morado);
+    font-weight: bold;
+}
+
+/* EFECTO HOVER SUAVE */
+.footer:hover {
+    border-top: 1px solid var(--morado);
+    box-shadow: 0 -5px 20px rgba(123, 44, 255, 0.2);
+    transition: 0.3s;
+}
+
+/* LINKS OPCIONALES */
+.footer a {
+    color: #aaa;
+    text-decoration: none;
+    margin: 0 8px;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.footer a:hover {
+    color: var(--naranja);
+    text-shadow: 0 0 8px var(--naranja);
+}
+
+/* ICONOS (si después agregas redes) */
+.footer-icons {
+    margin-bottom: 10px;
+}
+
+.footer-icons a {
+    margin: 0 8px;
+    font-size: 18px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+    .footer {
+        padding: 20px 10px;
+    }
+
+    .footer p {
+        font-size: 12px;
+    }
+}
+
+/* ================= FORMULARIO ================= */
+form {
+    max-width: 600px;
+    margin: auto;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+/* INPUTS */
+input, textarea, select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #111122;
+    color: #fff;
+    transition: 0.3s;
+}
+
+/* FOCUS PRO */
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    box-shadow: 0 0 10px var(--morado);
+}
+
+/* SELECT */
+select {
+    cursor: pointer;
+}
+
+/* CHECKBOX */
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--gris);
+}
+
+.checkbox input {
+    width: auto;
+    accent-color: var(--morado);
+}
+
+/* ================= RESPONSIVE ================= */
+
+/* TABLET */
+@media (max-width: 900px) {
+
+    .header-content h1 {
+        font-size: 45px;
+    }
+
+    .navbar ul {
+        gap: 15px;
+    }
+}
+
+/* MOVIL */
+@media (max-width: 600px) {
+
+    .menu {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .navbar ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .header-content h1 {
+        font-size: 35px;
+    }
+
+    .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    form {
+        width: 100%;
+    }
+}

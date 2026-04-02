@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <header class="header">
+        <div class="menu container">
+            <a href="index.html">VORANIX</a>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="comunidad.html">Comunidad</a></li>  
+                    <li><a href="rosters.html">Rosters</a></li>
+                    <li><a href="streamers.html">Streamers</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="header-content container">
+            <h1>Contacto</h1>
+            <p>Únete a la comunidad VORANIX o contáctanos para colaboraciones</p>
+        </div>
+    </header>
+
+    <section class="contact container">
+
+        <div class="contact-content">
+
+            <h2>Envíanos un mensaje</h2>
+
+            <form action="#" method="post">
+
+            <!-- NOMBRE -->
+            <div class="input-group">
+                <input type="text" name="nombre" placeholder="Nombre completo" required>
+            </div>
+
+            <!-- EMAIL -->
+            <div class="input-group">
+                <input type="email" name="email" placeholder="Correo electrónico" required>
+            </div>
+
+            <!-- DISCORD / RED -->
+            <div class="input-group">
+                <input type="text" name="discord" placeholder="Usuario de Discord o red social">
+            </div>
+
+            <!-- ASUNTO -->
+            <div class="input-group">
+                <select name="asunto" required>
+                    <option value="">Selecciona un motivo</option>
+                    <option value="roster">Postulación a roster</option>
+                    <option value="streamer">Afiliación de streamer</option>
+                    <option value="colaboracion">Colaboración</option>
+                    <option value="torneo">Participación en torneo</option>
+                    <option value="general">Consulta general</option>
+                </select>
+            </div>
+
+            <!-- JUEGO -->
+            <div class="input-group">
+                <select name="juego">
+                    <option value="">Juego (opcional)</option>
+                    <option value="valorant">Valorant</option>
+                    <option value="fifa">FIFA</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+
+            <!-- RANK / NIVEL -->
+            <div class="input-group">
+                <input type="text" name="nivel" placeholder="Rango / Nivel (ej: Diamante, Elite, etc)">
+            </div>
+
+            <!-- MENSAJE -->
+            <div class="input-group">
+                <textarea name="mensaje" rows="5" placeholder="Cuéntanos más sobre tu solicitud..." required></textarea>
+            </div>
+
+            <!-- CHECK -->
+            <div class="input-group checkbox">
+                <label>
+                    <input type="checkbox" required>
+                    Acepto ser contactado por el equipo de VORANIX
+                </label>
+            </div>
+
+            <!-- BOTÓN -->
+            <div class="input-group">
+                <input type="submit" value="Enviar solicitud" class="btn">
+            </div>
+
+        </form>
+        </div>
+
+        <div class="contact-info">
+            <h2>Información</h2>
+            <p>También puedes encontrarnos en:</p>
+
+            <ul>
+                <li>Instagram: @voranix_gaming</li>
+                <li>Email: contacto@voranix.gg</li>
+                <li>Discord: Próximamente</li>
+            </ul>
+        </div>
+
+    </section>
+
+    <footer class="footer container">
+        <p>© 2026 VORANIX - Todos los derechos reservados</p>
+    </footer>
+
+</body>
+</html>
