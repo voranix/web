@@ -6,7 +6,7 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Orbitron', sans-serif;
     background: #0a0a0f;
     color: #ffffff;
 }
@@ -32,10 +32,9 @@ body {
 
 /* ================= NAVBAR MINIMALISTA ================= */
 
-
 /* LOGO */
 .logo {
-    width: 120px; /* ajusta a gusto */
+    width: 90px; /* ajusta a gusto */
     height: auto;
     object-fit: contain;
 }
@@ -51,6 +50,7 @@ body {
     backdrop-filter: blur(12px);
 
     border-bottom: 1px solid rgba(255,255,255,0.05);
+    
 }
 
 .menu-content {
@@ -61,7 +61,14 @@ body {
     justify-content: space-between;
     align-items: center;
 
-    padding: 15px 20px;
+    padding: 10px 20px;
+}
+
+.menu-toggle {
+    display: none;
+    font-size: 26px;
+    color: white;
+    cursor: pointer;
 }
 
 /* LOGO / MARCA */
@@ -131,22 +138,36 @@ body {
 }
 
 /* MÓVIL */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
 
-    .menu {
+    .menu-content {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .navbar {
+        position: absolute;
+        top: 60px;
+        left: 0;
+        width: 100%;
+        background: #0a0a0f;
+        display: none;
         flex-direction: column;
-        gap: 10px;
-        padding: 15px;
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    .navbar.active {
+        display: flex;
     }
 
     .navbar ul {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-    }
-
-    .navbar a {
-        font-size: 13px;
+        flex-direction: column;
+        gap: 20px;
     }
 }
 /* ================= HEADER ================= */
@@ -155,20 +176,82 @@ body {
 .header {
     position: relative;
     min-height: 100vh;
-    background-image: linear-gradient(
+    
+    background: linear-gradient(
         rgba(0, 0, 0, 0.6),
         rgba(0, 0, 0, 0.8)
-    ),
-    url("imagenes/header.png"); /* cambia por tu imagen */
-
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    );
 
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
+
+.header-home {
+    background-image: linear-gradient(
+        rgba(0, 0, 0, 0.6),
+        rgba(0, 0, 0, 0.8)
+    ),
+    url("imagenes/header.png");
+    
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.header-contacto {
+    background: #0a0a0a; /* o el color que quieras */
+}
+
+.header-nosotros {
+    background-image: linear-gradient(
+        rgba(0, 0, 0, 0.6),
+        rgba(0, 0, 0, 0.8)
+    ),
+    url("imagenes/nosotros.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.header-comunidad {
+    background-image: linear-gradient(
+        rgba(0, 0, 0, 0.6),
+        rgba(0, 0, 0, 0.8)
+    ),
+    url("imagenes/comunidad.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.header-rosters {
+    background-image: linear-gradient(
+        rgba(0, 0, 0, 0.6),
+        rgba(0, 0, 0, 0.8)
+    ),
+    url("imagenes/rosters.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.header-streamers {
+    background-image: linear-gradient(
+        rgba(0, 0, 0, 0.6),
+        rgba(0, 0, 0, 0.8)
+    ),
+    url("imagenes/streamers.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+
 .header-content {
     text-align: center;
     padding: 60px 20px;

@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VORANIX</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <header class="header">
+    <header class="header header-home">
         <div class="menu">
             <div class="menu-content container">
-
+                <div class="menu-toggle" id="menu-toggle">☰</div>
                 <a href="index.html">
                     <img class="logo" src="imagenes/logopng.png" alt="logo">
                 </a>
-
                 <nav class="navbar">
                     <ul>
                         <li><a href="index.html">Inicio</a></li>
@@ -163,5 +163,14 @@
         <p>© 2026 VORANIX - Todos los derechos reservados</p>
     </footer>
 
+    <script>
+const toggle = document.getElementById("menu-toggle");
+const navbar = document.querySelector(".navbar");
+
+toggle.addEventListener("click", () => {
+    navbar.classList.toggle("active");
+});
+</script>
 </body>
 </html>
+
