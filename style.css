@@ -199,8 +199,22 @@ body {
     background-repeat: no-repeat;
 }
 
+/* ================= HEADER CONTACTO AJUSTE ================= */
+
 .header-contacto {
-    background: #0a0a0a; /* o el color que quieras */
+    min-height: 40vh; /* antes 100vh por .header */
+}
+
+.header-contacto .header-content {
+    padding: 30px 20px; /* reduce espacio interno */
+}
+
+.header-contacto h1 {
+    font-size: 40px; /* opcional: más compacto */
+}
+
+.header-contacto p {
+    font-size: 16px;
 }
 
 .header-nosotros {
@@ -308,6 +322,221 @@ body {
 /* ================= SECCIONES ================= */
 section {
     margin: 60px 0;
+}
+
+/* ================= HOME ROSTERS PRO ================= */
+
+.home-rosters {
+    text-align: center;
+}
+
+.home-rosters .roster-box {
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    border-radius: 16px;
+}
+
+/* IMAGEN */
+.home-rosters .roster-box img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    transition: 0.4s;
+}
+
+/* CONTENIDO */
+.roster-content {
+    padding: 20px;
+}
+
+/* HOVER PRO */
+.home-rosters .roster-box:hover img {
+    transform: scale(1.1);
+    filter: brightness(0.6);
+}
+
+/* EFECTO COLOR POR JUEGO */
+.roster-valorant:hover {
+    box-shadow: 0 0 25px #ff4655;
+    border: 1px solid #ff4655;
+}
+
+.roster-fifa:hover {
+    box-shadow: 0 0 25px #00ff87;
+    border: 1px solid #00ff87;
+}
+
+/* TEXTO SOBRE IMAGEN (OPCIONAL MÁS PRO) */
+.home-rosters .roster-box::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.8),
+        rgba(0,0,0,0.1)
+    );
+}
+
+/* ASEGURAR QUE EL CONTENIDO QUEDE ARRIBA */
+.home-rosters .roster-content {
+    position: relative;
+    z-index: 2;
+}
+
+/* ================= ABOUT PRO MAX ================= */
+
+/* ================= FIX FULL WIDTH ABOUT ================= */
+
+.about-pro.container {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* pero mantenemos el contenido centrado */
+.about-pro .about-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.about-pro {
+    position: relative;
+    padding: 80px 0;
+    overflow: hidden;
+}
+
+/* FONDO GAMER */
+.about-pro::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 50%, rgba(123, 44, 255, 0.15), transparent 60%);
+    pointer-events: none;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+}
+
+/* TAG */
+.about-tag {
+    display: inline-block;
+    font-size: 12px;
+    color: var(--naranja);
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+/* TEXTO */
+.about-content {
+    text-align: left;
+    animation: fadeUp 1s ease;
+}
+
+.about-content h2 {
+    text-align: left;
+    font-size: 42px;
+    margin-bottom: 15px;
+}
+
+.about-content p {
+    text-align: left;
+    margin-bottom: 15px;
+    line-height: 1.7;
+    opacity: 0.85;
+}
+
+/* STATS */
+.about-stats {
+    display: flex;
+    gap: 25px;
+    margin: 25px 0;
+}
+
+.stat {
+    text-align: left;
+}
+
+.stat h3 {
+    font-size: 28px;
+    color: var(--morado);
+    text-shadow: 0 0 10px var(--morado);
+}
+
+.stat p {
+    font-size: 13px;
+    color: #aaa;
+}
+
+/* IMAGEN */
+.about-image {
+    position: relative;
+}
+
+.about-image img {
+    width: 100%;
+    border-radius: 20px;
+    transition: 0.5s;
+    position: relative;
+    z-index: 2;
+}
+
+/* GLOW DETRÁS */
+.about-image::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--morado), var(--naranja));
+    filter: blur(60px);
+    opacity: 0.25;
+    z-index: 1;
+}
+
+/* HOVER */
+.about-image:hover img {
+    transform: scale(1.05) rotate(-1deg);
+}
+
+/* ANIMACIÓN */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .about-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .about-content {
+        text-align: center;
+    }
+
+    .about-content h2,
+    .about-content p {
+        text-align: center;
+    }
+
+    .about-stats {
+        justify-content: center;
+    }
+
+    .stat {
+        text-align: center;
+    }
 }
 
 /* ================= TITULOS ================= */

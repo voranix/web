@@ -43,65 +43,56 @@
 
             <form id="formulario">
 
-    <!-- SIEMPRE VISIBLES -->
-    <div class="input-group">
-        <input type="text" name="nombre" placeholder="Nombre completo" required>
-    </div>
+            <!-- SIEMPRE VISIBLES -->
+            <div class="input-group">
+                <input type="text" name="nombre" placeholder="Nombre completo" required>
+            </div>
 
-    <div class="input-group">
-        <input type="email" name="email" placeholder="Correo electrónico" required>
-    </div>
+            <div class="input-group">
+                <input type="email" name="email" placeholder="Correo electrónico" required>
+            </div>
 
-    <!-- ASUNTO -->
-    <div class="input-group">
-        <select name="asunto" id="asunto" required>
-            <option value="">Selecciona un motivo</option>
-            <option value="roster">Postulación a roster</option>
-            <option value="streamer">Afiliación de streamer</option>
-            <option value="colaboracion">Colaboración</option>
-            <option value="torneo">Participación en torneo</option>
-            <option value="general">Consulta general</option>
-        </select>
-    </div>
+            <!-- ASUNTO -->
+            <div class="input-group">
+                <select name="asunto" id="asunto" required>
+                    <option value="">Selecciona un motivo</option>
+                    <option value="roster">Postulación a roster</option>
+                    <option value="streamer">Afiliación de streamer</option>
+                    <option value="colaboracion">Colaboración</option>
+                    <option value="torneo">Participación en torneo</option>
+                    <option value="general">Consulta general</option>
+                </select>
+            </div>
 
-    <!-- 🔽 CAMPOS DINÁMICOS -->
+            <!-- 🔽 CAMPOS DINÁMICOS -->
 
-    <!-- ROSTER -->
-    <div id="rosterFields" class="dynamic">
-        <input type="text" placeholder="Juego (Valorant, FIFA...)" name="juego">
-        <input type="text" placeholder="Rango / Nivel" name="nivel">
-        <input type="text" placeholder="ID del juego" name="id_juego">
-    </div>
+            <!-- ROSTER -->
+            <div id="rosterFields" class="dynamic">
+                <input type="text" placeholder="Juego (Valorant, FIFA...)" name="juego">
+                <input type="text" placeholder="Rango / Nivel" name="nivel">
+                <input type="text" placeholder="ID del juego" name="id_juego">
+            </div>
 
-    <!-- STREAMER -->
-    <div id="streamerFields" class="dynamic">
-        <input type="text" placeholder="Link Twitch / TikTok / Kick" name="redes">
-        <textarea placeholder="Descríbete y por qué quieres unirte"></textarea>
-    </div>
+            <!-- STREAMER -->
+            <div id="streamerFields" class="dynamic">
+                <input type="text" placeholder="Link Twitch / TikTok / Kick" name="redes">
+                <textarea placeholder="Descríbete y por qué quieres unirte"></textarea>
+            </div>
 
-    <!-- TORNEO -->
-    <div id="torneoFields" class="dynamic">
-        <input type="text" placeholder="Equipo o jugador">
-        <input type="text" placeholder="Juego">
-    </div>
+            <!-- TORNEO -->
+            <div id="torneoFields" class="dynamic">
+                <input type="text" placeholder="Equipo o jugador">
+                <input type="text" placeholder="Juego">
+            </div>
 
-    <!-- MENSAJE GENERAL (SIEMPRE) -->
-    <div class="input-group">
-        <textarea name="mensaje" placeholder="Mensaje adicional..." required></textarea>
-    </div>
+            <!-- MENSAJE GENERAL (SIEMPRE) -->
+            <div class="input-group">
+                <textarea name="mensaje" placeholder="Mensaje adicional..." required></textarea>
+            </div>
 
-    <input type="submit" value="Enviar" class="btn">
+            <input type="submit" value="Enviar" class="btn">
 
-</form>
-        </div>
-
-        <div class="contact-info">
-            <p>También puedes encontrarnos en:</p>
-            <ul>
-                <li>Instagram: @voranix_gaming</li>
-                <li>Email: contacto@voranix.gg</li>
-                <li>Discord: Próximamente</li>
-            </ul>
+        </form>
         </div>
 
     </section>
@@ -112,42 +103,42 @@
 
 
 <script>
-const asunto = document.getElementById("asunto");
+    const asunto = document.getElementById("asunto");
 
-const sections = {
-    roster: document.getElementById("rosterFields"),
-    streamer: document.getElementById("streamerFields"),
-    torneo: document.getElementById("torneoFields")
-};
+    const sections = {
+        roster: document.getElementById("rosterFields"),
+        streamer: document.getElementById("streamerFields"),
+        torneo: document.getElementById("torneoFields")
+    };
 
-asunto.addEventListener("change", () => {
+    asunto.addEventListener("change", () => {
 
-    // Ocultar todo
-    Object.values(sections).forEach(sec => sec.style.display = "none");
+        // Ocultar todo
+        Object.values(sections).forEach(sec => sec.style.display = "none");
 
-    // Mostrar lo correspondiente
+        // Mostrar lo correspondiente
+        if (sections[asunto.value]) {
+            sections[asunto.value].style.display = "block";
+        }
+
+    });
+    Object.values(sections).forEach(sec => {
+        sec.classList.remove("active");
+    });
+
     if (sections[asunto.value]) {
-        sections[asunto.value].style.display = "block";
+        sections[asunto.value].classList.add("active");
     }
-
-});
-Object.values(sections).forEach(sec => {
-    sec.classList.remove("active");
-});
-
-if (sections[asunto.value]) {
-    sections[asunto.value].classList.add("active");
-}
 </script>
 
 
-    <script>
-const toggle = document.getElementById("menu-toggle");
-const navbar = document.querySelector(".navbar");
+<script>
+    const toggle = document.getElementById("menu-toggle");
+    const navbar = document.querySelector(".navbar");
 
-toggle.addEventListener("click", () => {
-    navbar.classList.toggle("active");
-});
+    toggle.addEventListener("click", () => {
+        navbar.classList.toggle("active");
+    });
 </script>
 </body>
 </html>
