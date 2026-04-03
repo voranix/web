@@ -349,6 +349,28 @@ h3 {
     box-shadow: 0 0 20px var(--naranja);
 }
 
+
+/* ===== STREAMERS INFO EXTRA ===== */
+
+.card .games {
+    font-size: 14px;
+    margin: 8px 0;
+    color: #ccc;
+}
+
+.card .schedule {
+    font-size: 13px;
+    color: var(--naranja);
+    margin-bottom: 10px;
+}
+
+.card .flag {
+    width: 30px;
+    margin: 10px auto;
+    display: block;
+    border-radius: 4px;
+}
+
 /* ================= IMAGENES ================= */
 .card img {
     width: 100%;
