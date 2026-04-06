@@ -48,45 +48,9 @@
         <h2>Roster Valorant</h2>
         <p>Equipo competitivo de Valorant</p>
 
-        <!-- TARJETAS -->
-        <div class="roster-grid">
-
-            <div class="card">
-                <img src="imagenes/player1.jpg" alt="">
-                <h3>Jugador 1</h3>
-                <p>Líder (IGL)</p>
-            </div>
-
-            <div class="card">
-                <img src="imagenes/player2.jpg" alt="">
-                <h3>Jugador 2</h3>
-                <p>Duelista</p>
-            </div>
-
-            <div class="card">
-                <img src="imagenes/player3.jpg" alt="">
-                <h3>Jugador 3</h3>
-                <p>Controlador</p>
-            </div>
-
-            <div class="card">
-                <img src="imagenes/player4.jpg" alt="">
-                <h3>Jugador 4</h3>
-                <p>Sentinela</p>
-            </div>
-
-            <div class="card">
-                <img src="imagenes/player5.jpg" alt="">
-                <h3>Jugador 5</h3>
-                <p>Iniciador</p>
-            </div>
-
-            <div class="card">
-                <img src="imagenes/coach.jpg" alt="">
-                <h3>Coach</h3>
-                <p>Entrenador</p>
-            </div>
-
+        <!-- TARJETAS DINÁMICAS -->
+        <div class="roster-grid" id="valorant-team">
+            <p>Cargando equipo...</p>
         </div>
 
         <!-- DESEMPEÑO -->
@@ -153,12 +117,82 @@
 
 
     <script>
-const toggle = document.getElementById("menu-toggle");
-const navbar = document.querySelector(".navbar");
+        const toggle = document.getElementById("menu-toggle");
+        const navbar = document.querySelector(".navbar");
 
-toggle.addEventListener("click", () => {
-    navbar.classList.toggle("active");
-});
-</script>
+        toggle.addEventListener("click", () => {
+            navbar.classList.toggle("active");
+        });
+        </script>
+        <script>
+            const API_KEY = "453be8a5-b150-454f-9a88-25869fa27298";
+            // 👇 EDITA TU EQUIPO AQUÍ
+            const players = [
+                {
+                    name: "Cameloth",
+                    tag: "3005",
+                    displayName: "Cameloth",
+                    img: "imagenes/streamers/SoyDobleN.jpg",
+                    rol: "Duelista"
+                },
+                {
+                    name: "player2",
+                    tag: "LAS",
+                    displayName: "Jugador 2",
+                    img: "imagenes/player1.jpg",
+                    rol: "IGL"
+                }
+            ];
+
+            // 🔥 ahora usamos TU servidor
+            async function getPlayerStats(name, tag) {
+                const res = await fetch(`http://localhost:3000/valorant/${name}/${tag}`);
+                const data = await res.json();
+                return data.data;
+            }
+
+            async function renderValorantTeam() {
+                const container = document.getElementById("valorant-team");
+                container.innerHTML = "";
+
+                for (let player of players) {
+                    try {
+                        const data = await getPlayerStats(player.name, player.tag);
+
+                        const stats = data.segments[0].stats;
+
+                        const card = `
+                            <div class="card">
+                                <img src="${player.img}" alt="">
+                                
+                                <!-- 👇 SOLO nombre limpio -->
+                                <h3>${player.displayName}</h3>
+
+                                <p class="categoria">${player.rol}</p>
+
+                                <p class="rango">${stats.rank?.displayValue || "Sin rango"}</p>
+
+                                <p>KD: ${stats.kdRatio?.displayValue || "-"}</p>
+                                <p>HS: ${stats.headshotPercentage?.displayValue || "-"}</p>
+
+                                <img class="flag" src="imagenes/flags/chile.png" alt="">
+                            </div>
+                        `;
+
+                        container.innerHTML += card;
+
+                    } catch (error) {
+                        container.innerHTML += `
+                            <div class="card">
+                                <h3>${player.displayName}</h3>
+                                <p>Error al cargar stats</p>
+                            </div>
+                        `;
+                    }
+                }
+            }
+
+            renderValorantTeam();
+    </script>
 </body>
 </html>
