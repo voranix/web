@@ -24,8 +24,10 @@
                         <li><a href="rosters.html">Rosters</a></li>
                         <li><a href="streamers.html">Streamers</a></li>
                         <li><a href="contacto.html">Contacto</a></li>
+                        <li><a href="documentos.html">Documentos</a></li>
                     </ul>
                 </nav>
+
             </div>
         </div>
 
@@ -33,6 +35,7 @@
             <h1>Rosters</h1>
             <p>Conoce a nuestros equipos competitivos</p>
 
+            <!-- BOTONES -->
             <div class="roster-buttons">
                 <a href="#valorant" class="btn">Valorant</a>
                 <a href="#fifa" class="btn">FIFA</a>
@@ -46,10 +49,12 @@
         <h2>Roster Valorant</h2>
         <p>Equipo competitivo de Valorant</p>
 
+        <!-- TARJETAS DINÁMICAS -->
         <div class="roster-grid" id="valorant-team">
             <p>Cargando equipo...</p>
         </div>
 
+        <!-- DESEMPEÑO -->
         <div class="roster-info">
             <h3>Desempeño del equipo</h3>
             <ul>
@@ -109,7 +114,9 @@
         <p>© 2026 VORANIX - Todos los derechos reservados</p>
     </footer>
 
-    <!-- MENU MOBILE -->
+    </script>
+
+
     <script>
         const toggle = document.getElementById("menu-toggle");
         const navbar = document.querySelector(".navbar");
@@ -119,10 +126,9 @@
         });
     </script>
 
-    <!-- VALORANT API -->
     <script>
-        // 🔥 CAMBIA ESTO POR TU URL REAL
-        const BASE_URL = "https://TU-APP.onrender.com";
+        // 🔥 TU URL DE RENDER (MUY IMPORTANTE)
+        const API_URL = "https://TU-APP.onrender.comhttps://valorant-backend-cuwl.onrender.com/"; // 👈 CAMBIA ESTO
 
         const players = [
             {
@@ -133,55 +139,59 @@
                 rol: "Duelista"
             },
             {
-                name: "player2",
-                tag: "LAS",
-                displayName: "Jugador 2",
+                name: "TenZ",
+                tag: "NA1",
+                displayName: "TenZ",
                 img: "imagenes/player1.jpg",
                 rol: "IGL"
             }
         ];
 
         async function getPlayerStats(name, tag) {
-            const res = await fetch(`${BASE_URL}/valorant/${name}/${tag}`);
+            const res = await fetch(`${API_URL}/valorant/${name}/${tag}`);
             const data = await res.json();
             return data.data;
         }
 
         async function renderValorantTeam() {
             const container = document.getElementById("valorant-team");
-
-            const promises = players.map(player =>
-                getPlayerStats(player.name, player.tag)
-                    .then(data => ({ player, data }))
-                    .catch(() => null)
-            );
-
-            const results = await Promise.all(promises);
-
             container.innerHTML = "";
 
-            results.forEach(result => {
-                if (!result) return;
+            for (let player of players) {
+                try {
+                    const data = await getPlayerStats(player.name, player.tag);
 
-                const { player, data } = result;
+                    const card = `
+                        <div class="card">
+                            <img src="${player.img}" alt="">
+                            
+                            <h3>${player.displayName}</h3>
 
-                const card = `
-                    <div class="card">
-                        <img src="${player.img}" alt="">
-                        <h3>${player.displayName}</h3>
-                        <p class="categoria">${player.rol}</p>
-                        <p class="rango">Nivel: ${data.account_level}</p>
-                        <p>Región: ${data.region}</p>
-                        <img class="flag" src="imagenes/flags/chile.png" alt="">
-                    </div>
-                `;
+                            <p class="categoria">${player.rol}</p>
 
-                container.innerHTML += card;
-            });
+                            <!-- 🔥 DATOS REALES -->
+                            <p class="rango">Nivel: ${data.account_level}</p>
+                            <p>Región: ${data.region.toUpperCase()}</p>
+
+                            <img class="flag" src="imagenes/flags/chile.png" alt="">
+                        </div>
+                    `;
+
+                    container.innerHTML += card;
+
+                } catch (error) {
+                    container.innerHTML += `
+                        <div class="card">
+                            <h3>${player.displayName}</h3>
+                            <p>Error al cargar stats</p>
+                        </div>
+                    `;
+                }
+            }
         }
 
         renderValorantTeam();
     </script>
-
+        
 </body>
 </html>
