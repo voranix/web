@@ -858,22 +858,28 @@ select {
 }
 
 .social-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-3px);
     border-color: currentColor;
 }
 
 .social-icon {
-    width: 80px;
-    height: 80px;
+    width: 200px;
+    height: 200px;
     margin: 0 auto 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
     position: relative;
     z-index: 1;
+    transition: 0.3s;
+}
+
+/* ICONO */
+.social-icon i {
+    font-size: 60px !important;
+    transition: 0.3s;
 }
 
 .social-card:hover .social-icon {
@@ -926,6 +932,20 @@ select {
 
 .social-card.tiktok:hover {
     box-shadow: 0 8px 30px rgba(0, 242, 234, 0.3);
+}
+
+.social-card:hover .social-icon {
+    transform: scale(1.15);
+}
+
+/* ================= sombra neon iconos ================= */
+
+.social-card:hover .social-icon i {
+    transform: scale(1.1);
+    text-shadow: 
+        0 0 3px currentColor,
+        0 0 6px currentColor,
+        0 0 12px currentColor;
 }
 
 /* ================= PROYECTOS ================= */
@@ -1180,7 +1200,7 @@ select {
 /* ================= IFRAME ================= */
 .instagram-card iframe {
     width: 100%;
-    height: 510px; /* base desktop */
+    height: 515px; /* base desktop */
     border: none;
     display: block;
     overflow: hidden;
@@ -1227,4 +1247,104 @@ select {
 /* ================= EXTRA: OCULTAR SCROLL VISUAL ================= */
 .instagram-card iframe::-webkit-scrollbar {
     display: none;
+}
+
+/* ================= PROYECTOS HOME ================= */
+.home-projects {
+    margin: 80px auto;
+    text-align: center;
+}
+
+.projects-desc {
+    color: var(--gris);
+    margin-bottom: 40px;
+    font-size: 18px;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+}
+
+/* CARD */
+.project-card {
+    background: var(--card);
+    padding: 30px 20px;
+    border-radius: 16px;
+    transition: 0.3s;
+    border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+/* EFECTO GRADIENTE */
+.project-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-card);
+    opacity: 0;
+    transition: 0.3s;
+}
+
+/* ================= HOVER POR TIPO ================= */
+
+/* TORNEOS (NARANJA) */
+.project-card.torneo:hover {
+    border: 1px solid #ff7a00;
+    box-shadow: 0 0 20px #ff7a00;
+}
+
+/* MINECRAFT (VERDE) */
+.project-card.minecraft:hover {
+    border: 1px solid #00c853;
+    box-shadow: 0 0 20px #00c853;
+}
+
+/* STREAMERS (MORADO) */
+.project-card.streamers:hover {
+    border: 1px solid #9146ff;
+    box-shadow: 0 0 20px #9146ff;
+}
+
+.project-card:hover {
+    transform: translateY(-8px);
+    border: 1px solid var(--naranja);
+    box-shadow: 0 0 20px var(--naranja);
+}
+
+/* TEXTO */
+.project-card h3 {
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.project-card p {
+    color: var(--gris);
+    position: relative;
+    z-index: 1;
+}
+
+/* BOTÓN */
+.projects-btn {
+    margin-top: 40px;
+    display: inline-block;
+}
+
+/* ================= IMÁGENES PROYECTOS ================= */
+.project-card img {
+    width: 100%;
+    height: 300px; /* 🔥 ajusta este valor */
+    object-fit: cover; /* recorta sin deformar */
+    border-radius: 12px;
+    margin-top: 15px;
+    position: relative;
+    z-index: 1;
+}
+
+/* ================= EFECTO EXTRA PRO ================= */
+.project-card:hover img {
+    transform: scale(1.05);
 }
