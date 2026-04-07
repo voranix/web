@@ -1153,7 +1153,7 @@ select {
     }
 }
 
-/* ================= GRID IGUAL QUE ROSTERS ================= */
+/* ================= INSTAGRAM GRID ================= */
 .instagram-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -1166,13 +1166,11 @@ select {
     background: var(--card);
     border-radius: 16px;
     overflow: hidden;
-    transition: 0.3s;
     border: 1px solid transparent;
-    display: flex;
-    flex-direction: column;
+    transition: 0.3s;
 }
 
-/* ================= HOVER IGUAL QUE TARJETAS ================= */
+/* ================= HOVER ================= */
 .instagram-card:hover {
     transform: translateY(-6px);
     border: 1px solid var(--naranja);
@@ -1182,35 +1180,51 @@ select {
 /* ================= IFRAME ================= */
 .instagram-card iframe {
     width: 100%;
-    height: 400px;
-    min-height: 300px;
+    height: 510px; /* base desktop */
     border: none;
     display: block;
+    overflow: hidden;
+}
+
+/* ================= CONTROL WIDGET ================= */
+
+/* Desktop por defecto */
+.instagram-desktop {
+    display: block;
+}
+
+.instagram-mobile {
+    display: none;
 }
 
 /* ================= RESPONSIVE ================= */
 
-/* Tablets */
+/* Tablet */
 @media (max-width: 900px) {
     .instagram-card iframe {
-        height: 100px;
+        height: 500px;
     }
 }
 
-/* Móviles */
+/* Mobile */
 @media (max-width: 600px) {
-    .instagram-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
+
+    /* mostrar solo mobile */
+    .instagram-desktop {
+        display: none !important;
     }
 
-    .instagram-card iframe {
-        height: 250px;
+    .instagram-mobile {
+        display: block !important;
+    }
+
+    /* altura mobile */
+    .instagram-mobile iframe {
+        height: 420px;
     }
 }
 
-/* ================= ANIMACIONES ================= */
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
+/* ================= EXTRA: OCULTAR SCROLL VISUAL ================= */
+.instagram-card iframe::-webkit-scrollbar {
+    display: none;
 }
