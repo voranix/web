@@ -40,59 +40,66 @@
 
         <div class="contact-content">
 
+            <form id="formulario" action="https://formspree.io/f/xykbveee" method="POST">
 
-            <form id="formulario">
+                <!-- CONFIG -->
+                <input type="hidden" name="_subject" value="Nuevo mensaje VORANIX">
+                <input type="hidden" name="_captcha" value="false">
 
-            <!-- SIEMPRE VISIBLES -->
-            <div class="input-group">
-                <input type="text" name="nombre" placeholder="Nombre completo" required>
-            </div>
+                <!-- BASICOS -->
+                <div class="input-group">
+                    <input type="text" name="nombre" placeholder="Nombre completo" required>
+                </div>
 
-            <div class="input-group">
-                <input type="email" name="email" placeholder="Correo electrónico" required>
-            </div>
+                <div class="input-group">
+                    <input type="email" name="email" placeholder="Correo electrónico" required>
+                </div>
 
-            <!-- ASUNTO -->
-            <div class="input-group">
-                <select name="asunto" id="asunto" required>
-                    <option value="">Selecciona un motivo</option>
-                    <option value="roster">Postulación a roster</option>
-                    <option value="streamer">Afiliación de streamer</option>
-                    <option value="colaboracion">Colaboración</option>
-                    <option value="torneo">Participación en torneo</option>
-                    <option value="general">Consulta general</option>
-                </select>
-            </div>
+                <!-- ASUNTO -->
+                <div class="input-group">
+                    <select name="asunto" id="asunto" required>
+                        <option value="">Selecciona un motivo</option>
+                        <option value="roster">Postulación a roster</option>
+                        <option value="streamer">Afiliación de streamer</option>
+                        <option value="colaboracion">Colaboración</option>
+                        <option value="torneo">Participación en torneo</option>
+                        <option value="general">Consulta general</option>
+                    </select>
+                </div>
 
-            <!-- 🔽 CAMPOS DINÁMICOS -->
+                <!-- ROSTER -->
+                <div id="rosterFields" class="dynamic">
+                    <input type="text" name="juego" placeholder="Juego (Valorant, FIFA...)">
+                    <input type="text" name="nivel" placeholder="Rango / Nivel">
+                    <input type="text" name="id_juego" placeholder="ID del juego">
+                </div>
 
-            <!-- ROSTER -->
-            <div id="rosterFields" class="dynamic">
-                <input type="text" placeholder="Juego (Valorant, FIFA...)" name="juego">
-                <input type="text" placeholder="Rango / Nivel" name="nivel">
-                <input type="text" placeholder="ID del juego" name="id_juego">
-            </div>
+                <!-- STREAMER -->
+                <div id="streamerFields" class="dynamic">
+                    <input type="text" name="redes" placeholder="Link Twitch / TikTok / Kick">
+                    <textarea name="descripcion" placeholder="Descríbete y por qué quieres unirte"></textarea>
+                </div>
 
-            <!-- STREAMER -->
-            <div id="streamerFields" class="dynamic">
-                <input type="text" placeholder="Link Twitch / TikTok / Kick" name="redes">
-                <textarea placeholder="Descríbete y por qué quieres unirte"></textarea>
-            </div>
+                <!-- TORNEO -->
+                <div id="torneoFields" class="dynamic">
+                    <input type="text" name="equipo" placeholder="Equipo o jugador">
+                    <input type="text" name="juego_torneo" placeholder="Juego">
+                </div>
 
-            <!-- TORNEO -->
-            <div id="torneoFields" class="dynamic">
-                <input type="text" placeholder="Equipo o jugador">
-                <input type="text" placeholder="Juego">
-            </div>
+                <!-- MENSAJE -->
+                <div class="input-group">
+                    <textarea name="mensaje" placeholder="Mensaje adicional..." required></textarea>
+                </div>
 
-            <!-- MENSAJE GENERAL (SIEMPRE) -->
-            <div class="input-group">
-                <textarea name="mensaje" placeholder="Mensaje adicional..." required></textarea>
-            </div>
+                <input type="submit" value="Enviar" class="btn">
 
-            <input type="submit" value="Enviar" class="btn">
+                <!-- MENSAJE DE EXITO -->
+                <p id="successMessage" style="display:none; margin-top:15px; color:#00ffae;">
+                    ✅ Mensaje enviado correctamente
+                </p>
 
-        </form>
+            </form>
+
         </div>
 
     </section>
