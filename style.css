@@ -1348,3 +1348,442 @@ select {
 .project-card:hover img {
     transform: scale(1.05);
 }
+
+/* ================= NOSOTROS PRO (VORANIX) ================= */
+
+/* HERO MÁS IMPACTANTE */
+.header-nosotros .header-content h1 {
+    font-size: 80px;
+    background: linear-gradient(90deg, var(--morado), var(--naranja));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.header-nosotros .header-content p {
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* ================= ABOUT BASE ================= */
+
+.about {
+    display: flex;
+    justify-content: center;
+}
+
+/* TEXTO */
+.about-content {
+     max-width: 800px; /* 🔥 clave para centrar y no estirar */
+    width: 100%;
+
+    background: rgba(255,255,255,0.02);
+    padding: 50px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+
+    text-align: center; /* centramos todo */
+}
+
+/* TITULOS */
+.about-content h2 {
+    font-size: 22px;
+    text-align: left;
+    margin-top: 25px;
+    color: #fff;
+    position: relative;
+}
+
+/* LINEA GAMER */
+.about-content h2::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--morado), var(--naranja));
+}
+
+/* TEXTO */
+.about-content p {
+    text-align: left;
+    font-size: 15px;
+    opacity: 0.8;
+}
+
+/* LISTA */
+.about-content ul {
+    margin-top: 10px;
+    padding-left: 15px;
+}
+
+.about-content li {
+    margin: 8px 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* ================= CAJA DESTACADA ================= */
+
+.about-highlight {
+    background: linear-gradient(135deg, rgba(123,44,255,0.2), rgba(255,106,0,0.2));
+    border-radius: 20px;
+    padding: 40px 25px;
+    text-align: center;
+    position: sticky;
+    top: 100px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* EFECTO GLOW */
+.about-highlight::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--morado), var(--naranja));
+    filter: blur(50px);
+    opacity: 0.2;
+    z-index: -1;
+}
+
+.about-highlight h2 {
+    font-size: 36px;
+    letter-spacing: 3px;
+}
+
+.about-highlight p {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--gris);
+}
+
+
+/* ================= SOCIAL (INSTAGRAM vibe) ================= */
+
+.social {
+    text-align: center;
+    margin-top: 80px;
+    padding: 40px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.social h2 {
+    font-size: 26px;
+    margin-bottom: 10px;
+}
+
+.social p:first-of-type {
+    font-size: 20px;
+    color: var(--naranja);
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.social p:last-of-type {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* ================= EFECTO HOVER PRO ================= */
+
+.about-content:hover {
+    border: 1px solid var(--morado);
+    box-shadow: 0 0 25px rgba(123,44,255,0.2);
+    transition: 0.3s;
+}
+
+.about-highlight:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 30px rgba(255,106,0,0.2);
+    transition: 0.3s;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 900px) {
+    .about {
+        grid-template-columns: 1fr;
+    }
+
+    .about-highlight {
+        position: relative;
+        top: 0;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .header-nosotros .header-content h1 {
+        font-size: 45px;
+    }
+
+    .about-content {
+        padding: 25px;
+    }
+
+    .social {
+        padding: 25px;
+    }
+}
+
+.header-proyectos {
+    background-image: linear-gradient(
+        rgba(0, 0, 0, 0.6),
+        rgba(0, 0, 0, 0.85)
+    ),
+    url("imagenes/proyectos.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.projects-intro {
+    text-align: center;
+    margin-bottom: 70px;
+}
+
+.projects-intro h2 {
+    font-size: 32px;
+}
+
+.projects-intro p {
+    max-width: 650px;
+    margin: 15px auto 0;
+    font-size: 16px;
+    opacity: 0.8;
+}
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 35px;
+}
+
+.project-card {
+    background: rgba(255,255,255,0.02);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: 0.4s ease;
+    border: 1px solid rgba(255,255,255,0.05);
+
+    backdrop-filter: blur(10px);
+}
+
+/* HOVER MÁS PRO */
+.project-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border: 1px solid var(--morado);
+    box-shadow: 
+        0 0 20px rgba(123,44,255,0.2),
+        0 0 40px rgba(255,106,0,0.1);
+}
+
+.project-image {
+    height: 180px;
+
+    background: linear-gradient(
+        135deg,
+        rgba(123,44,255,0.2),
+        rgba(255,106,0,0.2)
+    );
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ICONO MÁS PRO */
+.project-placeholder svg {
+    width: 50px;
+    height: 50px;
+    opacity: 0.6;
+    transition: 0.3s;
+}
+
+.project-card:hover .project-placeholder svg {
+    transform: scale(1.2);
+    opacity: 1;
+}
+
+.tag {
+    background: rgba(123,44,255,0.15);
+    border: 1px solid rgba(123,44,255,0.4);
+    color: #fff;
+}
+
+.upcoming-projects {
+    margin-top: 100px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ================= TIMELINE PROYECTOS ================= */
+
+.timeline-projects {
+    position: relative;
+    max-width: 800px;
+    margin: 80px auto;
+    padding-left: 30px;
+}
+
+/* LINEA */
+.timeline-projects::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(var(--morado), var(--naranja));
+}
+
+/* ITEM */
+.timeline-item {
+    position: relative;
+    margin-bottom: 60px;
+}
+
+/* PUNTO */
+.timeline-dot {
+    position: absolute;
+    left: -2px;
+    top: 5px;
+    width: 20px;
+    height: 20px;
+    background: var(--morado);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--morado);
+}
+
+/* PROXIMO */
+.timeline-dot.upcoming {
+    background: var(--naranja);
+    box-shadow: 0 0 10px var(--naranja);
+}
+
+/* CONTENIDO */
+.timeline-content {
+    background: rgba(255,255,255,0.02);
+    padding: 25px 30px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    transition: 0.3s;
+}
+
+/* HOVER */
+.timeline-content:hover {
+    transform: translateX(10px);
+    border: 1px solid var(--naranja);
+    box-shadow: 0 0 20px rgba(255,106,0,0.2);
+}
+
+/* FECHA */
+.timeline-date {
+    font-size: 12px;
+    color: var(--naranja);
+    letter-spacing: 2px;
+}
+
+/* TITULO */
+.timeline-content h3 {
+    margin: 5px 0 10px;
+    font-size: 20px;
+}
+
+/* TEXTO */
+.timeline-content p {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* ================= MODAL GOD ================= */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+/* CAJA */
+.modal-content {
+    background: rgba(20,20,20,0.95);
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    position: relative;
+
+    transform: scale(0.8);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+/* ANIMACION */
+.modal.show .modal-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* IMAGEN */
+#modal-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 15px;
+    margin-bottom: 15px;
+}
+
+/* TITULO */
+.modal-content h2 {
+    margin-bottom: 10px;
+}
+
+/* TEXTO */
+.modal-content p {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* BOTON */
+.modal-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--morado), var(--naranja));
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.modal-btn:hover {
+    transform: scale(1.05);
+}
+
+/* CERRAR */
+.close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 22px;
+    cursor: pointer;
+}

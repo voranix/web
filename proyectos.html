@@ -9,226 +9,258 @@
 </head>
 <body>
 
-    <header class="header">
-        <div class="menu">
-            <div class="menu-content container">
-                <div class="menu-toggle" id="menu-toggle">☰</div>
-                <a href="index.html">
-                    <img class="logo" src="imagenes/logopng.png" alt="logo">
-                </a>
-                <nav class="navbar">
-                    <ul>
-                        <li><a href="index.html">Inicio</a></li>
-                        <li><a href="nosotros.html">Nosotros</a></li>
-                        <li><a href="proyectos.html">Proyectos</a></li>  
-                        <li><a href="rosters.html">Rosters</a></li>
-                        <li><a href="streamers.html">Streamers</a></li>
-                        <li><a href="contacto.html">Contacto</a></li>
-                        <li><a href="documentos.html">Documentos</a></li>
-                    </ul>
-                </nav>
+    <!DOCTYPE html>
 
-            </div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyectos</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+
+<header class="header header-projectos">
+    <div class="menu">
+        <div class="menu-content container">
+            <div class="menu-toggle" id="menu-toggle">☰</div>
+            <a href="index.html">
+                <img class="logo" src="imagenes/logopng.png" alt="logo">
+            </a>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="proyectos.html">Proyectos</a></li>  
+                    <li><a href="rosters.html">Rosters</a></li>
+                    <li><a href="streamers.html">Streamers</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                    <li><a href="documentos.html">Documentos</a></li>
+                </ul>
+            </nav>
         </div>
+    </div>
 
-        <div class="header-content container">
-            <h1>Proyectos</h1>
-            <p>Nuestros logros y colaboraciones</p>
-        </div>
-    </header>
+    <div class="header-content container">
+        <h1>Proyectos</h1>
+        <p>Nuestros logros y colaboraciones</p>
+    </div>
+</header>
 
-    <!-- ================= PROYECTOS ================= -->
-    <section class="projects container">
+<!-- ================= PROYECTOS ================= -->
+<section class="projects container"> 
 
-        <div class="projects-intro">
-            <h2>Nuestros Proyectos</h2>
-            <p>
-                En VORANIX hemos participado en diversos torneos, eventos y colaboraciones
-                que han marcado nuestro crecimiento como comunidad gaming.
-            </p>
-        </div>
 
-        <div class="projects-grid">
+<div class="projects-intro">
+    <h2>Nuestros Proyectos</h2>
+    <p>
+        En VORANIX hemos participado en diversos torneos, eventos y colaboraciones
+        que han marcado nuestro crecimiento como comunidad gaming.
+    </p>
+</div>
 
-            <div class="project-card">
-                <div class="project-image">
-                    <div class="project-placeholder">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V7.3l7-3.11v8.8z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="project-info">
-                    <h3>Torneo Valorant Regional</h3>
-                    <span class="project-date">Marzo 2026</span>
-                    <p>Participación en el torneo regional clasificatorio. Alcanzamos el Top 4 demostrando nivel competitivo.</p>
-                    <div class="project-tags">
-                        <span class="tag">Valorant</span>
-                        <span class="tag">Competitivo</span>
-                    </div>
-                </div>
-            </div>
+<div class="timeline-projects">
 
-            <div class="project-card">
-                <div class="project-image">
-                    <div class="project-placeholder">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-6 18c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm6-3H6V5h12v12z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="project-info">
-                    <h3>Liga Comunitaria</h3>
-                    <span class="project-date">Febrero 2026</span>
-                    <p>Primer lugar en la liga comunitaria de Valorant. Gran desempeño del equipo a lo largo de toda la temporada.</p>
-                    <div class="project-tags">
-                        <span class="tag">Valorant</span>
-                        <span class="tag">1er Lugar</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <div class="project-placeholder">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="project-info">
-                    <h3>Colaboración con Streamers</h3>
-                    <span class="project-date">Enero 2026</span>
-                    <p>Inicio del programa de afiliación de streamers. Crecimiento de la comunidad en plataformas de streaming.</p>
-                    <div class="project-tags">
-                        <span class="tag">Streaming</span>
-                        <span class="tag">Comunidad</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <div class="project-placeholder">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="project-info">
-                    <h3>Torneo FIFA Online</h3>
-                    <span class="project-date">Enero 2026</span>
-                    <p>Participación del roster de FIFA en torneos online. Top 8 en la liga local.</p>
-                    <div class="project-tags">
-                        <span class="tag">FIFA</span>
-                        <span class="tag">Online</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <div class="project-placeholder">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="project-info">
-                    <h3>Expansión de Rosters</h3>
-                    <span class="project-date">Diciembre 2025</span>
-                    <p>Formación oficial de los rosters de Valorant y FIFA. Comienzo de la etapa competitiva de VORANIX.</p>
-                    <div class="project-tags">
-                        <span class="tag">Rosters</span>
-                        <span class="tag">Inicio</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="project-card">
-                <div class="project-image">
-                    <div class="project-placeholder">
-                        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                        </svg>
-                    </div>
-                </div>
-                <div class="project-info">
-                    <h3>Lanzamiento VORANIX</h3>
-                    <span class="project-date">Noviembre 2025</span>
-                    <p>Inicio oficial de VORANIX como comunidad gaming. Creación de identidad y primeros miembros.</p>
-                    <div class="project-tags">
-                        <span class="tag">Fundación</span>
-                        <span class="tag">Comunidad</span>
-                    </div>
-                </div>
-            </div>
+    <!-- ITEM 1 -->
+    <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content"
+            data-title="Inicio de VORANIX"
+            data-text="Aquí comenzó todo. Se creó la comunidad con la visión de crecer en el competitivo. 
+            Los primeros pasos fueron formativos, con la creación de equipos y participación en torneos 
+            locales. Fue el punto de partida para lo que hoy es VORANIX, una comunidad vibrante y en constante evolución. 
+            ¡Un inicio lleno de pasión y dedicación que sentó las bases para nuestro futuro en el mundo del gaming!"
+            data-img="imagenes\logo.jpg"
+            data-link="#">
+            
+            <span class="timeline-date">2024</span>
+            <h3>Inicio de VORANIX</h3>
+            <p>Creación de la comunidad y primeros pasos en el gaming competitivo.</p>
 
         </div>
+    </div>
 
-    </section>
+    <!-- ITEM 2 -->
+    <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content"
+            data-title="Mithycal School"
+            data-text="Mithycal School fue una serie de minecraft creada para la comunidad de Voranix,
+             donde la magia, criaturas fantásticas y aventuras épicas se entrelazan en un mundo lleno 
+             de misterio y emoción. Cada episodio llevó a los espectadores a un viaje inolvidable, 
+             explorando un universo lleno de desafíos, alianzas y momentos épicos que dejaron una marca 
+             imborrable en la historia de VORANIX. ¡Una aventura que siempre recordaremos con cariño!"
+            data-img="imagenes/proyecto2.jpg"
+            data-link="#">
+            
+            <span class="timeline-date">2025</span>
+            <h3>Mithycal School</h3>
+            <p>Mithycal School fue una serie de minecraft creada para la comunidad de Voranix, donde la magia, criaturas fantásticas y aventuras épicas se entrelazan en un mundo lleno de misterio y emoción.</p>
 
-    <!-- ================= PROXIMOS PROYECTOS ================= -->
-    <section class="upcoming-projects">
+        </div>
+    </div>
 
-        <div class="upcoming-content container">
-            <h2>Próximos Proyectos</h2>
-            <p>Estamos trabajando en nuevas iniciativas y colaboraciones</p>
+    <!-- ITEM 3 -->
+    <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content"
+            data-title="Nuestros equipos"
+            data-text="Formamos nuestros primeros equipos competitivos y comenzamos a participar en torneos locales, 
+            marcando el inicio de nuestra presencia en la escena competitiva. Fue un paso crucial que nos permitió 
+            crecer, aprender y establecer las bases para futuros éxitos en el mundo del gaming. ¡Un momento de orgullo y motivación para toda la comunidad de VORANIX!"
+            data-img="imagenes/proyecto3.jpg"
+            data-link="#">
+            
+            <span class="timeline-date">2025</span>
+            <h3>Equipos Competitivos</h3>
+            <p>Formamos nuestros equipos y participamos en torneos locales.</p>
 
-            <div class="upcoming-list">
-                <div class="upcoming-item">
-                    <span class="upcoming-icon">🎯</span>
-                    <div>
-                        <h3>Torneo Interno</h3>
-                        <p>Competición entre miembros de la comunidad</p>
-                    </div>
+        </div>
+    </div>
+
+    <!-- ITEM 4 -->
+    <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content"
+            data-title="Streams y Creadores"
+            data-text="Se iniciaron colaboraciones con streamers y creación de contenido en vivo. 
+            Esto permitió expandir nuestra presencia en plataformas de streaming, conectar con la 
+            comunidad y mostrar el talento de nuestros jugadores y creadores. Fue un paso importante 
+            para fortalecer nuestra marca y acercarnos aún más a nuestros seguidores. ¡Una etapa 
+            emocionante que nos abrió nuevas puertas en el mundo del gaming!"
+            data-img="imagenes/proyecto4.jpg"
+            data-link="#">
+            
+            <span class="timeline-date">2026</span>
+            <h3>Streams y Creadores</h3>
+            <p>Colaboraciones con streamers y expansión del contenido en vivo.</p>
+
+        </div>
+    </div>
+
+    <!-- ITEM 5 -->
+    <div class="timeline-item">
+        <div class="timeline-dot upcoming"></div>
+        <div class="timeline-content"
+            data-title="Nuevos Proyectos"
+            data-text="Se vienen torneos, eventos grandes y expansión de la comunidad VORANIX. 
+            Estamos trabajando en nuevas iniciativas y colaboraciones que prometen llevar a VORANIX
+             a nuevos niveles de éxito y reconocimiento dentro del mundo del gaming. 
+             ¡El futuro se ve brillante y lleno de oportunidades para toda nuestra comunidad!"
+            data-img="imagenes/proyecto5.jpg"
+            data-link="#">
+            
+            <span class="timeline-date">PRÓXIMO</span>
+            <h3>Nuevos Proyectos</h3>
+            <p>Torneos, eventos y crecimiento de la comunidad VORANIX.</p>
+
+        </div>
+    </div>
+
+</div>
+
+
+</section>
+
+
+<!-- ================= PROXIMOS PROYECTOS ================= -->
+<section class="upcoming-projects">
+
+    <div class="upcoming-content container">
+        <h2>Próximos Proyectos</h2>
+        <p>Estamos trabajando en nuevas iniciativas y colaboraciones</p>
+
+        <div class="upcoming-list">
+            <div class="upcoming-item">
+                <span class="upcoming-icon">🎯</span>
+                <div>
+                    <h3>Torneo Interno</h3>
+                    <p>Competición entre miembros de la comunidad</p>
                 </div>
+            </div>
 
-                <div class="upcoming-item">
-                    <span class="upcoming-icon">🎮</span>
-                    <div>
-                        <h3>Expansión a Nuevos Juegos</h3>
-                        <p>Formación de rosters en otros títulos competitivos</p>
-                    </div>
+            <div class="upcoming-item">
+                <span class="upcoming-icon">🎮</span>
+                <div>
+                    <h3>Expansión a Nuevos Juegos</h3>
+                    <p>Formación de rosters en otros títulos competitivos</p>
                 </div>
+            </div>
 
-                <div class="upcoming-item">
-                    <span class="upcoming-icon">📡</span>
-                    <div>
-                        <h3>Eventos de Streaming</h3>
-                        <p>Maratones y eventos especiales con la comunidad</p>
-                    </div>
+            <div class="upcoming-item">
+                <span class="upcoming-icon">📡</span>
+                <div>
+                    <h3>Eventos de Streaming</h3>
+                    <p>Maratones y eventos especiales con la comunidad</p>
                 </div>
             </div>
         </div>
+    </div>
 
-    </section>
+</section>
 
-    <!-- ================= FRASE ================= -->
-    <section class="home-quote">
+<!-- ================= MODAL ================= -->
+<div class="modal" id="modal">
+    <div class="modal-content">
 
-        <div class="quote-content container">
-            <h2>VORANIX</h2>
-            <p>JUEGA • CONECTA • EVOLUCIONA</p>
-        </div>
+        <span class="close">&times;</span>
 
-    </section>
+        <img id="modal-img" src="" alt="proyecto">
 
-    <!-- ================= FOOTER ================= -->
-    <footer class="footer container">
-        <p>© 2026 VORANIX - Todos los derechos reservados</p>
-    </footer>
+        <h2 id="modal-title"></h2>
+        <p id="modal-text"></p>
 
-    </script>
+        <a id="modal-link" href="#" target="_blank" class="modal-btn">Ver más</a>
 
+    </div>
+</div>
+<!-- ================= FOOTER ================= -->
+<footer class="footer container">
+    <p>© 2026 VORANIX - Todos los derechos reservados</p>
+</footer>
 
-    <script>
-const toggle = document.getElementById("menu-toggle");
-const navbar = document.querySelector(".navbar");
+<!-- ================= SCRIPTS ================= -->
+<script>
+const modal = document.getElementById("modal");
+const modalTitle = document.getElementById("modal-title");
+const modalText = document.getElementById("modal-text");
+const modalImg = document.getElementById("modal-img");
+const modalLink = document.getElementById("modal-link");
+const closeBtn = document.querySelector(".close");
 
-toggle.addEventListener("click", () => {
-    navbar.classList.toggle("active");
+// ABRIR
+document.querySelectorAll(".timeline-content").forEach(item => {
+    item.addEventListener("click", () => {
+
+        modalTitle.textContent = item.dataset.title;
+        modalText.textContent = item.dataset.text;
+        modalImg.src = item.dataset.img;
+        modalLink.href = item.dataset.link;
+
+        modal.classList.add("show");
+    });
+});
+
+// CERRAR BOTON
+closeBtn.onclick = () => modal.classList.remove("show");
+
+// CERRAR FUERA
+modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+        modal.classList.remove("show");
+    }
+});
+
+// CERRAR CON ESC
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        modal.classList.remove("show");
+    }
 });
 </script>
+
+
 </body>
 </html>
