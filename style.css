@@ -1834,6 +1834,24 @@ select {
     background: #b66100;
 }
 
+.card {
+    background: #090a0c;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    transition: 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-8px) scale(1.03);
+}
+
+.card:hover::before {
+    opacity: 1;
+}
+
 /* ================= RANK IMAGE ================= */
 .rank-img {
     max-width: 100px;

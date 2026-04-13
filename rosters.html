@@ -56,61 +56,7 @@
     <p>Equipo competitivo de Valorant</p>
 
     <div class="roster-grid" id="valorant-team">
-        <p class="loading">Cargando equipo...</p>
-    </div>
-
-    <div class="roster-info">
-        <h3>Desempeño del equipo</h3>
-        <ul>
-            <li>🏆 Top 4 - Torneo Amateur Valorant</li>
-            <li>🔥 1° Lugar - Liga Comunitaria</li>
-            <li>🎯 Clasificación a torneo regional</li>
-        </ul>
-    </div>
-
-</section>
-
-<!-- ================= FIFA ================= -->
-<section id="fifa" class="roster container">
-
-    <h2>Roster FIFA</h2>
-    <p>Equipo competitivo de FIFA</p>
-
-    <div class="roster-grid">
-
-        <div class="card">
-            <img src="imagenes/fifa1.jpg" alt="">
-            <h3>Jugador 1</h3>
-            <p>Pro Player</p>
-        </div>
-
-        <div class="card">
-            <img src="imagenes/fifa2.jpg" alt="">
-            <h3>Jugador 2</h3>
-            <p>Competitivo</p>
-        </div>
-
-        <div class="card">
-            <img src="imagenes/fifa3.jpg" alt="">
-            <h3>Jugador 3</h3>
-            <p>Analista</p>
-        </div>
-
-        <div class="card">
-            <img src="imagenes/fifa_coach.jpg" alt="">
-            <h3>Coach</h3>
-            <p>Estratega</p>
-        </div>
-
-    </div>
-
-    <div class="roster-info">
-        <h3>Desempeño del equipo</h3>
-        <ul>
-            <li>🏆 Participación en torneos online</li>
-            <li>⚽ Top 8 - Liga local FIFA</li>
-            <li>🔥 Crecimiento competitivo activo</li>
-        </ul>
+        <p class="loading">Conectando con servidor...</p>
     </div>
 
 </section>
@@ -122,18 +68,18 @@
 
 <!-- ================= MENU MOBILE ================= -->
 <script>
-    const toggle = document.getElementById("menu-toggle");
-    const navbar = document.querySelector(".navbar");
+const toggle = document.getElementById("menu-toggle");
+const navbar = document.querySelector(".navbar");
 
-    toggle.addEventListener("click", () => {
-        navbar.classList.toggle("active");
-    });
+toggle.addEventListener("click", () => {
+    navbar.classList.toggle("active");
+});
 </script>
 
-<!-- ================= API + RENDER ================= -->
+<!-- ================= ROSTER PRO SCRIPT ================= -->
 <script>
 
-const API_URL = "http://localhost:3000";
+const API_URL = "https://api-tracker-gg.onrender.com";
 
 const players = [
     { name: "Cameloth", tag: "3005", displayName: "Cameloth", img: "imagenes/streamers/cameloth.jpg", rol: "Duelista" },
@@ -146,59 +92,113 @@ const players = [
     { name: "TenZ", tag: "NA1", displayName: "TenZ", img: "imagenes/player1.jpg", rol: "IGL" }
 ];
 
+// 🔥 CACHE LOCAL (10 min)
+function getCache(key) {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+
+    const { data, time } = JSON.parse(cached);
+    if (Date.now() - time > 600000) return null;
+
+    return data;
+}
+
+function setCache(key, data) {
+    localStorage.setItem(key, JSON.stringify({
+        data,
+        time: Date.now()
+    }));
+}
+
+// 🌐 FETCH
 async function getPlayerStats(name, tag) {
+
+    const cacheKey = `${name}-${tag}`;
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+
     try {
-        const res = await fetch(`${API_URL}/valorant/${name}/${tag}`);
+        const res = await fetch(`${API_URL}/valorant/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`);
+
         if (!res.ok) throw new Error("API error");
-        return await res.json();
+
+        const data = await res.json();
+
+        setCache(cacheKey, data);
+
+        return data;
+
     } catch (err) {
-        console.error("Error:", err);
+        console.log(`Error con ${name}`);
         return null;
     }
 }
 
-async function renderValorantTeam() {
-    const container = document.getElementById("valorant-team");
-    container.innerHTML = "";
+// 🎨 COLOR SEGÚN RANGO
+function getRankColor(rank) {
+    if (!rank) return "#090a0c";
 
-    for (let player of players) {
+    if (rank.includes("Radiant")) return "#ff4655";
+    if (rank.includes("Immortal")) return "#a335ee";
+    if (rank.includes("Diamond")) return "#4fc3f7";
+    if (rank.includes("Platinum")) return "#00e5ff";
+    if (rank.includes("Gold")) return "#ffd700";
+    if (rank.includes("Silver")) return "#c0c0c0";
+    if (rank.includes("Bronze")) return "#cd7f32";
 
-        const data = await getPlayerStats(player.name, player.tag);
-
-        if (!data) {
-            container.innerHTML += `
-                <div class="card">
-                    <h3>${player.displayName}</h3>
-                    <p>Error al cargar stats</p>
-                </div>
-            `;
-            continue;
-        }
-
-        const card = `
-            <div class="card">
-                <img src="${player.img}" alt="">
-
-                <h3>${player.displayName}</h3>
-                <p class="categoria">${player.rol}</p>
-
-                <img class="rank-img" src="${data.rankImage}" alt="rank">
-
-                <div class="stats">
-                    <p class="rango">🏆 ${data.rank}</p>
-                    <p>🎯 KD: ${data.kd}</p>
-                    <p>📊 Winrate: ${data.winrate}</p>
-                    <p>⭐ Nivel: ${data.level}</p>
-                </div>
-
-                <img class="flag" src="imagenes/flags/chile.png" alt="">
-            </div>
-        `;
-
-        container.innerHTML += card;
-    }
+    return "#090a0c";
 }
 
+// 🎮 RENDER
+async function renderValorantTeam() {
+
+    const container = document.getElementById("valorant-team");
+    container.innerHTML = `<p class="loading">Cargando stats...</p>`;
+
+    const results = await Promise.all(
+        players.map(p => getPlayerStats(p.name, p.tag))
+    );
+
+    // 🔥 ordenar por KD
+    const combined = players.map((p, i) => ({
+        ...p,
+        stats: results[i]
+    }));
+
+    combined.sort((a, b) => (b.stats?.kd || 0) - (a.stats?.kd || 0));
+
+    container.innerHTML = "";
+
+    combined.forEach((player, index) => {
+
+        const data = player.stats;
+        const color = getRankColor(data?.rank);
+
+        container.innerHTML += `
+            <div class="card" style="animation: fadeUp 0.6s ease ${index * 0.1}s both; border-color:${color}">
+                
+                <img src="${player.img}" alt="">
+
+                <h3>#${index + 1} ${player.displayName}</h3>
+                <p class="categoria">${player.rol}</p>
+
+                <img class="rank-img" src="${data?.rankImage || 'imagenes/unranked.png'}">
+
+                <div class="stats">
+                    <p class="rango" style="color:${color}">🏆 ${data?.rank || 'Sin datos'}</p>
+                    <p>🎯 KD: ${data?.kd || '-'}</p>
+                    <p>📊 Winrate: ${data?.winrate || '-'}</p>
+                    <p>⭐ Nivel: ${data?.level || '-'}</p>
+                </div>
+
+                <img class="flag" src="imagenes/flags/chile.png">
+            </div>
+        `;
+    });
+
+}
+
+// 🚀 INIT
 renderValorantTeam();
 
 </script>
