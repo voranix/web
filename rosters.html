@@ -56,7 +56,7 @@
     <p>Equipo competitivo de Valorant</p>
 
     <div class="roster-grid" id="valorant-team">
-        <p class="loading">Conectando con servidor...</p>
+        <p class="loading">Cargando stats competitivas...</p>
     </div>
 
 </section>
@@ -66,7 +66,7 @@
     <p>© 2026 VORANIX - Todos los derechos reservados</p>
 </footer>
 
-<!-- ================= MENU MOBILE ================= -->
+<!-- ================= MENU ================= -->
 <script>
 const toggle = document.getElementById("menu-toggle");
 const navbar = document.querySelector(".navbar");
@@ -76,7 +76,7 @@ toggle.addEventListener("click", () => {
 });
 </script>
 
-<!-- ================= ROSTER PRO SCRIPT ================= -->
+<!-- ================= API SCRIPT PRO ================= -->
 <script>
 
 const API_URL = "https://api-tracker-gg.onrender.com";
@@ -92,7 +92,7 @@ const players = [
     { name: "TenZ", tag: "NA1", displayName: "TenZ", img: "imagenes/player1.jpg", rol: "IGL" }
 ];
 
-// 🔥 CACHE LOCAL (10 min)
+// ================= CACHE =================
 function getCache(key) {
     const cached = localStorage.getItem(key);
     if (!cached) return null;
@@ -110,7 +110,7 @@ function setCache(key, data) {
     }));
 }
 
-// 🌐 FETCH
+// ================= FETCH =================
 async function getPlayerStats(name, tag) {
 
     const cacheKey = `${name}-${tag}`;
@@ -134,9 +134,8 @@ async function getPlayerStats(name, tag) {
     }
 }
 
-// 🎨 COLOR SEGÚN RANGO
-function getRankColor(rank) {
-    if (!rank) return "#090a0c";
+// ================= RANGO COLOR =================
+function getRankColor(rank = "") {
 
     if (rank.includes("Radiant")) return "#ff4655";
     if (rank.includes("Immortal")) return "#a335ee";
@@ -146,20 +145,20 @@ function getRankColor(rank) {
     if (rank.includes("Silver")) return "#c0c0c0";
     if (rank.includes("Bronze")) return "#cd7f32";
 
-    return "#090a0c";
+    return "#111";
 }
 
-// 🎮 RENDER
+// ================= RENDER =================
 async function renderValorantTeam() {
 
     const container = document.getElementById("valorant-team");
-    container.innerHTML = `<p class="loading">Cargando stats...</p>`;
+
+    container.innerHTML = `<p class="loading">Cargando estadísticas competitivas...</p>`;
 
     const results = await Promise.all(
         players.map(p => getPlayerStats(p.name, p.tag))
     );
 
-    // 🔥 ordenar por KD
     const combined = players.map((p, i) => ({
         ...p,
         stats: results[i]
@@ -172,7 +171,20 @@ async function renderValorantTeam() {
     combined.forEach((player, index) => {
 
         const data = player.stats;
-        const color = getRankColor(data?.rank);
+
+        // 🔥 FALLBACK SI API FALLA
+        if (!data) {
+            container.innerHTML += `
+                <div class="card">
+                    <img src="${player.img}" alt="">
+                    <h3>${player.displayName}</h3>
+                    <p>⚠️ Stats no disponibles</p>
+                </div>
+            `;
+            return;
+        }
+
+        const color = getRankColor(data?.rank || "");
 
         container.innerHTML += `
             <div class="card" style="animation: fadeUp 0.6s ease ${index * 0.1}s both; border-color:${color}">
@@ -182,23 +194,22 @@ async function renderValorantTeam() {
                 <h3>#${index + 1} ${player.displayName}</h3>
                 <p class="categoria">${player.rol}</p>
 
-                <img class="rank-img" src="${data?.rankImage || 'imagenes/unranked.png'}">
+                <img class="rank-img" src="${data.rankImage || 'imagenes/unranked.png'}">
 
                 <div class="stats">
-                    <p class="rango" style="color:${color}">🏆 ${data?.rank || 'Sin datos'}</p>
-                    <p>🎯 KD: ${data?.kd || '-'}</p>
-                    <p>📊 Winrate: ${data?.winrate || '-'}</p>
-                    <p>⭐ Nivel: ${data?.level || '-'}</p>
+                    <p style="color:${color}">🏆 ${data.rank || 'Sin datos'}</p>
+                    <p>🎯 KD: ${data.kd || '-'}</p>
+                    <p>📊 Winrate: ${data.winrate || '-'}</p>
+                    <p>⭐ Nivel: ${data.level || '-'}</p>
                 </div>
 
                 <img class="flag" src="imagenes/flags/chile.png">
             </div>
         `;
     });
-
 }
 
-// 🚀 INIT
+// ================= INIT =================
 renderValorantTeam();
 
 </script>
