@@ -1833,3 +1833,18 @@ select {
 .btn-doc:hover {
     background: #b66100;
 }
+
+/* ================= RANK IMAGE ================= */
+.rank-img {
+    max-width: 100px;
+    width: 100%;
+    height: auto;
+    margin: 10px auto;
+    display: block;
+}
+
+@media (max-width: 600px) {
+    .rank-img {
+        max-width: 50px;
+    }
+}

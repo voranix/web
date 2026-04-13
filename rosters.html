@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,191 +7,201 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
+
 <body>
-    
-    <header class="header header-rosters">
-        <div class="menu">
-            <div class="menu-content container">
-                <div class="menu-toggle" id="menu-toggle">☰</div>
-                <a href="index.html">
-                    <img class="logo" src="imagenes/logopng.png" alt="logo">
-                </a>
-                <nav class="navbar">
-                    <ul>
-                        <li><a href="index.html">Inicio</a></li>
-                        <li><a href="nosotros.html">Nosotros</a></li>
-                        <li><a href="proyectos.html">Proyectos</a></li>  
-                        <li><a href="rosters.html">Rosters</a></li>
-                        <li><a href="streamers.html">Streamers</a></li>
-                        <li><a href="contacto.html">Contacto</a></li>
-                        <li><a href="documentos.html">Documentos</a></li>
-                    </ul>
-                </nav>
 
-            </div>
-        </div>
+<!-- ================= HEADER ================= -->
+<header class="header header-rosters">
 
-        <div class="header-content container">
-            <h1>Rosters</h1>
-            <p>Conoce a nuestros equipos competitivos</p>
+    <div class="menu">
+        <div class="menu-content container">
 
-            <!-- BOTONES -->
-            <div class="roster-buttons">
-                <a href="#valorant" class="btn">Valorant</a>
-                <a href="#fifa" class="btn">FIFA</a>
-            </div>
-        </div>
-    </header>
+            <div class="menu-toggle" id="menu-toggle">☰</div>
 
-    <!-- ================= VALORANT ================= -->
-    <section id="valorant" class="roster container">
+            <a href="index.html">
+                <img class="logo" src="imagenes/logopng.png" alt="logo">
+            </a>
 
-        <h2>Roster Valorant</h2>
-        <p>Equipo competitivo de Valorant</p>
-
-        <!-- TARJETAS DINÁMICAS -->
-        <div class="roster-grid" id="valorant-team">
-            <p>Cargando equipo...</p>
-        </div>
-
-        <!-- DESEMPEÑO -->
-        <div class="roster-info">
-            <h3>Desempeño del equipo</h3>
-            <ul>
-                <li>🏆 Top 4 - Torneo Amateur Valorant</li>
-                <li>🔥 1° Lugar - Liga Comunitaria</li>
-                <li>🎯 Clasificación a torneo regional</li>
-            </ul>
-        </div>
-
-    </section>
-
-    <!-- ================= FIFA ================= -->
-    <section id="fifa" class="roster container">
-
-        <h2>Roster FIFA</h2>
-        <p>Equipo competitivo de FIFA</p>
-        <div class="roster-grid">
-
-            <div class="card">
-                <img src="imagenes/fifa1.jpg" alt="">
-                <h3>Jugador 1</h3>
-                <p>Pro Player</p>
-            </div>
-
-            <div class="card">
-                <img src="imagenes/fifa2.jpg" alt="">
-                <h3>Jugador 2</h3>
-                <p>Competitivo</p>
-            </div>
-
-            <div class="card">
-                <img src="imagenes/fifa3.jpg" alt="">
-                <h3>Jugador 3</h3>
-                <p>Analista</p>
-            </div>
-
-            <div class="card">
-                <img src="imagenes/fifa_coach.jpg" alt="">
-                <h3>Coach</h3>
-                <p>Estratega</p>
-            </div>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="proyectos.html">Proyectos</a></li>
+                    <li><a href="rosters.html">Rosters</a></li>
+                    <li><a href="streamers.html">Streamers</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                    <li><a href="documentos.html">Documentos</a></li>
+                </ul>
+            </nav>
 
         </div>
+    </div>
 
-        <div class="roster-info">
-            <h3>Desempeño del equipo</h3>
-            <ul>
-                <li>🏆 Participación en torneos online</li>
-                <li>⚽ Top 8 - Liga local FIFA</li>
-                <li>🔥 Crecimiento competitivo activo</li>
-            </ul>
+    <div class="header-content container">
+        <h1>Rosters</h1>
+        <p>Conoce a nuestros equipos competitivos</p>
+
+        <div class="roster-buttons">
+            <a href="#valorant" class="btn">Valorant</a>
+            <a href="#fifa" class="btn">FIFA</a>
+        </div>
+    </div>
+
+</header>
+
+<!-- ================= VALORANT ================= -->
+<section id="valorant" class="roster container">
+
+    <h2>Roster Valorant</h2>
+    <p>Equipo competitivo de Valorant</p>
+
+    <div class="roster-grid" id="valorant-team">
+        <p class="loading">Cargando equipo...</p>
+    </div>
+
+    <div class="roster-info">
+        <h3>Desempeño del equipo</h3>
+        <ul>
+            <li>🏆 Top 4 - Torneo Amateur Valorant</li>
+            <li>🔥 1° Lugar - Liga Comunitaria</li>
+            <li>🎯 Clasificación a torneo regional</li>
+        </ul>
+    </div>
+
+</section>
+
+<!-- ================= FIFA ================= -->
+<section id="fifa" class="roster container">
+
+    <h2>Roster FIFA</h2>
+    <p>Equipo competitivo de FIFA</p>
+
+    <div class="roster-grid">
+
+        <div class="card">
+            <img src="imagenes/fifa1.jpg" alt="">
+            <h3>Jugador 1</h3>
+            <p>Pro Player</p>
         </div>
 
-    </section>
+        <div class="card">
+            <img src="imagenes/fifa2.jpg" alt="">
+            <h3>Jugador 2</h3>
+            <p>Competitivo</p>
+        </div>
 
-    <footer class="footer container">
-        <p>© 2026 VORANIX - Todos los derechos reservados</p>
-    </footer>
+        <div class="card">
+            <img src="imagenes/fifa3.jpg" alt="">
+            <h3>Jugador 3</h3>
+            <p>Analista</p>
+        </div>
 
-    </script>
+        <div class="card">
+            <img src="imagenes/fifa_coach.jpg" alt="">
+            <h3>Coach</h3>
+            <p>Estratega</p>
+        </div>
 
+    </div>
 
-    <script>
-        const toggle = document.getElementById("menu-toggle");
-        const navbar = document.querySelector(".navbar");
+    <div class="roster-info">
+        <h3>Desempeño del equipo</h3>
+        <ul>
+            <li>🏆 Participación en torneos online</li>
+            <li>⚽ Top 8 - Liga local FIFA</li>
+            <li>🔥 Crecimiento competitivo activo</li>
+        </ul>
+    </div>
 
-        toggle.addEventListener("click", () => {
-            navbar.classList.toggle("active");
-        });
-    </script>
+</section>
 
-    <script>
-        // 🔥 TU URL DE RENDER (MUY IMPORTANTE)
-        const API_URL = "https://TU-APP.onrender.comhttps://valorant-backend-cuwl.onrender.com/"; // 👈 CAMBIA ESTO
+<!-- ================= FOOTER ================= -->
+<footer class="footer container">
+    <p>© 2026 VORANIX - Todos los derechos reservados</p>
+</footer>
 
-        const players = [
-            {
-                name: "Cameloth",
-                tag: "3005",
-                displayName: "Cameloth",
-                img: "imagenes/streamers/SoyDobleN.jpg",
-                rol: "Duelista"
-            },
-            {
-                name: "TenZ",
-                tag: "NA1",
-                displayName: "TenZ",
-                img: "imagenes/player1.jpg",
-                rol: "IGL"
-            }
-        ];
+<!-- ================= MENU MOBILE ================= -->
+<script>
+    const toggle = document.getElementById("menu-toggle");
+    const navbar = document.querySelector(".navbar");
 
-        async function getPlayerStats(name, tag) {
-            const res = await fetch(`${API_URL}/valorant/${name}/${tag}`);
-            const data = await res.json();
-            return data.data;
+    toggle.addEventListener("click", () => {
+        navbar.classList.toggle("active");
+    });
+</script>
+
+<!-- ================= API + RENDER ================= -->
+<script>
+
+const API_URL = "http://localhost:3000";
+
+const players = [
+    { name: "Cameloth", tag: "3005", displayName: "Cameloth", img: "imagenes/streamers/Cameloth.jpg", rol: "Duelista" },
+    { name: "Xulinho", tag: "Miau", displayName: "Xulinho", img: "imagenes/streamers/cameloth.jpg", rol: "Duelista" },
+    { name: "Andriuu", tag: "999", displayName: "Andriuu", img: "imagenes/streamers/cameloth.jpg", rol: "Duelista" },
+    { name: "Sr invisiblemudo", tag: "0310", displayName: "Sr invisiblemudo", img: "imagenes/streamers/cameloth.jpg", rol: "Duelista" },
+    { name: "Keke ssj", tag: "mawz", displayName: "Keke ssj", img: "imagenes/streamers/cameloth.jpg", rol: "Duelista" },
+    { name: "Saaku", tag: "666", displayName: "Saaku", img: "imagenes/streamers/cameloth.jpg", rol: "Duelista" },
+    { name: "Wolfsong", tag: "pico", displayName: "Wolfsong", img: "imagenes/streamers/cameloth.jpg", rol: "Duelista" },
+    { name: "TenZ", tag: "NA1", displayName: "TenZ", img: "imagenes/player1.jpg", rol: "IGL" }
+];
+
+async function getPlayerStats(name, tag) {
+    try {
+        const res = await fetch(`${API_URL}/valorant/${name}/${tag}`);
+        if (!res.ok) throw new Error("API error");
+        return await res.json();
+    } catch (err) {
+        console.error("Error:", err);
+        return null;
+    }
+}
+
+async function renderValorantTeam() {
+    const container = document.getElementById("valorant-team");
+    container.innerHTML = "";
+
+    for (let player of players) {
+
+        const data = await getPlayerStats(player.name, player.tag);
+
+        if (!data) {
+            container.innerHTML += `
+                <div class="card">
+                    <h3>${player.displayName}</h3>
+                    <p>Error al cargar stats</p>
+                </div>
+            `;
+            continue;
         }
 
-        async function renderValorantTeam() {
-            const container = document.getElementById("valorant-team");
-            container.innerHTML = "";
+        const card = `
+            <div class="card">
+                <img src="${player.img}" alt="">
 
-            for (let player of players) {
-                try {
-                    const data = await getPlayerStats(player.name, player.tag);
+                <h3>${player.displayName}</h3>
+                <p class="categoria">${player.rol}</p>
 
-                    const card = `
-                        <div class="card">
-                            <img src="${player.img}" alt="">
-                            
-                            <h3>${player.displayName}</h3>
+                <img class="rank-img" src="${data.rankImage}" alt="rank">
 
-                            <p class="categoria">${player.rol}</p>
+                <div class="stats">
+                    <p class="rango">🏆 ${data.rank}</p>
+                    <p>🎯 KD: ${data.kd}</p>
+                    <p>📊 Winrate: ${data.winrate}</p>
+                    <p>⭐ Nivel: ${data.level}</p>
+                </div>
 
-                            <!-- 🔥 DATOS REALES -->
-                            <p class="rango">Nivel: ${data.account_level}</p>
-                            <p>Región: ${data.region.toUpperCase()}</p>
+                <img class="flag" src="imagenes/flags/chile.png" alt="">
+            </div>
+        `;
 
-                            <img class="flag" src="imagenes/flags/chile.png" alt="">
-                        </div>
-                    `;
+        container.innerHTML += card;
+    }
+}
 
-                    container.innerHTML += card;
+renderValorantTeam();
 
-                } catch (error) {
-                    container.innerHTML += `
-                        <div class="card">
-                            <h3>${player.displayName}</h3>
-                            <p>Error al cargar stats</p>
-                        </div>
-                    `;
-                }
-            }
-        }
+</script>
 
-        renderValorantTeam();
-    </script>
-        
 </body>
 </html>
