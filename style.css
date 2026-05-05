@@ -241,6 +241,18 @@ body {
     background-repeat: no-repeat;
 }
 
+.header-projectos {
+    background-image: linear-gradient(
+        rgba(0, 0, 0, 0.6),
+        rgba(0, 0, 0, 0.8)
+    ),
+    url("imagenes/95fb939d-58ee-47af-8d51-6a2b1522ecc4.png");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
 .header-rosters {
     background-image: linear-gradient(
         rgba(0, 0, 0, 0.6),
