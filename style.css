@@ -2035,3 +2035,72 @@ select {
     display:flex;
 }
 }
+
+/* =========================
+   FIX INSTAGRAM SOLO PC
+========================= */
+
+/* PC */
+@media (min-width: 769px) {
+
+    /* mostrar solo desktop */
+    .instagram-desktop{
+        display:block !important;
+    }
+
+    .instagram-mobile{
+        display:none !important;
+    }
+
+    /* contenedor limpio */
+    .instagram-section{
+        overflow:hidden;
+    }
+
+    /* card ajustada */
+    .instagram-card{
+        max-width:1200px;
+        margin:0 auto;
+    }
+
+    /* iframe correcto */
+    .instagram-desktop iframe{
+        width:100% !important;
+        height:430px !important;
+        display:block;
+        border:none;
+        overflow:hidden;
+    }
+
+}
+
+/* =========================
+   INSTAGRAM PC - FONDO TRANSPARENTE
+   pegar al final del CSS
+========================= */
+
+@media (min-width: 769px){
+
+    .instagram-section{
+        background: transparent !important;
+    }
+
+    .instagram-card{
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: hidden;
+    }
+
+    .instagram-card:hover{
+        transform: none !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .instagram-desktop iframe{
+        background: transparent !important;
+        opacity: 0.98;
+    }
+
+}
