@@ -1968,3 +1968,70 @@ select {
 }
 
 }
+
+/* =========================
+   REDES PC + MOBILE
+========================= */
+
+/* PC / TABLET GRANDE */
+.social-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:22px;
+    width:100%;
+}
+
+/* MOBILE */
+@media (max-width: 768px){
+
+.social-section{
+    overflow:hidden;
+}
+
+.social-grid{
+    display:flex !important;
+    gap:16px;
+    width:max-content;
+    animation:socialScroll 18s linear infinite;
+    padding:10px 0;
+}
+
+.social-card{
+    min-width:220px;
+    max-width:220px;
+    flex-shrink:0;
+    padding:18px;
+    border-radius:18px;
+}
+
+.social-card h3{
+    font-size:18px;
+}
+
+.social-card p{
+    font-size:13px;
+}
+
+}
+
+/* Animación solo mobile */
+@keyframes socialScroll{
+    0%{
+        transform:translateX(0);
+    }
+    100%{
+        transform:translateX(-50%);
+    }
+}
+
+/* AGREGA ESTO TAMBIÉN */
+
+.social-duplicate{
+    display:none;
+}
+
+@media (max-width:768px){
+.social-duplicate{
+    display:flex;
+}
+}
