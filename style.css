@@ -192,8 +192,8 @@ body {
         rgba(0, 0, 0, 0.6),
         rgba(0, 0, 0, 0.8)
     ),
-    url("");
-    
+    url("imagenes/f9bcc787-ab31-480d-bc07-72bf7e3a9325.png");
+
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -246,7 +246,7 @@ body {
         rgba(0, 0, 0, 0.6),
         rgba(0, 0, 0, 0.8)
     ),
-    url("imagenes/rosters.png");
+    url("imagenes/ChatGPT\ Image\ 5\ may\ 2026\,\ 02_47_44\ p.m..png");
 
     background-size: cover;
     background-position: center;
@@ -1865,4 +1865,105 @@ select {
     .rank-img {
         max-width: 50px;
     }
+}
+
+/* =========================
+   BRANDS SECTION
+========================= */
+
+.brands-section{
+    padding:90px 0;
+    background:#0b0b0b;
+    overflow:hidden;
+}
+
+.brands-section h2{
+    text-align:center;
+    font-size:42px;
+    color:#fff;
+    margin-bottom:10px;
+}
+
+.brands-sub{
+    text-align:center;
+    color:#999;
+    margin-bottom:45px;
+}
+
+.brands-slider{
+    width:100%;
+    overflow:hidden;
+    position:relative;
+}
+
+.brands-track{
+    display:flex;
+    gap:25px;
+    width:max-content;
+    animation:scrollBrands 25s linear infinite;
+}
+
+.brand-card{
+    min-width:260px;
+    background:#111;
+    border:1px solid #222;
+    border-radius:20px;
+    padding:25px;
+    text-align:center;
+    transition:.3s;
+}
+
+.brand-card:hover{
+    transform:translateY(-8px);
+    border-color:#00e5ff;
+}
+
+.brand-card img{
+    width:120px;
+    height:120px;
+    object-fit:contain;
+    margin-bottom:18px;
+}
+
+.brand-card h3{
+    color:#fff;
+    font-size:20px;
+    margin-bottom:8px;
+}
+
+.brand-card span{
+    color:#00e5ff;
+    font-size:14px;
+}
+
+.brand-card.sponsor{
+    border:1px solid #ffd700;
+    box-shadow:0 0 20px rgba(255,215,0,.15);
+}
+
+.brand-card.sponsor span{
+    color:#ffd700;
+}
+
+@keyframes scrollBrands{
+    0%{
+        transform:translateX(0);
+    }
+    100%{
+        transform:translateX(-50%);
+    }
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+.brand-card{
+    min-width:220px;
+}
+
+.brands-section h2{
+    font-size:32px;
+}
+
 }
