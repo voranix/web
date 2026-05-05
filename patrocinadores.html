@@ -1,113 +1,199 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patrocinadores</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrocinadores | VORANIX</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
+
 <body>
 
-    <header class="header">
-        <div class="menu">
-            <div class="menu-content container">
-                <div class="menu-toggle" id="menu-toggle">☰</div>
-                <a href="index.html">
-                    <img class="logo" src="imagenes/logopng.png" alt="logo">
-                </a>
-                <nav class="navbar">
-                    <ul>
-                        <li><a href="index.html">Inicio</a></li>
+<header class="header header-patrocinadores">
+
+<div class="menu">
+<div class="menu-content container">
+
+<div class="menu-toggle" id="menu-toggle">☰</div>
+
+<a href="index.html">
+<img class="logo" src="imagenes/logopng.png" alt="logo">
+</a>
+
+<nav class="navbar">
+<ul>
+<li><a href="index.html">Inicio</a></li>
                         <li><a href="nosotros.html">Nosotros</a></li>
                         <li><a href="proyectos.html">Proyectos</a></li>  
                         <li><a href="rosters.html">Rosters</a></li>
                         <li><a href="streamers.html">Streamers</a></li>
+                        <li><a href="patrocinadores.html">Patrocinadores</a></li>
                         <li><a href="contacto.html">Contacto</a></li>
-                        <li><a href="documentos.html">Documentos</a></li>
-                    </ul>
-                </nav>
+</ul>
+</nav>
 
+</div>
+</div>
+
+<div class="header-content container">
+<h1>Patrocinadores</h1>
+<p>Marcas que apoyan el crecimiento de VORANIX</p>
+</div>
+
+</header>
+
+<section class="sponsors-page container">
+
+<!-- OTTOKE -->
+<div class="sponsor-box sponsor-main" id="ottoke">
+
+<img src="imagenes/marcas/Logo Ottoke.png" alt="Ottoke">
+
+<div class="sponsor-info">
+<h2>Ottoke Street Food</h2>
+<p>
+Patrocinador oficial de VORANIX. 
+Especialistas en comida callejera coreana, sabores únicos y experiencias diferentes.
+</p>
+
+<div class="sponsor-links">
+<a href="https://www.instagram.com/ottoke_streetfood/" target="_blank" class="btn">
+<i class="fab fa-instagram"></i> Instagram
+</a>
+</div>
+
+</div>
+</div>
+
+<!-- MAI -->
+
+<div class="sponsor-box" id="mai">
+
+<img src="imagenes/marcas/Logo Mai.Pizza_.png" alt="Mai Pizza">
+
+<div class="sponsor-info">
+<h2>Mai Pizza</h2>
+<p>
+Pizza artesanal con sabor único. 
+Aliados de la comunidad en sorteos, eventos y colaboraciones especiales.
+</p>
+
+<div class="sponsor-links">
+<a href="https://www.instagram.com/mai.pizza_/" target="_blank" class="btn">
+<i class="fab fa-instagram"></i> Instagram
+</a>
+</div>
+
+</div>
+</div>
+
+<!-- TRULU -->
+
+<div class="sponsor-box" id="trulu">
+
+    <img src="imagenes/marcas/Logo Trulustore.png" alt="Trulu Store">
+
+    <div class="sponsor-info">
+        <h2>Trulu Store</h2>
+
+        <p>
+            Tienda colaboradora con beneficios exclusivos para la comunidad VORANIX.
+            Compra productos tecnológicos, accesorios y PCs armados con descuentos especiales.
+        </p>
+
+        <div class="coupon-area">
+
+            <div class="coupon-card">
+                <h3>🛒 Productos $20.000 a $200.000</h3>
+                <p>5% de descuento para la comunidad</p>
+
+                <div class="coupon-line">
+                    <input type="text" value="VORANIX5" id="cupon1" readonly>
+                    <button onclick="copiarCupon('cupon1')">Copiar</button>
+                </div>
             </div>
-        </div>
-        <div class="header-content container">
-            <h1>Comunidad</h1>
-            <p>Un solo universo, infinitas posibilidades</p>
-        </div>
-    </header>
 
-    <!-- ================= BIENVENIDA ================= -->
-    <section class="community container">
+            <div class="coupon-card">
+                <h3>💻 PCs Armados</h3>
+                <p>$20.000 de descuento directo</p>
 
-        <div class="community-content">
-            <h2>Bienvenido a VORANIX</h2>
-            <p>
-                VORANIX no es solo un equipo, es una comunidad donde los gamers se conectan,
-                comparten y evolucionan juntos. Aquí puedes encontrar personas con tus mismos
-                intereses, mejorar tu nivel y formar parte de algo grande.
-            </p>
-        </div>
-
-    </section>
-
-    <!-- ================= QUE PUEDES HACER ================= -->
-    <section class="community-features container">
-
-        <h2>¿Qué puedes hacer?</h2>
-
-        <div class="features-grid">
-
-            <div class="feature">
-                <h3>🎮 Jugar</h3>
-                <p>Encuentra compañeros para partidas casuales o competitivas.</p>
-            </div>
-
-            <div class="feature">
-                <h3>🏆 Competir</h3>
-                <p>Participa en torneos y demuestra tu nivel.</p>
-            </div>
-
-            <div class="feature">
-                <h3>📡 Crear contenido</h3>
-                <p>Streams, clips y redes para crecer dentro de la comunidad.</p>
-            </div>
-
-            <div class="feature">
-                <h3>🤝 Conectar</h3>
-                <p>Conoce nuevos jugadores y crea tu equipo.</p>
+                <div class="coupon-line">
+                    <input type="text" value="VORAPC20K" id="cupon2" readonly>
+                    <button onclick="copiarCupon('cupon2')">Copiar</button>
+                </div>
             </div>
 
         </div>
 
-    </section>
+        <div class="sponsor-links">
+            <a href="https://trulustore.cl/" target="_blank" class="btn">
+                🌐 Ir a Trulu Store
+            </a>
 
-    <!-- ================= REDES ================= -->
-    <section class="community-links container">
-
-        <h2>Únete a la comunidad</h2>
-
-        <div class="links-buttons">
-            <a href="#" class="btn">Discord</a>
-            <a href="https://www.instagram.com/voranix_gaming" class="btn">Instagram</a>
-            <a href="#" class="btn">Twitch</a>
+            <a href="https://www.instagram.com/trulustore.cl/" target="_blank" class="btn">
+                <i class="fab fa-instagram"></i> Instagram
+            </a>
         </div>
 
-    </section>
+    </div>
+</div>
 
-    <!-- ================= FRASE ================= -->
-    <section class="community-quote">
+</section>
 
-        <div class="quote-content container">
-            <h2>VORANIX</h2>
-            <p>JUEGA • CONECTA • EVOLUCIONA</p>
-        </div>
+<footer class="footer container">
+<p>© 2026 VORANIX - Todos los derechos reservados</p>
+</footer>
 
-    </section>
+<script>
+const toggle = document.getElementById("menu-toggle");
+const navbar = document.querySelector(".navbar");
 
-    <!-- ================= FOOTER ================= -->
-    <footer class="footer container">
-        <p>© 2026 VORANIX - Todos los derechos reservados</p>
-    </footer>
+toggle.addEventListener("click", () => {
+navbar.classList.toggle("active");
+});
+</script>
 
+<!-- REEMPLAZA TU SCRIPT ACTUAL POR ESTE -->
+
+<script>
+async function copiarCupon(id){
+
+const input = document.getElementById(id);
+const codigo = input.value;
+
+try{
+    await navigator.clipboard.writeText(codigo);
+
+    const boton = input.nextElementSibling;
+    const textoOriginal = boton.innerHTML;
+
+    boton.innerHTML = "✓ Copiado";
+    boton.style.background = "#00c853";
+
+    setTimeout(() => {
+        boton.innerHTML = textoOriginal;
+        boton.style.background = "";
+    }, 1800);
+
+}catch(error){
+
+    input.select();
+    document.execCommand("copy");
+
+    const boton = input.nextElementSibling;
+    const textoOriginal = boton.innerHTML;
+
+    boton.innerHTML = "✓ Copiado";
+
+    setTimeout(() => {
+        boton.innerHTML = textoOriginal;
+    }, 1800);
+
+}
+
+}
+</script>
 </body>
 </html>
