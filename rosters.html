@@ -9,11 +9,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 
 <style>
-.loading{
-    text-align:center;
-    color:white;
-    font-size:18px;
+
+/* ================= VARIABLES ================= */
+:root{
+    --rank-iron: #5c5c5c;
+
+    --rank-bronze: #8c5a2b;
+
+    --rank-silver: #c0c0c0;
+
+    --rank-gold: #d4a937;
+
+    --rank-platinum: #2bb8a6;
+
+    --rank-diamond: #9a6bff;
+
+    --rank-ascendant: #2ecc71;
+
+    --rank-immortal: #b026ff;
+
+    --rank-radiant: #ff3b3b;
+
+    --rank-unranked: #2a2a2a;
 }
+
+/* ================= BASE ================= */
+.loading{ text-align:center; color:white; font-size:18px; }
 
 .roster-grid{
     display:grid;
@@ -23,8 +44,8 @@
 }
 
 .card{
-    background:#111;
-    border:2px solid #222;
+    background:var(--bg-card);
+    border:2px solid var(--border-default);
     border-radius:18px;
     padding:20px;
     text-align:center;
@@ -33,9 +54,7 @@
     box-shadow:0 0 20px rgba(0,0,0,.4);
 }
 
-.card:hover{
-    transform:translateY(-8px);
-}
+.card:hover{ transform:translateY(-8px); }
 
 .card img{
     width:100%;
@@ -53,9 +72,7 @@
     margin-top:10px;
 }
 
-.stats p{
-    margin:8px 0;
-}
+.stats p{ margin:8px 0; }
 
 .categoria{
     color:#00e5ff;
@@ -63,9 +80,7 @@
     margin-bottom:10px;
 }
 
-.roster{
-    padding:80px 0;
-}
+.roster{ padding:80px 0; }
 
 .roster h2{
     color:white;
@@ -79,44 +94,34 @@
 }
 
 @keyframes fadeUp{
-    from{
-        opacity:0;
-        transform:translateY(30px);
-    }
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
+    from{ opacity:0; transform:translateY(30px);}
+    to{ opacity:1; transform:translateY(0);}
 }
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
 <header class="header header-rosters">
-
 <div class="menu">
 <div class="menu-content container">
-
 <div class="menu-toggle" id="menu-toggle">☰</div>
 
 <a href="index.html">
-<img class="logo" src="imagenes/logopng.png" alt="logo">
+<img class="logo" src="imagenes/logopng.png">
 </a>
 
 <nav class="navbar">
 <ul>
 <li><a href="index.html">Inicio</a></li>
-                        <li><a href="nosotros.html">Nosotros</a></li>
-                        <li><a href="proyectos.html">Proyectos</a></li>  
-                        <li><a href="rosters.html">Rosters</a></li>
-                        <li><a href="streamers.html">Streamers</a></li>
-                        <li><a href="patrocinadores.html">Patrocinadores</a></li>
-                        <li><a href="contacto.html">Contacto</a></li>
+<li><a href="nosotros.html">Nosotros</a></li>
+<li><a href="proyectos.html">Proyectos</a></li>
+<li><a href="rosters.html">Rosters</a></li>
+<li><a href="streamers.html">Streamers</a></li>
+<li><a href="patrocinadores.html">Patrocinadores</a></li>
+<li><a href="contacto.html">Contacto</a></li>
 </ul>
 </nav>
-
 </div>
 </div>
 
@@ -129,357 +134,156 @@
 <a href="#fifa" class="btn">FIFA</a>
 </div>
 </div>
-
 </header>
 
-<!-- VALORANT -->
+<!-- ================= VALORANT ================= -->
 <section id="valorant" class="roster container">
-
 <h2>Roster Valorant</h2>
 <p>Equipo competitivo de Valorant</p>
 
-<div class="roster-grid" id="valorant-team">
-<p class="loading">Cargando estadísticas...</p>
+<div class="roster-grid">
+
+<div class="card" style="animation:fadeUp .6s ease .1s both; border-color:var(--rank-diamond)">
+<img src="imagenes/roster/cameloth.jpg">
+<h3>Cameloth</h3>
+<p class="categoria">Duelista</p>
+<img class="rank-img" src="imagenes/rangos/diamante.png">
+<div class="stats">
+<p style="color:var(--rank-diamond)">Diamond 3</p>
+<p>Tag: 3005</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
 </div>
 
+<div class="card" style="animation:fadeUp .6s ease .2s both; border-color:var(--rank-platinum)">
+<img src="imagenes/roster/xulinho.jpg">
+<h3>Xulinho</h3>
+<p class="categoria">Flex</p>
+<img class="rank-img" src="imagenes/rangos/platino.png">
+<div class="stats">
+<p style="color:var(--rank-platinum)">Platino</p>
+<p>Tag: Miau</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+<div class="card" style="animation:fadeUp .6s ease .3s both; border-color:var(--rank-ascendant)">
+<img src="imagenes/roster/andriuu.jpg">
+<h3>Andriuu</h3>
+<p class="categoria">Duelista</p>
+<img class="rank-img" src="imagenes/rangos/ascendente.png">
+<div class="stats">
+<p style="color:var(--rank-ascendant)">Ascendente</p>
+<p>Tag: 999</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+<div class="card" style="animation:fadeUp .6s ease .4s both; border-color:var(--rank-gold)">
+<img src="imagenes/roster/sr invisiblemudo.jpg">
+<h3>Sr invisiblemudo</h3>
+<p class="categoria">Centinela</p>
+<img class="rank-img" src="imagenes/rangos/oro.png">
+<div class="stats">
+<p style="color:var(--rank-gold)">Oro</p>
+<p>Tag: 0310</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+<div class="card" style="animation:fadeUp .6s ease .5s both; border-color:var(--rank-diamond)">
+<img src="imagenes/roster/keke.jpg">
+<h3>Keke ssj</h3>
+<p class="categoria">Controlador</p>
+<img class="rank-img" src="imagenes/rangos/diamante.png">
+<div class="stats">
+<p style="color:var(--rank-diamond)">Diamante</p>
+<p>Tag: mawz</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+<div class="card" style="animation:fadeUp .6s ease .6s both; border-color:var(--rank-diamond)">
+<img src="imagenes/roster/saaku.jpg">
+<h3>Saaku</h3>
+<p class="categoria">Centinela</p>
+<img class="rank-img" src="imagenes/rangos/diamante.png">
+<div class="stats">
+<p style="color:var(--rank-diamond)">Diamante</p>
+<p>Tag: 666</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+<div class="card" style="animation:fadeUp .6s ease .7s both; border-color:var(--rank-platinum)">
+<img src="imagenes/roster/wolfsong.jpg">
+<h3>Wolfsong</h3>
+<p class="categoria">Iniciador</p>
+<img class="rank-img" src="imagenes/rangos/platino.png">
+<div class="stats">
+<p style="color:var(--rank-platinum)">Platino</p>
+<p>Tag: pico</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+</div>
 </section>
 
-<!-- FIFA -->
+<!-- ================= FIFA ================= -->
 <section id="fifa" class="roster container">
-
 <h2>Roster FIFA</h2>
 <p>Equipo competitivo de EA FC</p>
 
-<div class="roster-grid" id="fifa-team"></div>
+<div class="roster-grid">
 
+<div class="card" style="animation:fadeUp .6s ease .1s both; border-color:var(--rank-ascendant)">
+<img src="imagenes/fifa/bobmarley_033.jpg">
+<h3>BobMarley_003</h3>
+<p class="categoria">EA FC PRO PLAYER</p>
+<div class="stats">
+<p style="color:var(--rank-ascendant)">Elite Division</p>
+<p>1890 SR</p>
+<p>25W - 7L</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+<div class="card" style="animation:fadeUp .6s ease .2s both; border-color:var(--rank-ascendant)">
+<img src="imagenes/fifa/broly_ny.jpg">
+<h3>Br0ly_NY</h3>
+<p class="categoria">EA FC PRO PLAYER</p>
+<div class="stats">
+<p style="color:var(--rank-ascendant)">Division 1</p>
+<p>1670 SR</p>
+<p>19W - 10L</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+<div class="card" style="animation:fadeUp .6s ease .3s both; border-color:var(--rank-ascendant)">
+<img src="imagenes/fifa/chris_barber.jpg">
+<h3>Chris_barber96</h3>
+<p class="categoria">EA FC PRO PLAYER</p>
+<div class="stats">
+<p style="color:var(--rank-ascendant)">Division 2</p>
+<p>1540 SR</p>
+<p>16W - 11L</p>
+</div>
+<img class="flag" src="imagenes/flags/chile.png">
+</div>
+
+</div>
 </section>
 
-<!-- FOOTER -->
 <footer class="footer container">
 <p>© 2026 VORANIX - Todos los derechos reservados</p>
 </footer>
 
-<!-- MENU -->
 <script>
 const toggle = document.getElementById("menu-toggle");
 const navbar = document.querySelector(".navbar");
-
-toggle.addEventListener("click", () => {
-    navbar.classList.toggle("active");
-});
-</script>
-
-<!-- SCRIPT -->
-<script>
-
-const API_URL = "https://api-tracker-gg.onrender.com";
-
-/* =========================
-   VALORANT PLAYERS
-========================= */
-
-<!-- REEMPLAZA SOLO EL ARRAY players POR ESTE -->
-
-const players = [
-
-{
-name:"Cameloth",
-tag:"3005",
-displayName:"Cameloth",
-img:"imagenes/roster/cameloth.jpg",
-rol:"Duelista",
-manualRank:"Diamond 3",
-manualRankImg:"imagenes/ranks/diamond.png"
-},
-
-{
-name:"Xulinho",
-tag:"Miau",
-displayName:"Xulinho",
-img:"imagenes/roster/xulinho.jpg",
-rol:"Iniciador",
-manualRank:"Diamond 2",
-manualRankImg:"imagenes/ranks/diamond.png"
-},
-
-{
-name:"Andriuu",
-tag:"999",
-displayName:"Andriuu",
-img:"imagenes/roster/andriuu.jpg",
-rol:"Centinela",
-manualRank:"Immortal 1",
-manualRankImg:"imagenes/ranks/immortal.png"
-},
-
-{
-name:"Sr invisiblemudo",
-tag:"0310",
-displayName:"Sr invisiblemudo",
-img:"imagenes/roster/sr invisiblemudo.jpg",
-rol:"Duelista",
-manualRank:"Platinum 3",
-manualRankImg:"imagenes/ranks/platinum.png"
-},
-
-{
-name:"Keke ssj",
-tag:"mawz",
-displayName:"Keke ssj",
-img:"imagenes/roster/keke.jpg",
-rol:"Controlador",
-manualRank:"Diamond 1",
-manualRankImg:"imagenes/ranks/diamond.png"
-},
-
-{
-name:"Saaku",
-tag:"666",
-displayName:"Saaku",
-img:"imagenes/roster/saaku.jpg",
-rol:"Iniciador",
-manualRank:"Ascendant 1",
-manualRankImg:"imagenes/ranks/ascendant.png"
-},
-
-{
-name:"Wolfsong",
-tag:"pico",
-displayName:"Wolfsong",
-img:"imagenes/roster/wolfsong.jpg",
-rol:"Duelista",
-manualRank:"Gold 3",
-manualRankImg:"imagenes/ranks/gold.png"
-}
-
-];
-
-/* =========================
-   FIFA PLAYERS
-========================= */
-
-const fifaPlayers = [
-
-{
-displayName:"BobMarley_003",
-img:"imagenes/fifa/bobmarley_033.jpg",
-division:"Elite Division",
-points:"1890 SR",
-record:"25W - 7L"
-},
-
-{
-displayName:"Br0ly_NY",
-img:"imagenes/fifa/broly_ny.jpg",
-division:"Division 1",
-points:"1670 SR",
-record:"19W - 10L"
-},
-
-{
-displayName:"Chris_barber96",
-img:"imagenes/fifa/chris_barber.jpg",
-division:"Division 2",
-points:"1540 SR",
-record:"16W - 11L"
-}
-
-];
-
-/* =========================
-   CACHE
-========================= */
-
-function getCache(key){
-const cached = localStorage.getItem(key);
-
-if(!cached) return null;
-
-const {data,time} = JSON.parse(cached);
-
-if(Date.now() - time > 600000) return null;
-
-return data;
-}
-
-function setCache(key,data){
-localStorage.setItem(key, JSON.stringify({
-data,
-time:Date.now()
-}));
-}
-
-/* =========================
-   API FETCH
-========================= */
-
-async function getPlayerStats(name,tag){
-
-const cacheKey = `${name}-${tag}`;
-const cached = getCache(cacheKey);
-
-if(cached) return cached;
-
-try{
-
-const res = await fetch(`${API_URL}/valorant/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`);
-
-if(!res.ok) throw new Error("error");
-
-const data = await res.json();
-
-setCache(cacheKey,data);
-
-return data;
-
-}catch(error){
-return null;
-}
-
-}
-
-/* =========================
-   RANK COLORS
-========================= */
-
-function getRankColor(rank=""){
-
-if(rank.includes("Radiant")) return "#ff4655";
-if(rank.includes("Immortal")) return "#a335ee";
-if(rank.includes("Ascendant")) return "#00ff88";
-if(rank.includes("Diamond")) return "#4fc3f7";
-if(rank.includes("Platinum")) return "#00e5ff";
-if(rank.includes("Gold")) return "#ffd700";
-if(rank.includes("Silver")) return "#c0c0c0";
-if(rank.includes("Bronze")) return "#cd7f32";
-
-return "#333";
-}
-
-/* =========================
-   VALORANT RENDER
-========================= */
-
-async function renderValorantTeam(){
-
-const container = document.getElementById("valorant-team");
-
-container.innerHTML = `<p class="loading">Cargando estadísticas...</p>`;
-
-const results = await Promise.all(
-players.map(p => getPlayerStats(p.name,p.tag))
-);
-
-const combined = players.map((p,i)=>({
-...p,
-stats:results[i]
-}));
-
-container.innerHTML = "";
-
-combined.forEach((player,index)=>{
-
-const data = player.stats;
-
-/* API FALLA */
-if(!data){
-
-const color = getRankColor(player.manualRank);
-
-container.innerHTML += `
-<div class="card" style="animation:fadeUp .6s ease ${index * .1}s both; border-color:${color}">
-
-<img src="${player.img}">
-
-<h3>#${index+1} ${player.displayName}</h3>
-<p class="categoria">${player.rol}</p>
-
-<img class="rank-img" src="${player.manualRankImg || 'imagenes/unranked.png'}">
-
-<div class="stats">
-<p style="color:${color}">🏆 ${player.manualRank}</p>
-<p>⚠️ API no disponible</p>
-</div>
-
-<img class="flag" src="imagenes/flags/chile.png">
-
-</div>
-`;
-
-return;
-}
-
-/* API FUNCIONA */
-const color = getRankColor(data.rank || player.manualRank);
-
-container.innerHTML += `
-<div class="card" style="animation:fadeUp .6s ease ${index * .1}s both; border-color:${color}">
-
-<img src="${player.img}">
-
-<h3>#${index+1} ${player.displayName}</h3>
-<p class="categoria">${player.rol}</p>
-
-<img class="rank-img" src="${data.rankImage || player.manualRankImg || 'imagenes/unranked.png'}">
-
-<div class="stats">
-<p style="color:${color}">🏆 ${data.rank || player.manualRank}</p>
-<p>🎯 KD: ${data.kd || '-'}</p>
-<p>📊 Winrate: ${data.winrate || '-'}</p>
-<p>⭐ Nivel: ${data.level || '-'}</p>
-</div>
-
-<img class="flag" src="imagenes/flags/chile.png">
-
-</div>
-`;
-
-});
-
-}
-
-/* =========================
-   FIFA RENDER
-========================= */
-
-function renderFifaTeam(){
-
-const container = document.getElementById("fifa-team");
-
-container.innerHTML = "";
-
-fifaPlayers.forEach((player,index)=>{
-
-container.innerHTML += `
-<div class="card" style="animation:fadeUp .6s ease ${index * .1}s both; border-color:#00ff88">
-
-<img src="${player.img}">
-
-<h3>#${index+1} ${player.displayName}</h3>
-<p class="categoria">EA FC PRO PLAYER</p>
-
-<div class="stats">
-<p style="color:#00ff88">⚽ ${player.division}</p>
-<p>🏆 ${player.points}</p>
-<p>📊 ${player.record}</p>
-</div>
-
-<img class="flag" src="imagenes/flags/chile.png">
-
-</div>
-`;
-
-});
-
-}
-
-/* =========================
-   INIT
-========================= */
-
-renderValorantTeam();
-renderFifaTeam();
-
+toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 </script>
 
 </body>
