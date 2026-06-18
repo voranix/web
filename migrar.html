@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Migrar datos | VORANIX</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+.migrate-shell{min-height:100vh;display:grid;place-items:center;padding:24px;}
+.migrate-card{width:min(860px,100%);background:var(--card);border:1px solid var(--border-accent);border-radius:8px;padding:28px;box-shadow:0 0 40px rgba(123,44,255,0.14);}
+.migrate-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:18px;}
+.migrate-title h1{font-size:28px;margin-bottom:6px;}
+.migrate-title p,.muted{color:var(--gris);}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0;}
+.summary-item{background:#0a0a18;border:1px solid var(--border);border-radius:8px;padding:16px;}
+.summary-item strong{display:block;font-size:24px;color:#fff;margin-bottom:6px;}
+.summary-item span{font-size:12px;color:var(--gris);}
+.log{margin-top:18px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#090915;}
+.log-head{padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#fff;}
+.log-body{padding:14px;display:flex;flex-direction:column;gap:8px;min-height:140px;}
+.log-line{font-size:13px;color:var(--gris);line-height:1.5;}
+.log-line.ok{color:#9ef0b8;}
+.log-line.warn{color:#ffcf7a;}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+@media(max-width:768px){
+    .summary-grid{grid-template-columns:1fr;}
+    .migrate-card{padding:22px;}
+    .migrate-title h1{font-size:24px;}
+}
+</style>
+</head>
+<body>
+
+<section class="migrate-shell">
+    <div class="migrate-card">
+        <div class="migrate-head">
+            <div class="migrate-title">
+                <h1>Migración Firestore</h1>
+                <p id="access-state">Verificando acceso...</p>
+            </div>
+            <div class="actions">
+                <a class="btn secondary" href="admin.html">Volver al admin</a>
+                <button class="btn" id="run-migration" type="button" disabled>Ejecutar migración</button>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-item"><strong>16</strong><span>Streamers</span></div>
+            <div class="summary-item"><strong>8</strong><span>Jugadores</span></div>
+            <div class="summary-item"><strong>5</strong><span>Patrocinadores</span></div>
+        </div>
+
+        <div class="panel">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Origen</th><th>Colección</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Streamers</td><td>streamers</td><td id="streamers-state">Pendiente</td></tr>
+                        <tr><td>Rosters</td><td>rosters</td><td id="rosters-state">Pendiente</td></tr>
+                        <tr><td>Patrocinadores</td><td>sponsors</td><td id="sponsors-state">Pendiente</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="log">
+            <div class="log-head">Registro</div>
+            <div class="log-body" id="log-body">
+                <div class="log-line">Listo para migrar datos.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script type="module">
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { doc, getDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { auth, db } from "./firebase-config.js";
+import { makeDocId, streamersSeed, rostersSeed, sponsorsSeed } from "./migracion-data.js";
+
+const accessState = document.getElementById("access-state");
+const runBtn = document.getElementById("run-migration");
+const logBody = document.getElementById("log-body");
+const streamersState = document.getElementById("streamers-state");
+const rostersState = document.getElementById("rosters-state");
+const sponsorsState = document.getElementById("sponsors-state");
+
+let currentProfile = null;
+
+function log(message, kind = "info") {
+    const line = document.createElement("div");
+    line.className = `log-line ${kind === "ok" ? "ok" : kind === "warn" ? "warn" : ""}`;
+    line.textContent = message;
+    logBody.appendChild(line);
+}
+
+async function loadProfile(user) {
+    const snapshot = await getDoc(doc(db, "users", user.uid));
+    return snapshot.exists() ? { uid: user.uid, ...snapshot.data() } : null;
+}
+
+function setRowState(element, text, kind = "info") {
+    element.textContent = text;
+    element.style.color = kind === "ok" ? "#9ef0b8" : kind === "warn" ? "#ffcf7a" : "";
+}
+
+async function migrateSeed(collectionName, seed) {
+    const batch = writeBatch(db);
+    for (const item of seed) {
+        const id = makeDocId(item.nombre || item.displayName || item.titulo || "");
+        batch.set(doc(db, collectionName, id), {
+            ...item,
+            createdAt: serverTimestamp()
+        });
+    }
+    await batch.commit();
+}
+
+async function runMigration() {
+    runBtn.disabled = true;
+    logBody.innerHTML = "";
+    log("Iniciando migración...");
+    setRowState(streamersState, "Migrando...", "warn");
+    setRowState(rostersState, "Migrando...", "warn");
+    setRowState(sponsorsState, "Migrando...", "warn");
+
+    try {
+        await migrateSeed("streamers", streamersSeed);
+        setRowState(streamersState, "✔ 16 streamers migrados", "ok");
+        log("✔ 16 streamers migrados", "ok");
+
+        await migrateSeed("rosters", rostersSeed);
+        setRowState(rostersState, "✔ 8 jugadores migrados", "ok");
+        log("✔ 8 jugadores migrados", "ok");
+
+        await migrateSeed("sponsors", sponsorsSeed);
+        setRowState(sponsorsState, "✔ 5 patrocinadores migrados", "ok");
+        log("✔ 5 patrocinadores migrados", "ok");
+
+        log("Migración completada sin duplicados.", "ok");
+    } catch (error) {
+        console.error(error);
+        log(`Error: ${error.message || "No se pudo completar la migración."}`, "warn");
+    } finally {
+        runBtn.disabled = false;
+    }
+}
+
+runBtn.addEventListener("click", runMigration);
+
+onAuthStateChanged(auth, async (user) => {
+    if(!user){
+        currentProfile = null;
+        accessState.textContent = "Debes iniciar sesión como admin.";
+        runBtn.disabled = true;
+        return;
+    }
+
+    try{
+        currentProfile = await loadProfile(user);
+
+        if(!currentProfile || currentProfile.active === false || currentProfile.role !== "admin"){
+            accessState.textContent = "Acceso denegado. Esta página es solo para admins.";
+            runBtn.disabled = true;
+            await signOut(auth);
+            return;
+        }
+
+        accessState.textContent = `Acceso concedido para ${currentProfile.email || user.email}`;
+        runBtn.disabled = false;
+        log("Usuario autenticado como admin.", "ok");
+    }catch(error){
+        console.error(error);
+        accessState.textContent = "No se pudo validar la sesión.";
+        runBtn.disabled = true;
+    }
+});
+</script>
+</body>
+</html>

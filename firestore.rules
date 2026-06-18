@@ -3,38 +3,50 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
+    function userData() {
+      return get(
+        /databases/$(database)/documents/users/$(request.auth.uid)
+      ).data;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        userData().role == "admin";
+    }
+
+    function isEditor() {
+      return signedIn() &&
+        (
+          userData().role == "admin" ||
+          userData().role == "editor"
+        );
+    }
+
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+
+      allow read: if signedIn();
+
+      allow update, create, delete: if isAdmin();
     }
 
-    match /valorant_roster/{docId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+    match /streamers/{doc} {
+      allow read, write: if isEditor();
     }
 
-    match /fifa_roster/{docId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+    match /rosters/{doc} {
+      allow read, write: if isEditor();
     }
 
-    match /streamers/{docId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+    match /sponsors/{doc} {
+      allow read, write: if isEditor();
     }
 
-    match /patrocinadores/{docId} {
-      allow read: if true;
-      allow write: if isSignedIn();
-    }
-
-    match /proyectos/{docId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+    match /proyectos/{doc} {
+      allow read, write: if isEditor();
     }
   }
 }

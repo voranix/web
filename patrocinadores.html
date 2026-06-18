@@ -49,88 +49,30 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 </script>
 
 <script type="module">
-import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
 const container = document.getElementById("sponsors-page");
 
-function renderCoupon(coupon, index, sponsorId){
-    // Los cupones se guardan como array dentro de cada patrocinador.
-    const inputId = `cupon-${sponsorId}-${index}`;
-    return `
-<div class="coupon-card">
-    <h3>${coupon.titulo || "Cupon"}</h3>
-    <p>${coupon.descripcion || ""}</p>
-    <div class="coupon-line">
-        <input type="text" value="${coupon.codigo || ""}" id="${inputId}" readonly>
-        <button type="button" data-copy="${inputId}">Copiar</button>
-    </div>
-</div>`;
-}
-
-function renderLinks(sponsor){
-    const links = [];
-
-    if(sponsor.websiteUrl){
-        links.push(`<a href="${sponsor.websiteUrl}" target="_blank" rel="noopener" class="btn">Ir al sitio</a>`);
-    }
-
-    if(sponsor.instagramUrl){
-        links.push(`<a href="${sponsor.instagramUrl}" target="_blank" rel="noopener" class="btn"><i class="fab fa-instagram"></i> Instagram</a>`);
-    }
-
-    return links.length ? `<div class="sponsor-links">${links.join("")}</div>` : "";
-}
-
 function renderSponsor(sponsor){
-    const coupons = Array.isArray(sponsor.cupones) ? sponsor.cupones : [];
-    const couponHtml = coupons.length
-        ? `<div class="coupon-area">${coupons.map((coupon, index) => renderCoupon(coupon, index, sponsor.id)).join("")}</div>`
-        : "";
-
     return `
-<div class="sponsor-box ${sponsor.tipo === "sponsor" ? "sponsor-main" : ""}" id="${sponsor.id}">
-    <img src="${sponsor.img || "imagenes/logo.jpg"}" alt="${sponsor.nombre || "Patrocinador"}">
+<div class="sponsor-box ${sponsor.tipo === "patrocinador" ? "sponsor-main" : ""}" id="${sponsor.id}">
+    <img src="${sponsor.logo || "imagenes/logo.jpg"}" alt="${sponsor.nombre || "Patrocinador"}">
     <div class="sponsor-info">
         <h2>${sponsor.nombre || "Patrocinador"}</h2>
         <p>${sponsor.descripcion || ""}</p>
-        ${couponHtml}
-        ${renderLinks(sponsor)}
+        ${sponsor.web ? `<div class="sponsor-links"><a href="${sponsor.web}" target="_blank" rel="noopener" class="btn">Ir al sitio</a></div>` : ""}
     </div>
 </div>`;
 }
 
-async function copiarCupon(id){
-    // Copia el codigo al portapapeles y muestra feedback visual breve.
-    const input = document.getElementById(id);
-    if(!input) return;
-
-    const boton = document.querySelector(`[data-copy="${id}"]`);
-    const textoOriginal = boton ? boton.innerHTML : "Copiar";
-
-    try{
-        await navigator.clipboard.writeText(input.value);
-    }catch(error){
-        input.select();
-        document.execCommand("copy");
-    }
-
-    if(boton){
-        boton.innerHTML = "Copiado";
-        boton.style.background = "#00c853";
-
-        setTimeout(() => {
-            boton.innerHTML = textoOriginal;
-            boton.style.background = "";
-        }, 1800);
-    }
-}
-
 async function loadSponsors(){
-    // Renderiza sponsors y colaboraciones usando el diseno existente.
     try{
-        const snapshot = await getDocs(query(collection(db, "patrocinadores"), orderBy("nombre")));
-        const sponsors = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const snapshot = await getDocs(collection(db, "sponsors"));
+        const sponsors = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(item => item.activo !== false)
+            .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
         container.innerHTML = sponsors.length
             ? sponsors.map(renderSponsor).join("")
             : `<p class="loading">Aun no hay patrocinadores publicados.</p>`;
@@ -139,11 +81,6 @@ async function loadSponsors(){
         container.innerHTML = `<p class="loading">No se pudieron cargar los patrocinadores.</p>`;
     }
 }
-
-container.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-copy]");
-    if(button) copiarCupon(button.dataset.copy);
-});
 
 loadSponsors();
 </script>

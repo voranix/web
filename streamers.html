@@ -76,43 +76,29 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 </script>
 
 <script type="module">
-import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { db } from "./firebase-config.js";
 
 const grid = document.getElementById("streamers-grid");
+function flagPath(pais) {
+    return String(pais || "").toLowerCase() === "mexico" ? "imagenes/flags/mexico.png" : "imagenes/flags/chile.png";
+}
 
-// Lista actualizada de streamers confirmados
-const fallbackStreamers = [
-    { displayName: "Aniiseong",        img: "imagenes/streamers/aniiseong.jpg",      games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Doble N",          img: "imagenes/streamers/soydoblen.jpg",       games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Cameloth",         img: "imagenes/streamers/cameloth.jpg",        games: "Valorant",           schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Charles",          img: "imagenes/streamers/charlesgo.jpg",       games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Goshi",            img: "imagenes/streamers/goshiip.jpg",         games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Ste_Ale_",         img: "imagenes/logo.jpg",                      games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Valesuki",         img: "imagenes/streamers/valesuki.jpg",        games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Juacoxis",         img: "imagenes/logo.jpg",                      games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Kevinsinho",       img: "imagenes/streamers/kevinsinho.jpg",      games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Sr_Invisiblemudo", img: "imagenes/streamers/srinvisiblemudo.jpg", games: "Valorant / Variety", schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Solangelissett",   img: "imagenes/logo.jpg",                      games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Zmain18",          img: "imagenes/logo.jpg",                      games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Elniuxlml",        img: "imagenes/streamers/elniux.jpg",          games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Kachi_ndeah",      img: "imagenes/logo.jpg",                      games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-    { displayName: "Silenc3r23",       img: "imagenes/streamers/silenc3r23.jpg",      games: "Variety",            schedule: "Consultar redes", flag: "chile",  linksUrl: "#" },
-];
+function flagAlt(pais) {
+    return String(pais || "").toLowerCase() === "mexico" ? "México" : "Chile";
+}
 
-function flagPath(flag) { return flag === "mexico" ? "imagenes/flags/mexico.png" : "imagenes/flags/chile.png"; }
-function flagAlt(flag)  { return flag === "mexico" ? "México" : "Chile"; }
-
-function renderStreamer(s, i) {
+function renderStreamer(streamer, i) {
+    const redesUrl = streamer.twitch || streamer.instagram || "#";
     return `
-<div class="card fade-up" style="animation-delay:${i*0.04}s">
-    <img src="${s.img || 'imagenes/logo.jpg'}" alt="${s.displayName}" onerror="this.src='imagenes/logo.jpg'">
+<div class="card fade-up" style="animation-delay:${i * 0.04}s">
+    <img src="${streamer.foto || 'imagenes/logo.jpg'}" alt="${streamer.nombre || 'Streamer'}" onerror="this.src='imagenes/logo.jpg'">
     <div class="card-body">
-        <h3>${s.displayName}</h3>
-        <p class="games"><i class="fas fa-gamepad" style="margin-right:6px;color:var(--morado);"></i>${s.games || "Variety"}</p>
-        <p class="schedule"><i class="fas fa-clock" style="margin-right:6px;"></i>${s.schedule || "Consultar redes"}</p>
-        <img class="flag" src="${flagPath(s.flag)}" alt="${flagAlt(s.flag)}">
-        <a href="${s.linksUrl || '#'}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
+        <h3>${streamer.nombre || "Streamer"}</h3>
+        <p class="games"><i class="fas fa-gamepad" style="margin-right:6px;color:var(--morado);"></i>${streamer.juegos || "Variety"}</p>
+        <p class="schedule"><i class="fas fa-clock" style="margin-right:6px;"></i>${streamer.horario || "Consultar redes"}</p>
+        <img class="flag" src="${flagPath(streamer.pais)}" alt="${flagAlt(streamer.pais)}">
+        <a href="${redesUrl}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
             <i class="fas fa-external-link-alt"></i> Redes
         </a>
     </div>
@@ -121,11 +107,17 @@ function renderStreamer(s, i) {
 
 async function loadStreamers() {
     try {
-        const snapshot = await getDocs(query(collection(db, "streamers"), orderBy("displayName")));
-        const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        grid.innerHTML = list.length ? list.map(renderStreamer).join("") : fallbackStreamers.map(renderStreamer).join("");
+        const snapshot = await getDocs(collection(db, "streamers"));
+        const list = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(item => item.activo !== false)
+            .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
+        grid.innerHTML = list.length
+            ? list.map(renderStreamer).join("")
+            : `<p class="loading">No hay streamers publicados.</p>`;
     } catch (e) {
-        grid.innerHTML = fallbackStreamers.map(renderStreamer).join("");
+        console.error(e);
+        grid.innerHTML = `<p class="loading">No se pudieron cargar los streamers.</p>`;
     }
 }
 loadStreamers();
