@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin VORANIX</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{ --morado:#7b2cff; --naranja:#ff6a00; --bg:#0a0a0f; --sidebar:#0d0d18; --card:#111122; --text:#ffffff; --muted:#a9a9bc; --danger:#ff3b5c; --ok:#00c853; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ min-height:100vh; background:var(--bg); color:var(--text); font-family:"Orbitron",sans-serif; }
+button,input,textarea,select{ font:inherit; }
+button{ cursor:pointer; }
+.hidden{ display:none !important; }
+.login-screen{ min-height:100vh; display:grid; place-items:center; padding:24px; }
+.login-card{ width:min(420px,100%); background:var(--card); border:1px solid rgba(123,44,255,.45); border-radius:8px; padding:28px; box-shadow:0 0 35px rgba(123,44,255,.18); }
+.login-card h1{ margin-bottom:10px; font-size:28px; }
+.login-card p,.muted{ color:var(--muted); }
+.field{ display:flex; flex-direction:column; gap:8px; margin:16px 0; }
+.field label{ color:#ddd; font-size:13px; }
+.field input,.field textarea,.field select{ width:100%; background:#07070d; color:#fff; border:1px solid #272738; border-radius:6px; padding:12px; outline:none; }
+.field textarea{ min-height:110px; resize:vertical; }
+.field input:focus,.field textarea:focus,.field select:focus{ border-color:var(--morado); box-shadow:0 0 0 3px rgba(123,44,255,.16); }
+.btn{ border:0; color:#fff; background:linear-gradient(90deg,var(--morado),var(--naranja)); border-radius:6px; padding:11px 16px; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.btn.secondary{ background:#1d1d2f; border:1px solid #33334a; }
+.btn.danger{ background:var(--danger); }
+.btn.small{ padding:8px 10px; font-size:12px; }
+.btn:disabled{ opacity:.55; cursor:not-allowed; }
+.error{ margin-top:14px; color:#ff8b9d; min-height:20px; }
+.admin-shell{ min-height:100vh; display:grid; grid-template-columns:260px 1fr; }
+.sidebar{ background:var(--sidebar); border-right:2px solid var(--morado); padding:22px 16px; position:sticky; top:0; height:100vh; }
+.brand{ display:flex; align-items:center; gap:12px; margin-bottom:26px; }
+.brand img{ width:46px; height:46px; object-fit:contain; }
+.brand strong{ font-size:18px; }
+.nav{ display:flex; flex-direction:column; gap:10px; }
+.nav button{ background:transparent; color:#ddd; border:1px solid transparent; border-radius:6px; padding:12px; text-align:left; }
+.nav button.active,.nav button:hover{ background:#151528; border-color:rgba(123,44,255,.7); color:#fff; }
+.main{ min-width:0; }
+.topbar{ min-height:70px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid rgba(255,255,255,.08); padding:14px 24px; background:rgba(10,10,15,.85); position:sticky; top:0; z-index:5; backdrop-filter:blur(10px); }
+.hamburger{ display:none; background:#151528; color:#fff; border:1px solid #33334a; border-radius:6px; padding:10px 12px; }
+.user-box{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
+.badge{ background:rgba(123,44,255,.18); border:1px solid var(--morado); color:#fff; border-radius:999px; padding:6px 10px; font-size:12px; }
+.content{ padding:26px; }
+.section-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:22px; }
+.section-head h2{ font-size:28px; margin-bottom:6px; }
+.panel{ background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:8px; overflow:hidden; }
+.table-wrap{ overflow:auto; }
+table{ width:100%; border-collapse:collapse; min-width:760px; }
+th,td{ padding:14px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:middle; }
+th{ color:#fff; background:#151528; font-size:13px; }
+td{ color:#d7d7e5; font-size:13px; }
+td img{ width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid #33334a; }
+.actions{ display:flex; gap:8px; flex-wrap:wrap; }
+.empty{ padding:24px; color:var(--muted); text-align:center; }
+.modal{ position:fixed; inset:0; background:rgba(0,0,0,.78); display:flex; align-items:center; justify-content:center; padding:18px; z-index:20; }
+.modal-card{ width:min(760px,100%); max-height:90vh; overflow:auto; background:#101020; border:1px solid rgba(123,44,255,.55); border-radius:8px; padding:22px; }
+.modal-head{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; }
+.form-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.field.full{ grid-column:1 / -1; }
+.help{ color:var(--muted); font-size:12px; line-height:1.5; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; flex-wrap:wrap; }
+@media(max-width:860px){
+    .admin-shell{ grid-template-columns:1fr; }
+    .sidebar{ position:fixed; inset:0 auto 0 0; width:260px; z-index:15; transform:translateX(-100%); transition:.25s; }
+    .sidebar.open{ transform:translateX(0); }
+    .hamburger{ display:inline-flex; }
+    .topbar{ padding:12px 16px; }
+    .content{ padding:18px; }
+    .form-grid{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<section id="login-screen" class="login-screen">
+    <form id="login-form" class="login-card">
+        <h1>VORANIX Admin</h1>
+        <p>Ingresa con una cuenta autorizada como admin o editor.</p>
+        <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+            <label for="password">Contraseña</label>
+            <input id="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn" type="submit">Ingresar</button>
+        <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
+        <div id="login-error" class="error"></div>
+    </form>
+</section>
+
+<section id="admin-shell" class="admin-shell hidden">
+    <aside id="sidebar" class="sidebar">
+        <div class="brand">
+            <img src="imagenes/logopng.png" alt="VORANIX">
+            <strong>VORANIX</strong>
+        </div>
+        <nav id="nav" class="nav"></nav>
+    </aside>
+    <main class="main">
+        <header class="topbar">
+            <button id="hamburger" class="hamburger" type="button">☰</button>
+            <div>
+                <strong id="section-title">Dashboard</strong>
+                <div class="muted" id="section-subtitle">Administración de contenido</div>
+            </div>
+            <div class="user-box">
+                <span id="user-email" class="muted"></span>
+                <span id="role-badge" class="badge"></span>
+                <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
+            </div>
+        </header>
+        <div id="content" class="content"></div>
+    </main>
+</section>
+
+<div id="modal" class="modal hidden">
+    <form id="item-form" class="modal-card">
+        <div class="modal-head">
+            <h2 id="modal-title">Editar</h2>
+            <button class="btn secondary small" type="button" id="close-modal">Cerrar</button>
+        </div>
+        <div id="form-fields" class="form-grid"></div>
+        <div id="form-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="cancel-modal">Cancelar</button>
+            <button class="btn" type="submit" id="save-item">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<script type="module">
+
+import {
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+import {
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    onSnapshot,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+import {
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+
+import { auth, db, storage } from "./firebase-config.js";
+
+const sections = {
+    // Definicion de cada CRUD: etiqueta visible, coleccion y campos del modal.
+    valorant: {
+        label: "Rosters Valorant",
+        collection: "valorant_roster",
+        fields: [
+            ["displayName", "Nombre", "text"],
+            ["rol", "Rol", "text"],
+            ["manualRank", "Rango manual", "text"],
+            ["manualRankImg", "Imagen del rango", "image"],
+            ["img", "Imagen jugador", "image"],
+            ["tag", "Tag", "text"]
+        ]
+    },
+    fifa: {
+        label: "Rosters FIFA",
+        collection: "fifa_roster",
+        fields: [
+            ["displayName", "Nombre", "text"],
+            ["division", "División", "text"],
+            ["points", "Puntos", "text"],
+            ["record", "Record", "text"],
+            ["img", "Imagen jugador", "image"]
+        ]
+    },
+    streamers: {
+        label: "Streamers",
+        collection: "streamers",
+        fields: [
+            ["displayName", "Nombre", "text"],
+            ["games", "Juegos", "text"],
+            ["schedule", "Horario", "text"],
+            ["flag", "Bandera", "select", ["chile", "mexico"]],
+            ["linksUrl", "URL de redes", "url"],
+            ["img", "Imagen", "image"]
+        ]
+    },
+    patrocinadores: {
+        label: "Patrocinadores",
+        collection: "patrocinadores",
+        fields: [
+            ["nombre", "Nombre", "text"],
+            ["descripcion", "Descripción", "textarea"],
+            ["instagramUrl", "Instagram URL", "url"],
+            ["websiteUrl", "Website URL", "url"],
+            ["tipo", "Tipo", "select", ["sponsor", "colaboracion"]],
+            ["img", "Imagen", "image"],
+            ["cupones", "Cupones JSON", "json"]
+        ]
+    },
+    proyectos: {
+        label: "Proyectos",
+        collection: "proyectos",
+        fields: [
+            ["titulo", "Título", "text"],
+            ["fecha", "Fecha", "text"],
+            ["descripcion", "Descripción corta", "textarea"],
+            ["textoLargo", "Texto largo", "textarea"],
+            ["img", "Imagen", "image"],
+            ["link", "Link", "url"],
+            ["upcoming", "Próximo", "boolean"]
+        ]
+    }
+};
+
+let currentUser = null;
+let currentProfile = null;
+let currentSection = "valorant";
+let unsubscribeList = null;
+let editingId = null;
+let editingData = {};
+
+// Referencias del DOM usadas por el login, layout y modal.
+const loginScreen = document.getElementById("login-screen");
+const adminShell = document.getElementById("admin-shell");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const nav = document.getElementById("nav");
+const content = document.getElementById("content");
+const sectionTitle = document.getElementById("section-title");
+const sectionSubtitle = document.getElementById("section-subtitle");
+const userEmail = document.getElementById("user-email");
+const roleBadge = document.getElementById("role-badge");
+const modal = document.getElementById("modal");
+const itemForm = document.getElementById("item-form");
+const formFields = document.getElementById("form-fields");
+const formError = document.getElementById("form-error");
+const modalTitle = document.getElementById("modal-title");
+const sidebar = document.getElementById("sidebar");
+
+function showError(target, message){
+    target.textContent = message || "";
+}
+
+function hasValidRole(profile){
+    return profile && profile.active !== false && ["admin", "editor"].includes(profile.role);
+}
+
+function isAdmin(){
+    return currentProfile?.role === "admin";
+}
+
+async function loadProfile(user){
+    const userRef = doc(db, "users", user.uid);
+    const snapshot = await getDoc(userRef);
+
+    if(snapshot.exists()){
+        return snapshot.data();
+    }
+
+    return null;
+}
+
+function showLogin(){
+    loginScreen.classList.remove("hidden");
+    adminShell.classList.add("hidden");
+}
+
+function showAdmin(){
+    loginScreen.classList.add("hidden");
+    adminShell.classList.remove("hidden");
+    userEmail.textContent = currentProfile.email || currentUser.email;
+    roleBadge.textContent = currentProfile.role === "admin" ? "ADMIN" : "EDITOR";
+    buildNav();
+    selectSection(currentSection);
+}
+
+function buildNav(){
+    const entries = Object.entries(sections);
+    nav.innerHTML = entries.map(([key, section]) => `
+<button type="button" data-section="${key}" class="${key === currentSection ? "active" : ""}">${section.label}</button>
+`).join("") + (isAdmin() ? `<button type="button" data-section="users">Gestión de usuarios</button>` : "");
+}
+
+function selectSection(key){
+    if(key === "users" && !isAdmin()) key = "valorant";
+    currentSection = key;
+    buildNav();
+    sidebar.classList.remove("open");
+    if(unsubscribeList) unsubscribeList();
+    if(key === "users") renderUsers();
+    else renderCrudSection(sections[key]);
+}
+
+function tableValue(value, type){
+    if(type === "image") return value ? `<img src="${value}" alt="imagen">` : "-";
+    if(type === "boolean") return value ? "Sí" : "No";
+    if(type === "json") return Array.isArray(value) ? `${value.length} cupón(es)` : "-";
+    return value || "-";
+}
+
+function renderCrudSection(section){
+    // Cada seccion de contenido usa la misma tabla y se actualiza en tiempo real.
+    sectionTitle.textContent = section.label;
+    sectionSubtitle.textContent = `Colección: ${section.collection}`;
+    content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>${section.label}</h2>
+        <p class="muted">Los cambios se sincronizan en tiempo real con Firestore.</p>
+    </div>
+    <button class="btn" type="button" id="add-item">Agregar</button>
+</div>
+<div class="panel">
+    <div class="table-wrap">
+        <table>
+            <thead><tr>${section.fields.map(field => `<th>${field[1]}</th>`).join("")}<th>Acciones</th></tr></thead>
+            <tbody id="items-body"><tr><td colspan="${section.fields.length + 1}">Cargando...</td></tr></tbody>
+        </table>
+    </div>
+</div>`;
+
+    document.getElementById("add-item").addEventListener("click", () => openItemModal());
+    const body = document.getElementById("items-body");
+
+    unsubscribeList = onSnapshot(collection(db, section.collection), (snapshot) => {
+        const rows = snapshot.docs.map(item => {
+            const data = item.data();
+            return `<tr>
+${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2])}</td>`).join("")}
+<td><div class="actions">
+    <button class="btn secondary small" type="button" data-edit="${item.id}">Editar</button>
+    <button class="btn danger small" type="button" data-delete="${item.id}">Eliminar</button>
+</div></td>
+</tr>`;
+        });
+        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="${section.fields.length + 1}" class="empty">No hay registros.</td></tr>`;
+    }, (error) => {
+        console.error(error);
+        body.innerHTML = `<tr><td colspan="${section.fields.length + 1}" class="empty">No se pudieron cargar los datos.</td></tr>`;
+    });
+}
+
+async function renderUsers(){
+    // La gestion de usuarios solo permite cambiar rol o desactivar cuentas existentes.
+    sectionTitle.textContent = "Gestión de usuarios";
+    sectionSubtitle.textContent = "Solo visible para admins";
+    content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Gestión de usuarios</h2>
+        <p class="muted">Los usuarios se crean desde Firebase Console. Aquí solo gestionas rol y estado.</p>
+    </div>
+</div>
+<div class="panel">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Activo</th><th>Acciones</th></tr></thead>
+            <tbody id="users-body"><tr><td colspan="5">Cargando...</td></tr></tbody>
+        </table>
+    </div>
+</div>`;
+
+    const body = document.getElementById("users-body");
+    unsubscribeList = onSnapshot(collection(db, "users"), (snapshot) => {
+        const rows = snapshot.docs.map(item => {
+            const user = item.data();
+            const nextRole = user.role === "admin" ? "editor" : "admin";
+            return `<tr>
+<td>${user.email || "-"}</td>
+<td>${user.displayName || "-"}</td>
+<td>${user.role || "-"}</td>
+<td>${user.active === false ? "No" : "Sí"}</td>
+<td><div class="actions">
+    <button class="btn secondary small" type="button" data-role="${item.id}" data-next-role="${nextRole}">Cambiar a ${nextRole}</button>
+    <button class="btn danger small" type="button" data-disable="${item.id}">Desactivar</button>
+</div></td>
+</tr>`;
+        });
+        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="5" class="empty">No hay usuarios.</td></tr>`;
+    }, (error) => {
+        console.error(error);
+        body.innerHTML = `<tr><td colspan="5" class="empty">No se pudieron cargar los usuarios.</td></tr>`;
+    });
+}
+
+function fieldHtml(field, value){
+    // El modal se arma desde la definicion de campos para evitar duplicar formularios.
+    const [name, label, type, options] = field;
+    const safeValue = value ?? "";
+    const full = ["textarea", "json", "image"].includes(type) ? " full" : "";
+
+    if(type === "textarea"){
+        return `<div class="field${full}"><label>${label}</label><textarea name="${name}">${safeValue}</textarea></div>`;
+    }
+
+    if(type === "json"){
+        const jsonValue = Array.isArray(value) ? JSON.stringify(value, null, 2) : "[]";
+        return `<div class="field${full}"><label>${label}</label><textarea name="${name}">${jsonValue}</textarea><span class="help">Formato: [{"titulo":"...","descripcion":"...","codigo":"..."}]</span></div>`;
+    }
+
+    if(type === "select"){
+        return `<div class="field"><label>${label}</label><select name="${name}">${options.map(option => `<option value="${option}" ${option === safeValue ? "selected" : ""}>${option}</option>`).join("")}</select></div>`;
+    }
+
+    if(type === "boolean"){
+        return `<div class="field"><label>${label}</label><select name="${name}"><option value="false" ${!safeValue ? "selected" : ""}>No</option><option value="true" ${safeValue ? "selected" : ""}>Sí</option></select></div>`;
+    }
+
+    if(type === "image"){
+        return `<div class="field${full}"><label>${label}</label><input name="${name}" type="url" value="${safeValue}" placeholder="URL de imagen"><input name="${name}File" type="file" accept="image/*"><span class="help">Puedes pegar una URL o subir una imagen a Firebase Storage.</span></div>`;
+    }
+
+    return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${safeValue}"></div>`;
+}
+
+function openItemModal(id = null, data = {}){
+    const section = sections[currentSection];
+    editingId = id;
+    editingData = data;
+    modalTitle.textContent = id ? `Editar ${section.label}` : `Agregar ${section.label}`;
+    formError.textContent = "";
+    formFields.innerHTML = section.fields.map(field => fieldHtml(field, data[field[0]])).join("");
+    modal.classList.remove("hidden");
+}
+
+function closeModal(){
+    modal.classList.add("hidden");
+    itemForm.reset();
+    editingId = null;
+    editingData = {};
+}
+
+async function uploadImage(){
+    throw new Error("Storage deshabilitado temporalmente");
+}
+
+async function saveItem(event){
+    event.preventDefault();
+    const section = sections[currentSection];
+    const formData = new FormData(itemForm);
+    const payload = {};
+    showError(formError, "");
+
+    try{
+        for(const field of section.fields){
+            const [name, , type] = field;
+            const file = formData.get(`${name}File`);
+
+            if(type === "image" && file && file.size){
+                payload[name] = await uploadImage(file, section.collection, name);
+            }else if(type === "json"){
+                const raw = formData.get(name) || "[]";
+                payload[name] = JSON.parse(raw);
+            }else if(type === "boolean"){
+                payload[name] = formData.get(name) === "true";
+            }else{
+                payload[name] = formData.get(name) || "";
+            }
+        }
+
+        payload.updatedAt = serverTimestamp();
+
+        if(editingId){
+            await updateDoc(doc(db, section.collection, editingId), payload);
+        }else{
+            payload.createdAt = serverTimestamp();
+            await addDoc(collection(db, section.collection), payload);
+        }
+
+        closeModal();
+    }catch(error){
+        console.error(error);
+        showError(formError, "No se pudo guardar. Revisa los campos y permisos.");
+    }
+}
+
+nav.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-section]");
+    if(button) selectSection(button.dataset.section);
+});
+
+content.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-edit]");
+    const deleteButton = event.target.closest("[data-delete]");
+    const roleButton = event.target.closest("[data-role]");
+    const disableButton = event.target.closest("[data-disable]");
+
+    try{
+        if(editButton){
+            const section = sections[currentSection];
+            const snapshot = await getDoc(doc(db, section.collection, editButton.dataset.edit));
+            if(snapshot.exists()) openItemModal(snapshot.id, snapshot.data());
+        }
+
+        if(deleteButton && confirm("¿Eliminar este registro?")){
+            const section = sections[currentSection];
+            await deleteDoc(doc(db, section.collection, deleteButton.dataset.delete));
+        }
+
+        if(roleButton){
+            await updateDoc(doc(db, "users", roleButton.dataset.role), { role: roleButton.dataset.nextRole, updatedAt: serverTimestamp() });
+        }
+
+        if(disableButton && confirm("¿Desactivar este usuario?")){
+            await updateDoc(doc(db, "users", disableButton.dataset.disable), { active: false, updatedAt: serverTimestamp() });
+        }
+    }catch(error){
+        console.error(error);
+        alert("No se pudo completar la operación. Revisa permisos o conexión.");
+    }
+});
+
+loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    showError(loginError, "");
+
+    try{
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        await signInWithEmailAndPassword(auth, email, password);
+    }catch(error){
+        console.error(error);
+        showError(loginError, "Email o contraseña incorrectos.");
+    }
+});
+
+document.querySelectorAll("[data-logout]").forEach(button => {
+    button.addEventListener("click", () => signOut(auth));
+});
+
+document.getElementById("hamburger").addEventListener("click", () => sidebar.classList.toggle("open"));
+document.getElementById("close-modal").addEventListener("click", closeModal);
+document.getElementById("cancel-modal").addEventListener("click", closeModal);
+itemForm.addEventListener("submit", saveItem);
+
+
+
+
+
+onAuthStateChanged(auth, async (user) => {
+    // Firebase recuerda la sesion; si ya esta logueado se muestra el dashboard.
+    currentUser = user;
+
+    if(!user){
+        currentProfile = null;
+        if(unsubscribeList) unsubscribeList();
+        showLogin();
+        return;
+    }
+
+    try{
+        currentProfile = await loadProfile(user);
+
+        if(!hasValidRole(currentProfile)){
+            showError(loginError, "Tu cuenta no tiene permisos de administración.");
+            await signOut(auth);
+            return;
+        }
+
+        showAdmin();
+    }catch(error){
+        console.error("ERROR LOGIN:");
+        console.error(error);
+        alert(
+            "Código: " + error.code +
+            "\nMensaje: " + error.message
+        );
+
+        showError(loginError, error.message);
+        await signOut(auth);
+    }
+});
+</script>
+</body>
+</html>

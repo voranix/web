@@ -1,301 +1,228 @@
 <!DOCTYPE html>
-
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VORANIX</title>
+    <title>VORANIX — Juega. Conecta. Evoluciona.</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
+
+<!-- ================= HERO ================= -->
 <header class="header header-home">
+    <div class="hero-bg-grid"></div>
     <div class="menu">
-        <div class="menu-content container">
-            <div class="menu-toggle" id="menu-toggle">☰</div>
-            <a href="index.html">
-                <img class="logo" src="imagenes/logopng.png" alt="logo">
-            </a>
+        <div class="menu-content">
+            <button class="menu-toggle" id="menu-toggle">☰</button>
+            <a href="index.html"><img class="logo" src="imagenes/logopng.png" alt="VORANIX"></a>
             <nav class="navbar">
                 <ul>
-                    <li><a href="index.html">Inicio</a></li>
-                        <li><a href="nosotros.html">Nosotros</a></li>
-                        <li><a href="proyectos.html">Proyectos</a></li>  
-                        <li><a href="rosters.html">Rosters</a></li>
-                        <li><a href="streamers.html">Streamers</a></li>
-                        <li><a href="patrocinadores.html">Patrocinadores</a></li>
-                        <li><a href="contacto.html">Contacto</a></li>
+                    <li><a href="index.html" class="active">Inicio</a></li>
+                    <li><a href="nosotros.html">Nosotros</a></li>
+                    <li><a href="proyectos.html">Proyectos</a></li>
+                    <li><a href="rosters.html">Rosters</a></li>
+                    <li><a href="streamers.html">Streamers</a></li>
+                    <li><a href="patrocinadores.html">Patrocinadores</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                    <li><a href="admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
                 </ul>
             </nav>
         </div>
     </div>
-
-    <!-- HERO -->
     <div class="header-content container">
+        <div class="hero-eyebrow"><span></span>COMUNIDAD GAMER LATINA</div>
         <h1>VORANIX</h1>
-        <p>JUEGA • CONECTA • EVOLUCIONA</p>
-
+        <p>JUEGA &bull; CONECTA &bull; EVOLUCIONA</p>
         <div class="header-buttons">
-            <a href="contacto.html" class="btn">Unirse</a>
-            <a href="rosters.html" class="btn">Ver Rosters</a>
+            <a href="contacto.html" class="btn"><i class="fas fa-bolt"></i> Únete</a>
+            <a href="rosters.html" class="btn btn-ghost">Ver Rosters</a>
         </div>
     </div>
+    <div class="hero-scroll">Scroll</div>
 </header>
 
-<!-- ================= SOBRE ================= -->
-<section class="about about-pro container">
-    <div class="about-grid">
-
-        <div class="about-content">
-            <span class="about-tag">Comunidad • Esports • Gaming</span>
-            <h2>¿Qué es VORANIX?</h2>
-
-            <p>
-                VORANIX es una comunidad gamer creada para unir jugadores,
-                creadores de contenido y equipos competitivos en un solo lugar.
-            </p>
-
-            <p>
-                Aquí no solo juegas — creces, compites y formas parte de algo más grande.
-            </p>
-
-            <div class="about-stats">
-                <div class="stat">
-                    <h3>+150</h3>
-                    <p>Jugadores</p>
-                </div>
-
-                <div class="stat">
-                    <h3>2</h3>
-                    <p>Equipos Competitivos</p>
-                </div>
-
-                <div class="stat">
-                    <h3>24/7</h3>
-                    <p>Actividad</p>
+<!-- ================= SOBRE NOSOTROS ================= -->
+<section class="about-home">
+    <div class="container">
+        <div class="about-grid">
+            <div class="about-left">
+                <div class="about-img-wrap">
+                    <img src="imagenes/logopng.png" alt="Comunidad VORANIX">
                 </div>
             </div>
-
-            <a href="nosotros.html" class="btn">Conócenos</a>
+            <div class="about-right">
+                <div class="section-label">Sobre nosotros</div>
+                <h2 style="text-align:left;margin-bottom:16px;">¿Qué es VORANIX?</h2>
+                <p style="text-align:left;font-size:14px;line-height:1.9;margin-bottom:12px;">
+                    VORANIX es una comunidad gamer creada para unir jugadores, creadores de contenido
+                    y equipos competitivos en un solo lugar.
+                </p>
+                <p style="text-align:left;font-size:14px;line-height:1.9;">
+                    Aquí no solo juegas — creces, compites y formas parte de algo más grande.
+                </p>
+                <div class="about-stats">
+                    <div class="stat"><h3>+150</h3><p>Jugadores</p></div>
+                    <div class="stat"><h3>2</h3><p>Equipos competitivos</p></div>
+                    <div class="stat"><h3>24/7</h3><p>Actividad</p></div>
+                </div>
+                <a href="nosotros.html" class="btn">Conócenos <i class="fas fa-arrow-right" style="font-size:10px;"></i></a>
+            </div>
         </div>
-
-        <div class="about-image">
-            <img src="imagenes/logopng.png" alt="Comunidad VORANIX">
-        </div>
-
     </div>
 </section>
 
 <!-- ================= ROSTERS ================= -->
-<section class="home-rosters container">
-    <h2>Nuestros Equipos</h2>
-
-    <div class="rosters-grid">
-
-        <div class="roster-box roster-valorant">
-            <img src="imagenes/valorant.jpg" alt="Valorant Team">
-            <div class="roster-content">
-                <h3>Valorant</h3>
-                <p>Equipo competitivo enfocado en torneos y ligas.</p>
-                <a href="rosters.html#valorant" class="btn">Ver más</a>
-            </div>
+<section class="home-rosters">
+    <div class="container">
+        <div class="section-label" style="justify-content:center;">Esports</div>
+        <h2>Nuestros Equipos</h2>
+        <div class="rosters-grid">
+            <a href="rosters.html#valorant" class="roster-box roster-valorant">
+                <img src="imagenes/valorant.jpg" alt="Valorant Team">
+                <div class="roster-content">
+                    <span class="roster-badge valorant">Competitivo</span>
+                    <h3>Valorant</h3>
+                    <p>Equipo competitivo enfocado en torneos y ligas.</p>
+                    <span class="btn btn-sm">Ver roster</span>
+                </div>
+            </a>
+            <a href="rosters.html#fifa" class="roster-box roster-fifa">
+                <img src="imagenes/fifa.jpg" alt="EA FC Team">
+                <div class="roster-content">
+                    <span class="roster-badge fc">Competitivo</span>
+                    <h3>EA FC</h3>
+                    <p>Jugadores competitivos en el ámbito deportivo virtual.</p>
+                    <span class="btn btn-sm">Ver roster</span>
+                </div>
+            </a>
         </div>
-
-        <div class="roster-box roster-fifa">
-            <img src="imagenes/fifa.jpg" alt="FIFA Team">
-            <div class="roster-content">
-                <h3>FIFA</h3>
-                <p>Jugadores competitivos en el ámbito deportivo virtual.</p>
-                <a href="rosters.html#fifa" class="btn">Ver más</a>
-            </div>
-        </div>
-
     </div>
 </section>
 
+<!-- ================= INSTAGRAM ================= -->
 <section class="instagram-section container">
-    <h2>Últimas publicaciones</h2>
-
+    <div class="section-label" style="justify-content:center;">Redes sociales</div>
+    <h2>Últimas Publicaciones</h2>
     <div class="instagram-desktop">
         <div class="instagram-card">
-            <iframe src="https://snapwidget.com/embed/1123144"></iframe>
+            <iframe src="https://snapwidget.com/embed/1123144" allowtransparency="true" frameborder="0" scrolling="no" style="width:100%;height:340px;border:none;overflow:hidden;"></iframe>
         </div>
     </div>
-
     <div class="instagram-mobile">
         <div class="instagram-card">
-            <!-- SnapWidget -->
-            <iframe src="https://snapwidget.com/embed/1123145" class="snapwidget-widget" allowtransparency="true" frameborder="0" scrolling="no" style="border:none; overflow:hidden;  width:500px; height:500px" title="Posts from Instagram"></iframe>
+            <iframe src="https://snapwidget.com/embed/1123145" class="snapwidget-widget" allowtransparency="true" frameborder="0" scrolling="no" style="border:none;overflow:hidden;width:500px;height:500px;"></iframe>
         </div>
     </div>
 </section>
-
-<!-- SCRIPT FUERA -->
 <script src="https://snapwidget.com/js/snapwidget.js"></script>
 
 <!-- ================= PROYECTOS ================= -->
-<section class="home-projects container">
-    <h2>Proyectos</h2>
-    <p class="projects-desc">Explora las iniciativas y desarrollos de la comunidad VORANIX</p>
-
-    <div class="projects-grid">
-
-        <div class="project-card torneo">
-            <img src="imagenes/torneos.png" alt="Torneos">
-            <h3>Torneos</h3>
-            <p>Desarrollo y gestión de torneos en diferentes juegos.</p>
+<section class="home-projects">
+    <div class="container">
+        <div class="section-label" style="justify-content:center;">Iniciativas</div>
+        <h2>Proyectos</h2>
+        <p class="projects-desc">Explora las iniciativas y desarrollos de la comunidad VORANIX</p>
+        <div class="projects-grid">
+            <div class="project-card torneo">
+                <img src="imagenes/torneos.png" alt="Torneos">
+                <h3>Torneos</h3>
+                <p>Desarrollo y gestión de torneos en diferentes juegos.</p>
+            </div>
+            <div class="project-card minecraft">
+                <img src="imagenes/minecraft.png" alt="Minecraft">
+                <h3>Series de Minecraft</h3>
+                <p>Creamos series de contenido para la comunidad de Minecraft.</p>
+            </div>
+            <div class="project-card streamers">
+                <img src="imagenes/eventos.png" alt="Streamers">
+                <h3>Eventos Streamers</h3>
+                <p>Espacios y actividades para la comunidad de streamers.</p>
+            </div>
         </div>
-
-        <div class="project-card minecraft">
-            <img src="imagenes/minecraft.png" alt="Minecraft">
-            <h3>Series de Minecraft</h3>
-            <p>Creamos series de contenido para la comunidad de Minecraft.</p>
-        </div>
-
-        <div class="project-card streamers">
-            <img src="imagenes/eventos.png" alt="Streamers">
-            <h3>Eventos Streamers</h3>
-            <p>Espacios y actividades para la comunidad de streamers.</p>
-        </div>
-
+        <a href="proyectos.html" class="btn projects-btn">Ver todos los proyectos</a>
     </div>
-
-    <a href="proyectos.html" class="btn projects-btn">Ver todos los proyectos</a>
 </section>
 
 <!-- ================= REDES ================= -->
-<section class="social-section container">
-    <h2>Síguenos en Redes</h2>
-    <p class="social-description">Mantente conectado con la comunidad VORANIX</p>
-
-    <div class="social-grid">
-
-<a href="https://discord.gg/jZq9gPSW5T" class="social-card discord social-main">
-    <div class="social-icon"><i class="fab fa-discord"></i></div>
-    <h3>Discord</h3>
-    <p>Únete a nuestro servidor</p>
-</a>
-
-<a href="https://www.instagram.com/voranix_gaming" class="social-card instagram social-main">
-    <div class="social-icon"><i class="fab fa-instagram"></i></div>
-    <h3>Instagram</h3>
-    <p>@voranix_gaming</p>
-</a>
-
-<a href="https://www.twitch.tv/voranix_gaming" class="social-card twitch social-main">
-    <div class="social-icon"><i class="fab fa-twitch"></i></div>
-    <h3>Twitch</h3>
-    <p>Mira nuestros streams</p>
-</a>
-
-<a href="https://www.tiktok.com/@voranix_gaming" class="social-card tiktok social-main">
-    <div class="social-icon"><i class="fab fa-tiktok"></i></div>
-    <h3>TikTok</h3>
-    <p>Contenido diario</p>
-</a>
-
-<!-- DUPLICADOS SOLO PARA MOBILE -->
-<a href="https://discord.gg/jZq9gPSW5T" class="social-card discord social-duplicate">
-    <div class="social-icon"><i class="fab fa-discord"></i></div>
-    <h3>Discord</h3>
-    <p>Únete a nuestro servidor</p>
-</a>
-
-<a href="https://www.instagram.com/voranix_gaming" class="social-card instagram social-duplicate">
-    <div class="social-icon"><i class="fab fa-instagram"></i></div>
-    <h3>Instagram</h3>
-    <p>@voranix_gaming</p>
-</a>
-
-<a href="https://www.twitch.tv/voranix_gaming" class="social-card twitch social-duplicate">
-    <div class="social-icon"><i class="fab fa-twitch"></i></div>
-    <h3>Twitch</h3>
-    <p>Mira nuestros streams</p>
-</a>
-
-<a href="https://www.tiktok.com/@voranix_gaming" class="social-card tiktok social-duplicate">
-    <div class="social-icon"><i class="fab fa-tiktok"></i></div>
-    <h3>TikTok</h3>
-    <p>Contenido diario</p>
-</a>
-
-</div>
-</section>
-
-<!-- ================= MARCAS / COLAB ================= -->
-<section class="brands-section">
-
+<section class="social-section">
     <div class="container">
-
-        <h2>Nuestras Marcas Aliadas</h2>
-        <p class="brands-sub">
-        Colaboramos con marcas que impulsan la comunidad gamer.
-        </p>
-
-        <div class="brands-slider">
-        <div class="brands-track">
-
-        <!-- OTTOKE PRIMERO -->
-        <a href="patrocinadores.html#ottoke" class="brand-card sponsor">
-        <img src="imagenes/marcas/Logo Ottoke.png" alt="Ottoke">
-        <h3>Ottoke</h3>
-        <span>Patrocinador Oficial</span>
-        </a>
-
-        <a href="patrocinadores.html#mai" class="brand-card">
-        <img src="imagenes/marcas/Logo Mai.Pizza_.png" alt="Mai Pizza">
-        <h3>Mai Pizza</h3>
-        <span>Colaboración</span>
-        </a>
-
-        <a href="patrocinadores.html#trulu" class="brand-card">
-        <img src="imagenes/marcas/Logo Trulustore.png" alt="Trulu Store">
-        <h3>Trulu Store</h3>
-        <span>Colaboración</span>
-        </a>
-
-        <!-- DUPLICADOS LOOP -->
-
-        <a href="patrocinadores.html#ottoke" class="brand-card sponsor">
-        <img src="imagenes/marcas/Logo Ottoke.png" alt="Ottoke">
-        <h3>Ottoke</h3>
-        <span>Patrocinador Oficial</span>
-        </a>
-
-        <a href="patrocinadores.html#mai" class="brand-card">
-        <img src="imagenes/marcas/Logo Mai.Pizza_.png" alt="Mai Pizza">
-        <h3>Mai Pizza</h3>
-        <span>Colaboración</span>
-        </a>
-
-        <a href="patrocinadores.html#trulu" class="brand-card">
-        <img src="imagenes/marcas/Logo Trulustore.png" alt="Trulu Store">
-        <h3>Trulu Store</h3>
-        <span>Colaboración</span>
-        </a>
-
-        </div>
+        <div class="section-label" style="justify-content:center;">Síguenos</div>
+        <h2>Redes Sociales</h2>
+        <div class="social-grid">
+            <a href="https://discord.gg/jZq9gPSW5T" class="social-card discord" target="_blank">
+                <div class="social-icon"><i class="fab fa-discord"></i></div>
+                <h3>Discord</h3><p>Únete al servidor</p>
+            </a>
+            <a href="https://www.instagram.com/voranix_gaming" class="social-card instagram" target="_blank">
+                <div class="social-icon"><i class="fab fa-instagram"></i></div>
+                <h3>Instagram</h3><p>@voranix_gaming</p>
+            </a>
+            <a href="https://www.twitch.tv/voranix_gaming" class="social-card twitch" target="_blank">
+                <div class="social-icon"><i class="fab fa-twitch"></i></div>
+                <h3>Twitch</h3><p>Mira nuestros streams</p>
+            </a>
+            <a href="https://www.tiktok.com/@voranix_gaming" class="social-card tiktok" target="_blank">
+                <div class="social-icon"><i class="fab fa-tiktok"></i></div>
+                <h3>TikTok</h3><p>Contenido diario</p>
+            </a>
         </div>
     </div>
 </section>
+
+<!-- ================= MARCAS ================= -->
+<section class="brands-section">
+    <div class="container">
+        <div class="section-label" style="justify-content:center;">Alianzas</div>
+        <h2>Nuestras Marcas Aliadas</h2>
+        <p class="brands-sub">Colaboramos con marcas que impulsan la comunidad gamer</p>
+        <div class="brands-slider">
+            <div class="brands-track">
+                <a href="patrocinadores.html#ottoke" class="brand-card sponsor"><img src="imagenes/marcas/Logo Ottoke.png" alt="Ottoke"><h3>Ottoke</h3><span>Patrocinador Oficial</span></a>
+                <a href="patrocinadores.html#maipizza" class="brand-card sponsor"><img src="imagenes/marcas/Logo Mai.Pizza_.png" alt="Mai Pizza"><h3>Mai Pizza</h3><span>Patrocinador Oficial</span></a>
+                <a href="patrocinadores.html#kenkofoods" class="brand-card"><img src="imagenes/marcas/kenkofoods.png" alt="Kenkofoods" onerror="this.style.display='none'"><h3>Kenkofoods</h3><span>Colaborador</span></a>
+                <a href="patrocinadores.html#doraking" class="brand-card"><img src="imagenes/marcas/doraking.png" alt="Doraking" onerror="this.style.display='none'"><h3>Doraking</h3><span>Colaborador</span></a>
+                <a href="patrocinadores.html#trulu" class="brand-card"><img src="imagenes/marcas/Logo Trulustore.png" alt="Trulu Store"><h3>Trulu Store</h3><span>Colaborador</span></a>
+                <!-- Duplicados para loop infinito -->
+                <a href="patrocinadores.html#ottoke" class="brand-card sponsor"><img src="imagenes/marcas/Logo Ottoke.png" alt="Ottoke"><h3>Ottoke</h3><span>Patrocinador Oficial</span></a>
+                <a href="patrocinadores.html#maipizza" class="brand-card sponsor"><img src="imagenes/marcas/Logo Mai.Pizza_.png" alt="Mai Pizza"><h3>Mai Pizza</h3><span>Patrocinador Oficial</span></a>
+                <a href="patrocinadores.html#kenkofoods" class="brand-card"><img src="imagenes/marcas/kenkofoods.png" alt="Kenkofoods" onerror="this.style.display='none'"><h3>Kenkofoods</h3><span>Colaborador</span></a>
+                <a href="patrocinadores.html#doraking" class="brand-card"><img src="imagenes/marcas/doraking.png" alt="Doraking" onerror="this.style.display='none'"><h3>Doraking</h3><span>Colaborador</span></a>
+                <a href="patrocinadores.html#trulu" class="brand-card"><img src="imagenes/marcas/Logo Trulustore.png" alt="Trulu Store"><h3>Trulu Store</h3><span>Colaborador</span></a>
+            </div>
+        </div>
+    </div>
+</section>
+
 <!-- ================= FOOTER ================= -->
-<footer class="footer container">
-    <p>© 2026 VORANIX - Todos los derechos reservados</p>
+<footer class="footer">
+    <div class="footer-inner container">
+        <img src="imagenes/logopng.png" alt="VORANIX" class="footer-logo">
+        <div class="footer-links">
+            <a href="index.html">Inicio</a>
+            <a href="nosotros.html">Nosotros</a>
+            <a href="proyectos.html">Proyectos</a>
+            <a href="streamers.html">Streamers</a>
+            <a href="rosters.html">Rosters</a>
+            <a href="patrocinadores.html">Patrocinadores</a>
+            <a href="contacto.html">Contacto</a>
+        </div>
+        <div class="footer-social">
+            <a href="https://discord.gg/jZq9gPSW5T" target="_blank"><i class="fab fa-discord"></i></a>
+            <a href="https://www.instagram.com/voranix_gaming" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.twitch.tv/voranix_gaming" target="_blank"><i class="fab fa-twitch"></i></a>
+            <a href="https://www.tiktok.com/@voranix_gaming" target="_blank"><i class="fab fa-tiktok"></i></a>
+        </div>
+        <div class="footer-copy">© 2026 <span>VORANIX</span> — Todos los derechos reservados</div>
+    </div>
 </footer>
 
-<!-- JS MENU -->
 <script>
 const toggle = document.getElementById("menu-toggle");
 const navbar = document.querySelector(".navbar");
-
-toggle.addEventListener("click", () => {
-    navbar.classList.toggle("active");
-});
+toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 </script>
-
-<!-- SNAPWIDGET SCRIPT -->
 <script src="https://snapwidget.com/js/snapwidget.js"></script>
-
 </body>
 </html>

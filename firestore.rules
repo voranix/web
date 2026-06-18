@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
+    }
+
+    match /valorant_roster/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /fifa_roster/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /streamers/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /patrocinadores/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /proyectos/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+  }
+}

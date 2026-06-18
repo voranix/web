@@ -8,138 +8,34 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-
 <body>
 
 <header class="header header-patrocinadores">
-
 <div class="menu">
 <div class="menu-content container">
-
 <div class="menu-toggle" id="menu-toggle">☰</div>
-
-<a href="index.html">
-<img class="logo" src="imagenes/logopng.png" alt="logo">
-</a>
-
+<a href="index.html"><img class="logo" src="imagenes/logopng.png" alt="logo"></a>
 <nav class="navbar">
 <ul>
 <li><a href="index.html">Inicio</a></li>
-                        <li><a href="nosotros.html">Nosotros</a></li>
-                        <li><a href="proyectos.html">Proyectos</a></li>  
-                        <li><a href="rosters.html">Rosters</a></li>
-                        <li><a href="streamers.html">Streamers</a></li>
-                        <li><a href="patrocinadores.html">Patrocinadores</a></li>
-                        <li><a href="contacto.html">Contacto</a></li>
+<li><a href="nosotros.html">Nosotros</a></li>
+<li><a href="proyectos.html">Proyectos</a></li>
+<li><a href="rosters.html">Rosters</a></li>
+<li><a href="streamers.html">Streamers</a></li>
+<li><a href="patrocinadores.html">Patrocinadores</a></li>
+<li><a href="contacto.html">Contacto</a></li>
 </ul>
 </nav>
-
 </div>
 </div>
-
 <div class="header-content container">
 <h1>Patrocinadores</h1>
 <p>Marcas que apoyan el crecimiento de VORANIX</p>
 </div>
-
 </header>
 
-<section class="sponsors-page container">
-
-<!-- OTTOKE -->
-<div class="sponsor-box sponsor-main" id="ottoke">
-
-<img src="imagenes/marcas/Logo Ottoke.png" alt="Ottoke">
-
-<div class="sponsor-info">
-<h2>Ottoke Street Food</h2>
-<p>
-Patrocinador oficial de VORANIX. 
-Especialistas en comida callejera coreana, sabores únicos y experiencias diferentes.
-</p>
-
-<div class="sponsor-links">
-<a href="https://www.instagram.com/ottoke_streetfood/" target="_blank" class="btn">
-<i class="fab fa-instagram"></i> Instagram
-</a>
-</div>
-
-</div>
-</div>
-
-<!-- MAI -->
-
-<div class="sponsor-box" id="mai">
-
-<img src="imagenes/marcas/Logo Mai.Pizza_.png" alt="Mai Pizza">
-
-<div class="sponsor-info">
-<h2>Mai Pizza</h2>
-<p>
-Pizza artesanal con sabor único. 
-Aliados de la comunidad en sorteos, eventos y colaboraciones especiales.
-</p>
-
-<div class="sponsor-links">
-<a href="https://www.instagram.com/mai.pizza_/" target="_blank" class="btn">
-<i class="fab fa-instagram"></i> Instagram
-</a>
-</div>
-
-</div>
-</div>
-
-<!-- TRULU -->
-
-<div class="sponsor-box" id="trulu">
-
-    <img src="imagenes/marcas/Logo Trulustore.png" alt="Trulu Store">
-
-    <div class="sponsor-info">
-        <h2>Trulu Store</h2>
-
-        <p>
-            Tienda colaboradora con beneficios exclusivos para la comunidad VORANIX.
-            Compra productos tecnológicos, accesorios y PCs armados con descuentos especiales.
-        </p>
-
-        <div class="coupon-area">
-
-            <div class="coupon-card">
-                <h3>🛒 Productos $20.000 a $200.000</h3>
-                <p>5% de descuento para la comunidad</p>
-
-                <div class="coupon-line">
-                    <input type="text" value="VORANIX5" id="cupon1" readonly>
-                    <button onclick="copiarCupon('cupon1')">Copiar</button>
-                </div>
-            </div>
-
-            <div class="coupon-card">
-                <h3>💻 PCs Armados</h3>
-                <p>$20.000 de descuento directo</p>
-
-                <div class="coupon-line">
-                    <input type="text" value="VORAPC20K" id="cupon2" readonly>
-                    <button onclick="copiarCupon('cupon2')">Copiar</button>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="sponsor-links">
-            <a href="https://trulustore.cl/" target="_blank" class="btn">
-                🌐 Ir a Trulu Store
-            </a>
-
-            <a href="https://www.instagram.com/trulustore.cl/" target="_blank" class="btn">
-                <i class="fab fa-instagram"></i> Instagram
-            </a>
-        </div>
-
-    </div>
-</div>
-
+<section class="sponsors-page container" id="sponsors-page">
+<p class="loading">Cargando patrocinadores...</p>
 </section>
 
 <footer class="footer container">
@@ -149,51 +45,107 @@ Aliados de la comunidad en sorteos, eventos y colaboraciones especiales.
 <script>
 const toggle = document.getElementById("menu-toggle");
 const navbar = document.querySelector(".navbar");
-
-toggle.addEventListener("click", () => {
-navbar.classList.toggle("active");
-});
+toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 </script>
 
-<!-- REEMPLAZA TU SCRIPT ACTUAL POR ESTE -->
+<script type="module">
+import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { db } from "./firebase-config.js";
 
-<script>
+const container = document.getElementById("sponsors-page");
+
+function renderCoupon(coupon, index, sponsorId){
+    // Los cupones se guardan como array dentro de cada patrocinador.
+    const inputId = `cupon-${sponsorId}-${index}`;
+    return `
+<div class="coupon-card">
+    <h3>${coupon.titulo || "Cupon"}</h3>
+    <p>${coupon.descripcion || ""}</p>
+    <div class="coupon-line">
+        <input type="text" value="${coupon.codigo || ""}" id="${inputId}" readonly>
+        <button type="button" data-copy="${inputId}">Copiar</button>
+    </div>
+</div>`;
+}
+
+function renderLinks(sponsor){
+    const links = [];
+
+    if(sponsor.websiteUrl){
+        links.push(`<a href="${sponsor.websiteUrl}" target="_blank" rel="noopener" class="btn">Ir al sitio</a>`);
+    }
+
+    if(sponsor.instagramUrl){
+        links.push(`<a href="${sponsor.instagramUrl}" target="_blank" rel="noopener" class="btn"><i class="fab fa-instagram"></i> Instagram</a>`);
+    }
+
+    return links.length ? `<div class="sponsor-links">${links.join("")}</div>` : "";
+}
+
+function renderSponsor(sponsor){
+    const coupons = Array.isArray(sponsor.cupones) ? sponsor.cupones : [];
+    const couponHtml = coupons.length
+        ? `<div class="coupon-area">${coupons.map((coupon, index) => renderCoupon(coupon, index, sponsor.id)).join("")}</div>`
+        : "";
+
+    return `
+<div class="sponsor-box ${sponsor.tipo === "sponsor" ? "sponsor-main" : ""}" id="${sponsor.id}">
+    <img src="${sponsor.img || "imagenes/logo.jpg"}" alt="${sponsor.nombre || "Patrocinador"}">
+    <div class="sponsor-info">
+        <h2>${sponsor.nombre || "Patrocinador"}</h2>
+        <p>${sponsor.descripcion || ""}</p>
+        ${couponHtml}
+        ${renderLinks(sponsor)}
+    </div>
+</div>`;
+}
+
 async function copiarCupon(id){
+    // Copia el codigo al portapapeles y muestra feedback visual breve.
+    const input = document.getElementById(id);
+    if(!input) return;
 
-const input = document.getElementById(id);
-const codigo = input.value;
+    const boton = document.querySelector(`[data-copy="${id}"]`);
+    const textoOriginal = boton ? boton.innerHTML : "Copiar";
 
-try{
-    await navigator.clipboard.writeText(codigo);
+    try{
+        await navigator.clipboard.writeText(input.value);
+    }catch(error){
+        input.select();
+        document.execCommand("copy");
+    }
 
-    const boton = input.nextElementSibling;
-    const textoOriginal = boton.innerHTML;
+    if(boton){
+        boton.innerHTML = "Copiado";
+        boton.style.background = "#00c853";
 
-    boton.innerHTML = "✓ Copiado";
-    boton.style.background = "#00c853";
-
-    setTimeout(() => {
-        boton.innerHTML = textoOriginal;
-        boton.style.background = "";
-    }, 1800);
-
-}catch(error){
-
-    input.select();
-    document.execCommand("copy");
-
-    const boton = input.nextElementSibling;
-    const textoOriginal = boton.innerHTML;
-
-    boton.innerHTML = "✓ Copiado";
-
-    setTimeout(() => {
-        boton.innerHTML = textoOriginal;
-    }, 1800);
-
+        setTimeout(() => {
+            boton.innerHTML = textoOriginal;
+            boton.style.background = "";
+        }, 1800);
+    }
 }
 
+async function loadSponsors(){
+    // Renderiza sponsors y colaboraciones usando el diseno existente.
+    try{
+        const snapshot = await getDocs(query(collection(db, "patrocinadores"), orderBy("nombre")));
+        const sponsors = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        container.innerHTML = sponsors.length
+            ? sponsors.map(renderSponsor).join("")
+            : `<p class="loading">Aun no hay patrocinadores publicados.</p>`;
+    }catch(error){
+        console.error(error);
+        container.innerHTML = `<p class="loading">No se pudieron cargar los patrocinadores.</p>`;
+    }
 }
+
+container.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-copy]");
+    if(button) copiarCupon(button.dataset.copy);
+});
+
+loadSponsors();
 </script>
 </body>
 </html>
