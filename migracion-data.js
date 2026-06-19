@@ -34,7 +34,10 @@ export const rostersSeed = [
     { nombre: "Keke ssj",  juego: "valorant", rol: "Controlador", rango: "Diamante",   rankImg: "imagenes/rangos/diamante.png",   foto: "imagenes/roster/keke.jpg",      activo: true },
     { nombre: "Saaku",     juego: "valorant", rol: "Centinela",   rango: "Diamante",   rankImg: "imagenes/rangos/diamante.png",   foto: "imagenes/roster/saaku.jpg",     activo: true },
     { nombre: "Proximamente 1", juego: "valorant", rol: "Por confirmar", rango: "",      rankImg: "",                               foto: "imagenes/logo.jpg",             activo: true },
-    { nombre: "Proximamente 2", juego: "valorant", rol: "Por confirmar", rango: "",      rankImg: "",                               foto: "imagenes/logo.jpg",             activo: true }
+    { nombre: "Proximamente 2", juego: "valorant", rol: "Por confirmar", rango: "",      rankImg: "",                               foto: "imagenes/logo.jpg",             activo: true },
+    { nombre: "BobMarley_003",  juego: "fifa",     rol: "EA FC PRO PLAYER", rango: "Elite Division",  rankImg: "",                               foto: "imagenes/fifa/bobmarley_033.jpg", activo: true },
+    { nombre: "Br0ly_NY",       juego: "fifa",     rol: "EA FC PRO PLAYER", rango: "Division 1",      rankImg: "",                               foto: "imagenes/fifa/broly_ny.jpg",      activo: true },
+    { nombre: "Chris_barber96", juego: "fifa",     rol: "EA FC PRO PLAYER", rango: "Division 2",      rankImg: "",                               foto: "imagenes/fifa/chris_barber.jpg",   activo: true }
 ];
 
 export const sponsorsSeed = [

@@ -45,9 +45,9 @@
             </div>
         </div>
 
-        <div class="summary-grid">
+<div class="summary-grid">
             <div class="summary-item"><strong>16</strong><span>Streamers</span></div>
-            <div class="summary-item"><strong>8</strong><span>Jugadores</span></div>
+            <div class="summary-item"><strong>11</strong><span>Jugadores</span></div>
             <div class="summary-item"><strong>5</strong><span>Patrocinadores</span></div>
         </div>
 
@@ -77,7 +77,7 @@
 
 <script type="module">
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { doc, getDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { auth, db } from "./firebase-config.js";
 import { makeDocId, streamersSeed, rostersSeed, sponsorsSeed } from "./migracion-data.js";
 
@@ -108,15 +108,24 @@ function setRowState(element, text, kind = "info") {
 }
 
 async function migrateSeed(collectionName, seed) {
-    const batch = writeBatch(db);
+    let inserted = 0;
     for (const item of seed) {
         const id = makeDocId(item.nombre || item.displayName || item.titulo || "");
-        batch.set(doc(db, collectionName, id), {
+        const ref = doc(db, collectionName, id);
+        const snapshot = await getDoc(ref);
+
+        if(snapshot.exists()){
+            log(`Saltado: ${collectionName}/${id} ya existe.`, "warn");
+            continue;
+        }
+
+        await setDoc(ref, {
             ...item,
             createdAt: serverTimestamp()
         });
+        inserted += 1;
     }
-    await batch.commit();
+    return inserted;
 }
 
 async function runMigration() {
@@ -128,17 +137,17 @@ async function runMigration() {
     setRowState(sponsorsState, "Migrando...", "warn");
 
     try {
-        await migrateSeed("streamers", streamersSeed);
-        setRowState(streamersState, "✔ 16 streamers migrados", "ok");
-        log("✔ 16 streamers migrados", "ok");
+        const streamersInserted = await migrateSeed("streamers", streamersSeed);
+        setRowState(streamersState, `✔ ${streamersInserted} streamers migrados`, "ok");
+        log(`✔ ${streamersInserted} streamers migrados`, "ok");
 
-        await migrateSeed("rosters", rostersSeed);
-        setRowState(rostersState, "✔ 8 jugadores migrados", "ok");
-        log("✔ 8 jugadores migrados", "ok");
+        const rostersInserted = await migrateSeed("rosters", rostersSeed);
+        setRowState(rostersState, `✔ ${rostersInserted} jugadores migrados`, "ok");
+        log(`✔ ${rostersInserted} jugadores migrados`, "ok");
 
-        await migrateSeed("sponsors", sponsorsSeed);
-        setRowState(sponsorsState, "✔ 5 patrocinadores migrados", "ok");
-        log("✔ 5 patrocinadores migrados", "ok");
+        const sponsorsInserted = await migrateSeed("sponsors", sponsorsSeed);
+        setRowState(sponsorsState, `✔ ${sponsorsInserted} patrocinadores migrados`, "ok");
+        log(`✔ ${sponsorsInserted} patrocinadores migrados`, "ok");
 
         log("Migración completada sin duplicados.", "ok");
     } catch (error) {

@@ -1,0 +1,69 @@
+[debug] [2026-06-18T22:59:54.811Z] ----------------------------------------------------------------------
+[debug] [2026-06-18T22:59:54.814Z] Command:       E:\Program Files\node\node.exe C:\Users\ACER\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only firestore:rules
+[debug] [2026-06-18T22:59:54.814Z] CLI Version:   15.20.0
+[debug] [2026-06-18T22:59:54.814Z] Platform:      win32
+[debug] [2026-06-18T22:59:54.814Z] Node Version:  v24.16.0
+[debug] [2026-06-18T22:59:54.815Z] Time:          Thu Jun 18 2026 18:59:54 GMT-0400 (hora estándar de Chile)
+[debug] [2026-06-18T22:59:54.815Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-18T22:59:56.816Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-18T22:59:56.817Z] > authorizing via signed-in user (voranix.st.gm@gmail.com)
+[debug] [2026-06-18T22:59:56.817Z] [iam] checking project voranix-2ecc9 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-06-18T22:59:56.818Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:56.818Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:56.819Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/voranix-2ecc9:testIamPermissions [none]
+[debug] [2026-06-18T22:59:56.819Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/voranix-2ecc9:testIamPermissions  x-goog-user-project=voranix-2ecc9
+[debug] [2026-06-18T22:59:56.819Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/voranix-2ecc9:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-06-18T22:59:57.896Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/voranix-2ecc9:testIamPermissions 200
+[debug] [2026-06-18T22:59:57.896Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/voranix-2ecc9:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'voranix-2ecc9'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-06-18T22:59:57.901Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:57.901Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:57.901Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/voranix-2ecc9/databases/(default) [none]
+[debug] [2026-06-18T22:59:58.345Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/voranix-2ecc9/databases/(default) 200
+[debug] [2026-06-18T22:59:58.345Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/voranix-2ecc9/databases/(default) {"name":"projects/voranix-2ecc9/databases/(default)","uid":"8fcb8038-8ece-473e-8d9c-725a7fe6dd79","createTime":"2026-06-18T19:06:25.675179Z","updateTime":"2026-06-18T19:06:25.675179Z","locationId":"southamerica-east1","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-06-18T21:59:58.147221Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"i","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"INvk+pTykZUDMK35qsjJkZUD"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-06-18T22:59:58.348Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:58.348Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:58.348Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9:test [none]
+[debug] [2026-06-18T22:59:58.349Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9:test [omitted]
+[debug] [2026-06-18T22:59:59.396Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9:test 200
+[debug] [2026-06-18T22:59:59.396Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9:test {}
+[info] +  cloud.firestore: rules file firestore.rules compiled successfully 
+[debug] [2026-06-18T22:59:59.397Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:59.397Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:59.398Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/releases pageSize=10&pageToken=
+[debug] [2026-06-18T22:59:59.648Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/releases 200
+[debug] [2026-06-18T22:59:59.648Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/releases {"releases":[{"name":"projects/voranix-2ecc9/releases/cloud.firestore","rulesetName":"projects/voranix-2ecc9/rulesets/b2d241e8-5f19-4028-97e0-95e918f5bb9f","createTime":"2026-06-18T19:06:27.962380Z","updateTime":"2026-06-18T22:39:08.841467Z"}]}
+[debug] [2026-06-18T22:59:59.649Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:59.649Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T22:59:59.650Z] >>> [apiv2][query] GET https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/rulesets/b2d241e8-5f19-4028-97e0-95e918f5bb9f [none]
+[debug] [2026-06-18T23:00:00.689Z] <<< [apiv2][status] GET https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/rulesets/b2d241e8-5f19-4028-97e0-95e918f5bb9f 200
+[debug] [2026-06-18T23:00:00.689Z] <<< [apiv2][body] GET https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/rulesets/b2d241e8-5f19-4028-97e0-95e918f5bb9f [omitted]
+[info] i  firestore: uploading rules firestore.rules... 
+[debug] [2026-06-18T23:00:00.695Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T23:00:00.695Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T23:00:00.696Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/rulesets [none]
+[debug] [2026-06-18T23:00:00.696Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/rulesets [omitted]
+[debug] [2026-06-18T23:00:01.070Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/rulesets 200
+[debug] [2026-06-18T23:00:01.071Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/rulesets {"name":"projects/voranix-2ecc9/rulesets/06e236a6-caf6-46b8-a8b7-3255769274e8","source":{"files":[{"content":"rules_version = '2';\n\nservice cloud.firestore {\n  match /databases/{database}/documents {\n\n    function signedIn() {\n      return request.auth != null;\n    }\n\n    function isAdmin() {\n      return signedIn() &&\n        get(\n          /databases/$(database)/documents/users/$(request.auth.uid)\n        ).data.role == \"admin\";\n    }\n\n    match /users/{userId} {\n      allow read: if signedIn();\n      allow create, update, delete: if isAdmin();\n    }\n\n    match /streamers/{doc} {\n      allow read: if true;\n      allow write: if isAdmin();\n    }\n\n    match /rosters/{doc} {\n      allow read: if true;\n      allow write: if isAdmin();\n    }\n\n    match /sponsors/{doc} {\n      allow read: if true;\n      allow write: if isAdmin();\n    }\n\n    match /proyectos/{doc} {\n      allow read: if true;\n      allow write: if isAdmin();\n    }\n\n    match /{document=**} {\n      allow read, write: if isAdmin();\n    }\n  }\n}\n","name":"firestore.rules"}]},"createTime":"2026-06-18T23:00:00.793007Z","metadata":{"services":["cloud.firestore"]}}
+[debug] [2026-06-18T23:00:01.071Z] [rules] created ruleset projects/voranix-2ecc9/rulesets/06e236a6-caf6-46b8-a8b7-3255769274e8
+[debug] [2026-06-18T23:00:01.072Z] [rules] releasing cloud.firestore with ruleset projects/voranix-2ecc9/rulesets/06e236a6-caf6-46b8-a8b7-3255769274e8
+[debug] [2026-06-18T23:00:01.072Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T23:00:01.072Z] Checked if tokens are valid: true, expires at: 1781825942414
+[debug] [2026-06-18T23:00:01.073Z] >>> [apiv2][query] PATCH https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/releases/cloud.firestore [none]
+[debug] [2026-06-18T23:00:01.073Z] >>> [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/releases/cloud.firestore {"release":{"name":"projects/voranix-2ecc9/releases/cloud.firestore","rulesetName":"projects/voranix-2ecc9/rulesets/06e236a6-caf6-46b8-a8b7-3255769274e8"}}
+[debug] [2026-06-18T23:00:01.474Z] <<< [apiv2][status] PATCH https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/releases/cloud.firestore 200
+[debug] [2026-06-18T23:00:01.475Z] <<< [apiv2][body] PATCH https://firebaserules.googleapis.com/v1/projects/voranix-2ecc9/releases/cloud.firestore {"name":"projects/voranix-2ecc9/releases/cloud.firestore","rulesetName":"projects/voranix-2ecc9/rulesets/06e236a6-caf6-46b8-a8b7-3255769274e8","createTime":"2026-06-18T19:06:27.962380Z","updateTime":"2026-06-18T23:00:01.200358Z"}
+[debug] [2026-06-18T23:00:01.475Z] [rules] updated release projects/voranix-2ecc9/releases/cloud.firestore
+[info] +  firestore: released rules firestore.rules to cloud.firestore 
+[info] 
+[info] +  Deploy complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/voranix-2ecc9/overview

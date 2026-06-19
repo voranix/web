@@ -79,8 +79,25 @@ import { db } from "./firebase-config.js";
 
 const content = document.getElementById("rosters-content");
 
+function normalizeText(value) {
+    return String(value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim();
+}
+
+function resolveGameValue(data) {
+    const raw = data.juego ?? data.game ?? data.tipo ?? "";
+    const value = normalizeText(raw);
+    if (!value) return "valorant";
+    if (["valorant", "valo", "vct"].some(token => value.includes(token))) return "valorant";
+    if (["fifa", "fc25", "fc 25", "ea fc", "eafc", "fc"].some(token => value.includes(token))) return "fifa";
+    return value;
+}
+
 function rankImgPath(rango) {
-    const value = String(rango || "").toLowerCase();
+    const value = normalizeText(rango);
     if(value.includes("ascend")) return "imagenes/rangos/ascendente.png";
     if(value.includes("plat")) return "imagenes/rangos/platino.png";
     if(value.includes("diamond") || value.includes("diamante")) return "imagenes/rangos/diamante.png";
@@ -106,7 +123,7 @@ function renderCard(player, i){
 
 function groupByGame(players){
     return players.reduce((acc, player) => {
-        const key = player.juego || "valorant";
+        const key = resolveGameValue(player);
         if(!acc[key]) acc[key] = [];
         acc[key].push(player);
         return acc;
@@ -122,8 +139,16 @@ function gameLabel(game){
 async function loadRosters(){
     try{
         const snapshot = await getDocs(collection(db, "rosters"));
-        const players = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
+        const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log("ROSTERS", docs);
+        console.table(docs.map(doc => ({
+            id: doc.id,
+            juego: doc.juego,
+            game: doc.game,
+            tipo: doc.tipo
+        })));
+
+        const players = docs
             .filter(item => item.activo !== false)
             .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
 
@@ -133,6 +158,11 @@ async function loadRosters(){
         }
 
         const grouped = groupByGame(players);
+        const valorant = grouped.valorant || [];
+        const fifa = grouped.fifa || [];
+        console.log("VALORANT FILTRADOS", valorant);
+        console.log("FIFA FILTRADOS", fifa);
+
         content.innerHTML = Object.entries(grouped).map(([game, list]) => `
 <section id="${game}" class="roster">
     <div class="section-divider">

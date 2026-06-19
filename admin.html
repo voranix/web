@@ -463,7 +463,8 @@ function fieldHtml(field, value){
     }
 
     if(type === "image"){
-        return `<div class="field${full}"><label>${label}</label><input name="${name}" type="url" value="${safeValue}" placeholder="URL de imagen"><input name="${name}File" type="file" accept="image/*"><span class="help">Puedes pegar una URL o subir una imagen a Firebase Storage.</span></div>`;
+        const preview = safeValue ? `<img src="${safeValue}" alt="${label}" style="width:100%;max-width:220px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #33334a;margin-top:10px;">` : "";
+        return `<div class="field${full}"><label>${label}</label><input name="${name}" type="text" value="${safeValue}" placeholder="Ruta o URL de imagen"><input name="${name}File" type="file" accept="image/*"><span class="help">Puedes pegar una ruta relativa, una URL o subir una imagen a Firebase Storage.</span>${preview}</div>`;
     }
 
     return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${safeValue}"></div>`;
@@ -532,8 +533,11 @@ function closeModal(){
     editingData = {};
 }
 
-async function uploadImage(){
-    throw new Error("Storage deshabilitado temporalmente");
+async function uploadImage(file, bucketPath, fieldName){
+    const fileName = `${Date.now()}-${file.name}`.replace(/\s+/g, "_");
+    const storageRef = ref(storage, `${bucketPath}/${fieldName}/${fileName}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    return await getDownloadURL(snapshot.ref);
 }
 
 async function saveItem(event){
@@ -557,9 +561,17 @@ async function saveItem(event){
         for(const field of section.fields){
             const [name, , type] = field;
             const file = formData.get(`${name}File`);
+            const urlValue = String(formData.get(name) ?? "").trim();
+            const currentValue = editingData[name];
 
-            if(type === "image" && file && file.size){
-                payload[name] = await uploadImage(file, section.collection, name);
+            if(type === "image"){
+                if(file && file.size){
+                    payload[name] = await uploadImage(file, section.collection, name);
+                }else if(urlValue){
+                    payload[name] = urlValue;
+                }else if(editingId && currentValue){
+                    payload[name] = currentValue;
+                }
             }else if(type === "json"){
                 const raw = formData.get(name) || "[]";
                 payload[name] = JSON.parse(raw);
