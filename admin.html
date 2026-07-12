@@ -252,6 +252,18 @@ const sections = {
             ["link", "Link", "url"],
             ["upcoming", "Próximo", "boolean"]
         ]
+    },
+    mensajes: {
+        label: "Mensajes",
+        collection: "mensajes",
+        hideAdd: true,
+        fields: [
+            ["nombre", "Nombre", "text"],
+            ["email", "Email", "text"],
+            ["asunto", "Motivo", "text"],
+            ["mensaje", "Mensaje", "textarea"],
+            ["leido", "Leído", "boolean"]
+        ]
     }
 };
 
@@ -357,7 +369,7 @@ function renderCrudSection(section){
         <h2>${section.label}</h2>
         <p class="muted">Los cambios se sincronizan en tiempo real con Firestore.</p>
     </div>
-    <button class="btn" type="button" id="add-item">Agregar</button>
+    ${section.hideAdd ? "" : '<button class="btn" type="button" id="add-item">Agregar</button>'}
 </div>
 <div class="panel">
     <div class="table-wrap">
@@ -368,7 +380,8 @@ function renderCrudSection(section){
     </div>
 </div>`;
 
-    document.getElementById("add-item").addEventListener("click", () => openItemModal());
+    const addItemBtn = document.getElementById("add-item");
+    if(addItemBtn) addItemBtn.addEventListener("click", () => openItemModal());
     const body = document.getElementById("items-body");
 
     unsubscribeList = onSnapshot(collection(db, section.collection), (snapshot) => {
