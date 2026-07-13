@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rosters | VORANIX</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -14,17 +14,18 @@
     <div class="menu">
         <div class="menu-content">
             <button class="menu-toggle" id="menu-toggle">â˜°</button>
-            <a href="index.html"><img class="logo" src="imagenes/logopng.png" alt="VORANIX"></a>
+            <a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="VORANIX"></a>
             <nav class="navbar">
                 <ul>
-                    <li><a href="index.html">Inicio</a></li>
-                    <li><a href="nosotros.html">Nosotros</a></li>
-                    <li><a href="proyectos.html">Proyectos</a></li>
-                    <li><a href="rosters.html" class="active">Rosters</a></li>
-                    <li><a href="streamers.html">Streamers</a></li>
-                    <li><a href="patrocinadores.html">Patrocinadores</a></li>
-                    <li><a href="contacto.html">Contacto</a></li>
-                    <li><a href="admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
+                    <li><a href="/index.html">Inicio</a></li>
+                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                    <li><a href="/pages/rosters.html" class="active">Rosters</a></li>
+                    <li><a href="/pages/streamers.html">Streamers</a></li>
+                    <li><a href="/pages/influencers.html">Influencers</a></li>
+                    <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+                    <li><a href="/pages/contacto.html">Contacto</a></li>
+                    <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
                 </ul>
             </nav>
         </div>
@@ -44,14 +45,15 @@
 
 <footer class="footer">
     <div class="footer-inner container">
-        <img src="imagenes/logopng.png" alt="VORANIX" class="footer-logo">
+        <img src="/imagenes/logopng.png" alt="VORANIX" class="footer-logo">
         <div class="footer-links">
-            <a href="index.html">Inicio</a>
-            <a href="nosotros.html">Nosotros</a>
-            <a href="streamers.html">Streamers</a>
-            <a href="rosters.html">Rosters</a>
-            <a href="patrocinadores.html">Patrocinadores</a>
-            <a href="contacto.html">Contacto</a>
+            <a href="/index.html">Inicio</a>
+            <a href="/pages/nosotros.html">Nosotros</a>
+            <a href="/pages/streamers.html">Streamers</a>
+            <a href="/pages/influencers.html">Influencers</a>
+            <a href="/pages/rosters.html">Rosters</a>
+            <a href="/pages/patrocinadores.html">Patrocinadores</a>
+            <a href="/pages/contacto.html">Contacto</a>
         </div>
         <div class="footer-social">
             <a href="https://discord.gg/jZq9gPSW5T" target="_blank"><i class="fab fa-discord"></i></a>
@@ -71,9 +73,14 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 
 <script type="module">
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "./firebase-config.js";
+import { db } from "/assets/js/firebase-config.js";
 
 const content = document.getElementById("rosters-content");
+
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
 
 function normalizeText(value) {
     return String(value || "")
@@ -92,27 +99,44 @@ function resolveGameValue(data) {
     return value;
 }
 
+const RANGO_BASES = [
+    ["hierro", "Hierro"],
+    ["bronce", "Bronce"],
+    ["plata", "Plata"],
+    ["oro", "Oro"],
+    ["platino", "Platino"],
+    ["diamante", "Diamante"],
+    ["ascendente", "Ascendente"],
+    ["inmortal", "Inmortal"]
+];
+const RANGO_LABELS = Object.fromEntries(
+    RANGO_BASES.flatMap(([value, label]) => [1, 2, 3].map(tier => [`${value}${tier}`, `${label} ${tier}`]))
+        .concat([["radiante", "Radiante"]])
+);
+
 function rankImgPath(rango) {
-    const value = normalizeText(rango);
-    if(value.includes("ascend")) return "imagenes/rangos/ascendente.png";
-    if(value.includes("plat")) return "imagenes/rangos/platino.png";
-    if(value.includes("diamond") || value.includes("diamante")) return "imagenes/rangos/diamante.png";
-    return "";
+    const key = normalizeText(rango);
+    return key ? `/imagenes/rangos/${key}.png` : "";
+}
+
+function rankLabel(rango) {
+    const key = normalizeText(rango);
+    return RANGO_LABELS[key] || rango || "";
 }
 
 function renderCard(player, i){
-    const rankImg = player.rankImg || rankImgPath(player.rango);
+    const rankImg = rankImgPath(player.rango);
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.05}s">
-    <img src="${player.foto || 'imagenes/logo.jpg'}" alt="${player.nombre || 'Jugador'}" onerror="this.src='imagenes/logo.jpg'">
+    <img src="${assetUrl(player.foto) || '/imagenes/logo.jpg'}" alt="${player.nombre || 'Jugador'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
         <p class="categoria">${player.rol || "Jugador"}</p>
         <h3>${player.nombre || "Jugador"}</h3>
-        ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${player.rango || 'Rango'}">` : ""}
+        ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${rankLabel(player.rango) || 'Rango'}" onerror="this.style.display='none'">` : ""}
         <div class="stats">
-            <p style="color:var(--diamond)">${player.rango || ""}</p>
+            <p style="color:var(--diamond)">${rankLabel(player.rango)}</p>
         </div>
-        <img class="flag" src="imagenes/flags/chile.png" alt="Chile">
+        <img class="flag" src="/imagenes/flags/chile.png" alt="Chile">
     </div>
 </div>`;
 }

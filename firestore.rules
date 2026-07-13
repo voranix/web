@@ -29,6 +29,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /influencers/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /sponsors/{doc} {
       allow read: if true;
       allow write: if isAdmin();

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Migrar datos | VORANIX</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 .migrate-shell{min-height:100vh;display:grid;place-items:center;padding:24px;}
@@ -40,7 +40,7 @@
                 <p id="access-state">Verificando acceso...</p>
             </div>
             <div class="actions">
-                <a class="btn secondary" href="admin.html">Volver al admin</a>
+                <a class="btn secondary" href="/admin/admin.html">Volver al admin</a>
                 <button class="btn" id="run-migration" type="button" disabled>Ejecutar migración</button>
             </div>
         </div>
@@ -78,8 +78,8 @@
 <script type="module">
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { auth, db } from "./firebase-config.js";
-import { makeDocId, streamersSeed, rostersSeed, sponsorsSeed } from "./migracion-data.js";
+import { auth, db } from "/assets/js/firebase-config.js";
+import { makeDocId, streamersSeed, rostersSeed, sponsorsSeed } from "/admin/migracion-data.js";
 
 const accessState = document.getElementById("access-state");
 const runBtn = document.getElementById("run-migration");

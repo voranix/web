@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contacto</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -13,18 +13,19 @@
         <div class="menu">
             <div class="menu-content container">
                 <div class="menu-toggle" id="menu-toggle">☰</div>
-                <a href="index.html">
-                    <img class="logo" src="imagenes/logopng.png" alt="logo">
+                <a href="/index.html">
+                    <img class="logo" src="/imagenes/logopng.png" alt="logo">
                 </a>
                 <nav class="navbar">
                     <ul>
-                        <li><a href="index.html">Inicio</a></li>
-                        <li><a href="nosotros.html">Nosotros</a></li>
-                        <li><a href="proyectos.html">Proyectos</a></li>  
-                        <li><a href="rosters.html">Rosters</a></li>
-                        <li><a href="streamers.html">Streamers</a></li>
-                        <li><a href="patrocinadores.html">Patrocinadores</a></li>
-                        <li><a href="contacto.html">Contacto</a></li>
+                        <li><a href="/index.html">Inicio</a></li>
+                        <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                        <li><a href="/pages/proyectos.html">Proyectos</a></li>  
+                        <li><a href="/pages/rosters.html">Rosters</a></li>
+                        <li><a href="/pages/streamers.html">Streamers</a></li>
+                        <li><a href="/pages/influencers.html">Influencers</a></li>
+                        <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+                        <li><a href="/pages/contacto.html">Contacto</a></li>
                     </ul>
                 </nav>
 
@@ -163,7 +164,7 @@
     // (que a su vez avisa en Discord). Si uno de los dos falla, el otro
     // igual intenta llegar, para no perder el mensaje.
     import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-    import { db } from "./firebase-config.js";
+    import { db } from "/assets/js/firebase-config.js";
 
     const form = document.getElementById("contact-form");
     const submitBtn = document.getElementById("submitBtn");

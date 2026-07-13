@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "voranix-2ecc9"
-  }
+  },
+  "targets": {
+    "voranix-2ecc9": {
+      "hosting": {
+        "voranix": [
+          "voranix"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

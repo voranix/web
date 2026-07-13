@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyectos</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="header header-projectos">
+    <div class="menu">
+        <div class="menu-content container">
+            <div class="menu-toggle" id="menu-toggle">☰</div>
+            <a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="logo"></a>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="/index.html">Inicio</a></li>
+                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                    <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/streamers.html">Streamers</a></li>
+                    <li><a href="/pages/influencers.html">Influencers</a></li>
+                    <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+                    <li><a href="/pages/contacto.html">Contacto</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <div class="header-content container">
+        <h1>Proyectos</h1>
+        <p>Nuestros logros y colaboraciones</p>
+    </div>
+</header>
+
+<section class="projects container">
+    <div class="projects-intro">
+        <h2 style="text-align:center;font-size:48px;">PRÓXIMAMENTE</h2>
+    </div>
+</section>
+
+<div class="modal show" id="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>En construcción</h2>
+        <p>Estamos trabajando en esta sección. ¡Vuelve pronto!</p>
+    </div>
+</div>
+
+<footer class="footer container">
+    <p>© 2026 VORANIX - Todos los derechos reservados</p>
+</footer>
+
+<script>
+const toggle = document.getElementById("menu-toggle");
+const navbar = document.querySelector(".navbar");
+toggle.addEventListener("click", () => navbar.classList.toggle("active"));
+</script>
+
+<script>
+const modal = document.getElementById("modal");
+const closeBtn = document.querySelector(".close");
+
+closeBtn.onclick = () => modal.classList.remove("show");
+
+modal.addEventListener("click", (event) => {
+    if(event.target === modal) modal.classList.remove("show");
+});
+
+document.addEventListener("keydown", (event) => {
+    if(event.key === "Escape") modal.classList.remove("show");
+});
+</script>
+</body>
+</html>

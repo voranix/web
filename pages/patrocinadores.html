@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Patrocinadores | VORANIX</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -14,16 +14,17 @@
 <div class="menu">
 <div class="menu-content container">
 <div class="menu-toggle" id="menu-toggle">☰</div>
-<a href="index.html"><img class="logo" src="imagenes/logopng.png" alt="logo"></a>
+<a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="logo"></a>
 <nav class="navbar">
 <ul>
-<li><a href="index.html">Inicio</a></li>
-<li><a href="nosotros.html">Nosotros</a></li>
-<li><a href="proyectos.html">Proyectos</a></li>
-<li><a href="rosters.html">Rosters</a></li>
-<li><a href="streamers.html">Streamers</a></li>
-<li><a href="patrocinadores.html">Patrocinadores</a></li>
-<li><a href="contacto.html">Contacto</a></li>
+<li><a href="/index.html">Inicio</a></li>
+<li><a href="/pages/nosotros.html">Nosotros</a></li>
+<li><a href="/pages/proyectos.html">Proyectos</a></li>
+<li><a href="/pages/rosters.html">Rosters</a></li>
+<li><a href="/pages/streamers.html">Streamers</a></li>
+<li><a href="/pages/influencers.html">Influencers</a></li>
+<li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+<li><a href="/pages/contacto.html">Contacto</a></li>
 </ul>
 </nav>
 </div>
@@ -50,14 +51,19 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 
 <script type="module">
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "./firebase-config.js";
+import { db } from "/assets/js/firebase-config.js";
 
 const container = document.getElementById("sponsors-page");
+
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
 
 function renderSponsor(sponsor){
     return `
 <div class="sponsor-box ${sponsor.tipo === "patrocinador" ? "sponsor-main" : ""}" id="${sponsor.id}">
-    <img src="${sponsor.logo || "imagenes/logo.jpg"}" alt="${sponsor.nombre || "Patrocinador"}">
+    <img src="${assetUrl(sponsor.logo) || "/imagenes/logo.jpg"}" alt="${sponsor.nombre || "Patrocinador"}">
     <div class="sponsor-info">
         <h2>${sponsor.nombre || "Patrocinador"}</h2>
         <p>${sponsor.descripcion || ""}</p>

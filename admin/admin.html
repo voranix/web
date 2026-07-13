@@ -120,7 +120,7 @@ td img{ width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px
 <section id="admin-shell" class="admin-shell hidden">
     <aside id="sidebar" class="sidebar">
         <div class="brand">
-            <img src="imagenes/logopng.png" alt="VORANIX">
+            <img src="/imagenes/logopng.png" alt="VORANIX">
             <strong>VORANIX</strong>
         </div>
         <nav id="nav" class="nav"></nav>
@@ -135,7 +135,7 @@ td img{ width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px
             <div class="user-box">
                 <span id="user-email" class="muted"></span>
                 <span id="role-badge" class="badge"></span>
-                <a class="btn secondary" href="migrar.html">Migrar</a>
+                <a class="btn secondary" href="/admin/migrar.html">Migrar</a>
                 <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
             </div>
         </header>
@@ -184,7 +184,22 @@ import {
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 
-import { auth, db, storage } from "./firebase-config.js";
+import { auth, db, storage } from "/assets/js/firebase-config.js";
+
+const RANGO_BASES = [
+    ["hierro", "Hierro"],
+    ["bronce", "Bronce"],
+    ["plata", "Plata"],
+    ["oro", "Oro"],
+    ["platino", "Platino"],
+    ["diamante", "Diamante"],
+    ["ascendente", "Ascendente"],
+    ["inmortal", "Inmortal"]
+];
+const VALORANT_RANKS = [["", "Sin rango"]].concat(
+    RANGO_BASES.flatMap(([value, label]) => [1, 2, 3].map(tier => [`${value}${tier}`, `${label} ${tier}`])),
+    [["radiante", "Radiante"]]
+);
 
 const sections = {
     // Definicion de cada CRUD: etiqueta visible, coleccion y campos del modal.
@@ -196,7 +211,7 @@ const sections = {
             ["nombre", "Nombre", "text"],
             ["juego", "Juego", "text"],
             ["rol", "Rol", "text"],
-            ["rango", "Rango", "text"],
+            ["rango", "Rango", "select", VALORANT_RANKS],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
         ]
@@ -225,6 +240,19 @@ const sections = {
             ["foto", "Imagen", "image"],
             ["instagram", "Instagram", "url"],
             ["twitch", "Twitch", "url"],
+            ["activo", "Activo", "boolean"]
+        ]
+    },
+    influencers: {
+        label: "Influencers",
+        collection: "influencers",
+        fields: [
+            ["nombre", "Nombre", "text"],
+            ["categoria", "Categoría", "text"],
+            ["pais", "País", "text"],
+            ["foto", "Imagen", "image"],
+            ["instagram", "Instagram", "url"],
+            ["tiktok", "TikTok", "url"],
             ["activo", "Activo", "boolean"]
         ]
     },
@@ -352,10 +380,19 @@ function getUsersFieldValue(data, name){
     return data[name] ?? "";
 }
 
-function tableValue(value, type){
-    if(type === "image") return value ? `<img src="${value}" alt="imagen">` : "-";
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
+
+function tableValue(value, type, options){
+    if(type === "image") return value ? `<img src="${assetUrl(value)}" alt="imagen">` : "-";
     if(type === "boolean") return value ? "Sí" : "No";
     if(type === "json") return Array.isArray(value) ? `${value.length} cupón(es)` : "-";
+    if(type === "select" && Array.isArray(options)){
+        const match = options.find(option => Array.isArray(option) ? option[0] === value : option === value);
+        if(match) return Array.isArray(match) ? match[1] : match;
+    }
     return value || "-";
 }
 
@@ -393,7 +430,7 @@ function renderCrudSection(section){
         const rows = filteredDocs.map(item => {
             const data = item;
             return `<tr>
-${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2])}</td>`).join("")}
+${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[3])}</td>`).join("")}
 <td><div class="actions">
     <button class="btn secondary small" type="button" data-edit="${item.id}">Editar</button>
     <button class="btn danger small" type="button" data-delete="${item.id}">Eliminar</button>
@@ -468,7 +505,8 @@ function fieldHtml(field, value){
     }
 
     if(type === "select"){
-        return `<div class="field"><label>${label}</label><select name="${name}">${options.map(option => `<option value="${option}" ${option === safeValue ? "selected" : ""}>${option}</option>`).join("")}</select></div>`;
+        const opts = options.map(option => Array.isArray(option) ? option : [option, option]);
+        return `<div class="field"><label>${label}</label><select name="${name}">${opts.map(([optValue, optLabel]) => `<option value="${optValue}" ${optValue === safeValue ? "selected" : ""}>${optLabel}</option>`).join("")}</select></div>`;
     }
 
     if(type === "boolean"){
@@ -476,7 +514,7 @@ function fieldHtml(field, value){
     }
 
     if(type === "image"){
-        const preview = safeValue ? `<img src="${safeValue}" alt="${label}" style="width:100%;max-width:220px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #33334a;margin-top:10px;">` : "";
+        const preview = safeValue ? `<img src="${assetUrl(safeValue)}" alt="${label}" style="width:100%;max-width:220px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #33334a;margin-top:10px;">` : "";
         return `<div class="field${full}"><label>${label}</label><input name="${name}" type="text" value="${safeValue}" placeholder="Ruta o URL de imagen"><input name="${name}File" type="file" accept="image/*"><span class="help">Puedes pegar una ruta relativa, una URL o subir una imagen a Firebase Storage.</span>${preview}</div>`;
     }
 

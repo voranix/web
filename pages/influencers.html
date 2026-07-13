@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Influencers | VORANIX</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<header class="header header-sub header-influencers">
+    <div class="menu">
+        <div class="menu-content">
+            <button class="menu-toggle" id="menu-toggle">☰</button>
+            <a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="VORANIX"></a>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="/index.html">Inicio</a></li>
+                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                    <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/streamers.html">Streamers</a></li>
+                    <li><a href="/pages/influencers.html" class="active">Influencers</a></li>
+                    <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+                    <li><a href="/pages/contacto.html">Contacto</a></li>
+                    <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <div class="header-content container">
+        <div class="hero-eyebrow"><span></span>VORANIX CREATORS</div>
+        <h1>Influencers</h1>
+        <p>VOCES QUE REPRESENTAN A VORANIX</p>
+    </div>
+</header>
+
+<section class="streamers-page container">
+    <div class="section-title">
+        <div class="section-label">Nuestra red</div>
+        <h2>Influencers</h2>
+        <span class="accent-line"></span>
+        <p>Creadores de contenido que representan a VORANIX en redes sociales</p>
+    </div>
+    <div class="roster-grid" id="influencers-grid">
+        <p class="loading"><i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--morado);"></i>Cargando influencers...</p>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="footer-inner container">
+        <img src="/imagenes/logopng.png" alt="VORANIX" class="footer-logo">
+        <div class="footer-links">
+            <a href="/index.html">Inicio</a>
+            <a href="/pages/nosotros.html">Nosotros</a>
+            <a href="/pages/streamers.html">Streamers</a>
+            <a href="/pages/influencers.html">Influencers</a>
+            <a href="/pages/rosters.html">Rosters</a>
+            <a href="/pages/patrocinadores.html">Patrocinadores</a>
+            <a href="/pages/contacto.html">Contacto</a>
+        </div>
+        <div class="footer-social">
+            <a href="https://discord.gg/jZq9gPSW5T" target="_blank"><i class="fab fa-discord"></i></a>
+            <a href="https://www.instagram.com/voranix_gaming" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.twitch.tv/voranix_gaming" target="_blank"><i class="fab fa-twitch"></i></a>
+            <a href="https://www.tiktok.com/@voranix_gaming" target="_blank"><i class="fab fa-tiktok"></i></a>
+        </div>
+        <div class="footer-copy">© 2026 <span>VORANIX</span> — Todos los derechos reservados</div>
+    </div>
+</footer>
+
+<script>
+const toggle = document.getElementById("menu-toggle");
+const navbar = document.querySelector(".navbar");
+toggle.addEventListener("click", () => navbar.classList.toggle("active"));
+</script>
+
+<script type="module">
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { db } from "/assets/js/firebase-config.js";
+
+const grid = document.getElementById("influencers-grid");
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
+
+function flagPath(pais) {
+    return String(pais || "").toLowerCase() === "mexico" ? "/imagenes/flags/mexico.png" : "/imagenes/flags/chile.png";
+}
+
+function flagAlt(pais) {
+    return String(pais || "").toLowerCase() === "mexico" ? "México" : "Chile";
+}
+
+function renderInfluencer(influencer, i) {
+    const redesUrl = influencer.instagram || influencer.tiktok || "#";
+    return `
+<div class="card fade-up" style="animation-delay:${i * 0.04}s">
+    <img src="${assetUrl(influencer.foto) || '/imagenes/logo.jpg'}" alt="${influencer.nombre || 'Influencer'}" onerror="this.src='/imagenes/logo.jpg'">
+    <div class="card-body">
+        <h3>${influencer.nombre || "Influencer"}</h3>
+        <p class="games"><i class="fas fa-star" style="margin-right:6px;color:var(--morado);"></i>${influencer.categoria || "Contenido variado"}</p>
+        <img class="flag" src="${flagPath(influencer.pais)}" alt="${flagAlt(influencer.pais)}">
+        <a href="${redesUrl}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
+            <i class="fas fa-external-link-alt"></i> Redes
+        </a>
+    </div>
+</div>`;
+}
+
+async function loadInfluencers() {
+    try {
+        const snapshot = await getDocs(collection(db, "influencers"));
+        const list = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(item => item.activo !== false)
+            .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
+        grid.innerHTML = list.length
+            ? list.map(renderInfluencer).join("")
+            : `<p class="loading">No hay influencers publicados.</p>`;
+    } catch (e) {
+        console.error(e);
+        grid.innerHTML = `<p class="loading">No se pudieron cargar los influencers.</p>`;
+    }
+}
+loadInfluencers();
+</script>
+</body>
+</html>

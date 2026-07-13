@@ -20,12 +20,52 @@
       ]
     }
   ],
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ]
-  }
+  "hosting": [
+    {
+      "target": "voranix",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "functions/**"
+      ],
+      "redirects": [
+        { "source": "/nosotros.html", "destination": "/pages/nosotros.html", "type": 301 },
+        { "source": "/proyectos.html", "destination": "/pages/proyectos.html", "type": 301 },
+        { "source": "/rosters.html", "destination": "/pages/rosters.html", "type": 301 },
+        { "source": "/streamers.html", "destination": "/pages/streamers.html", "type": 301 },
+        { "source": "/influencers.html", "destination": "/pages/influencers.html", "type": 301 },
+        { "source": "/patrocinadores.html", "destination": "/pages/patrocinadores.html", "type": 301 },
+        { "source": "/contacto.html", "destination": "/pages/contacto.html", "type": 301 },
+        { "source": "/documentos.html", "destination": "/pages/documentos.html", "type": 301 },
+        { "source": "/admin.html", "destination": "/admin/admin.html", "type": 301 },
+        { "source": "/migrar.html", "destination": "/admin/migrar.html", "type": 301 },
+        { "source": "/troll.html", "destination": "/extras/troll.html", "type": 301 }
+      ]
+    },
+    {
+      "site": "voranix-2ecc9",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "functions/**"
+      ],
+      "redirects": [
+        { "source": "/nosotros.html", "destination": "/pages/nosotros.html", "type": 301 },
+        { "source": "/proyectos.html", "destination": "/pages/proyectos.html", "type": 301 },
+        { "source": "/rosters.html", "destination": "/pages/rosters.html", "type": 301 },
+        { "source": "/streamers.html", "destination": "/pages/streamers.html", "type": 301 },
+        { "source": "/influencers.html", "destination": "/pages/influencers.html", "type": 301 },
+        { "source": "/patrocinadores.html", "destination": "/pages/patrocinadores.html", "type": 301 },
+        { "source": "/contacto.html", "destination": "/pages/contacto.html", "type": 301 },
+        { "source": "/documentos.html", "destination": "/pages/documentos.html", "type": 301 },
+        { "source": "/admin.html", "destination": "/admin/admin.html", "type": 301 },
+        { "source": "/migrar.html", "destination": "/admin/migrar.html", "type": 301 },
+        { "source": "/troll.html", "destination": "/extras/troll.html", "type": 301 }
+      ]
+    }
+  ]
 }

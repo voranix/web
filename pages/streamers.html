@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Streamers | VORANIX</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
@@ -14,17 +14,18 @@
     <div class="menu">
         <div class="menu-content">
             <button class="menu-toggle" id="menu-toggle">☰</button>
-            <a href="index.html"><img class="logo" src="imagenes/logopng.png" alt="VORANIX"></a>
+            <a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="VORANIX"></a>
             <nav class="navbar">
                 <ul>
-                    <li><a href="index.html">Inicio</a></li>
-                    <li><a href="nosotros.html">Nosotros</a></li>
-                    <li><a href="proyectos.html">Proyectos</a></li>
-                    <li><a href="rosters.html">Rosters</a></li>
-                    <li><a href="streamers.html" class="active">Streamers</a></li>
-                    <li><a href="patrocinadores.html">Patrocinadores</a></li>
-                    <li><a href="contacto.html">Contacto</a></li>
-                    <li><a href="admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
+                    <li><a href="/index.html">Inicio</a></li>
+                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                    <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/streamers.html" class="active">Streamers</a></li>
+                    <li><a href="/pages/influencers.html">Influencers</a></li>
+                    <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+                    <li><a href="/pages/contacto.html">Contacto</a></li>
+                    <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
                 </ul>
             </nav>
         </div>
@@ -50,14 +51,15 @@
 
 <footer class="footer">
     <div class="footer-inner container">
-        <img src="imagenes/logopng.png" alt="VORANIX" class="footer-logo">
+        <img src="/imagenes/logopng.png" alt="VORANIX" class="footer-logo">
         <div class="footer-links">
-            <a href="index.html">Inicio</a>
-            <a href="nosotros.html">Nosotros</a>
-            <a href="streamers.html">Streamers</a>
-            <a href="rosters.html">Rosters</a>
-            <a href="patrocinadores.html">Patrocinadores</a>
-            <a href="contacto.html">Contacto</a>
+            <a href="/index.html">Inicio</a>
+            <a href="/pages/nosotros.html">Nosotros</a>
+            <a href="/pages/streamers.html">Streamers</a>
+            <a href="/pages/influencers.html">Influencers</a>
+            <a href="/pages/rosters.html">Rosters</a>
+            <a href="/pages/patrocinadores.html">Patrocinadores</a>
+            <a href="/pages/contacto.html">Contacto</a>
         </div>
         <div class="footer-social">
             <a href="https://discord.gg/jZq9gPSW5T" target="_blank"><i class="fab fa-discord"></i></a>
@@ -77,11 +79,11 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 
 <script type="module">
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "./firebase-config.js";
+import { db } from "/assets/js/firebase-config.js";
 
 const grid = document.getElementById("streamers-grid");
 function flagPath(pais) {
-    return String(pais || "").toLowerCase() === "mexico" ? "imagenes/flags/mexico.png" : "imagenes/flags/chile.png";
+    return String(pais || "").toLowerCase() === "mexico" ? "/imagenes/flags/mexico.png" : "/imagenes/flags/chile.png";
 }
 
 function flagAlt(pais) {
@@ -92,7 +94,7 @@ function renderStreamer(streamer, i) {
     const redesUrl = streamer.twitch || streamer.instagram || "#";
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.04}s">
-    <img src="${streamer.foto || 'imagenes/logo.jpg'}" alt="${streamer.nombre || 'Streamer'}" onerror="this.src='imagenes/logo.jpg'">
+    <img src="${streamer.foto || '/imagenes/logo.jpg'}" alt="${streamer.nombre || 'Streamer'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
         <h3>${streamer.nombre || "Streamer"}</h3>
         <p class="games"><i class="fas fa-gamepad" style="margin-right:6px;color:var(--morado);"></i>${streamer.juegos || "Variety"}</p>
