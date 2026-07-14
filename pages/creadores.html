@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Creadores - VORANIX</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .creadores-shell{ padding:20px 0 90px; }
+        .creadores-topbar{
+            display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+            padding:18px 0 26px; border-bottom:1px solid var(--border); margin-bottom:30px;
+        }
+        .creadores-topbar .muted{ color:var(--gris); font-size:12px; }
+        .creadores-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+        .tag-chip{
+            display:inline-flex; align-self:flex-start; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+            color:var(--naranja); border:1px solid rgba(255,106,0,0.3); background:rgba(255,106,0,0.06);
+            padding:4px 10px; border-radius:14px; margin-bottom:4px;
+        }
+        .meta-line{ font-size:11px; color:var(--gris-dark); letter-spacing:1px; text-transform:uppercase; margin-top:4px; }
+        .feature .btn{ margin-top:10px; }
+    </style>
+</head>
+<body>
+
+<header class="header header-contacto">
+    <div class="menu">
+        <div class="menu-content container">
+            <div class="menu-toggle" id="menu-toggle">☰</div>
+            <a href="/index.html">
+                <img class="logo" src="/imagenes/logopng.png" alt="logo">
+            </a>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="/index.html">Inicio</a></li>
+                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li><a href="/pages/reglamento.html">Reglamento</a></li>
+                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                    <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/streamers.html">Streamers</a></li>
+                    <li><a href="/pages/influencers.html">Influencers</a></li>
+                    <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+                    <li><a href="/pages/contacto.html">Contacto</a></li>
+                    <li><a href="/pages/creadores.html" class="admin-link active"><i class="fas fa-star" style="font-size:9px;margin-right:4px;"></i>Portal Creadores</a></li>
+                    <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="header-content container">
+        <h1>Portal Creadores</h1>
+        <p>Acceso anticipado para creadores VORANIX</p>
+    </div>
+</header>
+
+<!-- LOGIN -->
+<section id="login-screen" class="login-screen">
+    <form id="login-form" class="login-card">
+        <h1>Ingresar</h1>
+        <p class="muted">Usa la cuenta que te entregó VORANIX.</p>
+        <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+            <label for="password">Contraseña</label>
+            <input id="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn" type="submit" style="width:100%;">Ingresar</button>
+        <div id="login-error" class="error"></div>
+    </form>
+</section>
+
+<!-- CONTENIDO DEL PORTAL -->
+<section id="creadores-shell" class="container creadores-shell hidden">
+    <div class="creadores-topbar">
+        <div>
+            <strong id="user-email"></strong>
+            <span id="role-badge" class="badge"></span>
+        </div>
+        <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
+    </div>
+
+    <div id="accesos-grid" class="creadores-grid">
+        <p class="loading">Cargando accesos...</p>
+    </div>
+</section>
+
+<footer class="footer container">
+    <p>© 2026 VORANIX - Todos los derechos reservados</p>
+</footer>
+
+<script>
+    const toggle = document.getElementById("menu-toggle");
+    const navbar = document.querySelector(".navbar");
+    toggle.addEventListener("click", () => navbar.classList.toggle("active"));
+</script>
+
+<script type="module">
+    import {
+        signInWithEmailAndPassword,
+        onAuthStateChanged,
+        signOut
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import {
+        doc,
+        getDoc,
+        collection,
+        onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { auth, db, escapeHtml } from "/assets/js/firebase-config.js";
+
+    const CATEGORIAS = {
+        torneo: "Torneo",
+        evento: "Evento",
+        actividad: "Actividad",
+        proyecto: "Proyecto",
+        general: "General"
+    };
+
+    const loginScreen = document.getElementById("login-screen");
+    const creadoresShell = document.getElementById("creadores-shell");
+    const loginForm = document.getElementById("login-form");
+    const loginError = document.getElementById("login-error");
+    const userEmailEl = document.getElementById("user-email");
+    const roleBadge = document.getElementById("role-badge");
+    const accesosGrid = document.getElementById("accesos-grid");
+
+    let unsubAccesos = null;
+
+    function stopListeners(){
+        if(unsubAccesos) unsubAccesos();
+        unsubAccesos = null;
+    }
+
+    function showLogin(){
+        loginScreen.classList.remove("hidden");
+        creadoresShell.classList.add("hidden");
+    }
+
+    function showShell(user, profile){
+        loginScreen.classList.add("hidden");
+        creadoresShell.classList.remove("hidden");
+        userEmailEl.textContent = profile.displayName || profile.email || user.email;
+        roleBadge.textContent = (profile.role || "").toUpperCase();
+    }
+
+    function hasPortalAccess(profile){
+        return profile && profile.active !== false && ["admin", "editor", "creador"].includes(profile.role);
+    }
+
+    async function loadProfile(user){
+        const snapshot = await getDoc(doc(db, "users", user.uid));
+        return snapshot.exists() ? snapshot.data() : null;
+    }
+
+    function sortByCreatedAtDesc(a, b){
+        return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
+    }
+
+    function renderAcceso(item){
+        const categoria = CATEGORIAS[item.categoria] || item.categoria || "General";
+        const link = item.link || "";
+        return `
+<div class="feature">
+    <span class="tag-chip">${escapeHtml(categoria)}</span>
+    <h3>${escapeHtml(item.titulo || "Sin título")}</h3>
+    <p>${escapeHtml(item.descripcion || "")}</p>
+    ${item.fechaLimite ? `<div class="meta-line">Fecha límite: ${escapeHtml(item.fechaLimite)}</div>` : ""}
+    ${link ? `<a class="btn btn-sm" href="${escapeHtml(link)}" target="_blank" rel="noopener">Ir al formulario</a>` : ""}
+</div>`;
+    }
+
+    function loadAccesos(){
+        unsubAccesos = onSnapshot(collection(db, "accesos"), (snapshot) => {
+            const docs = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(item => item.activo !== false)
+                .sort(sortByCreatedAtDesc);
+
+            accesosGrid.innerHTML = docs.length
+                ? docs.map(renderAcceso).join("")
+                : `<p class="loading">Todavía no hay accesos publicados. Vuelve pronto.</p>`;
+        }, (error) => {
+            console.error(error);
+            accesosGrid.innerHTML = `<p class="loading">No se pudieron cargar los accesos.</p>`;
+        });
+    }
+
+    loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        loginError.textContent = "";
+        try{
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            await signInWithEmailAndPassword(auth, email, password);
+        }catch(error){
+            console.error(error);
+            loginError.textContent = "Email o contraseña incorrectos.";
+        }
+    });
+
+    document.querySelectorAll("[data-logout]").forEach(btn => {
+        btn.addEventListener("click", () => signOut(auth));
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if(!user){
+            stopListeners();
+            showLogin();
+            return;
+        }
+
+        try{
+            const profile = await loadProfile(user);
+            if(!hasPortalAccess(profile)){
+                loginError.textContent = "Tu cuenta no tiene acceso al portal de creadores.";
+                await signOut(auth);
+                return;
+            }
+            showShell(user, profile);
+            loadAccesos();
+        }catch(error){
+            console.error(error);
+            loginError.textContent = "No se pudo verificar tu cuenta. Intenta de nuevo.";
+            await signOut(auth);
+        }
+    });
+</script>
+</body>
+</html>
