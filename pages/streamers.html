@@ -18,10 +18,15 @@
             <nav class="navbar">
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
-                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
-                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-toggle">Quiénes Somos <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                            <li><a href="/pages/staff.html">Staff</a></li>
+                            <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                        </ul>
+                    </li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
-                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
                     <li><a href="/pages/streamers.html" class="active">Streamers</a></li>
                     <li><a href="/pages/influencers.html">Influencers</a></li>
@@ -76,11 +81,7 @@
     </div>
 </footer>
 
-<script>
-const toggle = document.getElementById("menu-toggle");
-const navbar = document.querySelector(".navbar");
-toggle.addEventListener("click", () => navbar.classList.toggle("active"));
-</script>
+<script src="/assets/js/nav.js"></script>
 
 <script type="module">
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";

@@ -1,0 +1,12 @@
+{
+  "name": "voranix-scripts",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Scripts administrativos locales para VORANIX (no se despliegan al hosting).",
+  "scripts": {
+    "bulk-create-users": "node bulk-create-users.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  }
+}

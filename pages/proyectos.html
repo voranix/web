@@ -6,6 +6,7 @@
     <title>Proyectos</title>
     <link rel="stylesheet" href="/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 
@@ -17,10 +18,15 @@
             <nav class="navbar">
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
-                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
-                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-toggle">Quiénes Somos <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                            <li><a href="/pages/staff.html">Staff</a></li>
+                            <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                        </ul>
+                    </li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
-                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
                     <li><a href="/pages/streamers.html">Streamers</a></li>
                     <li><a href="/pages/influencers.html">Influencers</a></li>
@@ -55,11 +61,7 @@
     <p>© 2026 VORANIX - Todos los derechos reservados</p>
 </footer>
 
-<script>
-const toggle = document.getElementById("menu-toggle");
-const navbar = document.querySelector(".navbar");
-toggle.addEventListener("click", () => navbar.classList.toggle("active"));
-</script>
+<script src="/assets/js/nav.js"></script>
 
 <script>
 const modal = document.getElementById("modal");

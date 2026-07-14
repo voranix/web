@@ -210,6 +210,12 @@ const VALORANT_ROLES = [
     ["iniciador", "Iniciador"]
 ];
 
+const DBD_ROLES = [
+    ["", "Sin rol"],
+    ["superviviente", "Superviviente"],
+    ["asesino", "Asesino"]
+];
+
 const TIPO_JUGADOR = [
     ["", "Sin especificar"],
     ["principal", "Jugador Principal"],
@@ -250,6 +256,20 @@ const sections = {
             ["juego", "Juego", "select", [["fifa", "EA FC"]]],
             ["rol", "Rol", "text"],
             ["rango", "Rango", "text"],
+            ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
+            ["foto", "Imagen", "image"],
+            ["activo", "Activo", "boolean"]
+        ]
+    },
+    dbd: {
+        label: "Rosters Dead by Daylight",
+        collection: "rosters",
+        filterValue: "dbd",
+        fields: [
+            ["nombre", "Nombre", "text"],
+            ["juego", "Juego", "select", [["dbd", "Dead by Daylight"]]],
+            ["rol", "Rol", "select", DBD_ROLES],
+            ["personaje", "Personaje principal", "text"],
             ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
@@ -344,9 +364,15 @@ const sections = {
                 ["proyecto", "Proyecto"],
                 ["general", "General"]
             ]],
+            ["imagen", "Imagen", "image"],
             ["descripcion", "Descripción", "textarea"],
+            ["juego", "Juego", "text"],
+            ["modalidad", "Modalidad", "text"],
+            ["participantes", "Cupos / Participantes", "text"],
+            ["premio", "Premio", "text"],
+            ["requisitos", "Requisitos", "textarea"],
             ["link", "Link (Google Form)", "url"],
-            ["fechaLimite", "Fecha límite", "text"],
+            ["fechaLimite", "Fecha límite", "date"],
             ["activo", "Publicado", "boolean"]
         ]
     }

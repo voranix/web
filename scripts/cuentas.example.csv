@@ -1,0 +1,5 @@
+# Una cuenta por línea: email,Nombre para mostrar (el nombre es opcional)
+# Las líneas que empiezan con # se ignoran.
+creador1@ejemplo.com,Creador Uno
+creador2@ejemplo.com,Creador Dos
+creador3@ejemplo.com

@@ -1,3 +1,7 @@
 node_modules/
 .env
 .firebase/
+firebase-debug.log
+scripts/serviceAccountKey.json
+scripts/cuentas.csv
+scripts/resultado.json

@@ -8,20 +8,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        .creadores-shell{ padding:20px 0 90px; }
+        .portal-login{ min-height:calc(100vh - 74px); }
+        .creadores-shell{ padding:36px 0 90px; }
         .creadores-topbar{
-            display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
-            padding:18px 0 26px; border-bottom:1px solid var(--border); margin-bottom:30px;
+            display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;
+            padding:0 0 26px; border-bottom:1px solid var(--border); margin-bottom:30px;
         }
-        .creadores-topbar .muted{ color:var(--gris); font-size:12px; }
-        .creadores-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px; }
+        .creadores-title{ text-align:left; font-size:clamp(1.5rem,4vw,2.1rem); letter-spacing:2px; margin-bottom:6px; }
+        .creadores-subtitle{ color:var(--gris); font-size:13px; }
+        .creadores-user{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
+        .creadores-user strong{ font-size:13px; }
+        .creadores-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; }
         .tag-chip{
             display:inline-flex; align-self:flex-start; font-size:10px; letter-spacing:2px; text-transform:uppercase;
             color:var(--naranja); border:1px solid rgba(255,106,0,0.3); background:rgba(255,106,0,0.06);
-            padding:4px 10px; border-radius:14px; margin-bottom:4px;
+            padding:4px 10px; border-radius:14px; margin-bottom:10px;
         }
-        .meta-line{ font-size:11px; color:var(--gris-dark); letter-spacing:1px; text-transform:uppercase; margin-top:4px; }
-        .feature .btn{ margin-top:10px; }
+        .acceso-card{
+            background:var(--card); border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--border);
+            transition:var(--ease); display:flex; flex-direction:column;
+        }
+        .acceso-card:hover{ transform:translateY(-6px); border-color:var(--morado); box-shadow:0 8px 30px var(--morado-glow); }
+        .acceso-img{ width:100%; height:170px; object-fit:cover; display:block; background:var(--bg-2); }
+        .acceso-body{ padding:22px; display:flex; flex-direction:column; gap:10px; flex:1; }
+        .acceso-body h3{ font-size:1.05rem; color:#fff; margin-bottom:0; }
+        .acceso-body > p{ font-size:13px; text-align:left; line-height:1.7; margin:0; }
+        .acceso-meta{ display:flex; flex-wrap:wrap; gap:8px; margin:2px 0; }
+        .meta-chip{
+            display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--gris);
+            background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:6px 10px;
+        }
+        .meta-chip i{ color:var(--morado-light); font-size:11px; }
+        .acceso-requisitos{ font-size:12px; color:var(--gris); background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--r-sm); padding:10px 12px; line-height:1.6; }
+        .acceso-requisitos strong{ color:#fff; display:block; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+        .meta-line{ font-size:11px; color:var(--gris-dark); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+        .acceso-card .btn{ margin-top:auto; align-self:flex-start; }
+        @media (max-width:600px){
+            .creadores-topbar{ flex-direction:column; }
+            .creadores-user{ justify-content:flex-start; width:100%; }
+        }
     </style>
 </head>
 <body>
@@ -36,10 +61,15 @@
             <nav class="navbar">
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
-                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
-                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-toggle">Quiénes Somos <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                            <li><a href="/pages/staff.html">Staff</a></li>
+                            <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                        </ul>
+                    </li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
-                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
                     <li><a href="/pages/streamers.html">Streamers</a></li>
                     <li><a href="/pages/influencers.html">Influencers</a></li>
@@ -51,18 +81,13 @@
             </nav>
         </div>
     </div>
-
-    <div class="header-content container">
-        <h1>Portal Creadores</h1>
-        <p>Acceso anticipado para creadores VORANIX</p>
-    </div>
 </header>
 
 <!-- LOGIN -->
-<section id="login-screen" class="login-screen">
+<section id="login-screen" class="login-screen portal-login">
     <form id="login-form" class="login-card">
-        <h1>Ingresar</h1>
-        <p class="muted">Usa la cuenta que te entregó VORANIX.</p>
+        <h1>Portal Creadores</h1>
+        <p class="muted">Ingresa con la cuenta que te entregó VORANIX.</p>
         <div class="field">
             <label for="email">Email</label>
             <input id="email" type="email" autocomplete="email" required>
@@ -80,10 +105,14 @@
 <section id="creadores-shell" class="container creadores-shell hidden">
     <div class="creadores-topbar">
         <div>
+            <h1 class="creadores-title">Portal Creadores</h1>
+            <p class="creadores-subtitle">Accesos, torneos y eventos exclusivos para creadores VORANIX.</p>
+        </div>
+        <div class="creadores-user">
             <strong id="user-email"></strong>
             <span id="role-badge" class="badge"></span>
+            <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
         </div>
-        <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
     </div>
 
     <div id="accesos-grid" class="creadores-grid">
@@ -95,11 +124,7 @@
     <p>© 2026 VORANIX - Todos los derechos reservados</p>
 </footer>
 
-<script>
-    const toggle = document.getElementById("menu-toggle");
-    const navbar = document.querySelector(".navbar");
-    toggle.addEventListener("click", () => navbar.classList.toggle("active"));
-</script>
+<script src="/assets/js/nav.js"></script>
 
 <script type="module">
     import {
@@ -163,16 +188,43 @@
         return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
     }
 
+    function assetUrl(path){
+        if(!path) return "";
+        return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+    }
+
+    function formatFecha(value){
+        if(!value) return "";
+        const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+        if(!match) return value;
+        const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+        return date.toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+    }
+
     function renderAcceso(item){
         const categoria = CATEGORIAS[item.categoria] || item.categoria || "General";
         const link = item.link || "";
+        const img = assetUrl(item.imagen);
+
+        const meta = [
+            item.juego ? `<span class="meta-chip"><i class="fas fa-gamepad"></i>${escapeHtml(item.juego)}</span>` : "",
+            item.modalidad ? `<span class="meta-chip"><i class="fas fa-users"></i>${escapeHtml(item.modalidad)}</span>` : "",
+            item.participantes ? `<span class="meta-chip"><i class="fas fa-user-friends"></i>${escapeHtml(item.participantes)}</span>` : "",
+            item.premio ? `<span class="meta-chip"><i class="fas fa-trophy"></i>${escapeHtml(item.premio)}</span>` : ""
+        ].filter(Boolean).join("");
+
         return `
-<div class="feature">
-    <span class="tag-chip">${escapeHtml(categoria)}</span>
-    <h3>${escapeHtml(item.titulo || "Sin título")}</h3>
-    <p>${escapeHtml(item.descripcion || "")}</p>
-    ${item.fechaLimite ? `<div class="meta-line">Fecha límite: ${escapeHtml(item.fechaLimite)}</div>` : ""}
-    ${link ? `<a class="btn btn-sm" href="${escapeHtml(link)}" target="_blank" rel="noopener">Ir al formulario</a>` : ""}
+<div class="acceso-card fade-up">
+    ${img ? `<img class="acceso-img" src="${escapeHtml(img)}" alt="${escapeHtml(item.titulo || categoria)}" onerror="this.style.display='none'">` : ""}
+    <div class="acceso-body">
+        <span class="tag-chip">${escapeHtml(categoria)}</span>
+        <h3>${escapeHtml(item.titulo || "Sin título")}</h3>
+        ${item.descripcion ? `<p>${escapeHtml(item.descripcion)}</p>` : ""}
+        ${meta ? `<div class="acceso-meta">${meta}</div>` : ""}
+        ${item.requisitos ? `<div class="acceso-requisitos"><strong>Requisitos</strong>${escapeHtml(item.requisitos)}</div>` : ""}
+        ${item.fechaLimite ? `<div class="meta-line">Fecha límite: ${escapeHtml(formatFecha(item.fechaLimite))}</div>` : ""}
+        ${link ? `<a class="btn btn-sm" href="${escapeHtml(link)}" target="_blank" rel="noopener">Ir al formulario</a>` : ""}
+    </div>
 </div>`;
     }
 

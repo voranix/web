@@ -18,10 +18,15 @@
             <nav class="navbar">
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
-                    <li><a href="/pages/nosotros.html">Nosotros</a></li>
-                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-toggle">Quiénes Somos <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                            <li><a href="/pages/staff.html">Staff</a></li>
+                            <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                        </ul>
+                    </li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
-                    <li><a href="/pages/proyectos.html">Proyectos</a></li>
                     <li><a href="/pages/rosters.html" class="active">Rosters</a></li>
                     <li><a href="/pages/streamers.html">Streamers</a></li>
                     <li><a href="/pages/influencers.html">Influencers</a></li>
@@ -70,11 +75,7 @@
     </div>
 </footer>
 
-<script>
-const toggle = document.getElementById("menu-toggle");
-const navbar = document.querySelector(".navbar");
-toggle.addEventListener("click", () => navbar.classList.toggle("active"));
-</script>
+<script src="/assets/js/nav.js"></script>
 
 <script type="module">
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
@@ -154,20 +155,31 @@ function tipoJugadorLabel(tipo) {
     return TIPO_JUGADOR_LABELS[key] || tipo || "";
 }
 
-function renderCard(player, i){
+const DBD_ROLE_LABELS = {
+    superviviente: "Superviviente",
+    asesino: "Asesino"
+};
+
+function dbdRoleLabel(rol) {
+    const key = normalizeText(rol);
+    return DBD_ROLE_LABELS[key] || rol || "Jugador";
+}
+
+function renderCard(player, i, game){
+    const isDbd = game === "dbd";
     const rankImg = rankImgPath(player.rango);
     const tipoLabel = tipoJugadorLabel(player.tipoJugador);
+    const rankText = rankLabel(player.rango);
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.05}s">
     <img src="${assetUrl(player.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(player.nombre) || 'Jugador'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
-        <p class="categoria">${escapeHtml(rolLabel(player.rol))}</p>
+        <p class="categoria">${isDbd ? escapeHtml(dbdRoleLabel(player.rol)) : escapeHtml(rolLabel(player.rol))}</p>
         <h3>${escapeHtml(player.nombre) || "Jugador"}</h3>
         ${tipoLabel ? `<p class="games">${escapeHtml(tipoLabel)}</p>` : ""}
-        ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${escapeHtml(rankLabel(player.rango)) || 'Rango'}" onerror="this.style.display='none'">` : ""}
-        <div class="stats">
-            <p style="color:var(--diamond)">${escapeHtml(rankLabel(player.rango))}</p>
-        </div>
+        ${isDbd && player.personaje ? `<p class="games">${escapeHtml(player.personaje)}</p>` : ""}
+        ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${escapeHtml(rankText) || 'Rango'}" onerror="this.style.display='none'">` : ""}
+        ${rankText ? `<div class="stats"><p style="color:var(--diamond)">${escapeHtml(rankText)}</p></div>` : ""}
         <img class="flag" src="/imagenes/flags/chile.png" alt="Chile">
     </div>
 </div>`;
@@ -185,7 +197,22 @@ function groupByGame(players){
 function gameLabel(game){
     if(game === "valorant") return "Roster Valorant";
     if(game === "fifa") return "Roster EA FC";
+    if(game === "dbd") return "Roster Dead by Daylight";
     return game || "Roster";
+}
+
+const GAME_ORDER = ["valorant", "fifa", "dbd"];
+
+function sortGameEntries(grouped){
+    const entries = Object.entries(grouped);
+    return entries.sort((a, b) => {
+        const ai = GAME_ORDER.indexOf(a[0]);
+        const bi = GAME_ORDER.indexOf(b[0]);
+        if(ai === -1 && bi === -1) return a[0].localeCompare(b[0]);
+        if(ai === -1) return 1;
+        if(bi === -1) return -1;
+        return ai - bi;
+    });
 }
 
 async function loadRosters(){
@@ -215,14 +242,14 @@ async function loadRosters(){
         console.log("VALORANT FILTRADOS", valorant);
         console.log("FIFA FILTRADOS", fifa);
 
-        content.innerHTML = Object.entries(grouped).map(([game, list]) => `
+        content.innerHTML = sortGameEntries(grouped).map(([game, list]) => `
 <section id="${game}" class="roster">
     <div class="section-divider">
         <h2>${gameLabel(game)}</h2>
     </div>
     <p>Equipo competitivo de ${gameLabel(game).replace("Roster ", "")}</p>
     <div class="roster-grid">
-        ${list.map(renderCard).join("")}
+        ${list.map((player, i) => renderCard(player, i, game)).join("")}
     </div>
 </section>`).join("");
     }catch(error){

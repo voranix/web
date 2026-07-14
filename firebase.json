@@ -29,7 +29,8 @@
         "**/.*",
         "**/.*/**",
         "**/node_modules/**",
-        "functions/**"
+        "functions/**",
+        "scripts/**"
       ],
       "redirects": [
         { "source": "/nosotros.html", "destination": "/pages/nosotros.html", "type": 301 },
@@ -53,7 +54,8 @@
         "**/.*",
         "**/.*/**",
         "**/node_modules/**",
-        "functions/**"
+        "functions/**",
+        "scripts/**"
       ],
       "redirects": [
         { "source": "/nosotros.html", "destination": "/pages/nosotros.html", "type": 301 },
