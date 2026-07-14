@@ -58,6 +58,31 @@ function construirCorreoHtml(data) {
     `;
 }
 
+function construirCorreoConfirmacionHtml(data) {
+    const asuntoLabel = ASUNTOS[data.asunto] || data.asunto || "tu consulta";
+    return `
+<div style="background:#06060e;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;background:#0d0d1e;border-radius:12px;overflow:hidden;border:1px solid #2a2a40;">
+    <img src="https://voranix.web.app/imagenes/header-email.jpg" alt="VORANIX" style="width:100%;display:block;">
+    <div style="padding:32px 28px;text-align:center;">
+      <img src="https://voranix.web.app/imagenes/logopng.png" alt="VORANIX" width="64" height="64" style="width:64px;height:64px;margin:0 auto 16px;display:block;">
+      <h1 style="color:#ffffff;font-size:22px;margin:0 0 12px;">¡Gracias por escribirnos, ${data.nombre}!</h1>
+      <p style="color:#b8b8d0;font-size:14px;line-height:1.7;margin:0 0 8px;">
+        Recibimos tu mensaje sobre <strong style="color:#ffffff;">${asuntoLabel}</strong>.
+      </p>
+      <p style="color:#b8b8d0;font-size:14px;line-height:1.7;margin:0 0 24px;">
+        Nuestro staff se comunicará contigo lo antes posible. Mientras tanto, te invitamos a sumarte a nuestra comunidad en Discord.
+      </p>
+      <a href="https://discord.gg/jZq9gPSW5T" style="display:inline-block;background:#7b2cff;background:linear-gradient(135deg,#7b2cff,#ff6a00);color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-weight:bold;font-size:13px;">Unirme al Discord</a>
+    </div>
+    <div style="border-top:1px solid #2a2a40;padding:20px 28px;text-align:center;">
+      <p style="color:#9090b0;font-size:12px;margin:0 0 4px;">— El equipo de VORANIX</p>
+      <p style="color:#55556a;font-size:11px;margin:0;">Este es un mensaje automático, no hace falta que lo respondas.</p>
+    </div>
+  </div>
+</div>`;
+}
+
 function construirDiscordEmbed(data) {
     const asuntoLabel = ASUNTOS[data.asunto] || data.asunto || "Sin especificar";
     const campos = [
@@ -138,6 +163,15 @@ exports.onNuevoMensaje = onDocumentCreated(
                     subject: `Nuevo mensaje de contacto: ${data.nombre}`,
                     html: construirCorreoHtml(data)
                 });
+
+                if (data.email && data.email.includes("@")) {
+                    await transporter.sendMail({
+                        from: `VORANIX <${smtpUser}>`,
+                        to: data.email,
+                        subject: "Recibimos tu mensaje - VORANIX",
+                        html: construirCorreoConfirmacionHtml(data)
+                    });
+                }
             } else {
                 logger.warn("SMTP_USER/SMTP_PASS no configurados, se omite el envío de correo");
             }

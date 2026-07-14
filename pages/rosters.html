@@ -19,6 +19,8 @@
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
                     <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li><a href="/pages/reglamento.html">Reglamento</a></li>
                     <li><a href="/pages/proyectos.html">Proyectos</a></li>
                     <li><a href="/pages/rosters.html" class="active">Rosters</a></li>
                     <li><a href="/pages/streamers.html">Streamers</a></li>
@@ -49,6 +51,8 @@
         <div class="footer-links">
             <a href="/index.html">Inicio</a>
             <a href="/pages/nosotros.html">Nosotros</a>
+            <a href="/pages/staff.html">Staff</a>
+            <a href="/pages/reglamento.html">Reglamento</a>
             <a href="/pages/streamers.html">Streamers</a>
             <a href="/pages/influencers.html">Influencers</a>
             <a href="/pages/rosters.html">Rosters</a>
@@ -73,7 +77,7 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 
 <script type="module">
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "/assets/js/firebase-config.js";
+import { db, escapeHtml } from "/assets/js/firebase-config.js";
 
 const content = document.getElementById("rosters-content");
 
@@ -124,17 +128,44 @@ function rankLabel(rango) {
     return RANGO_LABELS[key] || rango || "";
 }
 
+const ROL_LABELS = {
+    duelista: "Duelista",
+    controlador: "Controlador",
+    centinela: "Centinela",
+    iniciador: "Iniciador"
+};
+
+function rolLabel(rol) {
+    const key = normalizeText(rol);
+    return ROL_LABELS[key] || rol || "Jugador";
+}
+
+const TIPO_JUGADOR_LABELS = {
+    principal: "Jugador Principal",
+    suplente: "Jugador Suplente",
+    coach: "Coach",
+    igl: "IGL",
+    capitan: "Capitán"
+};
+
+function tipoJugadorLabel(tipo) {
+    const key = normalizeText(tipo);
+    return TIPO_JUGADOR_LABELS[key] || tipo || "";
+}
+
 function renderCard(player, i){
     const rankImg = rankImgPath(player.rango);
+    const tipoLabel = tipoJugadorLabel(player.tipoJugador);
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.05}s">
-    <img src="${assetUrl(player.foto) || '/imagenes/logo.jpg'}" alt="${player.nombre || 'Jugador'}" onerror="this.src='/imagenes/logo.jpg'">
+    <img src="${assetUrl(player.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(player.nombre) || 'Jugador'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
-        <p class="categoria">${player.rol || "Jugador"}</p>
-        <h3>${player.nombre || "Jugador"}</h3>
-        ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${rankLabel(player.rango) || 'Rango'}" onerror="this.style.display='none'">` : ""}
+        <p class="categoria">${escapeHtml(rolLabel(player.rol))}</p>
+        <h3>${escapeHtml(player.nombre) || "Jugador"}</h3>
+        ${tipoLabel ? `<p class="games">${escapeHtml(tipoLabel)}</p>` : ""}
+        ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${escapeHtml(rankLabel(player.rango)) || 'Rango'}" onerror="this.style.display='none'">` : ""}
         <div class="stats">
-            <p style="color:var(--diamond)">${rankLabel(player.rango)}</p>
+            <p style="color:var(--diamond)">${escapeHtml(rankLabel(player.rango))}</p>
         </div>
         <img class="flag" src="/imagenes/flags/chile.png" alt="Chile">
     </div>

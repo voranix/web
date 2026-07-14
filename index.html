@@ -21,6 +21,8 @@
                 <ul>
                     <li><a href="/index.html" class="active">Inicio</a></li>
                     <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li><a href="/pages/reglamento.html">Reglamento</a></li>
                     <li><a href="/pages/proyectos.html">Proyectos</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
                     <li><a href="/pages/streamers.html">Streamers</a></li>
@@ -179,18 +181,8 @@
         <h2>Nuestras Marcas Aliadas</h2>
         <p class="brands-sub">Colaboramos con marcas que impulsan la comunidad gamer</p>
         <div class="brands-slider">
-            <div class="brands-track">
-                <a href="/pages/patrocinadores.html#ottoke" class="brand-card sponsor"><img src="/imagenes/marcas/Logo Ottoke.png" alt="Ottoke"><h3>Ottoke</h3><span>Patrocinador Oficial</span></a>
-                <a href="/pages/patrocinadores.html#maipizza" class="brand-card sponsor"><img src="/imagenes/marcas/Logo Mai.Pizza_.png" alt="Mai Pizza"><h3>Mai Pizza</h3><span>Patrocinador Oficial</span></a>
-                <a href="/pages/patrocinadores.html#kenkofoods" class="brand-card"><img src="/imagenes/marcas/kenkofoods.png" alt="Kenkofoods" onerror="this.style.display='none'"><h3>Kenkofoods</h3><span>Colaborador</span></a>
-                <a href="/pages/patrocinadores.html#doraking" class="brand-card"><img src="/imagenes/marcas/doraking.png" alt="Doraking" onerror="this.style.display='none'"><h3>Doraking</h3><span>Colaborador</span></a>
-                <a href="/pages/patrocinadores.html#trulu" class="brand-card"><img src="/imagenes/marcas/Logo Trulustore.png" alt="Trulu Store"><h3>Trulu Store</h3><span>Colaborador</span></a>
-                <!-- Duplicados para loop infinito -->
-                <a href="/pages/patrocinadores.html#ottoke" class="brand-card sponsor"><img src="/imagenes/marcas/Logo Ottoke.png" alt="Ottoke"><h3>Ottoke</h3><span>Patrocinador Oficial</span></a>
-                <a href="/pages/patrocinadores.html#maipizza" class="brand-card sponsor"><img src="/imagenes/marcas/Logo Mai.Pizza_.png" alt="Mai Pizza"><h3>Mai Pizza</h3><span>Patrocinador Oficial</span></a>
-                <a href="/pages/patrocinadores.html#kenkofoods" class="brand-card"><img src="/imagenes/marcas/kenkofoods.png" alt="Kenkofoods" onerror="this.style.display='none'"><h3>Kenkofoods</h3><span>Colaborador</span></a>
-                <a href="/pages/patrocinadores.html#doraking" class="brand-card"><img src="/imagenes/marcas/doraking.png" alt="Doraking" onerror="this.style.display='none'"><h3>Doraking</h3><span>Colaborador</span></a>
-                <a href="/pages/patrocinadores.html#trulu" class="brand-card"><img src="/imagenes/marcas/Logo Trulustore.png" alt="Trulu Store"><h3>Trulu Store</h3><span>Colaborador</span></a>
+            <div class="brands-track" id="brands-track">
+                <p class="loading" style="width:100%;">Cargando marcas...</p>
             </div>
         </div>
     </div>
@@ -203,6 +195,8 @@
         <div class="footer-links">
             <a href="/index.html">Inicio</a>
             <a href="/pages/nosotros.html">Nosotros</a>
+            <a href="/pages/staff.html">Staff</a>
+            <a href="/pages/reglamento.html">Reglamento</a>
             <a href="/pages/proyectos.html">Proyectos</a>
             <a href="/pages/streamers.html">Streamers</a>
             <a href="/pages/influencers.html">Influencers</a>
@@ -224,6 +218,52 @@
 const toggle = document.getElementById("menu-toggle");
 const navbar = document.querySelector(".navbar");
 toggle.addEventListener("click", () => navbar.classList.toggle("active"));
+</script>
+
+<script type="module">
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { db, escapeHtml } from "/assets/js/firebase-config.js";
+
+const track = document.getElementById("brands-track");
+
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
+
+function renderBrandCard(sponsor) {
+    const isMain = sponsor.tipo === "patrocinador";
+    const badge = isMain ? "Patrocinador Oficial" : "Colaborador";
+    return `<a href="/pages/patrocinadores.html#${encodeURIComponent(sponsor.id)}" class="brand-card${isMain ? " sponsor" : ""}"><img src="${assetUrl(sponsor.logo) || '/imagenes/logo.jpg'}" alt="${escapeHtml(sponsor.nombre) || 'Patrocinador'}" onerror="this.style.display='none'"><h3>${escapeHtml(sponsor.nombre) || "Patrocinador"}</h3><span>${badge}</span></a>`;
+}
+
+async function loadBrands() {
+    try {
+        const snapshot = await getDocs(collection(db, "sponsors"));
+        const sponsors = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(item => item.activo !== false)
+            .sort((a, b) => {
+                const aMain = a.tipo === "patrocinador" ? 0 : 1;
+                const bMain = b.tipo === "patrocinador" ? 0 : 1;
+                if (aMain !== bMain) return aMain - bMain;
+                return String(a.nombre || "").localeCompare(String(b.nombre || ""));
+            });
+
+        if (!sponsors.length) {
+            track.innerHTML = `<p class="loading" style="width:100%;">Aún no hay marcas publicadas.</p>`;
+            return;
+        }
+
+        const cardsHtml = sponsors.map(renderBrandCard).join("");
+        // Se duplica una vez para que el loop de la animación (translateX(-50%)) sea continuo.
+        track.innerHTML = cardsHtml + cardsHtml;
+    } catch (e) {
+        console.error(e);
+        track.innerHTML = `<p class="loading" style="width:100%;">No se pudieron cargar las marcas.</p>`;
+    }
+}
+loadBrands();
 </script>
 </body>
 </html>

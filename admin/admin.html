@@ -184,7 +184,7 @@ import {
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 
-import { auth, db, storage } from "/assets/js/firebase-config.js";
+import { auth, db, storage, escapeHtml } from "/assets/js/firebase-config.js";
 
 const RANGO_BASES = [
     ["hierro", "Hierro"],
@@ -201,6 +201,29 @@ const VALORANT_RANKS = [["", "Sin rango"]].concat(
     [["radiante", "Radiante"]]
 );
 
+const VALORANT_ROLES = [
+    ["", "Sin rol"],
+    ["duelista", "Duelista"],
+    ["controlador", "Controlador"],
+    ["centinela", "Centinela"],
+    ["iniciador", "Iniciador"]
+];
+
+const TIPO_JUGADOR = [
+    ["", "Sin especificar"],
+    ["principal", "Jugador Principal"],
+    ["suplente", "Jugador Suplente"],
+    ["coach", "Coach"],
+    ["igl", "IGL"],
+    ["capitan", "Capitán"]
+];
+
+const PAISES = [
+    ["chile", "Chile"],
+    ["mexico", "México"],
+    ["argentina", "Argentina"]
+];
+
 const sections = {
     // Definicion de cada CRUD: etiqueta visible, coleccion y campos del modal.
     valorant: {
@@ -209,9 +232,10 @@ const sections = {
         filterValue: "valorant",
         fields: [
             ["nombre", "Nombre", "text"],
-            ["juego", "Juego", "text"],
-            ["rol", "Rol", "text"],
+            ["juego", "Juego", "select", [["valorant", "Valorant"]]],
+            ["rol", "Rol", "select", VALORANT_ROLES],
             ["rango", "Rango", "select", VALORANT_RANKS],
+            ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
         ]
@@ -222,9 +246,10 @@ const sections = {
         filterValue: "fifa",
         fields: [
             ["nombre", "Nombre", "text"],
-            ["juego", "Juego", "text"],
+            ["juego", "Juego", "select", [["fifa", "EA FC"]]],
             ["rol", "Rol", "text"],
             ["rango", "Rango", "text"],
+            ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
         ]
@@ -236,8 +261,8 @@ const sections = {
             ["nombre", "Nombre", "text"],
             ["juegos", "Juegos", "text"],
             ["horario", "Horario", "text"],
-            ["pais", "País", "text"],
-            ["foto", "Imagen", "image"],
+            ["pais", "País", "select", PAISES],
+            ["foto", "Imagen", "imageurl"],
             ["instagram", "Instagram", "url"],
             ["twitch", "Twitch", "url"],
             ["activo", "Activo", "boolean"]
@@ -249,8 +274,8 @@ const sections = {
         fields: [
             ["nombre", "Nombre", "text"],
             ["categoria", "Categoría", "text"],
-            ["pais", "País", "text"],
-            ["foto", "Imagen", "image"],
+            ["pais", "País", "select", PAISES],
+            ["foto", "Imagen", "imageurl"],
             ["instagram", "Instagram", "url"],
             ["tiktok", "TikTok", "url"],
             ["activo", "Activo", "boolean"]
@@ -264,7 +289,7 @@ const sections = {
             ["descripcion", "Descripción", "textarea"],
             ["logo", "Logo", "image"],
             ["web", "Website URL", "url"],
-            ["tipo", "Tipo", "select", ["patrocinador"]],
+            ["tipo", "Tipo", "select", [["patrocinador", "Patrocinador (dorado, arriba)"], ["colaborador", "Colaborador (morado)"]]],
             ["activo", "Activo", "boolean"]
         ]
     },
@@ -279,6 +304,19 @@ const sections = {
             ["img", "Imagen", "image"],
             ["link", "Link", "url"],
             ["upcoming", "Próximo", "boolean"]
+        ]
+    },
+    staff: {
+        label: "Staff",
+        collection: "staff",
+        fields: [
+            ["nombre", "Nombre", "text"],
+            ["cargo", "Cargo", "text"],
+            ["foto", "Imagen", "image"],
+            ["instagram", "Instagram", "url"],
+            ["twitter", "Twitter/X", "url"],
+            ["discord", "Discord", "url"],
+            ["activo", "Activo", "boolean"]
         ]
     },
     mensajes: {
@@ -386,14 +424,14 @@ function assetUrl(path) {
 }
 
 function tableValue(value, type, options){
-    if(type === "image") return value ? `<img src="${assetUrl(value)}" alt="imagen">` : "-";
+    if(type === "image" || type === "imageurl") return value ? `<img src="${escapeHtml(assetUrl(value))}" alt="imagen">` : "-";
     if(type === "boolean") return value ? "Sí" : "No";
     if(type === "json") return Array.isArray(value) ? `${value.length} cupón(es)` : "-";
     if(type === "select" && Array.isArray(options)){
         const match = options.find(option => Array.isArray(option) ? option[0] === value : option === value);
-        if(match) return Array.isArray(match) ? match[1] : match;
+        if(match) return escapeHtml(Array.isArray(match) ? match[1] : match);
     }
-    return value || "-";
+    return value ? escapeHtml(value) : "-";
 }
 
 function renderCrudSection(section){
@@ -473,9 +511,9 @@ async function renderUsers(){
 
         const rows = usersCache.map(user => `
 <tr>
-<td>${user.displayName || "-"}</td>
-<td>${user.email || "-"}</td>
-<td>${user.role || "-"}</td>
+<td>${user.displayName ? escapeHtml(user.displayName) : "-"}</td>
+<td>${user.email ? escapeHtml(user.email) : "-"}</td>
+<td>${user.role ? escapeHtml(user.role) : "-"}</td>
 <td>${user.active === false ? "No" : "Sí"}</td>
 <td><div class="actions">
     <button class="btn secondary small" type="button" data-user-edit="${user.uid}">Editar</button>
@@ -496,7 +534,7 @@ function fieldHtml(field, value){
     const full = ["textarea", "json", "image"].includes(type) ? " full" : "";
 
     if(type === "textarea"){
-        return `<div class="field${full}"><label>${label}</label><textarea name="${name}">${safeValue}</textarea></div>`;
+        return `<div class="field${full}"><label>${label}</label><textarea name="${name}">${escapeHtml(safeValue)}</textarea></div>`;
     }
 
     if(type === "json"){
@@ -514,11 +552,15 @@ function fieldHtml(field, value){
     }
 
     if(type === "image"){
-        const preview = safeValue ? `<img src="${assetUrl(safeValue)}" alt="${label}" style="width:100%;max-width:220px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #33334a;margin-top:10px;">` : "";
-        return `<div class="field${full}"><label>${label}</label><input name="${name}" type="text" value="${safeValue}" placeholder="Ruta o URL de imagen"><input name="${name}File" type="file" accept="image/*"><span class="help">Puedes pegar una ruta relativa, una URL o subir una imagen a Firebase Storage.</span>${preview}</div>`;
+        const preview = safeValue ? `<img src="${escapeHtml(assetUrl(safeValue))}" alt="${label}" style="width:100%;max-width:220px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #33334a;margin-top:10px;">` : "";
+        return `<div class="field${full}"><label>${label}</label><div style="display:flex;gap:8px;align-items:center;"><input name="${name}" type="text" value="${escapeHtml(safeValue)}" placeholder="Ruta o URL de imagen" style="flex:1;"><button type="button" class="btn danger small" title="Eliminar imagen" onclick="this.closest('div').querySelector('input[type=text]').value=''; this.closest('.field').querySelector('input[type=file]').value='';">🗑️</button></div><input name="${name}File" type="file" accept="image/*"><span class="help">Puedes pegar una ruta relativa, una URL o subir una imagen a Firebase Storage.</span>${preview}</div>`;
     }
 
-    return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${safeValue}"></div>`;
+    if(type === "imageurl"){
+        return `<div class="field"><label>${label}</label><div style="display:flex;gap:8px;align-items:center;"><input name="${name}" type="text" value="${escapeHtml(safeValue)}" placeholder="URL de la imagen" style="flex:1;"><button type="button" class="btn danger small" title="Eliminar imagen" onclick="this.closest('div').querySelector('input[type=text]').value=''; this.closest('.field').querySelector('input[type=file]').value='';">🗑️</button></div><input name="${name}File" type="file" accept="image/*" style="margin-top:6px;font-size:11px;"><span class="help">Pegá una URL o subí un archivo pequeño desde tu dispositivo.</span></div>`;
+    }
+
+    return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${escapeHtml(safeValue)}"></div>`;
 }
 
 function userFieldHtml(name, value, disabled = false){
@@ -546,7 +588,7 @@ function userFieldHtml(name, value, disabled = false){
 </div>`;
     }
 
-    return `<div class="field"><label>${name === "displayName" ? "Nombre" : name}</label><input name="${name}" type="text" value="${safeValue}" ${disabled ? "disabled" : ""}></div>`;
+    return `<div class="field"><label>${name === "displayName" ? "Nombre" : name}</label><input name="${name}" type="text" value="${escapeHtml(safeValue)}" ${disabled ? "disabled" : ""}></div>`;
 }
 
 function openItemModal(id = null, data = {}){
@@ -615,10 +657,10 @@ async function saveItem(event){
             const urlValue = String(formData.get(name) ?? "").trim();
             const currentValue = editingData[name];
 
-            if(type === "image"){
-                if(file && file.size){
-                    payload[name] = await uploadImage(file, section.collection, name);
-                }else if(urlValue){
+            if((type === "image" || type === "imageurl") && file && file.size){
+                payload[name] = await uploadImage(file, section.collection, name);
+            }else if(type === "image"){
+                if(urlValue){
                     payload[name] = urlValue;
                 }else if(editingId && currentValue){
                     payload[name] = currentValue;

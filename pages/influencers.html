@@ -19,6 +19,8 @@
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
                     <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li><a href="/pages/reglamento.html">Reglamento</a></li>
                     <li><a href="/pages/proyectos.html">Proyectos</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
                     <li><a href="/pages/streamers.html">Streamers</a></li>
@@ -55,6 +57,8 @@
         <div class="footer-links">
             <a href="/index.html">Inicio</a>
             <a href="/pages/nosotros.html">Nosotros</a>
+            <a href="/pages/staff.html">Staff</a>
+            <a href="/pages/reglamento.html">Reglamento</a>
             <a href="/pages/streamers.html">Streamers</a>
             <a href="/pages/influencers.html">Influencers</a>
             <a href="/pages/rosters.html">Rosters</a>
@@ -79,7 +83,7 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 
 <script type="module">
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "/assets/js/firebase-config.js";
+import { db, escapeHtml } from "/assets/js/firebase-config.js";
 
 const grid = document.getElementById("influencers-grid");
 function assetUrl(path) {
@@ -88,21 +92,27 @@ function assetUrl(path) {
 }
 
 function flagPath(pais) {
-    return String(pais || "").toLowerCase() === "mexico" ? "/imagenes/flags/mexico.png" : "/imagenes/flags/chile.png";
+    const key = String(pais || "").toLowerCase();
+    if (key === "mexico") return "/imagenes/flags/mexico.png";
+    if (key === "argentina") return "/imagenes/flags/argentina.png";
+    return "/imagenes/flags/chile.png";
 }
 
 function flagAlt(pais) {
-    return String(pais || "").toLowerCase() === "mexico" ? "México" : "Chile";
+    const key = String(pais || "").toLowerCase();
+    if (key === "mexico") return "México";
+    if (key === "argentina") return "Argentina";
+    return "Chile";
 }
 
 function renderInfluencer(influencer, i) {
     const redesUrl = influencer.instagram || influencer.tiktok || "#";
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.04}s">
-    <img src="${assetUrl(influencer.foto) || '/imagenes/logo.jpg'}" alt="${influencer.nombre || 'Influencer'}" onerror="this.src='/imagenes/logo.jpg'">
+    <img src="${assetUrl(influencer.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(influencer.nombre) || 'Influencer'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
-        <h3>${influencer.nombre || "Influencer"}</h3>
-        <p class="games"><i class="fas fa-star" style="margin-right:6px;color:var(--morado);"></i>${influencer.categoria || "Contenido variado"}</p>
+        <h3>${escapeHtml(influencer.nombre) || "Influencer"}</h3>
+        <p class="games"><i class="fas fa-star" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(influencer.categoria) || "Contenido variado"}</p>
         <img class="flag" src="${flagPath(influencer.pais)}" alt="${flagAlt(influencer.pais)}">
         <a href="${redesUrl}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
             <i class="fas fa-external-link-alt"></i> Redes

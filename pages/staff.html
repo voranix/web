@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streamers | VORANIX</title>
+    <title>Staff | VORANIX</title>
     <link rel="stylesheet" href="/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
 
-<header class="header header-sub header-streamers">
+<header class="header header-sub header-staff">
     <div class="menu">
         <div class="menu-content">
             <button class="menu-toggle" id="menu-toggle">☰</button>
@@ -19,11 +19,11 @@
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
                     <li><a href="/pages/nosotros.html">Nosotros</a></li>
-                    <li><a href="/pages/staff.html">Staff</a></li>
+                    <li><a href="/pages/staff.html" class="active">Staff</a></li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
                     <li><a href="/pages/proyectos.html">Proyectos</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
-                    <li><a href="/pages/streamers.html" class="active">Streamers</a></li>
+                    <li><a href="/pages/streamers.html">Streamers</a></li>
                     <li><a href="/pages/influencers.html">Influencers</a></li>
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
                     <li><a href="/pages/contacto.html">Contacto</a></li>
@@ -33,21 +33,21 @@
         </div>
     </div>
     <div class="header-content container">
-        <div class="hero-eyebrow"><span></span>VORANIX CREATORS</div>
-        <h1>Streamers</h1>
-        <p>CREADORES QUE REPRESENTAN A VORANIX</p>
+        <div class="hero-eyebrow"><span></span>EQUIPO VORANIX</div>
+        <h1>Staff</h1>
+        <p>LAS PERSONAS DETRÁS DE LA COMUNIDAD</p>
     </div>
 </header>
 
 <section class="streamers-page container">
     <div class="section-title">
-        <div class="section-label">Nuestra red</div>
-        <h2>Creadores de Contenido</h2>
+        <div class="section-label">Nuestro equipo</div>
+        <h2>Staff Administrativo</h2>
         <span class="accent-line"></span>
-        <p>Streamers activos en Twitch, Kick y TikTok que forman parte de la familia VORANIX</p>
+        <p>Conocé a quienes hacen posible VORANIX día a día</p>
     </div>
-    <div class="roster-grid" id="streamers-grid">
-        <p class="loading"><i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--morado);"></i>Cargando streamers...</p>
+    <div class="roster-grid" id="staff-grid">
+        <p class="loading"><i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--morado);"></i>Cargando staff...</p>
     </div>
 </section>
 
@@ -85,59 +85,47 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { db, escapeHtml } from "/assets/js/firebase-config.js";
 
-const grid = document.getElementById("streamers-grid");
+const grid = document.getElementById("staff-grid");
+
 function assetUrl(path) {
     if (!path) return "";
     return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
 }
 
-function flagPath(pais) {
-    const key = String(pais || "").toLowerCase();
-    if (key === "mexico") return "/imagenes/flags/mexico.png";
-    if (key === "argentina") return "/imagenes/flags/argentina.png";
-    return "/imagenes/flags/chile.png";
-}
+function renderStaff(member, i) {
+    const redes = [
+        member.instagram ? `<a href="${escapeHtml(member.instagram)}" target="_blank" rel="noopener" title="Instagram"><i class="fab fa-instagram"></i></a>` : "",
+        member.twitter ? `<a href="${escapeHtml(member.twitter)}" target="_blank" rel="noopener" title="Twitter/X"><i class="fab fa-twitter"></i></a>` : "",
+        member.discord ? `<a href="${escapeHtml(member.discord)}" target="_blank" rel="noopener" title="Discord"><i class="fab fa-discord"></i></a>` : ""
+    ].filter(Boolean).join("");
 
-function flagAlt(pais) {
-    const key = String(pais || "").toLowerCase();
-    if (key === "mexico") return "México";
-    if (key === "argentina") return "Argentina";
-    return "Chile";
-}
-
-function renderStreamer(streamer, i) {
-    const redesUrl = streamer.twitch || streamer.instagram || "#";
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.04}s">
-    <img src="${assetUrl(streamer.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(streamer.nombre) || 'Streamer'}" onerror="this.src='/imagenes/logo.jpg'">
+    <img src="${assetUrl(member.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(member.nombre) || 'Staff'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
-        <h3>${escapeHtml(streamer.nombre) || "Streamer"}</h3>
-        <p class="games"><i class="fas fa-gamepad" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(streamer.juegos) || "Variety"}</p>
-        <p class="schedule"><i class="fas fa-clock" style="margin-right:6px;"></i>${escapeHtml(streamer.horario) || "Consultar redes"}</p>
-        <img class="flag" src="${flagPath(streamer.pais)}" alt="${flagAlt(streamer.pais)}">
-        <a href="${redesUrl}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
-            <i class="fas fa-external-link-alt"></i> Redes
-        </a>
+        <h3>${escapeHtml(member.nombre) || "Staff"}</h3>
+        <p class="games"><i class="fas fa-user-shield" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(member.cargo) || "Staff VORANIX"}</p>
+        ${redes ? `<div class="staff-socials">${redes}</div>` : ""}
     </div>
 </div>`;
 }
 
-async function loadStreamers() {
+async function loadStaff() {
     try {
-        const snapshot = await getDocs(collection(db, "streamers"));
+        const snapshot = await getDocs(collection(db, "staff"));
         const list = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(item => item.activo !== false)
             .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
         grid.innerHTML = list.length
-            ? list.map(renderStreamer).join("")
-            : `<p class="loading">No hay streamers publicados.</p>`;
+            ? list.map(renderStaff).join("")
+            : `<p class="loading">Aún no hay miembros del staff publicados.</p>`;
     } catch (e) {
         console.error(e);
-        grid.innerHTML = `<p class="loading">No se pudieron cargar los streamers.</p>`;
+        grid.innerHTML = `<p class="loading">No se pudo cargar el staff.</p>`;
     }
 }
-loadStreamers();
+loadStaff();
 </script>
 </body>
 </html>

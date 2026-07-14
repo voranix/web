@@ -19,6 +19,8 @@
 <ul>
 <li><a href="/index.html">Inicio</a></li>
 <li><a href="/pages/nosotros.html">Nosotros</a></li>
+<li><a href="/pages/staff.html">Staff</a></li>
+<li><a href="/pages/reglamento.html">Reglamento</a></li>
 <li><a href="/pages/proyectos.html">Proyectos</a></li>
 <li><a href="/pages/rosters.html">Rosters</a></li>
 <li><a href="/pages/streamers.html">Streamers</a></li>
@@ -51,7 +53,7 @@ toggle.addEventListener("click", () => navbar.classList.toggle("active"));
 
 <script type="module">
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "/assets/js/firebase-config.js";
+import { db, escapeHtml } from "/assets/js/firebase-config.js";
 
 const container = document.getElementById("sponsors-page");
 
@@ -63,11 +65,11 @@ function assetUrl(path) {
 function renderSponsor(sponsor){
     return `
 <div class="sponsor-box ${sponsor.tipo === "patrocinador" ? "sponsor-main" : ""}" id="${sponsor.id}">
-    <img src="${assetUrl(sponsor.logo) || "/imagenes/logo.jpg"}" alt="${sponsor.nombre || "Patrocinador"}">
+    <img src="${assetUrl(sponsor.logo) || "/imagenes/logo.jpg"}" alt="${escapeHtml(sponsor.nombre) || "Patrocinador"}">
     <div class="sponsor-info">
-        <h2>${sponsor.nombre || "Patrocinador"}</h2>
-        <p>${sponsor.descripcion || ""}</p>
-        ${sponsor.web ? `<div class="sponsor-links"><a href="${sponsor.web}" target="_blank" rel="noopener" class="btn">Ir al sitio</a></div>` : ""}
+        <h2>${escapeHtml(sponsor.nombre) || "Patrocinador"}</h2>
+        <p>${escapeHtml(sponsor.descripcion) || ""}</p>
+        ${/^https?:\/\//.test(sponsor.web || "") ? `<div class="sponsor-links"><a href="${escapeHtml(sponsor.web)}" target="_blank" rel="noopener" class="btn">Ir al sitio</a></div>` : ""}
     </div>
 </div>`;
 }
@@ -78,7 +80,12 @@ async function loadSponsors(){
         const sponsors = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(item => item.activo !== false)
-            .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
+            .sort((a, b) => {
+                const aMain = a.tipo === "patrocinador" ? 0 : 1;
+                const bMain = b.tipo === "patrocinador" ? 0 : 1;
+                if (aMain !== bMain) return aMain - bMain;
+                return String(a.nombre || "").localeCompare(String(b.nombre || ""));
+            });
         container.innerHTML = sponsors.length
             ? sponsors.map(renderSponsor).join("")
             : `<p class="loading">Aun no hay patrocinadores publicados.</p>`;

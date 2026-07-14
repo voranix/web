@@ -15,7 +15,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if signedIn();
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
       allow create, update, delete: if isAdmin();
     }
 
@@ -34,6 +34,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /staff/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /sponsors/{doc} {
       allow read: if true;
       allow write: if isAdmin();
@@ -47,7 +52,11 @@ service cloud.firestore {
     match /mensajes/{doc} {
       function isValidMensaje() {
         let data = request.resource.data;
-        return data.nombre is string && data.nombre.size() > 0 && data.nombre.size() < 200
+        return data.keys().hasOnly([
+            "nombre", "email", "asunto", "mensaje", "leido", "createdAt",
+            "juego", "nivel", "id_juego", "redes", "descripcion", "equipo", "juego_torneo"
+          ])
+          && data.nombre is string && data.nombre.size() > 0 && data.nombre.size() < 200
           && data.email is string && data.email.size() > 0 && data.email.size() < 200
           && data.asunto is string && data.asunto.size() < 100
           && data.mensaje is string && data.mensaje.size() > 0 && data.mensaje.size() < 5000
