@@ -5,3 +5,4 @@ firebase-debug.log
 scripts/serviceAccountKey.json
 scripts/cuentas.csv
 scripts/resultado.json
+scripts/resultado-import.json

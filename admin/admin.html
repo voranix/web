@@ -185,7 +185,8 @@ import {
     getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 
-import { auth, db, storage, escapeHtml } from "/assets/js/firebase-config.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
+import { auth, db, storage, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
 
 const RANGO_BASES = [
     ["hierro", "Hierro"],
@@ -373,7 +374,8 @@ const sections = {
             ["requisitos", "Requisitos", "textarea"],
             ["link", "Link (Google Form)", "url"],
             ["fechaLimite", "Fecha límite", "date"],
-            ["activo", "Publicado", "boolean"]
+            ["activo", "Activo en Creadores", "boolean"],
+            ["publicarProyectos", "Activo en Proyectos", "boolean"]
         ]
     }
 };
@@ -527,6 +529,26 @@ ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[
     });
 }
 
+async function enviarAcceso(uids){
+    if(!uids.length) return;
+    const label = uids.length === 1 ? "este creador" : `estos ${uids.length} creadores`;
+    if(!confirm(`¿Enviar correo de acceso a ${label}? Les vamos a mandar un link para configurar su contraseña.`)) return;
+
+    try{
+        const sendFn = httpsCallable(functionsInstance, "enviarAccesoCreador");
+        const result = await sendFn({ uids });
+        const detalle = result.data.detalle || [];
+        const ok = detalle.filter(d => d.status === "enviado").length;
+        const fail = detalle.filter(d => d.status !== "enviado");
+        let msg = `Enviados: ${ok}/${detalle.length}.`;
+        if(fail.length) msg += `\nFallaron: ${fail.map(f => `${f.uid} (${f.error})`).join(", ")}`;
+        alert(msg);
+    }catch(error){
+        console.error(error);
+        alert("No se pudo enviar: " + (error.message || error));
+    }
+}
+
 async function renderUsers(){
     // La vista de usuarios usa lecturas directas de Firestore y edición por modal.
     unsubscribeList = null;
@@ -538,7 +560,10 @@ async function renderUsers(){
         <h2>Usuarios</h2>
         <p class="muted">Administración de perfiles almacenados en Firestore.</p>
     </div>
-    <button class="btn" type="button" id="add-user">Agregar</button>
+    <div class="actions">
+        <button class="btn" type="button" id="add-user">Agregar</button>
+        <button class="btn secondary" type="button" id="send-all-creadores">Enviar acceso a todos los creadores</button>
+    </div>
 </div>
 <div class="panel">
     <div class="table-wrap">
@@ -551,6 +576,16 @@ async function renderUsers(){
 
     const addUserBtn = document.getElementById("add-user");
     if(addUserBtn) addUserBtn.addEventListener("click", () => openItemModal(null, { role: "creador", active: true }));
+
+    const sendAllBtn = document.getElementById("send-all-creadores");
+    if(sendAllBtn) sendAllBtn.addEventListener("click", () => {
+        const creadorUids = usersCache.filter(u => u.role === "creador" && u.active !== false).map(u => u.uid);
+        if(!creadorUids.length){
+            alert("No hay cuentas creador activas todavía.");
+            return;
+        }
+        enviarAcceso(creadorUids);
+    });
 
     const body = document.getElementById("users-body");
     try{
@@ -566,6 +601,7 @@ async function renderUsers(){
 <td>${user.active === false ? "No" : "Sí"}</td>
 <td><div class="actions">
     <button class="btn secondary small" type="button" data-user-edit="${user.uid}">Editar</button>
+    ${user.role === "creador" ? `<button class="btn small" type="button" data-send-access="${user.uid}">Enviar acceso</button>` : ""}
 </div></td>
 </tr>`);
 
@@ -685,6 +721,27 @@ async function uploadImage(file, bucketPath, fieldName){
     return await getDownloadURL(snapshot.ref);
 }
 
+async function syncAccesoToProyectos(id, payload){
+    // Un acceso/evento con "Activo en Proyectos" también se refleja como
+    // proyecto (mismo id de documento, para poder mantenerlos sincronizados).
+    const proyectoRef = doc(db, "proyectos", id);
+    if(payload.publicarProyectos){
+        await setDoc(proyectoRef, {
+            titulo: payload.titulo || "",
+            fecha: payload.fechaLimite || "",
+            descripcion: payload.descripcion || "",
+            textoLargo: payload.requisitos || "",
+            img: payload.imagen || "",
+            link: payload.link || "",
+            upcoming: true,
+            origenAcceso: true,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    }else{
+        await deleteDoc(proyectoRef).catch(() => {});
+    }
+}
+
 async function saveItem(event){
     event.preventDefault();
     const formData = new FormData(itemForm);
@@ -742,11 +799,17 @@ async function saveItem(event){
 
         payload.updatedAt = serverTimestamp();
 
+        let savedId = editingId;
         if(editingId){
             await updateDoc(doc(db, section.collection, editingId), payload);
         }else{
             payload.createdAt = serverTimestamp();
-            await addDoc(collection(db, section.collection), payload);
+            const created = await addDoc(collection(db, section.collection), payload);
+            savedId = created.id;
+        }
+
+        if(currentSection === "accesos"){
+            await syncAccesoToProyectos(savedId, payload);
         }
 
         closeModal();
@@ -767,11 +830,16 @@ content.addEventListener("click", async (event) => {
     const deleteButton = event.target.closest("[data-delete]");
     const roleButton = event.target.closest("[data-role]");
     const disableButton = event.target.closest("[data-disable]");
+    const sendAccessButton = event.target.closest("[data-send-access]");
 
     try{
         if(userEditButton){
             const user = usersCache.find(item => item.uid === userEditButton.dataset.userEdit);
             if(user) openItemModal(user.uid, user);
+        }
+
+        if(sendAccessButton){
+            await enviarAcceso([sendAccessButton.dataset.sendAccess]);
         }
 
         if(editButton){
@@ -783,6 +851,9 @@ content.addEventListener("click", async (event) => {
         if(deleteButton && confirm("¿Eliminar este registro?")){
             const section = sections[currentSection];
             await deleteDoc(doc(db, section.collection, deleteButton.dataset.delete));
+            if(currentSection === "accesos"){
+                await deleteDoc(doc(db, "proyectos", deleteButton.dataset.delete)).catch(() => {});
+            }
         }
 
         if(roleButton){

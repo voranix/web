@@ -11,6 +11,7 @@
 // -----------------------------------------------------------------------
 
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
@@ -185,5 +186,98 @@ exports.onNuevoMensaje = onDocumentCreated(
         } catch (err) {
             logger.error("Error marcando mensaje como notificado", err);
         }
+    }
+);
+
+// ---------------------------------------------------------------------
+// enviarAccesoCreador: envía el link de "configurar contraseña" + un
+// correo explicando el portal, a una o varias cuentas creador.
+// ---------------------------------------------------------------------
+
+const PORTAL_URL = "https://voranix.web.app/pages/creadores.html";
+
+function construirCorreoAcceso({ displayName, email, resetLink }) {
+    const nombre = displayName || "";
+    return `
+        <h2>¡Bienvenido/a al Portal Creadores VORANIX!</h2>
+        <p>Hola ${nombre},</p>
+        <p>Como parte del equipo de creadores con contrato VORANIX, ahora tenés
+        acceso a un portal exclusivo donde vas a encontrar accesos anticipados
+        (por ejemplo, postulaciones a torneos) antes que el público general.</p>
+        <p><strong>Paso 1 — Configurá tu contraseña</strong><br>
+        Hacé clic en este link (válido por tiempo limitado):<br>
+        <a href="${resetLink}">${resetLink}</a></p>
+        <p><strong>Paso 2 — Entrá al portal</strong><br>
+        Una vez configurada tu contraseña, ingresá con tu email
+        (<strong>${email}</strong>) en:<br>
+        <a href="${PORTAL_URL}">${PORTAL_URL}</a></p>
+        <p>Cualquier duda, escribinos por Discord.</p>
+        <p>— Equipo VORANIX</p>
+    `;
+}
+
+exports.enviarAccesoCreador = onCall(
+    { secrets: [SMTP_USER, SMTP_PASS] },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+        }
+
+        // Solo admin puede disparar este envío (no editor: manda links de
+        // acceso a cuentas, es una acción sensible).
+        const callerSnap = await admin.firestore().doc(`users/${request.auth.uid}`).get();
+        const callerProfile = callerSnap.exists ? callerSnap.data() : null;
+        if (!callerProfile || callerProfile.role !== "admin") {
+            throw new HttpsError("permission-denied", "Solo un admin puede enviar accesos.");
+        }
+
+        const uids = Array.isArray(request.data?.uids) ? request.data.uids : [];
+        if (!uids.length) {
+            throw new HttpsError("invalid-argument", "Debes indicar al menos un UID.");
+        }
+
+        const smtpUser = SMTP_USER.value();
+        const smtpPass = SMTP_PASS.value();
+        if (!smtpUser || !smtpPass) {
+            throw new HttpsError("failed-precondition", "SMTP no configurado (SMTP_USER/SMTP_PASS).");
+        }
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: smtpUser, pass: smtpPass }
+        });
+
+        const results = await Promise.allSettled(uids.map(async (uid) => {
+            const profileSnap = await admin.firestore().doc(`users/${uid}`).get();
+            if (!profileSnap.exists) throw new Error(`Perfil ${uid} no existe en Firestore`);
+            const profile = profileSnap.data();
+
+            // Blindaje: solo se manda a cuentas creador activas, aunque el
+            // llamador haya mandado otro UID por error (ej. un admin).
+            if (profile.role !== "creador" || profile.active === false) {
+                throw new Error(`${uid} no es una cuenta creador activa, se omite`);
+            }
+
+            const authUser = await admin.auth().getUser(uid);
+            const email = authUser.email || profile.email;
+            if (!email) throw new Error(`${uid} no tiene email`);
+
+            const resetLink = await admin.auth().generatePasswordResetLink(email, { url: PORTAL_URL });
+
+            await transporter.sendMail({
+                from: `VORANIX <${smtpUser}>`,
+                to: email,
+                subject: "Tu acceso al Portal Creadores VORANIX",
+                html: construirCorreoAcceso({ displayName: profile.displayName, email, resetLink })
+            });
+
+            return { uid, email, status: "enviado" };
+        }));
+
+        const detalle = results.map((r, i) => r.status === "fulfilled"
+            ? r.value
+            : { uid: uids[i], status: "error", error: String(r.reason?.message || r.reason) });
+
+        return { detalle };
     }
 );

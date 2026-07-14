@@ -1,8 +1,14 @@
 # Alta masiva de cuentas de creadores
 
-Crea decenas de cuentas de Firebase Auth (con la misma contraseña) más su perfil en Firestore
-(`users/{uid}`, rol `creador`, `active: true`) de una sola vez, sin tocar la consola de Firebase
-una por una.
+Dos scripts, según cómo hayas creado las cuentas:
+
+- **`bulk-create-users.js`**: crea las cuentas en Firebase Auth (todas con la misma
+  contraseña) Y su perfil en Firestore, de una sola vez.
+- **`import-users.js`**: si ya creaste las cuentas a mano en Authentication (Firebase
+  Console), este solo las busca por email y les crea el perfil en Firestore
+  (`users/{uid}`, rol `creador`, `active: true`). No crea cuentas ni toca contraseñas.
+
+Ambos comparten el mismo archivo de entrada `cuentas.csv` y la misma clave de servicio.
 
 ## Pasos
 
@@ -18,29 +24,47 @@ una por una.
    ```
 
 3. **Arma la lista de cuentas**: copia `cuentas.example.csv` como `cuentas.csv` y
-   pon una cuenta por línea: `email,Nombre para mostrar` (el nombre es opcional).
+   pon una cuenta por línea.
 
-4. **Corre el script** indicando la contraseña que tendrán todas las cuentas:
+### Opción A: crear las cuentas desde el script (`bulk-create-users.js`)
 
-   PowerShell:
-   ```
-   $env:BULK_PASSWORD = "la-contraseña-que-quieras"
-   node bulk-create-users.js
-   ```
+Formato de línea: `email,Nombre para mostrar` (el nombre es opcional).
 
-   Bash:
-   ```
-   BULK_PASSWORD="la-contraseña-que-quieras" node bulk-create-users.js
-   ```
+Corre el script indicando la contraseña que tendrán todas las cuentas:
 
-5. Revisa `resultado.json` al terminar: indica qué cuentas se crearon, cuáles ya existían
-   y si alguna falló (por ejemplo, por un email mal escrito).
+PowerShell:
+```
+$env:BULK_PASSWORD = "la-contraseña-que-quieras"
+node bulk-create-users.js
+```
+
+Bash:
+```
+BULK_PASSWORD="la-contraseña-que-quieras" node bulk-create-users.js
+```
+
+Revisa `resultado.json` al terminar: indica qué cuentas se crearon, cuáles ya existían
+y si alguna falló (por ejemplo, por un email mal escrito).
+
+### Opción B: ya creaste las cuentas a mano en Authentication (`import-users.js`)
+
+Formato de línea: `email,Nombre para mostrar,rol` (nombre y rol son opcionales, rol
+por defecto `creador`).
+
+```
+node import-users.js
+```
+
+(no necesita `BULK_PASSWORD`, porque no crea contraseñas). Revisa `resultado-import.json`:
+indica qué cuentas se encontraron en Auth y engancharon a Firestore, y cuáles no existían
+todavía (créalas primero en la consola y vuelve a correr el script).
 
 ## Notas
 
-- Es seguro volver a correrlo: si una cuenta de Auth ya existe no la duplica, y si ya tiene
-  perfil en `users/{uid}` no lo pisa (para no perder cambios de rol que hayas hecho a mano).
-- Todas las cuentas quedan con rol `creador`. Si necesitas otro rol, cámbialo después desde
-  el panel Admin → Usuarios, o edita la constante `ROLE` en `bulk-create-users.js`.
-- Este script y sus archivos (`serviceAccountKey.json`, `cuentas.csv`, `resultado.json`) no se
-  suben al hosting de Firebase.
+- Es seguro volver a correr cualquiera de los dos: si una cuenta de Auth ya existe no la
+  duplica, y si ya tiene perfil en `users/{uid}` no lo pisa (para no perder cambios de rol
+  que hayas hecho a mano).
+- Todas las cuentas quedan con rol `creador` salvo que indiques otro en el CSV. Para
+  cambiarlo después, usa el panel Admin → Usuarios.
+- Estos scripts y sus archivos (`serviceAccountKey.json`, `cuentas.csv`, `resultado*.json`)
+  no se suben al hosting de Firebase.
