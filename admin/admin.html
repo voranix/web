@@ -46,6 +46,11 @@ button{ cursor:pointer; }
 .section-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:22px; }
 .section-head h2{ font-size:28px; margin-bottom:6px; }
 .panel{ background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:8px; overflow:hidden; }
+.table-toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:16px; border-bottom:1px solid rgba(255,255,255,.08); }
+.table-toolbar input[type="search"]{ flex:1 1 220px; min-width:160px; background:#07070d; color:#fff; border:1px solid #272738; border-radius:6px; padding:10px 12px; outline:none; }
+.table-toolbar select{ background:#07070d; color:#fff; border:1px solid #272738; border-radius:6px; padding:10px 12px; outline:none; max-width:220px; }
+.table-toolbar input[type="search"]:focus,.table-toolbar select:focus{ border-color:var(--morado); box-shadow:0 0 0 3px rgba(123,44,255,.16); }
+.table-toolbar .count{ color:var(--muted); font-size:12px; white-space:nowrap; margin-left:auto; }
 .table-wrap{ overflow:auto; -webkit-overflow-scrolling:touch; }
 table{ width:100%; border-collapse:collapse; min-width:760px; }
 th,td{ padding:14px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; vertical-align:middle; }
@@ -83,6 +88,9 @@ td img{ width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px
     .content{ padding:16px; }
     .modal{ padding:12px; }
     .modal-card{ padding:18px; }
+    .table-toolbar{ padding:12px; }
+    .table-toolbar select{ max-width:none; flex:1 1 140px; }
+    .table-toolbar .count{ margin-left:0; width:100%; }
 }
 
 @media(max-width:480px){
@@ -481,6 +489,59 @@ function tableValue(value, type, options){
     return value ? escapeHtml(value) : "-";
 }
 
+function normalizeSearch(value){
+    return String(value ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+function getFilterFields(section){
+    // Solo boolean, o select con mas de una opcion real (si hay 1 sola,
+    // section.filterValue ya la fija y el filtro seria inutil).
+    return section.fields.filter(field => {
+        const [, , type, options] = field;
+        if(type === "boolean") return true;
+        if(type === "select"){
+            const values = (options || []).map(o => Array.isArray(o) ? o[0] : o).filter(v => v !== "");
+            return values.length > 1;
+        }
+        return false;
+    });
+}
+
+function rowSearchText(section, data){
+    const parts = section.fields.map(field => {
+        const [name, , type, options] = field;
+        const raw = data[name];
+        if(type === "select" && Array.isArray(options)){
+            const match = options.find(o => Array.isArray(o) ? o[0] === raw : o === raw);
+            return match ? (Array.isArray(match) ? match[1] : match) : raw;
+        }
+        if(type === "boolean") return raw ? "si activo" : "no inactivo";
+        return raw;
+    });
+    parts.push(data.id);
+    return normalizeSearch(parts.join(" "));
+}
+
+function toolbarHtml(section, searchId, placeholder){
+    const filters = getFilterFields(section);
+    const filterSelects = filters.map(field => {
+        const [name, label, type, options] = field;
+        const opts = type === "boolean"
+            ? [["", "Todos"], ["true", "Sí"], ["false", "No"]]
+            : [["", "Todos"]].concat((options || []).map(o => Array.isArray(o) ? o : [o, o]).filter(([value]) => value !== ""));
+        return `<select data-filter="${name}">${opts.map(([value, optLabel]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}: ${escapeHtml(optLabel)}</option>`).join("")}</select>`;
+    }).join("");
+    return `
+<div class="table-toolbar">
+    <input type="search" id="${searchId}" placeholder="${escapeHtml(placeholder)}" autocomplete="off">
+    ${filterSelects}
+    <span class="count" id="${searchId}-count"></span>
+</div>`;
+}
+
 function renderCrudSection(section){
     // Cada seccion de contenido usa la misma tabla y se actualiza en tiempo real.
     sectionTitle.textContent = section.label;
@@ -494,6 +555,7 @@ function renderCrudSection(section){
     ${section.hideAdd ? "" : '<button class="btn" type="button" id="add-item">Agregar</button>'}
 </div>
 <div class="panel">
+    ${toolbarHtml(section, "item-search", "Buscar...")}
     <div class="table-wrap">
         <table>
             <thead><tr>${section.fields.map(field => `<th>${field[1]}</th>`).join("")}<th>Acciones</th></tr></thead>
@@ -505,14 +567,29 @@ function renderCrudSection(section){
     const addItemBtn = document.getElementById("add-item");
     if(addItemBtn) addItemBtn.addEventListener("click", () => openItemModal());
     const body = document.getElementById("items-body");
+    const searchInput = document.getElementById("item-search");
+    const countLabel = document.getElementById("item-search-count");
+    const filterSelects = Array.from(document.querySelectorAll("[data-filter]"));
 
-    unsubscribeList = onSnapshot(collection(db, section.collection), (snapshot) => {
-        const docs = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-        console.log(section.collection, docs.map(d => d));
-        const filteredDocs = section.filterValue
-            ? docs.filter(item => String(item.juego || "").toLowerCase() === section.filterValue)
-            : docs;
-        const rows = filteredDocs.map(item => {
+    let currentDocs = [];
+
+    function renderFilteredRows(){
+        const term = normalizeSearch(searchInput.value.trim());
+        const activeFilters = filterSelects
+            .map(select => [select.dataset.filter, select.value])
+            .filter(([, value]) => value !== "");
+
+        const filtered = currentDocs.filter(item => {
+            if(term && !rowSearchText(section, item).includes(term)) return false;
+            return activeFilters.every(([name, value]) => {
+                const field = section.fields.find(f => f[0] === name);
+                const raw = item[name];
+                if(field[2] === "boolean") return String(!!raw) === value;
+                return String(raw ?? "") === value;
+            });
+        });
+
+        const rows = filtered.map(item => {
             const data = item;
             return `<tr>
 ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[3])}</td>`).join("")}
@@ -522,7 +599,20 @@ ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[
 </div></td>
 </tr>`;
         });
-        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="${section.fields.length + 1}" class="empty">No hay registros.</td></tr>`;
+        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="${section.fields.length + 1}" class="empty">Sin resultados.</td></tr>`;
+        countLabel.textContent = `${filtered.length} de ${currentDocs.length}`;
+    }
+
+    searchInput.addEventListener("input", renderFilteredRows);
+    filterSelects.forEach(select => select.addEventListener("change", renderFilteredRows));
+
+    unsubscribeList = onSnapshot(collection(db, section.collection), (snapshot) => {
+        const docs = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+        console.log(section.collection, docs.map(d => d));
+        currentDocs = section.filterValue
+            ? docs.filter(item => String(item.juego || "").toLowerCase() === section.filterValue)
+            : docs;
+        renderFilteredRows();
     }, (error) => {
         console.error(error);
         body.innerHTML = `<tr><td colspan="${section.fields.length + 1}" class="empty">No se pudieron cargar los datos.</td></tr>`;
@@ -566,6 +656,22 @@ async function renderUsers(){
     </div>
 </div>
 <div class="panel">
+    <div class="table-toolbar">
+        <input type="search" id="users-search" placeholder="Buscar por nombre o email..." autocomplete="off">
+        <select id="users-filter-role">
+            <option value="">Rol: Todos</option>
+            <option value="admin">Rol: admin</option>
+            <option value="editor">Rol: editor</option>
+            <option value="creador">Rol: creador</option>
+            <option value="viewer">Rol: viewer</option>
+        </select>
+        <select id="users-filter-active">
+            <option value="">Activo: Todos</option>
+            <option value="true">Activo: Sí</option>
+            <option value="false">Activo: No</option>
+        </select>
+        <span class="count" id="users-count"></span>
+    </div>
     <div class="table-wrap">
         <table>
             <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Activo</th><th>Acciones</th></tr></thead>
@@ -588,12 +694,27 @@ async function renderUsers(){
     });
 
     const body = document.getElementById("users-body");
-    try{
-        const snapshot = await getDocs(collection(db, "users"));
-        usersCache = snapshot.docs.map(item => ({ uid: item.id, ...item.data() }));
-        console.log("users", usersCache);
+    const searchInput = document.getElementById("users-search");
+    const roleFilter = document.getElementById("users-filter-role");
+    const activeFilter = document.getElementById("users-filter-active");
+    const countLabel = document.getElementById("users-count");
 
-        const rows = usersCache.map(user => `
+    function renderFilteredUsers(){
+        const term = normalizeSearch(searchInput.value.trim());
+        const role = roleFilter.value;
+        const activeValue = activeFilter.value;
+
+        const filtered = usersCache.filter(user => {
+            if(term){
+                const haystack = normalizeSearch(`${user.displayName || ""} ${user.email || ""}`);
+                if(!haystack.includes(term)) return false;
+            }
+            if(role && user.role !== role) return false;
+            if(activeValue && String(user.active !== false) !== activeValue) return false;
+            return true;
+        });
+
+        const rows = filtered.map(user => `
 <tr>
 <td>${user.displayName ? escapeHtml(user.displayName) : "-"}</td>
 <td>${user.email ? escapeHtml(user.email) : "-"}</td>
@@ -605,7 +726,19 @@ async function renderUsers(){
 </div></td>
 </tr>`);
 
-        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="5" class="empty">No hay usuarios.</td></tr>`;
+        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="5" class="empty">Sin resultados.</td></tr>`;
+        countLabel.textContent = `${filtered.length} de ${usersCache.length}`;
+    }
+
+    searchInput.addEventListener("input", renderFilteredUsers);
+    roleFilter.addEventListener("change", renderFilteredUsers);
+    activeFilter.addEventListener("change", renderFilteredUsers);
+
+    try{
+        const snapshot = await getDocs(collection(db, "users"));
+        usersCache = snapshot.docs.map(item => ({ uid: item.id, ...item.data() }));
+        console.log("users", usersCache);
+        renderFilteredUsers();
     }catch(error){
         console.error(error);
         body.innerHTML = `<tr><td colspan="5" class="empty">No se pudieron cargar los usuarios.</td></tr>`;
