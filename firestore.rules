@@ -7,17 +7,37 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function userProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userRoles() {
+      let data = userProfile();
+      return ("roles" in data) ? data.roles : (("role" in data) ? [data.role] : []);
+    }
+
+    function isActive() {
+      return userProfile().active != false;
+    }
+
+    function hasRole(role) {
+      return signedIn() && isActive() && role in userRoles();
+    }
+
     function isAdmin() {
-      return signedIn() &&
-        get(
-          /databases/$(database)/documents/users/$(request.auth.uid)
-        ).data.role == "admin";
+      return hasRole("admin");
     }
 
     function isStaffOrCreador() {
-      return signedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active != false &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'editor', 'creador'];
+      return hasRole("admin") || hasRole("editor") || hasRole("creador");
+    }
+
+    function isCapitanDe(juego) {
+      return hasRole("capitan") && userProfile().equipoJuego == juego;
+    }
+
+    function isEquipoMiembro(juego) {
+      return (hasRole("capitan") || hasRole("jugador")) && userProfile().equipoJuego == juego;
     }
 
     match /users/{userId} {
@@ -32,7 +52,16 @@ service cloud.firestore {
 
     match /rosters/{doc} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdmin() || isCapitanDe(request.resource.data.juego);
+      allow update, delete: if isAdmin() ||
+        (isCapitanDe(resource.data.juego) && request.resource.data.juego == resource.data.juego);
+    }
+
+    match /equipoActividad/{doc} {
+      allow read: if resource.data.visiblePublico == true || isEquipoMiembro(resource.data.juego) || isAdmin();
+      allow create: if isAdmin() || isCapitanDe(request.resource.data.juego);
+      allow update, delete: if isAdmin() ||
+        (isCapitanDe(resource.data.juego) && request.resource.data.juego == resource.data.juego);
     }
 
     match /influencers/{doc} {
@@ -46,6 +75,11 @@ service cloud.firestore {
     }
 
     match /sponsors/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /overlayConfig/{doc} {
       allow read: if true;
       allow write: if isAdmin();
     }

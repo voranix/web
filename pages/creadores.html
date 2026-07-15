@@ -43,6 +43,19 @@
         .acceso-requisitos strong{ color:#fff; display:block; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
         .meta-line{ font-size:11px; color:var(--gris-dark); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
         .acceso-card .btn{ margin-top:auto; align-self:flex-start; }
+        .overlay-links-block{ margin-bottom:36px; }
+        .overlay-links-title{ font-size:1.3rem; letter-spacing:1px; margin-bottom:6px; }
+        .overlay-links-sub{ font-size:13px; margin-bottom:18px; }
+        .overlay-links-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; }
+        .overlay-link-card{
+            background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
+            padding:20px; display:flex; flex-direction:column; gap:12px;
+        }
+        .overlay-link-url{
+            font-size:12px; color:var(--gris); word-break:break-all; background:rgba(255,255,255,0.04);
+            border:1px solid var(--border); border-radius:var(--r-sm); padding:10px 12px;
+        }
+        .overlay-link-card .btn{ align-self:flex-start; }
         @media (max-width:600px){
             .creadores-topbar{ flex-direction:column; }
             .creadores-user{ justify-content:flex-start; width:100%; }
@@ -76,6 +89,7 @@
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
                     <li><a href="/pages/contacto.html">Contacto</a></li>
                     <li><a href="/pages/creadores.html" class="admin-link active"><i class="fas fa-star" style="font-size:9px;margin-right:4px;"></i>Portal Creadores</a></li>
+                    <li><a href="/pages/roster-portal.html" class="admin-link"><i class="fas fa-users" style="font-size:9px;margin-right:4px;"></i>Portal Roster</a></li>
                     <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
                 </ul>
             </nav>
@@ -112,6 +126,23 @@
             <strong id="user-email"></strong>
             <span id="role-badge" class="badge"></span>
             <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
+        </div>
+    </div>
+
+    <div class="overlay-links-block">
+        <h2 class="overlay-links-title">Tu overlay para streams</h2>
+        <p class="muted overlay-links-sub">Pegá estos links como Fuente de Navegador en OBS (Agregar → Fuente de navegador → URL). Por ahora son los mismos para todos los creadores.</p>
+        <div class="overlay-links-grid">
+            <div class="overlay-link-card">
+                <span class="tag-chip">Horizontal</span>
+                <p class="overlay-link-url" id="overlay-url-horizontal"></p>
+                <button class="btn secondary" type="button" data-copy="horizontal">Copiar link</button>
+            </div>
+            <div class="overlay-link-card">
+                <span class="tag-chip">Vertical</span>
+                <p class="overlay-link-url" id="overlay-url-vertical"></p>
+                <button class="btn secondary" type="button" data-copy="vertical">Copiar link</button>
+            </div>
         </div>
     </div>
 
@@ -172,11 +203,41 @@
         loginScreen.classList.add("hidden");
         creadoresShell.classList.remove("hidden");
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
-        roleBadge.textContent = (profile.role || "").toUpperCase();
+        roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
+        renderOverlayLinks();
+    }
+
+    function renderOverlayLinks(){
+        const urls = {
+            horizontal: `${location.origin}/overlay/horizontal.html`,
+            vertical: `${location.origin}/overlay/vertical.html`
+        };
+        document.getElementById("overlay-url-horizontal").textContent = urls.horizontal;
+        document.getElementById("overlay-url-vertical").textContent = urls.vertical;
+
+        document.querySelectorAll("[data-copy]").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                try{
+                    await navigator.clipboard.writeText(urls[btn.dataset.copy]);
+                    const original = btn.textContent;
+                    btn.textContent = "¡Copiado!";
+                    setTimeout(() => { btn.textContent = original; }, 1800);
+                }catch(error){
+                    console.error(error);
+                    alert("No se pudo copiar. Copiá el link manualmente.");
+                }
+            });
+        });
+    }
+
+    function profileRoles(profile){
+        if(!profile) return [];
+        return Array.isArray(profile.roles) ? profile.roles : (profile.role ? [profile.role] : []);
     }
 
     function hasPortalAccess(profile){
-        return profile && profile.active !== false && ["admin", "editor", "creador"].includes(profile.role);
+        return profile && profile.active !== false &&
+            profileRoles(profile).some(role => ["admin", "editor", "creador"].includes(role));
     }
 
     async function loadProfile(user){

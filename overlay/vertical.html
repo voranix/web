@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>VORANIX Overlay - Vertical</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{ --morado:#7b2cff; --naranja:#ff6a00; --text:#ffffff; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+html, body{ width:340px; height:1080px; background:transparent; overflow:hidden; }
+body{ font-family:"Orbitron",sans-serif; color:var(--text); }
+.hidden{ display:none !important; }
+.column{
+    position:absolute; top:0; right:0; bottom:0; width:100%;
+    display:flex; flex-direction:column; align-items:center; gap:22px; padding:26px 18px;
+    background:rgba(10,10,15,.82); border-left:2px solid var(--morado);
+}
+.logo{ height:90px; width:90px; object-fit:contain; }
+.timer{ display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; }
+.timer-label{ font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--naranja); }
+.timer-value{ font-size:26px; font-weight:800; letter-spacing:2px; }
+.sponsor{ height:80px; width:100%; display:flex; align-items:center; justify-content:center; }
+.sponsor img{ max-height:80px; max-width:100%; object-fit:contain; }
+.ticker{ font-size:16px; text-align:center; line-height:1.5; letter-spacing:.5px; margin-top:auto; }
+</style>
+</head>
+<body>
+
+<div class="column">
+    <img id="overlay-logo" class="logo" alt="VORANIX">
+    <div id="overlay-timer" class="timer hidden">
+        <span id="overlay-timer-label" class="timer-label"></span>
+        <span id="overlay-timer-value" class="timer-value"></span>
+    </div>
+    <div id="overlay-sponsors" class="sponsor hidden">
+        <img id="overlay-sponsor-logo" alt="Sponsor">
+    </div>
+    <div id="overlay-ticker" class="ticker hidden"></div>
+</div>
+
+<script type="module">
+    import { initOverlay } from "/assets/js/overlay.js";
+    initOverlay();
+</script>
+</body>
+</html>

@@ -33,6 +33,7 @@
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
                     <li><a href="/pages/contacto.html">Contacto</a></li>
                     <li><a href="/pages/creadores.html" class="admin-link"><i class="fas fa-star" style="font-size:9px;margin-right:4px;"></i>Portal Creadores</a></li>
+                    <li><a href="/pages/roster-portal.html" class="admin-link"><i class="fas fa-users" style="font-size:9px;margin-right:4px;"></i>Portal Roster</a></li>
                     <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
                 </ul>
             </nav>
@@ -78,8 +79,9 @@
 <script src="/assets/js/nav.js"></script>
 
 <script type="module">
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { db, escapeHtml } from "/assets/js/firebase-config.js";
+import { renderActividadList } from "/assets/js/roster-activity.js";
 
 const content = document.getElementById("rosters-content");
 
@@ -156,8 +158,11 @@ function tipoJugadorLabel(tipo) {
 }
 
 const DBD_ROLE_LABELS = {
-    superviviente: "Superviviente",
-    asesino: "Asesino"
+    survivor: "Survivor",
+    killer: "Killer",
+    // valores antiguos por compatibilidad con datos ya guardados
+    superviviente: "Survivor",
+    asesino: "Killer"
 };
 
 function dbdRoleLabel(rol) {
@@ -165,10 +170,21 @@ function dbdRoleLabel(rol) {
     return DBD_ROLE_LABELS[key] || rol || "Jugador";
 }
 
+const DBD_TIPO_JUGADOR_LABELS = {
+    digital: "Digital",
+    presencial: "Presencial",
+    lider_presencial: "Líder/Presencial"
+};
+
+function dbdTipoJugadorLabel(tipo) {
+    const key = normalizeText(tipo);
+    return DBD_TIPO_JUGADOR_LABELS[key] || tipoJugadorLabel(tipo);
+}
+
 function renderCard(player, i, game){
     const isDbd = game === "dbd";
     const rankImg = rankImgPath(player.rango);
-    const tipoLabel = tipoJugadorLabel(player.tipoJugador);
+    const tipoLabel = isDbd ? dbdTipoJugadorLabel(player.tipoJugador) : tipoJugadorLabel(player.tipoJugador);
     const rankText = rankLabel(player.rango);
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.05}s">
@@ -215,6 +231,21 @@ function sortGameEntries(grouped){
     });
 }
 
+async function loadActividad(){
+    try{
+        const snapshot = await getDocs(query(collection(db, "equipoActividad"), where("visiblePublico", "==", true)));
+        return snapshot.docs.map(doc => doc.data()).reduce((acc, item) => {
+            const key = item.juego || "";
+            if(!acc[key]) acc[key] = [];
+            acc[key].push(item);
+            return acc;
+        }, {});
+    }catch(error){
+        console.error(error);
+        return {};
+    }
+}
+
 async function loadRosters(){
     try{
         const snapshot = await getDocs(collection(db, "rosters"));
@@ -237,6 +268,7 @@ async function loadRosters(){
         }
 
         const grouped = groupByGame(players);
+        const actividadByGame = await loadActividad();
         const valorant = grouped.valorant || [];
         const fifa = grouped.fifa || [];
         console.log("VALORANT FILTRADOS", valorant);
@@ -251,6 +283,7 @@ async function loadRosters(){
     <div class="roster-grid">
         ${list.map((player, i) => renderCard(player, i, game)).join("")}
     </div>
+    ${renderActividadList(actividadByGame[game] || [])}
 </section>`).join("");
     }catch(error){
         console.error(error);

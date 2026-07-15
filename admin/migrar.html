@@ -170,8 +170,9 @@ onAuthStateChanged(auth, async (user) => {
 
     try{
         currentProfile = await loadProfile(user);
+        const roles = Array.isArray(currentProfile?.roles) ? currentProfile.roles : (currentProfile?.role ? [currentProfile.role] : []);
 
-        if(!currentProfile || currentProfile.active === false || currentProfile.role !== "admin"){
+        if(!currentProfile || currentProfile.active === false || !roles.includes("admin")){
             accessState.textContent = "Acceso denegado. Esta página es solo para admins.";
             runBtn.disabled = true;
             await signOut(auth);

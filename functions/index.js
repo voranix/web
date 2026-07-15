@@ -194,23 +194,49 @@ exports.onNuevoMensaje = onDocumentCreated(
 // correo explicando el portal, a una o varias cuentas creador.
 // ---------------------------------------------------------------------
 
-const PORTAL_URL = "https://voranix.web.app/pages/creadores.html";
+const PORTAL_INFO = {
+    creador: { url: "https://voranix.web.app/pages/creadores.html", nombre: "Portal Creadores" },
+    capitan: { url: "https://voranix.web.app/pages/roster-portal.html", nombre: "Portal Roster" },
+    jugador: { url: "https://voranix.web.app/pages/roster-portal.html", nombre: "Portal Roster" }
+};
 
-function construirCorreoAcceso({ displayName, email, resetLink }) {
+// Una cuenta puede tener varios roles a la vez (ej. capitan + creador) y por
+// lo tanto calificar para mas de un portal.
+function profileRoles(profile) {
+    if (!profile) return [];
+    return Array.isArray(profile.roles) ? profile.roles : (profile.role ? [profile.role] : []);
+}
+
+function portalesDe(roles) {
+    const vistos = new Set();
+    const portales = [];
+    for (const role of roles) {
+        const info = PORTAL_INFO[role];
+        if (info && !vistos.has(info.url)) {
+            vistos.add(info.url);
+            portales.push(info);
+        }
+    }
+    return portales;
+}
+
+function construirCorreoAcceso({ displayName, email, resetLink, portales }) {
     const nombre = displayName || "";
+    const titulo = portales.length === 1 ? portales[0].nombre : "los portales";
+    const links = portales
+        .map(p => `<a href="${p.url}">${p.nombre}: ${p.url}</a>`)
+        .join("<br>");
     return `
-        <h2>¡Bienvenido/a al Portal Creadores VORANIX!</h2>
+        <h2>¡Bienvenido/a a ${titulo} VORANIX!</h2>
         <p>Hola ${nombre},</p>
-        <p>Como parte del equipo de creadores con contrato VORANIX, ahora tenés
-        acceso a un portal exclusivo donde vas a encontrar accesos anticipados
-        (por ejemplo, postulaciones a torneos) antes que el público general.</p>
+        <p>Ahora tenés acceso a ${portales.length === 1 ? "un portal exclusivo" : "portales exclusivos"} de VORANIX.</p>
         <p><strong>Paso 1 — Configurá tu contraseña</strong><br>
         Hacé clic en este link (válido por tiempo limitado):<br>
         <a href="${resetLink}">${resetLink}</a></p>
         <p><strong>Paso 2 — Entrá al portal</strong><br>
         Una vez configurada tu contraseña, ingresá con tu email
         (<strong>${email}</strong>) en:<br>
-        <a href="${PORTAL_URL}">${PORTAL_URL}</a></p>
+        ${links}</p>
         <p>Cualquier duda, escribinos por Discord.</p>
         <p>— Equipo VORANIX</p>
     `;
@@ -227,7 +253,7 @@ exports.enviarAccesoCreador = onCall(
         // acceso a cuentas, es una acción sensible).
         const callerSnap = await admin.firestore().doc(`users/${request.auth.uid}`).get();
         const callerProfile = callerSnap.exists ? callerSnap.data() : null;
-        if (!callerProfile || callerProfile.role !== "admin") {
+        if (!callerProfile || !profileRoles(callerProfile).includes("admin")) {
             throw new HttpsError("permission-denied", "Solo un admin puede enviar accesos.");
         }
 
@@ -261,24 +287,26 @@ exports.enviarAccesoCreador = onCall(
                 const profileSnap = await admin.firestore().doc(`users/${uid}`).get();
                 if (!profileSnap.exists) throw new Error(`Perfil ${uid} no existe en Firestore`);
                 const profile = profileSnap.data();
+                const roles = profileRoles(profile);
 
-                // Blindaje: solo se manda a cuentas creador activas, aunque el
+                // Blindaje: solo se manda a cuentas de portal activas, aunque el
                 // llamador haya mandado otro UID por error (ej. un admin).
-                if (profile.role !== "creador" || profile.active === false) {
-                    throw new Error(`${uid} no es una cuenta creador activa, se omite`);
+                if (!roles.some(r => ["creador", "capitan", "jugador"].includes(r)) || profile.active === false) {
+                    throw new Error(`${uid} no es una cuenta de portal activa, se omite`);
                 }
 
                 const authUser = await admin.auth().getUser(uid);
                 const email = authUser.email || profile.email;
                 if (!email) throw new Error(`${uid} no tiene email`);
 
-                const resetLink = await admin.auth().generatePasswordResetLink(email, { url: PORTAL_URL });
+                const portales = portalesDe(roles);
+                const resetLink = await admin.auth().generatePasswordResetLink(email, { url: portales[0].url });
 
                 await transporter.sendMail({
                     from: `VORANIX <${smtpUser}>`,
                     to: email,
-                    subject: "Tu acceso al Portal Creadores VORANIX",
-                    html: construirCorreoAcceso({ displayName: profile.displayName, email, resetLink })
+                    subject: portales.length === 1 ? `Tu acceso al ${portales[0].nombre} VORANIX` : "Tu acceso a los portales VORANIX",
+                    html: construirCorreoAcceso({ displayName: profile.displayName, email, resetLink, portales })
                 });
 
                 detalle.push({ uid, email, status: "enviado" });

@@ -59,6 +59,9 @@ td{ color:#d7d7e5; font-size:13px; }
 td img{ width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid #33334a; }
 .actions{ display:flex; gap:8px; flex-wrap:wrap; }
 .empty{ padding:24px; color:var(--muted); text-align:center; }
+.bulk-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.08); background:rgba(123,44,255,.08); }
+.bulk-bar .count{ color:#fff; font-size:13px; font-weight:600; }
+td.select-col,th.select-col{ width:40px; text-align:center; }
 .modal{ position:fixed; inset:0; background:rgba(0,0,0,.78); display:flex; align-items:center; justify-content:center; padding:18px; z-index:20; }
 .modal-card{ width:min(760px,100%); max-height:90vh; overflow:auto; background:#101020; border:1px solid rgba(123,44,255,.55); border-radius:8px; padding:22px; }
 .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; }
@@ -221,8 +224,8 @@ const VALORANT_ROLES = [
 
 const DBD_ROLES = [
     ["", "Sin rol"],
-    ["superviviente", "Superviviente"],
-    ["asesino", "Asesino"]
+    ["survivor", "Survivor"],
+    ["killer", "Killer"]
 ];
 
 const TIPO_JUGADOR = [
@@ -234,11 +237,39 @@ const TIPO_JUGADOR = [
     ["capitan", "Capitán"]
 ];
 
+const DBD_TIPO_JUGADOR = [
+    ["", "Sin especificar"],
+    ["digital", "Digital"],
+    ["presencial", "Presencial"],
+    ["lider_presencial", "Líder/Presencial"]
+];
+
 const PAISES = [
     ["chile", "Chile"],
     ["mexico", "México"],
     ["argentina", "Argentina"]
 ];
+
+const ACTIVIDAD_TIPOS = [
+    ["torneo", "Torneo"],
+    ["scrim", "Scrim"],
+    ["entrenamiento", "Entrenamiento"]
+];
+
+function ACTIVIDAD_FIELDS(juegoValue, juegoLabel){
+    return [
+        ["juego", "Juego", "select", [[juegoValue, juegoLabel]]],
+        ["tipo", "Tipo", "select", ACTIVIDAD_TIPOS],
+        ["titulo", "Título", "text"],
+        ["fechaInicio", "Fecha de inicio", "date"],
+        ["fechaFin", "Fecha de término", "date"],
+        ["hora", "Hora", "time"],
+        ["resultado", "Resultado / Lugar", "text"],
+        ["descripcion", "Descripción", "textarea"],
+        ["visiblePortal", "Visible en Portal Roster", "boolean"],
+        ["visiblePublico", "Visible en página pública", "boolean"]
+    ];
+}
 
 const sections = {
     // Definicion de cada CRUD: etiqueta visible, coleccion y campos del modal.
@@ -279,10 +310,28 @@ const sections = {
             ["juego", "Juego", "select", [["dbd", "Dead by Daylight"]]],
             ["rol", "Rol", "select", DBD_ROLES],
             ["personaje", "Personaje principal", "text"],
-            ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
+            ["tipoJugador", "Tipo de Jugador", "select", DBD_TIPO_JUGADOR],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
         ]
+    },
+    actividadValorant: {
+        label: "Torneos/Scrims Valorant",
+        collection: "equipoActividad",
+        filterValue: "valorant",
+        fields: ACTIVIDAD_FIELDS("valorant", "Valorant")
+    },
+    actividadDbd: {
+        label: "Torneos/Scrims DBD",
+        collection: "equipoActividad",
+        filterValue: "dbd",
+        fields: ACTIVIDAD_FIELDS("dbd", "Dead by Daylight")
+    },
+    actividadFifa: {
+        label: "Torneos/Scrims FIFA",
+        collection: "equipoActividad",
+        filterValue: "fifa",
+        fields: ACTIVIDAD_FIELDS("fifa", "EA FC")
     },
     streamers: {
         label: "Streamers",
@@ -385,8 +434,21 @@ const sections = {
             ["activo", "Activo en Creadores", "boolean"],
             ["publicarProyectos", "Activo en Proyectos", "boolean"]
         ]
+    },
+    overlay: {
+        label: "Overlay",
+        singleton: true
     }
 };
+
+const OVERLAY_FIELDS = [
+    ["comando", "Comando del bot", "text"],
+    ["comandoRespuesta", "Respuesta del comando", "textarea"],
+    ["timerLabel", "Etiqueta del timer", "text"],
+    ["timerFecha", "Fecha/hora del timer", "datetime-local"],
+    ["mensajeTicker", "Mensaje rotativo / novedades", "textarea"],
+    ["logoOverlay", "Logo del overlay", "image"]
+];
 
 let currentUser = null;
 let currentProfile = null;
@@ -418,12 +480,26 @@ function showError(target, message){
     target.textContent = message || "";
 }
 
+function profileRoles(data){
+    if(!data) return [];
+    return Array.isArray(data.roles) ? data.roles : (data.role ? [data.role] : []);
+}
+
 function hasValidRole(profile){
-    return profile && profile.active !== false && ["admin", "editor"].includes(profile.role);
+    return profile && profile.active !== false &&
+        profileRoles(profile).some(role => ["admin", "editor", "capitan"].includes(role));
+}
+
+function isCapitan(){
+    return profileRoles(currentProfile).includes("capitan");
+}
+
+function isStaff(){
+    return profileRoles(currentProfile).some(role => ["admin", "editor"].includes(role));
 }
 
 function isAdmin(){
-    return currentProfile?.role === "admin";
+    return profileRoles(currentProfile).includes("admin");
 }
 
 async function loadProfile(user){
@@ -446,30 +522,48 @@ function showAdmin(){
     loginScreen.classList.add("hidden");
     adminShell.classList.remove("hidden");
     userEmail.textContent = currentProfile.email || currentUser.email;
-    roleBadge.textContent = currentProfile.role === "admin" ? "ADMIN" : "EDITOR";
+    roleBadge.textContent = profileRoles(currentProfile).join(", ").toUpperCase();
     buildNav();
     selectSection(currentSection);
 }
 
+function visibleSectionKeys(){
+    // Un capitán que ademas es staff (admin/editor) ve todo el nav igual que ellos.
+    // Solo se acota cuando "capitan" es el unico rol relevante de la cuenta.
+    if(isCapitan() && !isStaff()){
+        const juego = currentProfile?.equipoJuego || "";
+        const actividadKey = juego ? "actividad" + juego.charAt(0).toUpperCase() + juego.slice(1) : "";
+        return [juego, actividadKey].filter(key => sections[key]);
+    }
+    return Object.keys(sections);
+}
+
 function buildNav(){
-    const entries = Object.entries(sections);
-    nav.innerHTML = entries.map(([key, section]) => `
-<button type="button" data-section="${key}" class="${key === currentSection ? "active" : ""}">${section.label}</button>
+    const keys = visibleSectionKeys();
+    nav.innerHTML = keys.map(key => `
+<button type="button" data-section="${key}" class="${key === currentSection ? "active" : ""}">${sections[key].label}</button>
 `).join("") + (isAdmin() ? `<button type="button" data-section="users" class="${currentSection === "users" ? "active" : ""}">Usuarios</button>` : "");
 }
 
 function selectSection(key){
-    if(key === "users" && !isAdmin()) key = "valorant";
+    const keys = visibleSectionKeys();
+    if(key === "users"){
+        if(!isAdmin()) key = keys[0] || "valorant";
+    }else if(!keys.includes(key)){
+        key = keys[0] || "valorant";
+    }
     currentSection = key;
     buildNav();
     sidebar.classList.remove("open");
     if(unsubscribeList) unsubscribeList();
     if(key === "users") renderUsers();
+    else if(sections[key]?.singleton) renderOverlaySection();
     else renderCrudSection(sections[key]);
 }
 
 function getUsersFieldValue(data, name){
     if(name === "active") return data.active !== false;
+    if(name === "roles") return profileRoles(data);
     return data[name] ?? "";
 }
 
@@ -556,10 +650,14 @@ function renderCrudSection(section){
 </div>
 <div class="panel">
     ${toolbarHtml(section, "item-search", "Buscar...")}
+    <div class="bulk-bar hidden" id="bulk-bar">
+        <span class="count" id="bulk-count"></span>
+        <button class="btn danger small" type="button" id="bulk-delete-btn">Eliminar seleccionados</button>
+    </div>
     <div class="table-wrap">
         <table>
-            <thead><tr>${section.fields.map(field => `<th>${field[1]}</th>`).join("")}<th>Acciones</th></tr></thead>
-            <tbody id="items-body"><tr><td colspan="${section.fields.length + 1}">Cargando...</td></tr></tbody>
+            <thead><tr><th class="select-col"><input type="checkbox" id="select-all"></th>${section.fields.map(field => `<th>${field[1]}</th>`).join("")}<th>Acciones</th></tr></thead>
+            <tbody id="items-body"><tr><td colspan="${section.fields.length + 2}">Cargando...</td></tr></tbody>
         </table>
     </div>
 </div>`;
@@ -570,8 +668,22 @@ function renderCrudSection(section){
     const searchInput = document.getElementById("item-search");
     const countLabel = document.getElementById("item-search-count");
     const filterSelects = Array.from(document.querySelectorAll("[data-filter]"));
+    const selectAllBox = document.getElementById("select-all");
+    const bulkBar = document.getElementById("bulk-bar");
+    const bulkCount = document.getElementById("bulk-count");
+    const bulkDeleteBtn = document.getElementById("bulk-delete-btn");
 
     let currentDocs = [];
+    const selected = new Set();
+
+    function updateBulkBar(){
+        bulkBar.classList.toggle("hidden", selected.size === 0);
+        bulkCount.textContent = `${selected.size} seleccionado(s)`;
+        const idsOnScreen = Array.from(body.querySelectorAll("[data-select]")).map(cb => cb.dataset.select);
+        const selectedOnScreen = idsOnScreen.filter(id => selected.has(id));
+        selectAllBox.checked = idsOnScreen.length > 0 && selectedOnScreen.length === idsOnScreen.length;
+        selectAllBox.indeterminate = selectedOnScreen.length > 0 && selectedOnScreen.length < idsOnScreen.length;
+    }
 
     function renderFilteredRows(){
         const term = normalizeSearch(searchInput.value.trim());
@@ -589,9 +701,13 @@ function renderCrudSection(section){
             });
         });
 
+        const currentIds = new Set(currentDocs.map(item => item.id));
+        Array.from(selected).forEach(id => { if(!currentIds.has(id)) selected.delete(id); });
+
         const rows = filtered.map(item => {
             const data = item;
             return `<tr>
+<td class="select-col"><input type="checkbox" data-select="${item.id}" ${selected.has(item.id) ? "checked" : ""}></td>
 ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[3])}</td>`).join("")}
 <td><div class="actions">
     <button class="btn secondary small" type="button" data-edit="${item.id}">Editar</button>
@@ -599,12 +715,44 @@ ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[
 </div></td>
 </tr>`;
         });
-        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="${section.fields.length + 1}" class="empty">Sin resultados.</td></tr>`;
+        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="${section.fields.length + 2}" class="empty">Sin resultados.</td></tr>`;
         countLabel.textContent = `${filtered.length} de ${currentDocs.length}`;
+        updateBulkBar();
     }
 
     searchInput.addEventListener("input", renderFilteredRows);
     filterSelects.forEach(select => select.addEventListener("change", renderFilteredRows));
+
+    body.addEventListener("change", (event) => {
+        const checkbox = event.target.closest("[data-select]");
+        if(!checkbox) return;
+        if(checkbox.checked) selected.add(checkbox.dataset.select);
+        else selected.delete(checkbox.dataset.select);
+        updateBulkBar();
+    });
+
+    selectAllBox.addEventListener("change", () => {
+        const idsOnScreen = Array.from(body.querySelectorAll("[data-select]")).map(cb => cb.dataset.select);
+        if(selectAllBox.checked) idsOnScreen.forEach(id => selected.add(id));
+        else idsOnScreen.forEach(id => selected.delete(id));
+        renderFilteredRows();
+    });
+
+    bulkDeleteBtn.addEventListener("click", async () => {
+        const ids = Array.from(selected);
+        if(!ids.length) return;
+        if(!confirmBulkDelete(ids.length)) return;
+        try{
+            for(const id of ids){
+                await deleteDoc(doc(db, section.collection, id));
+                if(currentSection === "accesos") await deleteDoc(doc(db, "proyectos", id)).catch(() => {});
+            }
+            selected.clear();
+        }catch(error){
+            console.error(error);
+            alert("No se pudo completar la eliminación masiva.");
+        }
+    });
 
     unsubscribeList = onSnapshot(collection(db, section.collection), (snapshot) => {
         const docs = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
@@ -615,8 +763,87 @@ ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[
         renderFilteredRows();
     }, (error) => {
         console.error(error);
-        body.innerHTML = `<tr><td colspan="${section.fields.length + 1}" class="empty">No se pudieron cargar los datos.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="${section.fields.length + 2}" class="empty">No se pudieron cargar los datos.</td></tr>`;
     });
+}
+
+async function renderOverlaySection(){
+    // Config de un solo documento (overlayConfig/config), sin tabla ni modal.
+    unsubscribeList = null;
+    sectionTitle.textContent = "Overlay";
+    sectionSubtitle.textContent = "Colección: overlayConfig";
+    content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Overlay</h2>
+        <p class="muted">Configuración del overlay para OBS. El bot que responde el comando en el chat todavía no está activo — este texto queda guardado para cuando se conecte.</p>
+    </div>
+</div>
+<div class="panel">
+    <form id="overlay-form" style="padding:22px;">
+        <div class="form-grid" id="overlay-fields"></div>
+        <div class="modal-actions">
+            <button class="btn" type="submit">Guardar cambios</button>
+        </div>
+        <div class="error" id="overlay-error"></div>
+    </form>
+</div>`;
+
+    const fieldsWrap = document.getElementById("overlay-fields");
+    const form = document.getElementById("overlay-form");
+    const errorEl = document.getElementById("overlay-error");
+
+    let currentData = {};
+    try{
+        const snapshot = await getDoc(doc(db, "overlayConfig", "config"));
+        currentData = snapshot.exists() ? snapshot.data() : {};
+    }catch(error){
+        console.error(error);
+    }
+
+    fieldsWrap.innerHTML = OVERLAY_FIELDS.map(field => fieldHtml(field, currentData[field[0]])).join("");
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorEl.textContent = "";
+        const formData = new FormData(form);
+        const payload = {};
+
+        try{
+            for(const field of OVERLAY_FIELDS){
+                const [name, , type] = field;
+                const file = formData.get(`${name}File`);
+                const urlValue = String(formData.get(name) ?? "").trim();
+
+                if(type === "image" && file && file.size){
+                    payload[name] = await uploadImage(file, "overlayConfig", name);
+                }else if(type === "image"){
+                    payload[name] = urlValue || currentData[name] || "";
+                }else{
+                    payload[name] = formData.get(name) || "";
+                }
+            }
+            payload.updatedAt = serverTimestamp();
+            await setDoc(doc(db, "overlayConfig", "config"), payload, { merge: true });
+            currentData = { ...currentData, ...payload };
+        }catch(error){
+            console.error(error);
+            errorEl.textContent = "No se pudo guardar. Revisa los campos y permisos.";
+        }
+    });
+}
+
+const BULK_DELETE_PASSWORD = "VoranixADMIN";
+
+function confirmBulkDelete(count){
+    if(count <= 1) return confirm("¿Eliminar este registro?");
+    const pass = prompt(`Vas a eliminar ${count} registros a la vez. Escribe la contraseña de administrador para confirmar:`);
+    if(pass === null) return false;
+    if(pass !== BULK_DELETE_PASSWORD){
+        alert("Contraseña incorrecta. No se eliminó nada.");
+        return false;
+    }
+    return true;
 }
 
 async function enviarAcceso(uids){
@@ -653,6 +880,7 @@ async function renderUsers(){
     <div class="actions">
         <button class="btn" type="button" id="add-user">Agregar</button>
         <button class="btn secondary" type="button" id="send-all-creadores">Enviar acceso a todos los creadores</button>
+        <button class="btn secondary" type="button" id="migrate-roles-btn">Migrar roles antiguos</button>
     </div>
 </div>
 <div class="panel">
@@ -663,6 +891,8 @@ async function renderUsers(){
             <option value="admin">Rol: admin</option>
             <option value="editor">Rol: editor</option>
             <option value="creador">Rol: creador</option>
+            <option value="capitan">Rol: capitan</option>
+            <option value="jugador">Rol: jugador</option>
             <option value="viewer">Rol: viewer</option>
         </select>
         <select id="users-filter-active">
@@ -672,20 +902,25 @@ async function renderUsers(){
         </select>
         <span class="count" id="users-count"></span>
     </div>
+    <div class="bulk-bar hidden" id="bulk-bar">
+        <span class="count" id="bulk-count"></span>
+        <button class="btn secondary small" type="button" id="bulk-send-access-btn">Enviar acceso a seleccionados</button>
+        <button class="btn danger small" type="button" id="bulk-delete-btn">Eliminar seleccionados</button>
+    </div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Activo</th><th>Acciones</th></tr></thead>
-            <tbody id="users-body"><tr><td colspan="5">Cargando...</td></tr></tbody>
+            <thead><tr><th class="select-col"><input type="checkbox" id="select-all"></th><th>Nombre</th><th>Email</th><th>Rol</th><th>Activo</th><th>Acciones</th></tr></thead>
+            <tbody id="users-body"><tr><td colspan="6">Cargando...</td></tr></tbody>
         </table>
     </div>
 </div>`;
 
     const addUserBtn = document.getElementById("add-user");
-    if(addUserBtn) addUserBtn.addEventListener("click", () => openItemModal(null, { role: "creador", active: true }));
+    if(addUserBtn) addUserBtn.addEventListener("click", () => openItemModal(null, { roles: ["creador"], active: true }));
 
     const sendAllBtn = document.getElementById("send-all-creadores");
     if(sendAllBtn) sendAllBtn.addEventListener("click", () => {
-        const creadorUids = usersCache.filter(u => u.role === "creador" && u.active !== false).map(u => u.uid);
+        const creadorUids = usersCache.filter(u => profileRoles(u).includes("creador") && u.active !== false).map(u => u.uid);
         if(!creadorUids.length){
             alert("No hay cuentas creador activas todavía.");
             return;
@@ -693,11 +928,46 @@ async function renderUsers(){
         enviarAcceso(creadorUids);
     });
 
+    const migrateRolesBtn = document.getElementById("migrate-roles-btn");
+    if(migrateRolesBtn) migrateRolesBtn.addEventListener("click", async () => {
+        const pending = usersCache.filter(u => !Array.isArray(u.roles) && u.role);
+        if(!pending.length){
+            alert("No hay cuentas con el formato de rol antiguo.");
+            return;
+        }
+        if(!confirm(`Vas a migrar ${pending.length} cuenta(s) de "role" a "roles". ¿Continuar?`)) return;
+        try{
+            for(const user of pending){
+                await updateDoc(doc(db, "users", user.uid), { roles: [user.role] });
+            }
+            alert(`Migradas ${pending.length} cuenta(s).`);
+            await renderUsers();
+        }catch(error){
+            console.error(error);
+            alert("No se pudo completar la migración de roles.");
+        }
+    });
+
     const body = document.getElementById("users-body");
     const searchInput = document.getElementById("users-search");
     const roleFilter = document.getElementById("users-filter-role");
     const activeFilter = document.getElementById("users-filter-active");
     const countLabel = document.getElementById("users-count");
+    const selectAllBox = document.getElementById("select-all");
+    const bulkBar = document.getElementById("bulk-bar");
+    const bulkCount = document.getElementById("bulk-count");
+    const bulkSendAccessBtn = document.getElementById("bulk-send-access-btn");
+    const bulkDeleteBtn = document.getElementById("bulk-delete-btn");
+    const selected = new Set();
+
+    function updateBulkBar(){
+        bulkBar.classList.toggle("hidden", selected.size === 0);
+        bulkCount.textContent = `${selected.size} seleccionado(s)`;
+        const idsOnScreen = Array.from(body.querySelectorAll("[data-select]")).map(cb => cb.dataset.select);
+        const selectedOnScreen = idsOnScreen.filter(id => selected.has(id));
+        selectAllBox.checked = idsOnScreen.length > 0 && selectedOnScreen.length === idsOnScreen.length;
+        selectAllBox.indeterminate = selectedOnScreen.length > 0 && selectedOnScreen.length < idsOnScreen.length;
+    }
 
     function renderFilteredUsers(){
         const term = normalizeSearch(searchInput.value.trim());
@@ -709,30 +979,78 @@ async function renderUsers(){
                 const haystack = normalizeSearch(`${user.displayName || ""} ${user.email || ""}`);
                 if(!haystack.includes(term)) return false;
             }
-            if(role && user.role !== role) return false;
+            if(role && !profileRoles(user).includes(role)) return false;
             if(activeValue && String(user.active !== false) !== activeValue) return false;
             return true;
         });
 
+        const currentUids = new Set(usersCache.map(user => user.uid));
+        Array.from(selected).forEach(uid => { if(!currentUids.has(uid)) selected.delete(uid); });
+
         const rows = filtered.map(user => `
 <tr>
+<td class="select-col"><input type="checkbox" data-select="${user.uid}" ${selected.has(user.uid) ? "checked" : ""}></td>
 <td>${user.displayName ? escapeHtml(user.displayName) : "-"}</td>
 <td>${user.email ? escapeHtml(user.email) : "-"}</td>
-<td>${user.role ? escapeHtml(user.role) : "-"}</td>
+<td>${profileRoles(user).length ? escapeHtml(profileRoles(user).join(", ")) : "-"}</td>
 <td>${user.active === false ? "No" : "Sí"}</td>
 <td><div class="actions">
     <button class="btn secondary small" type="button" data-user-edit="${user.uid}">Editar</button>
-    ${user.role === "creador" ? `<button class="btn small" type="button" data-send-access="${user.uid}">Enviar acceso</button>` : ""}
+    ${profileRoles(user).some(r => ["creador", "capitan", "jugador"].includes(r)) ? `<button class="btn small" type="button" data-send-access="${user.uid}">Enviar acceso</button>` : ""}
 </div></td>
 </tr>`);
 
-        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="5" class="empty">Sin resultados.</td></tr>`;
+        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="6" class="empty">Sin resultados.</td></tr>`;
         countLabel.textContent = `${filtered.length} de ${usersCache.length}`;
+        updateBulkBar();
     }
 
     searchInput.addEventListener("input", renderFilteredUsers);
     roleFilter.addEventListener("change", renderFilteredUsers);
     activeFilter.addEventListener("change", renderFilteredUsers);
+
+    body.addEventListener("change", (event) => {
+        const checkbox = event.target.closest("[data-select]");
+        if(!checkbox) return;
+        if(checkbox.checked) selected.add(checkbox.dataset.select);
+        else selected.delete(checkbox.dataset.select);
+        updateBulkBar();
+    });
+
+    selectAllBox.addEventListener("change", () => {
+        const idsOnScreen = Array.from(body.querySelectorAll("[data-select]")).map(cb => cb.dataset.select);
+        if(selectAllBox.checked) idsOnScreen.forEach(id => selected.add(id));
+        else idsOnScreen.forEach(id => selected.delete(id));
+        renderFilteredUsers();
+    });
+
+    bulkSendAccessBtn.addEventListener("click", () => {
+        const uids = Array.from(selected).filter(uid => {
+            const user = usersCache.find(u => u.uid === uid);
+            return user && profileRoles(user).some(r => ["creador", "capitan", "jugador"].includes(r));
+        });
+        if(!uids.length){
+            alert("Selecciona al menos una cuenta creador, capitán o jugador para enviar el acceso.");
+            return;
+        }
+        enviarAcceso(uids);
+    });
+
+    bulkDeleteBtn.addEventListener("click", async () => {
+        const uids = Array.from(selected);
+        if(!uids.length) return;
+        if(!confirmBulkDelete(uids.length)) return;
+        try{
+            for(const uid of uids){
+                await deleteDoc(doc(db, "users", uid));
+            }
+            selected.clear();
+            await renderUsers();
+        }catch(error){
+            console.error(error);
+            alert("No se pudo completar la eliminación masiva.");
+        }
+    });
 
     try{
         const snapshot = await getDocs(collection(db, "users"));
@@ -741,7 +1059,7 @@ async function renderUsers(){
         renderFilteredUsers();
     }catch(error){
         console.error(error);
-        body.innerHTML = `<tr><td colspan="5" class="empty">No se pudieron cargar los usuarios.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" class="empty">No se pudieron cargar los usuarios.</td></tr>`;
     }
 }
 
@@ -784,15 +1102,34 @@ function fieldHtml(field, value){
 function userFieldHtml(name, value, disabled = false){
     const safeValue = value ?? "";
 
-    if(name === "role"){
+    if(name === "roles"){
+        const selected = Array.isArray(value) ? value : [];
+        const options = [
+            ["admin", "admin"], ["editor", "editor"], ["creador", "creador"],
+            ["capitan", "capitan"], ["jugador", "jugador"], ["viewer", "viewer"]
+        ];
+        return `
+<div class="field full">
+    <label>Roles (una cuenta puede tener varios)</label>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;">
+        ${options.map(([optValue, optLabel]) => `
+        <label style="display:flex;align-items:center;gap:6px;font-weight:normal;">
+            <input type="checkbox" name="roles" value="${optValue}" ${selected.includes(optValue) ? "checked" : ""} ${disabled ? "disabled" : ""} style="width:auto;">
+            <span>${optLabel}</span>
+        </label>`).join("")}
+    </div>
+</div>`;
+    }
+
+    if(name === "equipoJuego"){
         return `
 <div class="field">
-    <label>Rol</label>
-    <select name="role" ${disabled ? "disabled" : ""}>
-        <option value="admin" ${safeValue === "admin" ? "selected" : ""}>admin</option>
-        <option value="editor" ${safeValue === "editor" ? "selected" : ""}>editor</option>
-        <option value="creador" ${safeValue === "creador" ? "selected" : ""}>creador</option>
-        <option value="viewer" ${safeValue === "viewer" ? "selected" : ""}>viewer</option>
+    <label>Equipo (solo capitán/jugador)</label>
+    <select name="equipoJuego" ${disabled ? "disabled" : ""}>
+        <option value="" ${!safeValue ? "selected" : ""}>Sin equipo</option>
+        <option value="valorant" ${safeValue === "valorant" ? "selected" : ""}>Valorant</option>
+        <option value="dbd" ${safeValue === "dbd" ? "selected" : ""}>Dead by Daylight</option>
+        <option value="fifa" ${safeValue === "fifa" ? "selected" : ""}>EA FC</option>
     </select>
 </div>`;
     }
@@ -831,7 +1168,8 @@ function openItemModal(id = null, data = {}){
     <input name="email" type="email" value="${escapeHtml(data.email || "")}" ${isNew ? "" : "disabled"}>
 </div>
 ${userFieldHtml("displayName", getUsersFieldValue(data, "displayName"))}
-${userFieldHtml("role", getUsersFieldValue(data, "role"))}
+${userFieldHtml("roles", getUsersFieldValue(data, "roles"))}
+${userFieldHtml("equipoJuego", getUsersFieldValue(data, "equipoJuego"))}
 ${userFieldHtml("active", getUsersFieldValue(data, "active"))}
 `;
     }else{
@@ -884,7 +1222,8 @@ async function saveItem(event){
     try{
         if(currentSection === "users"){
             payload.displayName = formData.get("displayName") || "";
-            payload.role = formData.get("role") || "viewer";
+            payload.roles = formData.getAll("roles");
+            payload.equipoJuego = formData.get("equipoJuego") || "";
             payload.active = formData.get("active") === "on";
 
             if(editingId){
