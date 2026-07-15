@@ -6,3 +6,5 @@ scripts/serviceAccountKey.json
 scripts/cuentas.csv
 scripts/resultado.json
 scripts/resultado-import.json
+scripts/access-emails.csv
+scripts/resultado-acceso.json

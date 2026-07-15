@@ -59,6 +59,21 @@ node import-users.js
 indica qué cuentas se encontraron en Auth y engancharon a Firestore, y cuáles no existían
 todavía (créalas primero en la consola y vuelve a correr el script).
 
+## Reenviar el correo de acceso a cuentas puntuales (`send-access.js`)
+
+El botón "Enviar acceso" del admin (individual o masivo) llama a la Cloud
+Function `enviarAccesoCreador`. Si un envío masivo se corta a mitad de camino
+(por ejemplo, por el rate-limit de Gmail) y no querés reenviarle a quien ya
+recibió el correo, usá este script para apuntar solo a los pendientes:
+
+1. Copiá los emails pendientes (uno por línea) en `scripts/access-emails.csv`.
+2. `node send-access.js`
+
+Internamente resuelve cada email a su UID, toma cualquier cuenta con
+`role: admin` de Firestore para autenticarse como ella (vía un custom token),
+y llama a la función real desplegada — mismo código y mismo rate-limit que
+usa el botón del admin. Revisa `resultado-acceso.json` al terminar.
+
 ## Notas
 
 - Es seguro volver a correr cualquiera de los dos: si una cuenta de Auth ya existe no la
