@@ -217,7 +217,7 @@ function construirCorreoAcceso({ displayName, email, resetLink }) {
 }
 
 exports.enviarAccesoCreador = onCall(
-    { secrets: [SMTP_USER, SMTP_PASS] },
+    { secrets: [SMTP_USER, SMTP_PASS], timeoutSeconds: 300 },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
@@ -242,42 +242,53 @@ exports.enviarAccesoCreador = onCall(
             throw new HttpsError("failed-precondition", "SMTP no configurado (SMTP_USER/SMTP_PASS).");
         }
 
+        // Gmail SMTP corta la conexión con "421 Temporary System Problem" si le
+        // llegan muchos correos casi en simultáneo desde una cuenta normal, asi
+        // que se manda de a uno (pool de 1 conexión + limite de 1 mensaje/1.2s)
+        // en vez de dispararlos todos en paralelo.
         const transporter = nodemailer.createTransport({
             service: "gmail",
-            auth: { user: smtpUser, pass: smtpPass }
+            auth: { user: smtpUser, pass: smtpPass },
+            pool: true,
+            maxConnections: 1,
+            rateDelta: 1200,
+            rateLimit: 1
         });
 
-        const results = await Promise.allSettled(uids.map(async (uid) => {
-            const profileSnap = await admin.firestore().doc(`users/${uid}`).get();
-            if (!profileSnap.exists) throw new Error(`Perfil ${uid} no existe en Firestore`);
-            const profile = profileSnap.data();
+        const detalle = [];
+        for (const uid of uids) {
+            try {
+                const profileSnap = await admin.firestore().doc(`users/${uid}`).get();
+                if (!profileSnap.exists) throw new Error(`Perfil ${uid} no existe en Firestore`);
+                const profile = profileSnap.data();
 
-            // Blindaje: solo se manda a cuentas creador activas, aunque el
-            // llamador haya mandado otro UID por error (ej. un admin).
-            if (profile.role !== "creador" || profile.active === false) {
-                throw new Error(`${uid} no es una cuenta creador activa, se omite`);
+                // Blindaje: solo se manda a cuentas creador activas, aunque el
+                // llamador haya mandado otro UID por error (ej. un admin).
+                if (profile.role !== "creador" || profile.active === false) {
+                    throw new Error(`${uid} no es una cuenta creador activa, se omite`);
+                }
+
+                const authUser = await admin.auth().getUser(uid);
+                const email = authUser.email || profile.email;
+                if (!email) throw new Error(`${uid} no tiene email`);
+
+                const resetLink = await admin.auth().generatePasswordResetLink(email, { url: PORTAL_URL });
+
+                await transporter.sendMail({
+                    from: `VORANIX <${smtpUser}>`,
+                    to: email,
+                    subject: "Tu acceso al Portal Creadores VORANIX",
+                    html: construirCorreoAcceso({ displayName: profile.displayName, email, resetLink })
+                });
+
+                detalle.push({ uid, email, status: "enviado" });
+            } catch (err) {
+                logger.error(`enviarAccesoCreador: fallo con ${uid}`, err);
+                detalle.push({ uid, status: "error", error: String(err?.message || err) });
             }
+        }
 
-            const authUser = await admin.auth().getUser(uid);
-            const email = authUser.email || profile.email;
-            if (!email) throw new Error(`${uid} no tiene email`);
-
-            const resetLink = await admin.auth().generatePasswordResetLink(email, { url: PORTAL_URL });
-
-            await transporter.sendMail({
-                from: `VORANIX <${smtpUser}>`,
-                to: email,
-                subject: "Tu acceso al Portal Creadores VORANIX",
-                html: construirCorreoAcceso({ displayName: profile.displayName, email, resetLink })
-            });
-
-            return { uid, email, status: "enviado" };
-        }));
-
-        const detalle = results.map((r, i) => r.status === "fulfilled"
-            ? r.value
-            : { uid: uids[i], status: "error", error: String(r.reason?.message || r.reason) });
-
+        transporter.close();
         return { detalle };
     }
 );
