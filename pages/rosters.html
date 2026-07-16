@@ -13,7 +13,7 @@
 <header class="header header-sub header-rosters">
     <div class="menu">
         <div class="menu-content">
-            <button class="menu-toggle" id="menu-toggle">â˜°</button>
+            <button class="menu-toggle" id="menu-toggle">☰</button>
             <a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="VORANIX"></a>
             <nav class="navbar">
                 <ul>
@@ -32,9 +32,14 @@
                     <li><a href="/pages/influencers.html">Influencers</a></li>
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
                     <li><a href="/pages/contacto.html">Contacto</a></li>
-                    <li><a href="/pages/creadores.html" class="admin-link"><i class="fas fa-star" style="font-size:9px;margin-right:4px;"></i>Portal Creadores</a></li>
-                    <li><a href="/pages/roster-portal.html" class="admin-link"><i class="fas fa-users" style="font-size:9px;margin-right:4px;"></i>Portal Roster</a></li>
-                    <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
+                    <li class="nav-dropdown admin-access">
+                        <button type="button" class="nav-dropdown-toggle"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Acceso <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/creadores.html"><i class="fas fa-star" style="font-size:9px;margin-right:6px;"></i>Portal Creadores</a></li>
+                            <li><a href="/pages/roster-portal.html"><i class="fas fa-users" style="font-size:9px;margin-right:6px;"></i>Portal Roster</a></li>
+                            <li><a href="/admin/admin.html"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Admin</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -68,11 +73,11 @@
         </div>
         <div class="footer-social">
             <a href="https://discord.gg/jZq9gPSW5T" target="_blank"><i class="fab fa-discord"></i></a>
-            <a href="https://www.instagram.com/voranix_gaming" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.instagram.com/voranixstudio/" target="_blank"><i class="fab fa-instagram"></i></a>
             <a href="https://www.twitch.tv/voranix_gaming" target="_blank"><i class="fab fa-twitch"></i></a>
             <a href="https://www.tiktok.com/@voranix_gaming" target="_blank"><i class="fab fa-tiktok"></i></a>
         </div>
-        <div class="footer-copy">Â© 2026 <span>VORANIX</span> â€” Todos los derechos reservados</div>
+        <div class="footer-copy">© 2026 <span>VORANIX</span> — Todos los derechos reservados</div>
     </div>
 </footer>
 
@@ -98,12 +103,14 @@ function normalizeText(value) {
         .trim();
 }
 
-function resolveGameValue(data) {
+function resolveRosterKey(data) {
     const raw = data.juego ?? data.game ?? data.tipo ?? "";
     const value = normalizeText(raw);
     if (!value) return "valorant";
+    if (value.includes("secundario")) return "valorantsecundario";
     if (["valorant", "valo", "vct"].some(token => value.includes(token))) return "valorant";
     if (["fifa", "fc25", "fc 25", "ea fc", "eafc", "fc"].some(token => value.includes(token))) return "fifa";
+    if (value.includes("dbd") || value.includes("dead")) return "dbd";
     return value;
 }
 
@@ -160,6 +167,7 @@ function tipoJugadorLabel(tipo) {
 const DBD_ROLE_LABELS = {
     survivor: "Survivor",
     killer: "Killer",
+    "survivor/killer": "Survivor/Killer",
     // valores antiguos por compatibilidad con datos ya guardados
     superviviente: "Survivor",
     asesino: "Killer"
@@ -181,8 +189,55 @@ function dbdTipoJugadorLabel(tipo) {
     return DBD_TIPO_JUGADOR_LABELS[key] || tipoJugadorLabel(tipo);
 }
 
-function renderCard(player, i, game){
-    const isDbd = game === "dbd";
+function normalizeName(value){
+    return String(value || "").trim().toLowerCase();
+}
+
+// Deriva partidas jugadas, top agentes y MVPs por jugador a partir del
+// lineup cargado en cada actividad (solo aplica a los rosters de Valorant).
+function computeStats(items){
+    const stats = {};
+    items.forEach(item => {
+        if(!Array.isArray(item.lineup)) return;
+        item.lineup.forEach(row => {
+            if(!row || !row.jugador) return;
+            const key = normalizeName(row.jugador);
+            if(!stats[key]) stats[key] = { matches: 0, mvpCount: 0, agentCounts: {} };
+            stats[key].matches += 1;
+            if(row.mvp) stats[key].mvpCount += 1;
+            if(row.agente){
+                stats[key].agentCounts[row.agente] = (stats[key].agentCounts[row.agente] || 0) + 1;
+            }
+        });
+    });
+    return stats;
+}
+
+function renderStatsBlock(stats){
+    if(!stats) return "";
+    const topAgents = Object.entries(stats.agentCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const matches = stats.matches;
+    return `
+<div class="card-match-stats">
+    <div class="card-stat-row"><span>Partidas jugadas</span><span class="card-stat-value">${matches}</span></div>
+    ${stats.mvpCount ? `<div class="card-mvp-badge"><i class="fas fa-crown"></i> ${stats.mvpCount} MVP</div>` : ""}
+    ${topAgents.length ? `
+    <div class="card-agents">
+        ${topAgents.map(([agente, count]) => {
+            const pct = matches ? Math.round((count / matches) * 100) : 0;
+            return `
+        <div class="card-agent-row">
+            <span class="card-agent-name">${escapeHtml(agente)}</span>
+            <div class="agent-bar-track"><div class="agent-bar-fill" style="width:${pct}%"></div></div>
+            <span class="card-agent-pct">${pct}%</span>
+        </div>`;
+        }).join("")}
+    </div>` : ""}
+</div>`;
+}
+
+function renderCard(player, i, key, stats){
+    const isDbd = key === "dbd";
     const rankImg = rankImgPath(player.rango);
     const tipoLabel = isDbd ? dbdTipoJugadorLabel(player.tipoJugador) : tipoJugadorLabel(player.tipoJugador);
     const rankText = rankLabel(player.rango);
@@ -197,45 +252,52 @@ function renderCard(player, i, game){
         ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${escapeHtml(rankText) || 'Rango'}" onerror="this.style.display='none'">` : ""}
         ${rankText ? `<div class="stats"><p style="color:var(--diamond)">${escapeHtml(rankText)}</p></div>` : ""}
         <img class="flag" src="/imagenes/flags/chile.png" alt="Chile">
+        ${renderStatsBlock(stats)}
     </div>
 </div>`;
 }
 
-function groupByGame(players){
-    return players.reduce((acc, player) => {
-        const key = resolveGameValue(player);
-        if(!acc[key]) acc[key] = [];
-        acc[key].push(player);
-        return acc;
-    }, {});
+// Orden de referencia para las pestañas. Cualquier otro juego cargado a
+// futuro se agrega al final, ordenado alfabéticamente, sin romper nada.
+const ROSTER_TABS = [
+    ["valorant", "Valorant Principal"],
+    ["valorantsecundario", "Valorant Secundario"],
+    ["fifa", "EA FC"],
+    ["dbd", "Dead by Daylight"]
+];
+const ROSTER_TAB_ORDER = ROSTER_TABS.map(([key]) => key);
+
+function rosterLabel(key){
+    const known = ROSTER_TABS.find(([k]) => k === key);
+    if(known) return known[1];
+    return key ? key.charAt(0).toUpperCase() + key.slice(1) : "Roster";
 }
 
-function gameLabel(game){
-    if(game === "valorant") return "Roster Valorant";
-    if(game === "fifa") return "Roster EA FC";
-    if(game === "dbd") return "Roster Dead by Daylight";
-    return game || "Roster";
-}
-
-const GAME_ORDER = ["valorant", "fifa", "dbd"];
-
-function sortGameEntries(grouped){
-    const entries = Object.entries(grouped);
-    return entries.sort((a, b) => {
-        const ai = GAME_ORDER.indexOf(a[0]);
-        const bi = GAME_ORDER.indexOf(b[0]);
-        if(ai === -1 && bi === -1) return a[0].localeCompare(b[0]);
+function sortRosterKeys(keys){
+    return [...keys].sort((a, b) => {
+        const ai = ROSTER_TAB_ORDER.indexOf(a);
+        const bi = ROSTER_TAB_ORDER.indexOf(b);
+        if(ai === -1 && bi === -1) return a.localeCompare(b);
         if(ai === -1) return 1;
         if(bi === -1) return -1;
         return ai - bi;
     });
 }
 
+function groupByRoster(players){
+    return players.reduce((acc, player) => {
+        const key = resolveRosterKey(player);
+        if(!acc[key]) acc[key] = [];
+        acc[key].push(player);
+        return acc;
+    }, {});
+}
+
 async function loadActividad(){
     try{
         const snapshot = await getDocs(query(collection(db, "equipoActividad"), where("visiblePublico", "==", true)));
         return snapshot.docs.map(doc => doc.data()).reduce((acc, item) => {
-            const key = item.juego || "";
+            const key = resolveRosterKey(item);
             if(!acc[key]) acc[key] = [];
             acc[key].push(item);
             return acc;
@@ -246,45 +308,59 @@ async function loadActividad(){
     }
 }
 
+function renderTabPanel(key, players, actividad){
+    const stats = (key === "valorant" || key === "valorantsecundario") ? computeStats(actividad) : null;
+    const cards = players
+        .map((player, i) => renderCard(player, i, key, stats ? stats[normalizeName(player.nombre)] : null))
+        .join("");
+    return `
+<p class="roster-tab-desc">Equipo competitivo de ${escapeHtml(rosterLabel(key))}</p>
+<div class="roster-grid">${cards || `<p class="loading">Todavía no hay jugadores cargados.</p>`}</div>
+<div class="section-divider"><h2>Eventos</h2></div>
+${renderActividadList(actividad)}`;
+}
+
 async function loadRosters(){
     try{
         const snapshot = await getDocs(collection(db, "rosters"));
         const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        console.log("ROSTERS", docs);
-        console.table(docs.map(doc => ({
-            id: doc.id,
-            juego: doc.juego,
-            game: doc.game,
-            tipo: doc.tipo
-        })));
 
         const players = docs
             .filter(item => item.activo !== false)
             .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
 
-        if(!players.length){
+        const grouped = groupByRoster(players);
+        const actividadByRoster = await loadActividad();
+
+        const availableKeys = sortRosterKeys(
+            Array.from(new Set([...Object.keys(grouped), ...Object.keys(actividadByRoster)]))
+        );
+
+        if(!availableKeys.length){
             content.innerHTML = `<p class="loading">No hay rosters publicados.</p>`;
             return;
         }
 
-        const grouped = groupByGame(players);
-        const actividadByGame = await loadActividad();
-        const valorant = grouped.valorant || [];
-        const fifa = grouped.fifa || [];
-        console.log("VALORANT FILTRADOS", valorant);
-        console.log("FIFA FILTRADOS", fifa);
+        const hashKey = normalizeText(location.hash.replace("#", ""));
+        let activeKey = availableKeys.includes(hashKey) ? hashKey : availableKeys[0];
 
-        content.innerHTML = sortGameEntries(grouped).map(([game, list]) => `
-<section id="${game}" class="roster">
-    <div class="section-divider">
-        <h2>${gameLabel(game)}</h2>
-    </div>
-    <p>Equipo competitivo de ${gameLabel(game).replace("Roster ", "")}</p>
-    <div class="roster-grid">
-        ${list.map((player, i) => renderCard(player, i, game)).join("")}
-    </div>
-    ${renderActividadList(actividadByGame[game] || [])}
-</section>`).join("");
+        function render(){
+            content.innerHTML = `
+<div class="roster-section-nav" role="tablist">
+    ${availableKeys.map(key => `<button type="button" class="roster-tab${key === activeKey ? " active" : ""}" data-roster-tab="${key}" role="tab" aria-selected="${key === activeKey}">${escapeHtml(rosterLabel(key))}</button>`).join("")}
+</div>
+<div id="roster-tab-panel">${renderTabPanel(activeKey, grouped[activeKey] || [], actividadByRoster[activeKey] || [])}</div>`;
+        }
+
+        content.addEventListener("click", (event) => {
+            const tabButton = event.target.closest("[data-roster-tab]");
+            if(!tabButton || tabButton.dataset.rosterTab === activeKey) return;
+            activeKey = tabButton.dataset.rosterTab;
+            history.replaceState(null, "", `#${activeKey}`);
+            render();
+        });
+
+        render();
     }catch(error){
         console.error(error);
         content.innerHTML = `<p class="loading">No se pudieron cargar los rosters.</p>`;

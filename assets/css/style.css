@@ -72,11 +72,6 @@ button { cursor: pointer; }
 }
 .navbar a:hover, .navbar a.active { color: #fff; background: rgba(123,44,255,0.15); }
 .navbar a.active { color: var(--morado-light); }
-.admin-link {
-    background: rgba(123,44,255,0.12) !important; border: 1px solid var(--border-accent) !important;
-    color: var(--morado-light) !important;
-}
-.admin-link:hover { background: rgba(123,44,255,0.22) !important; }
 .menu-toggle { display: none; background: none; border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: var(--r-sm); font-size: 18px; cursor: pointer; }
 
 /* ================= NAV DROPDOWN ================= */
@@ -99,6 +94,16 @@ button { cursor: pointer; }
 }
 .nav-dropdown.open .nav-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
 .nav-dropdown-menu a { padding: 9px 12px; }
+
+/* Acceso (portales privados: creadores / roster / admin) */
+/* Es el último item del nav, pegado al borde derecho: alineamos el menú a la
+   derecha para que no se desborde fuera del viewport (pasaba con left:0). */
+.nav-dropdown.admin-access .nav-dropdown-menu { left: auto; right: 0; }
+.nav-dropdown.admin-access .nav-dropdown-toggle {
+    background: rgba(123,44,255,0.12); border: 1px solid var(--border-accent); color: var(--morado-light);
+}
+.nav-dropdown.admin-access .nav-dropdown-toggle:hover,
+.nav-dropdown.admin-access.open .nav-dropdown-toggle { background: rgba(123,44,255,0.22); color: var(--morado-light); }
 
 /* ================= BTN ================= */
 .btn {
@@ -216,13 +221,13 @@ button { cursor: pointer; }
 
 /* ================= HOME ROSTERS ================= */
 .home-rosters { padding:80px 0; }
-.rosters-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:24px; margin-top:40px; }
+.rosters-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:24px; margin-top:40px; }
 .roster-box {
     position:relative; border-radius:var(--r-lg); overflow:hidden;
     border:1px solid var(--border); transition:var(--ease); text-decoration:none; display:block;
     background:var(--card);
 }
-.roster-box img { width:100%; height:240px; object-fit:cover; display:block; transition:var(--ease); }
+.roster-box img { width:100%; aspect-ratio:16/9; height:auto; object-fit:cover; display:block; transition:var(--ease); }
 .roster-box:hover img { transform:scale(1.06); filter:brightness(0.65); }
 .roster-content { padding:24px; position:relative; z-index:2; }
 .roster-content h3 { font-size:1.2rem; color:#fff; margin-bottom:8px; }
@@ -246,12 +251,12 @@ button { cursor: pointer; }
 /* ================= PROJECTS HOME ================= */
 .home-projects { padding:80px 0; }
 .projects-desc { text-align:center; font-size:13px; margin-bottom:40px; }
-.projects-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
+.projects-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:22px; }
 .project-card {
     background:var(--card); border-radius:var(--r-lg); overflow:hidden;
     border:1px solid var(--border); transition:var(--ease); position:relative;
 }
-.project-card img { width:100%; height:180px; object-fit:cover; display:block; transition:var(--ease); }
+.project-card img { width:100%; aspect-ratio:16/9; height:auto; object-fit:cover; display:block; transition:var(--ease); }
 .project-card:hover img { filter:brightness(0.7); transform:scale(1.04); }
 .project-card h3 { font-size:1rem; color:#fff; padding:16px 20px 4px; }
 .project-card > p { font-size:13px; padding:0 20px 20px; text-align:left; }
@@ -260,7 +265,7 @@ button { cursor: pointer; }
 
 /* ================= SOCIAL ================= */
 .social-section { }
-.social-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-top:36px; }
+.social-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr)); gap:16px; margin-top:36px; }
 .social-card {
     background:var(--card); padding:28px 16px; border-radius:var(--r-lg);
     text-decoration:none; border:1px solid var(--border); transition:var(--ease);
@@ -322,7 +327,7 @@ button { cursor: pointer; }
 .section-title { text-align:center; margin-bottom:48px; }
 .section-title p { font-size:13px; margin-top:8px; }
 .accent-line { display:block; width:48px; height:2px; background:var(--grad); margin:12px auto; border-radius:2px; }
-.roster-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
+.roster-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:20px; }
 
 /* Streamer card */
 .card {
@@ -330,7 +335,7 @@ button { cursor: pointer; }
     border:1px solid var(--border); transition:var(--ease); position:relative;
 }
 .card:hover { transform:translateY(-8px); border-color:var(--morado); box-shadow:0 12px 40px var(--morado-glow); }
-.card > img:first-child { width:100%; height:210px; object-fit:cover; display:block; transition:var(--ease); }
+.card > img:first-child { width:100%; aspect-ratio:1/1; height:auto; object-fit:cover; display:block; transition:var(--ease); }
 .card:hover > img:first-child { filter:brightness(0.75); transform:scale(1.04); }
 .card-body { padding:18px 16px 20px; }
 .card h3 { font-size:.95rem; color:#fff; margin-bottom:8px; }
@@ -345,35 +350,78 @@ button { cursor: pointer; }
 /* ================= ROSTER PAGE ================= */
 .roster { padding:80px 0; }
 .roster h2 { color:#fff; }
-.roster > p { text-align:center; color:var(--gris); margin-bottom:8px; }
+.roster-tab-desc { text-align:center; color:var(--gris); margin-bottom:8px; }
 .roster-section-nav { display:flex; gap:12px; justify-content:center; margin-bottom:40px; flex-wrap:wrap; }
 .roster-tab {
     padding:10px 24px; border-radius:var(--r-sm); border:1px solid var(--border);
     background:var(--card); color:var(--gris); font-size:11px; letter-spacing:2px; text-transform:uppercase;
-    text-decoration:none; transition:var(--ease);
+    text-decoration:none; transition:var(--ease); cursor:pointer;
 }
 .roster-tab:hover { color:#fff; border-color:var(--morado); }
-.roster-tab.valorant:hover { border-color:#ff4655; color:#ff4655; }
-.roster-tab.fc:hover { border-color:#00ff87; color:#00ff87; }
+.roster-tab.active { color:#fff; border-color:var(--morado); background:var(--grad-subtle); box-shadow:0 0 0 1px var(--morado-light) inset; }
+
+/* Estadísticas de partidas embebidas en la tarjeta del jugador (solo Valorant, viene del lineup) */
+.card-match-stats { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); text-align:left; }
+.card-stat-row { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--gris); margin-bottom:10px; }
+.card-stat-value { color:#fff; font-weight:700; font-size:13px; }
+.card-mvp-badge {
+    display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:#ffc107;
+    background:rgba(255,193,7,.1); border:1px solid rgba(255,193,7,.35); border-radius:20px; padding:3px 9px; margin-bottom:10px;
+}
+.card-agents { display:flex; flex-direction:column; gap:7px; }
+.card-agent-row { display:grid; grid-template-columns:56px 1fr 28px; align-items:center; gap:6px; }
+.card-agent-name { font-size:10px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.agent-bar-track { height:5px; border-radius:4px; background:rgba(255,255,255,.06); overflow:hidden; }
+.agent-bar-fill { height:100%; background:linear-gradient(90deg,var(--morado),var(--naranja)); border-radius:4px; }
+.card-agent-pct { font-size:10px; color:var(--gris); text-align:right; }
 
 /* Actividad de equipo (torneos/scrims/entrenamientos) — a propósito distinto a .card */
-.actividad-timeline { display:flex; flex-direction:column; gap:14px; margin-top:28px; }
+.actividad-timeline { display:flex; flex-direction:column; gap:16px; margin-top:28px; }
 .actividad-empty { color:var(--gris); font-size:13px; text-align:center; padding:20px; }
 .actividad-item {
-    display:flex; gap:16px; align-items:flex-start; padding:16px 20px;
-    background:var(--grad-subtle); border:1px solid var(--border); border-left:3px solid var(--naranja);
-    border-radius:var(--r-md);
+    padding:20px 22px; background:var(--grad-subtle); border:1px solid var(--border); border-left:3px solid var(--naranja);
+    border-radius:var(--r-lg); transition:border-color .2s;
 }
+.actividad-item:hover { border-color:var(--border-accent); }
+.actividad-item-top { display:flex; gap:16px; align-items:flex-start; }
 .actividad-icon {
-    width:38px; height:38px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:rgba(255,106,0,0.12); color:var(--naranja); font-size:15px;
+    width:42px; height:42px; flex-shrink:0; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:rgba(255,106,0,0.12); color:var(--naranja); font-size:16px; border:1px solid rgba(255,106,0,0.25);
 }
-.actividad-body { min-width:0; }
-.actividad-tipo { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--morado-light); }
-.actividad-body h4 { font-size:1rem; color:#fff; margin:4px 0 2px; }
+.actividad-body { min-width:0; flex:1; }
+.actividad-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.actividad-tipo {
+    font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#fff; font-weight:700;
+    background:linear-gradient(90deg,var(--morado),var(--naranja)); padding:4px 12px; border-radius:20px;
+}
+.actividad-body h4 { font-size:1.05rem; color:#fff; margin:10px 0 2px; letter-spacing:.3px; }
 .actividad-fecha { font-size:11px; color:var(--gris-dark); text-transform:uppercase; letter-spacing:1px; }
-.actividad-resultado { font-size:13px; color:var(--naranja-light); margin-top:4px; font-weight:600; }
+.actividad-resultado { font-size:13px; color:var(--naranja-light); margin-top:4px; font-weight:700; }
 .actividad-desc { font-size:13px; color:var(--gris); margin-top:6px; line-height:1.6; }
+.actividad-group { margin-top:24px; }
+.actividad-group:first-child { margin-top:0; }
+.actividad-group-title {
+    display:flex; align-items:center; gap:8px; font-size:13px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--morado-light); margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid var(--border);
+}
+.actividad-item.is-past { opacity:.65; border-left-color:var(--gris-dark); }
+.actividad-item.is-past:hover { opacity:.85; }
+.actividad-lineup { margin-top:16px; padding-top:14px; border-top:1px dashed var(--border); }
+.actividad-lineup-title {
+    display:flex; align-items:center; gap:6px; font-size:10px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--gris-dark); margin-bottom:10px;
+}
+.actividad-lineup-list { display:flex; flex-wrap:wrap; gap:8px; list-style:none; padding:0; margin:0; }
+.actividad-lineup-list li {
+    display:flex; align-items:center; gap:6px; font-size:12px; color:var(--gris);
+    background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:20px; padding:6px 14px 6px 12px;
+}
+.actividad-lineup-list li .lineup-player { color:#fff; font-weight:600; }
+.actividad-lineup-list li .lineup-agent { color:var(--morado-light); }
+.actividad-lineup-list li .lineup-agent::before { content:"·"; margin-right:6px; color:var(--gris-dark); }
+.actividad-lineup-list li.is-mvp { border-color:#ffc107; background:rgba(255,193,7,.1); }
+.actividad-lineup-list li.is-mvp .lineup-player { color:#ffc107; }
+.actividad-lineup-list li i.fa-crown { color:#ffc107; font-size:11px; }
 
 /* Roster cards */
 .card.rank-card { cursor:default; }
@@ -422,7 +470,7 @@ button { cursor: pointer; }
 .about-highlight { background:var(--grad-subtle); border-radius:var(--r-xl); padding:40px 28px; text-align:center; border:1px solid var(--border-accent); margin:40px auto; max-width:820px; }
 .about-highlight h2 { font-size:2rem; letter-spacing:4px; }
 .about-highlight p { font-size:14px; margin-top:8px; }
-.features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; }
+.features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr)); gap:20px; }
 .feature { background:var(--card); padding:26px 22px; border-radius:var(--r-lg); border:1px solid var(--border); transition:var(--ease); }
 .feature:hover { transform:translateY(-6px); border-color:var(--morado); box-shadow:0 8px 30px var(--morado-glow); }
 .feature h3 { color:#fff; font-size:.95rem; margin-bottom:8px; }
@@ -453,7 +501,7 @@ button { cursor: pointer; }
 .upcoming-content { text-align:center; }
 .upcoming-content h2 { margin-bottom:12px; }
 .upcoming-content > p { margin-bottom:44px; }
-.upcoming-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:22px; margin-top:24px; }
+.upcoming-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr)); gap:22px; margin-top:24px; }
 .upcoming-item { background:rgba(255,255,255,0.025); padding:26px 22px; border-radius:var(--r-lg); border:1px solid var(--border); display:flex; align-items:flex-start; gap:16px; text-align:left; transition:var(--ease); }
 .upcoming-item:hover { border-color:var(--naranja); transform:translateX(6px); }
 .upcoming-icon { font-size:26px; flex-shrink:0; margin-top:2px; }
@@ -537,8 +585,11 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
 
 /* ================= HOME HEADER overrides ================= */
+/* overflow:visible: en .header base el overflow:hidden es para contener los
+   degradados decorativos del hero de home, pero acá recortaba el dropdown
+   "Acceso" del nav (quedaba con solo una tira visible arriba). */
 .header-streamers, .header-influencers, .header-rosters, .header-patrocinadores, .header-nosotros, .header-proyectos, .header-contacto, .header-reglamento, .header-staff {
-    min-height:auto;
+    min-height:auto; overflow:visible;
 }
 
 /* ================= REGLAMENTO ================= */
@@ -574,7 +625,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .reg-col.ok li::before { content:"✅"; position:absolute; left:0; font-size:11px; }
 .reg-col.no li::before { content:"❌"; position:absolute; left:0; font-size:11px; }
 
-.reg-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,200px)); justify-content:center; gap:16px; margin:18px 0; }
+.reg-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),200px)); justify-content:center; gap:16px; margin:18px 0; }
 .reg-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); padding:20px; text-align:center; font-size:13px; color:#fff; }
 .reg-card .emoji { font-size:26px; display:block; margin-bottom:10px; }
 
@@ -662,9 +713,9 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     .features-grid,
     .upcoming-list,
     .roster-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
     }
-    .social-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .social-grid { grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
 
     .section-divider { flex-wrap: wrap; justify-content: center; }
     .section-divider h2 { white-space: normal; }
@@ -681,7 +732,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     .footer-inner { grid-template-columns: 1fr; text-align: center; gap: 20px; }
     .footer-logo { margin: 0 auto; }
     .footer-links, .footer-social { justify-content: center; }
-    .footer-links { flex-direction: column; gap: 8px; }
+    .footer-links { grid-column: 1; flex-direction: column; flex-wrap: nowrap; gap: 8px; }
     .footer-copy { padding-top: 18px; }
 
     .sponsor-box { grid-template-columns: 1fr; text-align: center; gap: 22px; padding: 24px; }
@@ -697,7 +748,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     .modal-content { width: 92%; padding: 24px; }
 
     .reg-index { padding: 22px 20px; }
-    .reg-index ol { columns: 1; }
+    .reg-index ul { columns: 1; }
     .reg-two-col { grid-template-columns: 1fr; }
     .reg-table-wrap table { min-width: 520px; }
 }

@@ -8,13 +8,13 @@
 <style>
 :root{ --morado:#7b2cff; --naranja:#ff6a00; --bg:#0a0a0f; --sidebar:#0d0d18; --card:#111122; --text:#ffffff; --muted:#a9a9bc; --danger:#ff3b5c; --ok:#00c853; }
 *{ box-sizing:border-box; margin:0; padding:0; }
-html, body{ min-height:100%; overflow-x:hidden; }
-body{ min-height:100vh; background:var(--bg); color:var(--text); font-family:"Orbitron",sans-serif; }
+html, body{ height:100%; overflow:hidden; }
+body{ background:var(--bg); color:var(--text); font-family:"Orbitron",sans-serif; }
 img, iframe{ max-width:100%; display:block; }
 button,input,textarea,select{ font:inherit; max-width:100%; }
 button{ cursor:pointer; }
 .hidden{ display:none !important; }
-.login-screen{ min-height:100vh; display:grid; place-items:center; padding:24px; }
+.login-screen{ height:100vh; overflow-y:auto; display:grid; place-items:center; padding:24px; }
 .login-card{ width:min(420px,100%); background:var(--card); border:1px solid rgba(123,44,255,.45); border-radius:8px; padding:28px; box-shadow:0 0 35px rgba(123,44,255,.18); }
 .login-card h1{ margin-bottom:10px; font-size:28px; }
 .login-card p,.muted{ color:var(--muted); }
@@ -23,26 +23,49 @@ button{ cursor:pointer; }
 .field input,.field textarea,.field select{ width:100%; background:#07070d; color:#fff; border:1px solid #272738; border-radius:6px; padding:12px; outline:none; }
 .field textarea{ min-height:110px; resize:vertical; }
 .field input:focus,.field textarea:focus,.field select:focus{ border-color:var(--morado); box-shadow:0 0 0 3px rgba(123,44,255,.16); }
+.lineup-select{ position:relative; flex:1; min-width:0; }
+.lineup-select-trigger{ width:100%; background:#07070d; color:#fff; border:1px solid #272738; border-radius:6px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:8px; text-align:left; }
+.lineup-select-trigger .placeholder{ color:#7a7a90; }
+.lineup-select-trigger .arrow{ font-size:10px; opacity:.7; flex-shrink:0; }
+.lineup-select.open .lineup-select-trigger{ border-color:var(--morado); box-shadow:0 0 0 3px rgba(123,44,255,.16); }
+.lineup-select-panel{ position:fixed; z-index:200; background:#0d0d18; border:1px solid #272738; border-radius:6px; overflow-y:auto; box-shadow:0 12px 30px rgba(0,0,0,.55); }
+.lineup-select-option{ padding:10px 12px; font-size:14px; cursor:pointer; color:#fff; }
+.lineup-select-option:hover,.lineup-select-option.active{ background:rgba(123,44,255,.25); }
+.lineup-select-option.placeholder{ color:#7a7a90; }
+.lineup-mvp-btn{ background:#1d1d2f; border:1px solid #33334a; border-radius:6px; padding:8px 10px; font-size:16px; line-height:1; opacity:.4; filter:grayscale(1); flex-shrink:0; }
+.lineup-mvp-btn.active{ opacity:1; filter:none; background:rgba(255,193,7,.15); border-color:#ffc107; box-shadow:0 0 12px rgba(255,193,7,.35); }
+.lineup-row.is-mvp{ background:rgba(255,193,7,.06); border-radius:8px; padding:4px; margin:-4px -4px 8px; }
 .btn{ border:0; color:#fff; background:linear-gradient(90deg,var(--morado),var(--naranja)); border-radius:6px; padding:11px 16px; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
 .btn.secondary{ background:#1d1d2f; border:1px solid #33334a; }
 .btn.danger{ background:var(--danger); }
 .btn.small{ padding:8px 10px; font-size:12px; }
 .btn:disabled{ opacity:.55; cursor:not-allowed; }
 .error{ margin-top:14px; color:#ff8b9d; min-height:20px; }
-.admin-shell{ min-height:100vh; display:grid; grid-template-columns:260px 1fr; }
-.sidebar{ background:var(--sidebar); border-right:2px solid var(--morado); padding:22px 16px; position:sticky; top:0; height:100vh; }
+.admin-shell{ height:100vh; display:grid; grid-template-columns:260px 1fr; }
+.sidebar{ background:var(--sidebar); border-right:2px solid var(--morado); padding:22px 16px; height:100vh; overflow-y:auto; display:flex; flex-direction:column; }
 .brand{ display:flex; align-items:center; gap:12px; margin-bottom:26px; }
 .brand img{ width:46px; height:46px; object-fit:contain; }
 .brand strong{ font-size:18px; }
-.nav{ display:flex; flex-direction:column; gap:10px; }
-.nav button{ background:transparent; color:#ddd; border:1px solid transparent; border-radius:6px; padding:12px; text-align:left; }
+.nav{ display:flex; flex-direction:column; gap:2px; }
+.nav-group{ margin-bottom:10px; }
+.nav-group:last-child{ margin-bottom:0; }
+.nav-group-label{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); opacity:.65; padding:0 10px 6px; }
+.nav-group .nav-group-label:not(:first-child){ margin-top:4px; }
+.nav button{ display:flex; align-items:center; gap:8px; width:100%; background:transparent; color:#ddd; border:1px solid transparent; border-radius:6px; padding:8px 10px; text-align:left; margin-bottom:2px; font-size:12px; line-height:1.3; }
 .nav button.active,.nav button:hover{ background:#151528; border-color:rgba(123,44,255,.7); color:#fff; }
-.main{ min-width:0; }
-.topbar{ min-height:70px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid rgba(255,255,255,.08); padding:14px 24px; background:rgba(10,10,15,.85); position:sticky; top:0; z-index:5; backdrop-filter:blur(10px); flex-wrap:wrap; }
+.nav-icon{ font-size:14px; width:18px; text-align:center; flex-shrink:0; }
+.main{ min-width:0; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+.topbar{ min-height:70px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid rgba(255,255,255,.08); padding:14px 24px; background:rgba(10,10,15,.85); flex:0 0 auto; z-index:5; backdrop-filter:blur(10px); flex-wrap:wrap; }
+.topbar-left{ display:flex; align-items:center; gap:12px; }
 .hamburger{ display:none; background:#151528; color:#fff; border:1px solid #33334a; border-radius:6px; padding:10px 12px; }
+.sidebar-collapse{ background:#151528; color:#fff; border:1px solid #33334a; border-radius:6px; padding:10px 12px; font-size:12px; white-space:nowrap; }
+.admin-shell{ transition:grid-template-columns .2s; }
+.admin-shell.sidebar-collapsed{ grid-template-columns:0 1fr; }
+.admin-shell.sidebar-collapsed .sidebar{ padding:0; border-right:none; overflow:hidden; }
+@media(max-width:1024px){ .sidebar-collapse{ display:none; } }
 .user-box{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
 .badge{ background:rgba(123,44,255,.18); border:1px solid var(--morado); color:#fff; border-radius:999px; padding:6px 10px; font-size:12px; }
-.content{ padding:26px; }
+.content{ padding:26px; flex:1 1 auto; overflow-y:auto; }
 .section-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:22px; }
 .section-head h2{ font-size:28px; margin-bottom:6px; }
 .panel{ background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:8px; overflow:hidden; }
@@ -57,6 +80,7 @@ th,td{ padding:14px; border-bottom:1px solid rgba(255,255,255,.08); text-align:l
 th{ color:#fff; background:#151528; font-size:13px; }
 td{ color:#d7d7e5; font-size:13px; }
 td img{ width:52px; height:52px; object-fit:cover; border-radius:6px; border:1px solid #33334a; }
+.cell-clamp{ display:block; max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:help; }
 .actions{ display:flex; gap:8px; flex-wrap:wrap; }
 .empty{ padding:24px; color:var(--muted); text-align:center; }
 .bulk-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid rgba(255,255,255,.08); background:rgba(123,44,255,.08); }
@@ -69,6 +93,18 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .field.full{ grid-column:1 / -1; }
 .help{ color:var(--muted); font-size:12px; line-height:1.5; }
 .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; flex-wrap:wrap; }
+.dashboard-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.dashboard-card{ padding:20px; }
+.dashboard-card-wide{ grid-column:1 / -1; }
+.dashboard-card h3{ font-size:15px; margin-bottom:14px; }
+.dashboard-list{ display:flex; flex-direction:column; gap:10px; list-style:none; }
+.dashboard-list li{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 12px; background:rgba(255,255,255,.03); border-radius:6px; font-size:13px; }
+.dashboard-list strong{ color:#fff; }
+.dashboard-tag{ font-size:10.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--morado); background:rgba(123,44,255,.15); border:1px solid rgba(123,44,255,.4); border-radius:20px; padding:3px 9px; white-space:nowrap; }
+.dashboard-meta{ color:var(--muted); font-size:12px; margin-left:auto; }
+.dashboard-highlight{ color:#fff; font-weight:700; margin-bottom:12px; }
+.dashboard-empty{ color:var(--muted); font-size:13px; padding:8px 0; }
+@media(max-width:900px){ .dashboard-grid{ grid-template-columns:1fr; } }
 @media(max-width:1024px){
     .admin-shell{ grid-template-columns:1fr; }
     .sidebar{ position:fixed; inset:0 auto 0 0; width:260px; z-index:15; transform:translateX(-100%); transition:.25s; box-shadow:12px 0 30px rgba(0,0,0,.35); }
@@ -134,14 +170,18 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
             <img src="/imagenes/logopng.png" alt="VORANIX">
             <strong>VORANIX</strong>
         </div>
+        <a class="btn secondary" href="/index.html" style="margin-bottom:16px;">← Ir al sitio</a>
         <nav id="nav" class="nav"></nav>
     </aside>
     <main class="main">
         <header class="topbar">
-            <button id="hamburger" class="hamburger" type="button">☰</button>
-            <div>
-                <strong id="section-title">Dashboard</strong>
-                <div class="muted" id="section-subtitle">Administración de contenido</div>
+            <div class="topbar-left">
+                <button id="hamburger" class="hamburger" type="button">☰</button>
+                <button id="sidebar-collapse" class="sidebar-collapse" type="button">Ocultar menú</button>
+                <div>
+                    <strong id="section-title">Dashboard</strong>
+                    <div class="muted" id="section-subtitle">Administración de contenido</div>
+                </div>
             </div>
             <div class="user-box">
                 <span id="user-email" class="muted"></span>
@@ -182,6 +222,8 @@ import {
     doc,
     getDoc,
     getDocs,
+    query,
+    where,
     onSnapshot,
     addDoc,
     setDoc,
@@ -225,7 +267,8 @@ const VALORANT_ROLES = [
 const DBD_ROLES = [
     ["", "Sin rol"],
     ["survivor", "Survivor"],
-    ["killer", "Killer"]
+    ["killer", "Killer"],
+    ["survivor/killer", "Survivor/Killer"]
 ];
 
 const TIPO_JUGADOR = [
@@ -253,33 +296,69 @@ const PAISES = [
 const ACTIVIDAD_TIPOS = [
     ["torneo", "Torneo"],
     ["scrim", "Scrim"],
-    ["entrenamiento", "Entrenamiento"]
+    ["entrenamiento", "Práctica"],
+    ["reunion", "Reunión"]
 ];
 
-function ACTIVIDAD_FIELDS(juegoValue, juegoLabel){
-    return [
+const ACTIVIDAD_TIPOS_VALORANT = [
+    ...ACTIVIDAD_TIPOS,
+    ["premier", "Premier"],
+    ["liga", "Liga"]
+];
+
+// Lista de agentes de Valorant para el selector del lineup. Si sale un agente
+// nuevo que no esté acá, el campo es de texto libre con sugerencias (datalist).
+const VALORANT_AGENTS = [
+    "Brimstone", "Viper", "Omen", "Killjoy", "Cypher", "Sova", "Sage", "Phoenix",
+    "Jett", "Reyna", "Raze", "Breach", "Skye", "Yoru", "Astra", "KAY/O",
+    "Chamber", "Neon", "Fade", "Harbor", "Gekko", "Deadlock", "Iso", "Clove",
+    "Vyse", "Tejo", "Waylay"
+];
+
+function ACTIVIDAD_FIELDS(juegoValue, juegoLabel, tipos){
+    const fields = [
         ["juego", "Juego", "select", [[juegoValue, juegoLabel]]],
-        ["tipo", "Tipo", "select", ACTIVIDAD_TIPOS],
+        ["tipo", "Tipo", "select", tipos || ACTIVIDAD_TIPOS],
         ["titulo", "Título", "text"],
         ["fechaInicio", "Fecha de inicio", "date"],
         ["fechaFin", "Fecha de término", "date"],
         ["hora", "Hora", "time"],
         ["resultado", "Resultado / Lugar", "text"],
-        ["descripcion", "Descripción", "textarea"],
+        ["descripcion", "Descripción", "textarea"]
+    ];
+    if(juegoValue === "valorant" || juegoValue === "valorantsecundario"){
+        fields.push(["lineup", "Equipo usado (jugador + agente)", "lineup"]);
+    }
+    fields.push(
         ["visiblePortal", "Visible en Portal Roster", "boolean"],
         ["visiblePublico", "Visible en página pública", "boolean"]
-    ];
+    );
+    return fields;
 }
 
 const sections = {
     // Definicion de cada CRUD: etiqueta visible, coleccion y campos del modal.
     valorant: {
-        label: "Rosters Valorant",
+        label: "Rosters Valorant Principal",
         collection: "rosters",
         filterValue: "valorant",
         fields: [
             ["nombre", "Nombre", "text"],
             ["juego", "Juego", "select", [["valorant", "Valorant"]]],
+            ["rol", "Rol", "select", VALORANT_ROLES],
+            ["rango", "Rango", "select", VALORANT_RANKS],
+            ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
+            ["foto", "Imagen", "image"],
+            ["activo", "Activo", "boolean"]
+        ]
+    },
+    valorantsecundario: {
+        label: "Rosters Valorant Secundario",
+        collection: "rosters",
+        filterValue: "valorantsecundario",
+        fields: [
+            ["nombre", "Nombre", "text"],
+            ["juego", "Juego", "select", [["valorantsecundario", "Valorant Secundario"]]],
             ["rol", "Rol", "select", VALORANT_ROLES],
             ["rango", "Rango", "select", VALORANT_RANKS],
             ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
@@ -319,7 +398,15 @@ const sections = {
         label: "Torneos/Scrims Valorant",
         collection: "equipoActividad",
         filterValue: "valorant",
-        fields: ACTIVIDAD_FIELDS("valorant", "Valorant")
+        fields: ACTIVIDAD_FIELDS("valorant", "Valorant", ACTIVIDAD_TIPOS_VALORANT)
+    },
+    // Nombre de la key alineado con "actividad" + capitalize(equipoJuego) que usa
+    // visibleSectionKeys() para mostrarle a un capitán solo su propia sección.
+    actividadValorantsecundario: {
+        label: "Torneos/Scrims Valorant Secundario",
+        collection: "equipoActividad",
+        filterValue: "valorantsecundario",
+        fields: ACTIVIDAD_FIELDS("valorantsecundario", "Valorant Secundario", ACTIVIDAD_TIPOS_VALORANT)
     },
     actividadDbd: {
         label: "Torneos/Scrims DBD",
@@ -438,8 +525,54 @@ const sections = {
     overlay: {
         label: "Overlay",
         singleton: true
+    },
+    dashboard: {
+        label: "Bienvenida"
     }
 };
+
+const NAV_GROUPS = [
+    { label: "Inicio", keys: ["dashboard"] },
+    { label: "Rosters", keys: ["valorant", "valorantsecundario", "fifa", "dbd"] },
+    { label: "Actividad de Equipos", keys: ["actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
+    { label: "Comunidad", keys: ["streamers", "influencers", "staff"] },
+    { label: "Contenido", keys: ["proyectos", "patrocinadores"] },
+    { label: "Sistema", keys: ["mensajes", "accesos", "overlay", "users"] }
+];
+
+// Icono + nombre corto para el nav lateral (compacto). Si una key no está
+// acá, se usa sections[key].label completo como fallback.
+const NAV_META = {
+    dashboard: { icon: "🏠", short: "Inicio" },
+    valorant: { icon: "🔫", short: "Valorant A" },
+    valorantsecundario: { icon: "🔫", short: "Valorant B" },
+    fifa: { icon: "⚽", short: "FIFA" },
+    dbd: { icon: "🔪", short: "DBD" },
+    actividadValorant: { icon: "📅", short: "Torneos Val. A" },
+    actividadValorantsecundario: { icon: "📅", short: "Torneos Val. B" },
+    actividadDbd: { icon: "📅", short: "Torneos DBD" },
+    actividadFifa: { icon: "📅", short: "Torneos FIFA" },
+    streamers: { icon: "📺", short: "Streamers" },
+    influencers: { icon: "⭐", short: "Influencers" },
+    staff: { icon: "🛡️", short: "Staff" },
+    proyectos: { icon: "📁", short: "Proyectos" },
+    patrocinadores: { icon: "🤝", short: "Sponsors" },
+    mensajes: { icon: "✉️", short: "Mensajes" },
+    accesos: { icon: "🔑", short: "Accesos" },
+    overlay: { icon: "🖥️", short: "Overlay" },
+    users: { icon: "👤", short: "Usuarios" }
+};
+
+// Colecciones cuyas altas recientes se resumen en el dashboard de bienvenida.
+const DASHBOARD_FEED_COLLECTIONS = [
+    { collection: "rosters", icon: "🎮", label: "Roster", nameField: "nombre" },
+    { collection: "streamers", icon: "📺", label: "Streamer", nameField: "nombre" },
+    { collection: "influencers", icon: "⭐", label: "Influencer", nameField: "nombre" },
+    { collection: "staff", icon: "🛡️", label: "Staff", nameField: "nombre" },
+    { collection: "proyectos", icon: "📁", label: "Proyecto", nameField: "titulo" },
+    { collection: "sponsors", icon: "🤝", label: "Sponsor", nameField: "nombre" },
+    { collection: "accesos", icon: "🔑", label: "Acceso", nameField: "titulo" }
+];
 
 const OVERLAY_FIELDS = [
     ["comando", "Comando del bot", "text"],
@@ -452,11 +585,12 @@ const OVERLAY_FIELDS = [
 
 let currentUser = null;
 let currentProfile = null;
-let currentSection = "valorant";
+let currentSection = "dashboard";
 let unsubscribeList = null;
 let editingId = null;
 let editingData = {};
 let usersCache = [];
+let valorantRosterNamesCache = {}; // keyed por juego: "valorant" | "valorantsecundario"
 
 // Referencias del DOM usadas por el login, layout y modal.
 const loginScreen = document.getElementById("login-screen");
@@ -533,30 +667,46 @@ function visibleSectionKeys(){
     if(isCapitan() && !isStaff()){
         const juego = currentProfile?.equipoJuego || "";
         const actividadKey = juego ? "actividad" + juego.charAt(0).toUpperCase() + juego.slice(1) : "";
-        return [juego, actividadKey].filter(key => sections[key]);
+        return ["dashboard", juego, actividadKey].filter(key => sections[key]);
     }
     return Object.keys(sections);
 }
 
 function buildNav(){
     const keys = visibleSectionKeys();
-    nav.innerHTML = keys.map(key => `
-<button type="button" data-section="${key}" class="${key === currentSection ? "active" : ""}">${sections[key].label}</button>
-`).join("") + (isAdmin() ? `<button type="button" data-section="users" class="${currentSection === "users" ? "active" : ""}">Usuarios</button>` : "");
+    const allowed = new Set(keys);
+    if(isAdmin()) allowed.add("users");
+
+    const navButton = (key) => {
+        const meta = NAV_META[key] || {};
+        const label = key === "users" ? "Usuarios" : (meta.short || sections[key].label);
+        return `<button type="button" data-section="${key}" class="${key === currentSection ? "active" : ""}"><span class="nav-icon">${meta.icon || "•"}</span>${label}</button>`;
+    };
+
+    nav.innerHTML = NAV_GROUPS.map(group => {
+        const groupKeys = group.keys.filter(key => allowed.has(key));
+        if(!groupKeys.length) return "";
+        return `
+<div class="nav-group">
+    <div class="nav-group-label">${group.label}</div>
+    ${groupKeys.map(navButton).join("")}
+</div>`;
+    }).join("");
 }
 
 function selectSection(key){
     const keys = visibleSectionKeys();
     if(key === "users"){
-        if(!isAdmin()) key = keys[0] || "valorant";
+        if(!isAdmin()) key = keys[0] || "dashboard";
     }else if(!keys.includes(key)){
-        key = keys[0] || "valorant";
+        key = keys[0] || "dashboard";
     }
     currentSection = key;
     buildNav();
     sidebar.classList.remove("open");
     if(unsubscribeList) unsubscribeList();
     if(key === "users") renderUsers();
+    else if(key === "dashboard") renderDashboardSection();
     else if(sections[key]?.singleton) renderOverlaySection();
     else renderCrudSection(sections[key]);
 }
@@ -576,11 +726,17 @@ function tableValue(value, type, options){
     if(type === "image" || type === "imageurl") return value ? `<img src="${escapeHtml(assetUrl(value))}" alt="imagen">` : "-";
     if(type === "boolean") return value ? "Sí" : "No";
     if(type === "json") return Array.isArray(value) ? `${value.length} cupón(es)` : "-";
+    if(type === "lineup") return Array.isArray(value) && value.length ? `${value.length} jugador(es)` : "-";
     if(type === "select" && Array.isArray(options)){
         const match = options.find(option => Array.isArray(option) ? option[0] === value : option === value);
         if(match) return escapeHtml(Array.isArray(match) ? match[1] : match);
     }
-    return value ? escapeHtml(value) : "-";
+    if(!value) return "-";
+    const text = escapeHtml(value);
+    if(type === "textarea" || String(value).length > 60){
+        return `<span class="cell-clamp" title="${text}">${text}</span>`;
+    }
+    return text;
 }
 
 function normalizeSearch(value){
@@ -765,6 +921,166 @@ ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[
         console.error(error);
         body.innerHTML = `<tr><td colspan="${section.fields.length + 2}" class="empty">No se pudieron cargar los datos.</td></tr>`;
     });
+}
+
+const JUEGO_DASH_LABELS = { valorant: "Valorant A", valorantsecundario: "Valorant B", fifa: "FIFA", dbd: "DBD" };
+
+function relativeTime(timestamp){
+    if(!timestamp || typeof timestamp.toDate !== "function") return "";
+    const date = timestamp.toDate();
+    const diffMin = Math.round((Date.now() - date.getTime()) / 60000);
+    if(diffMin < 1) return "recién";
+    if(diffMin < 60) return `hace ${diffMin} min`;
+    const diffH = Math.round(diffMin / 60);
+    if(diffH < 24) return `hace ${diffH} h`;
+    const diffD = Math.round(diffH / 24);
+    if(diffD < 30) return `hace ${diffD} d`;
+    return date.toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+// Misma lógica de parseo que roster-activity.js, para ordenar próximos eventos.
+function parseActividadDate(item){
+    const dateStr = item.fechaInicio || item.fechaFin;
+    if(!dateStr) return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+    if(!match) return null;
+    let hours = 0, minutes = 0;
+    if(item.hora){
+        const horaMatch = /^(\d{2}):(\d{2})/.exec(item.hora);
+        if(horaMatch){ hours = Number(horaMatch[1]); minutes = Number(horaMatch[2]); }
+    }
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hours, minutes);
+}
+
+async function loadDashboardPendientes(){
+    const el = document.getElementById("dash-pendientes");
+    if(!el) return;
+    try{
+        const snapshot = await getDocs(collection(db, "mensajes"));
+        const noLeidos = snapshot.docs.map(d => d.data()).filter(m => !m.leido);
+        if(!noLeidos.length){
+            el.innerHTML = `<p class="dashboard-empty">No hay mensajes pendientes. 🎉</p>`;
+            return;
+        }
+        el.innerHTML = `
+<p class="dashboard-highlight">${noLeidos.length} mensaje(s) sin leer</p>
+<ul class="dashboard-list">
+    ${noLeidos.slice(0, 5).map(m => `<li><strong>${escapeHtml(m.nombre) || "Anónimo"}</strong><span class="dashboard-meta">${escapeHtml(m.asunto) || "Sin asunto"}</span></li>`).join("")}
+</ul>
+<button class="btn secondary small" type="button" data-goto-section="mensajes" style="margin-top:12px;">Ver mensajes</button>`;
+    }catch(error){
+        console.error(error);
+        el.innerHTML = `<p class="dashboard-empty">No se pudo cargar.</p>`;
+    }
+}
+
+async function loadDashboardProximos(){
+    const el = document.getElementById("dash-proximos");
+    if(!el) return;
+    try{
+        const snapshot = await getDocs(collection(db, "equipoActividad"));
+        const now = Date.now();
+        const proximos = snapshot.docs
+            .map(d => d.data())
+            .map(item => ({ item, date: parseActividadDate(item) }))
+            .filter(x => x.date && x.date.getTime() >= now)
+            .sort((a, b) => a.date - b.date)
+            .slice(0, 6);
+
+        if(!proximos.length){
+            el.innerHTML = `<p class="dashboard-empty">No hay eventos próximos cargados.</p>`;
+            return;
+        }
+
+        el.innerHTML = `<ul class="dashboard-list">
+            ${proximos.map(({ item, date }) => `
+            <li>
+                <span class="dashboard-tag">${escapeHtml(JUEGO_DASH_LABELS[item.juego] || item.juego) || "?"}</span>
+                <strong>${escapeHtml(item.titulo) || "Sin título"}</strong>
+                <span class="dashboard-meta">${escapeHtml(date.toLocaleDateString("es-CL", { day: "2-digit", month: "short" }))}${item.hora ? " · " + escapeHtml(item.hora) : ""}</span>
+            </li>`).join("")}
+        </ul>`;
+    }catch(error){
+        console.error(error);
+        el.innerHTML = `<p class="dashboard-empty">No se pudo cargar.</p>`;
+    }
+}
+
+async function loadDashboardRecientes(){
+    const el = document.getElementById("dash-recientes");
+    if(!el) return;
+    try{
+        const results = await Promise.all(DASHBOARD_FEED_COLLECTIONS.map(async (cfg) => {
+            try{
+                const snapshot = await getDocs(collection(db, cfg.collection));
+                return snapshot.docs.map(d => {
+                    const data = d.data();
+                    return { ...cfg, nombre: data[cfg.nameField] || "Sin nombre", createdAt: data.createdAt };
+                });
+            }catch(error){
+                return [];
+            }
+        }));
+
+        const items = results.flat()
+            .filter(item => item.createdAt && typeof item.createdAt.toMillis === "function")
+            .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())
+            .slice(0, 8);
+
+        if(!items.length){
+            el.innerHTML = `<p class="dashboard-empty">Todavía no hay cambios registrados.</p>`;
+            return;
+        }
+
+        el.innerHTML = `<ul class="dashboard-list">
+            ${items.map(item => `
+            <li>
+                <span class="dashboard-tag">${item.icon} ${escapeHtml(item.label)}</span>
+                <strong>${escapeHtml(item.nombre)}</strong>
+                <span class="dashboard-meta">${relativeTime(item.createdAt)}</span>
+            </li>`).join("")}
+        </ul>`;
+    }catch(error){
+        console.error(error);
+        el.innerHTML = `<p class="dashboard-empty">No se pudo cargar.</p>`;
+    }
+}
+
+async function renderDashboardSection(){
+    unsubscribeList = null;
+    sectionTitle.textContent = "Bienvenida";
+    sectionSubtitle.textContent = "Resumen general";
+
+    const displayName = currentProfile.displayName || currentProfile.email || currentUser.email;
+    const fechaLarga = new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    const canSeePendientes = isStaff();
+
+    content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Hola, ${escapeHtml(displayName)} 👋</h2>
+        <p class="muted" style="text-transform:capitalize;">${escapeHtml(fechaLarga)}</p>
+    </div>
+</div>
+<div class="dashboard-grid">
+    ${canSeePendientes ? `
+    <div class="panel dashboard-card">
+        <h3>📬 Pendientes</h3>
+        <div id="dash-pendientes"><p class="loading">Cargando...</p></div>
+    </div>` : ""}
+    <div class="panel dashboard-card">
+        <h3>📅 Próximos eventos</h3>
+        <div id="dash-proximos"><p class="loading">Cargando...</p></div>
+    </div>
+    <div class="panel dashboard-card dashboard-card-wide">
+        <h3>🆕 Cambios recientes</h3>
+        <div id="dash-recientes"><p class="loading">Cargando...</p></div>
+    </div>
+</div>`;
+
+    if(canSeePendientes) loadDashboardPendientes();
+    loadDashboardProximos();
+    loadDashboardRecientes();
 }
 
 async function renderOverlaySection(){
@@ -1067,7 +1383,7 @@ function fieldHtml(field, value){
     // El modal se arma desde la definicion de campos para evitar duplicar formularios.
     const [name, label, type, options] = field;
     const safeValue = value ?? "";
-    const full = ["textarea", "json", "image"].includes(type) ? " full" : "";
+    const full = ["textarea", "json", "image", "lineup"].includes(type) ? " full" : "";
 
     if(type === "textarea"){
         return `<div class="field${full}"><label>${label}</label><textarea name="${name}">${escapeHtml(safeValue)}</textarea></div>`;
@@ -1094,6 +1410,10 @@ function fieldHtml(field, value){
 
     if(type === "imageurl"){
         return `<div class="field"><label>${label}</label><div style="display:flex;gap:8px;align-items:center;"><input name="${name}" type="text" value="${escapeHtml(safeValue)}" placeholder="URL de la imagen" style="flex:1;"><button type="button" class="btn danger small" title="Eliminar imagen" onclick="this.closest('div').querySelector('input[type=text]').value=''; this.closest('.field').querySelector('input[type=file]').value='';">🗑️</button></div><input name="${name}File" type="file" accept="image/*" style="margin-top:6px;font-size:11px;"><span class="help">Pegá una URL o subí un archivo pequeño desde tu dispositivo.</span></div>`;
+    }
+
+    if(type === "lineup"){
+        return `<div class="field${full}" data-lineup-field="${name}"><label>${label}</label><div class="lineup-rows" data-lineup-rows></div><button type="button" class="btn secondary small" data-lineup-add>+ Agregar jugador</button><span class="help">Selecciona quiénes jugaron y con qué agente. Toca 👑 para marcar al MVP de la partida. Esto alimenta las estadísticas de cada jugador en el Portal Roster.</span></div>`;
     }
 
     return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${escapeHtml(safeValue)}"></div>`;
@@ -1127,7 +1447,8 @@ function userFieldHtml(name, value, disabled = false){
     <label>Equipo (solo capitán/jugador)</label>
     <select name="equipoJuego" ${disabled ? "disabled" : ""}>
         <option value="" ${!safeValue ? "selected" : ""}>Sin equipo</option>
-        <option value="valorant" ${safeValue === "valorant" ? "selected" : ""}>Valorant</option>
+        <option value="valorant" ${safeValue === "valorant" ? "selected" : ""}>Valorant Principal</option>
+        <option value="valorantsecundario" ${safeValue === "valorantsecundario" ? "selected" : ""}>Valorant Secundario</option>
         <option value="dbd" ${safeValue === "dbd" ? "selected" : ""}>Dead by Daylight</option>
         <option value="fifa" ${safeValue === "fifa" ? "selected" : ""}>EA FC</option>
     </select>
@@ -1145,6 +1466,172 @@ function userFieldHtml(name, value, disabled = false){
     }
 
     return `<div class="field"><label>${name === "displayName" ? "Nombre" : name}</label><input name="${name}" type="text" value="${escapeHtml(safeValue)}" ${disabled ? "disabled" : ""}></div>`;
+}
+
+async function fetchValorantRosterNames(rosterJuego){
+    if(valorantRosterNamesCache[rosterJuego]) return valorantRosterNamesCache[rosterJuego];
+    const snapshot = await getDocs(query(collection(db, "rosters"), where("juego", "==", rosterJuego)));
+    const names = snapshot.docs
+        .map(d => d.data())
+        .filter(item => item.activo !== false && item.nombre)
+        .map(item => item.nombre)
+        .sort((a, b) => String(a).localeCompare(String(b)));
+    valorantRosterNamesCache[rosterJuego] = names;
+    return names;
+}
+
+// Dropdown propio (no <select> nativo) para que el desplegable siempre se
+// abra hacia abajo, sin importar cuántas opciones tenga ni el scroll del modal.
+let openLineupPanel = null;
+
+function closeLineupPanel(){
+    if(openLineupPanel){
+        openLineupPanel.panel.remove();
+        openLineupPanel.wrap.classList.remove("open");
+        openLineupPanel = null;
+    }
+}
+
+document.addEventListener("click", closeLineupPanel);
+document.addEventListener("scroll", (event) => {
+    // No cerrar si el scroll ocurre dentro del propio panel (el usuario viendo más opciones).
+    if(openLineupPanel && openLineupPanel.panel.contains(event.target)) return;
+    closeLineupPanel();
+}, true);
+window.addEventListener("resize", closeLineupPanel);
+
+function createLineupSelect(name, options, selectedValue, placeholderLabel){
+    const wrap = document.createElement("div");
+    wrap.className = "lineup-select";
+
+    const hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = name;
+    hidden.value = selectedValue || "";
+
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "lineup-select-trigger";
+
+    function setLabel(value){
+        trigger.innerHTML = `<span class="${value ? "" : "placeholder"}">${escapeHtml(value || placeholderLabel)}</span><span class="arrow">▾</span>`;
+    }
+
+    function choose(value){
+        hidden.value = value;
+        setLabel(value);
+        closeLineupPanel();
+    }
+
+    function openPanel(){
+        closeLineupPanel();
+        const panel = document.createElement("div");
+        panel.className = "lineup-select-panel";
+
+        const placeholderOpt = document.createElement("div");
+        placeholderOpt.className = "lineup-select-option placeholder";
+        placeholderOpt.textContent = placeholderLabel;
+        placeholderOpt.addEventListener("click", (event) => { event.stopPropagation(); choose(""); });
+        panel.appendChild(placeholderOpt);
+
+        options.forEach(option => {
+            const optionEl = document.createElement("div");
+            optionEl.className = "lineup-select-option" + (option === hidden.value ? " active" : "");
+            optionEl.textContent = option;
+            optionEl.addEventListener("click", (event) => { event.stopPropagation(); choose(option); });
+            panel.appendChild(optionEl);
+        });
+
+        document.body.appendChild(panel);
+        const rect = trigger.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom - 12;
+        panel.style.left = `${rect.left}px`;
+        panel.style.top = `${rect.bottom + 4}px`;
+        panel.style.width = `${rect.width}px`;
+        panel.style.maxHeight = `${Math.max(120, Math.min(260, spaceBelow))}px`;
+
+        wrap.classList.add("open");
+        openLineupPanel = { panel, wrap };
+    }
+
+    trigger.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if(openLineupPanel && openLineupPanel.wrap === wrap){
+            closeLineupPanel();
+        }else{
+            openPanel();
+        }
+    });
+
+    setLabel(selectedValue);
+    wrap.appendChild(hidden);
+    wrap.appendChild(trigger);
+    return wrap;
+}
+
+async function initLineupField(fieldName, existingRows, rosterJuego){
+    const container = formFields.querySelector(`[data-lineup-field="${fieldName}"]`);
+    if(!container) return;
+    const rowsWrap = container.querySelector("[data-lineup-rows]");
+    const addBtn = container.querySelector("[data-lineup-add]");
+    delete valorantRosterNamesCache[rosterJuego]; // recargar por si se agregaron/editaron jugadores
+    const players = await fetchValorantRosterNames(rosterJuego);
+
+    function addRow(jugador = "", agente = "", mvp = false){
+        const row = document.createElement("div");
+        row.className = "lineup-row" + (mvp ? " is-mvp" : "");
+        row.style.cssText = "display:flex;gap:8px;margin-bottom:8px;align-items:center;";
+
+        // Si el agente guardado no está en la lista (agente nuevo del juego), se agrega igual para no perder el dato.
+        const agentOptions = agente && !VALORANT_AGENTS.includes(agente) ? [agente, ...VALORANT_AGENTS] : VALORANT_AGENTS;
+
+        row.appendChild(createLineupSelect(`${fieldName}_jugador`, players, jugador, "Selecciona jugador"));
+        row.appendChild(createLineupSelect(`${fieldName}_agente`, agentOptions, agente, "Selecciona agente"));
+
+        const mvpInput = document.createElement("input");
+        mvpInput.type = "hidden";
+        mvpInput.name = `${fieldName}_mvp`;
+        mvpInput.value = mvp ? "true" : "false";
+        row.appendChild(mvpInput);
+
+        const mvpBtn = document.createElement("button");
+        mvpBtn.type = "button";
+        mvpBtn.className = "btn lineup-mvp-btn" + (mvp ? " active" : "");
+        mvpBtn.title = "Marcar como MVP de la partida";
+        mvpBtn.textContent = "👑";
+        mvpBtn.addEventListener("click", () => {
+            const makeMvp = mvpInput.value !== "true";
+            rowsWrap.querySelectorAll(".lineup-row").forEach(otherRow => {
+                otherRow.classList.remove("is-mvp");
+                otherRow.querySelector(`input[name="${fieldName}_mvp"]`).value = "false";
+                otherRow.querySelector(".lineup-mvp-btn").classList.remove("active");
+            });
+            if(makeMvp){
+                mvpInput.value = "true";
+                row.classList.add("is-mvp");
+                mvpBtn.classList.add("active");
+            }
+        });
+        row.appendChild(mvpBtn);
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "btn danger small";
+        removeBtn.textContent = "✕";
+        removeBtn.addEventListener("click", () => row.remove());
+        row.appendChild(removeBtn);
+
+        rowsWrap.appendChild(row);
+    }
+
+    rowsWrap.innerHTML = "";
+    if(Array.isArray(existingRows) && existingRows.length){
+        existingRows.forEach(item => addRow(item.jugador || "", item.agente || "", !!item.mvp));
+    }else{
+        addRow();
+    }
+
+    addBtn.addEventListener("click", () => addRow());
 }
 
 function openItemModal(id = null, data = {}){
@@ -1174,11 +1661,14 @@ ${userFieldHtml("active", getUsersFieldValue(data, "active"))}
 `;
     }else{
         formFields.innerHTML = section.fields.map(field => fieldHtml(field, data[field[0]])).join("");
+        const lineupField = section.fields.find(field => field[2] === "lineup");
+        if(lineupField) initLineupField(lineupField[0], data[lineupField[0]], section.filterValue);
     }
     modal.classList.remove("hidden");
 }
 
 function closeModal(){
+    closeLineupPanel();
     modal.classList.add("hidden");
     itemForm.reset();
     editingId = null;
@@ -1262,6 +1752,17 @@ async function saveItem(event){
             }else if(type === "json"){
                 const raw = formData.get(name) || "[]";
                 payload[name] = JSON.parse(raw);
+            }else if(type === "lineup"){
+                const jugadores = formData.getAll(`${name}_jugador`);
+                const agentes = formData.getAll(`${name}_agente`);
+                const mvps = formData.getAll(`${name}_mvp`);
+                payload[name] = jugadores
+                    .map((jugador, i) => ({
+                        jugador: String(jugador || "").trim(),
+                        agente: String(agentes[i] || "").trim(),
+                        mvp: mvps[i] === "true"
+                    }))
+                    .filter(row => row.jugador || row.agente);
             }else if(type === "boolean"){
                 payload[name] = formData.get(name) === "true";
             }else{
@@ -1303,8 +1804,14 @@ content.addEventListener("click", async (event) => {
     const roleButton = event.target.closest("[data-role]");
     const disableButton = event.target.closest("[data-disable]");
     const sendAccessButton = event.target.closest("[data-send-access]");
+    const gotoSectionButton = event.target.closest("[data-goto-section]");
 
     try{
+        if(gotoSectionButton){
+            selectSection(gotoSectionButton.dataset.gotoSection);
+            return;
+        }
+
         if(userEditButton){
             const user = usersCache.find(item => item.uid === userEditButton.dataset.userEdit);
             if(user) openItemModal(user.uid, user);
@@ -1361,6 +1868,18 @@ document.querySelectorAll("[data-logout]").forEach(button => {
 });
 
 document.getElementById("hamburger").addEventListener("click", () => sidebar.classList.toggle("open"));
+
+const sidebarCollapseBtn = document.getElementById("sidebar-collapse");
+const SIDEBAR_COLLAPSE_KEY = "voranixAdminSidebarCollapsed";
+function applySidebarCollapsed(collapsed){
+    adminShell.classList.toggle("sidebar-collapsed", collapsed);
+    sidebarCollapseBtn.textContent = collapsed ? "Mostrar menú" : "Ocultar menú";
+    localStorage.setItem(SIDEBAR_COLLAPSE_KEY, collapsed ? "1" : "0");
+}
+applySidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSE_KEY) === "1");
+sidebarCollapseBtn.addEventListener("click", () => {
+    applySidebarCollapsed(!adminShell.classList.contains("sidebar-collapsed"));
+});
 document.getElementById("close-modal").addEventListener("click", closeModal);
 document.getElementById("cancel-modal").addEventListener("click", closeModal);
 itemForm.addEventListener("submit", saveItem);

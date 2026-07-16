@@ -20,14 +20,30 @@
         .roster-portal-user strong{ font-size:13px; }
         .roster-portal-section{ margin-bottom:44px; }
         .roster-portal-section h2{ font-size:1.2rem; letter-spacing:1px; margin-bottom:16px; }
-        .mini-card{
-            background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
-            padding:16px; display:flex; align-items:center; gap:14px;
+        .mini-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:16px; }
+        .player-card{
+            background:var(--grad-subtle); border:1px solid var(--border); border-radius:var(--r-lg);
+            padding:18px; transition:border-color .2s;
         }
-        .mini-card img{ width:52px; height:52px; border-radius:50%; object-fit:cover; }
-        .mini-card h4{ font-size:.95rem; color:#fff; margin-bottom:2px; }
-        .mini-card p{ font-size:12px; color:var(--gris); }
-        .mini-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+        .player-card:hover{ border-color:var(--border-accent); }
+        .player-card-head{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+        .player-card-head img{ width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,106,0,.4); flex-shrink:0; }
+        .player-card-head h4{ font-size:1rem; color:#fff; margin-bottom:2px; letter-spacing:.3px; }
+        .player-role{ font-size:11px; color:var(--morado-light); text-transform:uppercase; letter-spacing:1px; }
+        .player-mvp-badge{
+            margin-left:auto; display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#ffc107;
+            background:rgba(255,193,7,.1); border:1px solid rgba(255,193,7,.35); border-radius:20px; padding:4px 10px; white-space:nowrap;
+        }
+        .player-card-stats{ padding-top:14px; border-top:1px solid var(--border); }
+        .player-stat-row{ display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--gris); margin-bottom:12px; }
+        .player-stat-row .stat-value{ color:#fff; font-weight:700; font-size:14px; }
+        .player-agents{ display:flex; flex-direction:column; gap:9px; }
+        .player-agent-row{ display:grid; grid-template-columns:64px 1fr 32px; align-items:center; gap:8px; }
+        .player-agent-row .agent-name{ font-size:11px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .agent-bar{ height:6px; border-radius:4px; background:rgba(255,255,255,.06); overflow:hidden; }
+        .agent-bar-fill{ height:100%; background:linear-gradient(90deg,var(--morado),var(--naranja)); border-radius:4px; }
+        .player-agent-row .agent-pct{ font-size:11px; color:var(--gris); text-align:right; }
+        .player-no-stats{ font-size:11px; color:var(--gris-dark); font-style:italic; }
         @media (max-width:600px){
             .roster-portal-topbar{ flex-direction:column; }
             .roster-portal-user{ justify-content:flex-start; width:100%; }
@@ -60,9 +76,14 @@
                     <li><a href="/pages/influencers.html">Influencers</a></li>
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
                     <li><a href="/pages/contacto.html">Contacto</a></li>
-                    <li><a href="/pages/creadores.html" class="admin-link"><i class="fas fa-star" style="font-size:9px;margin-right:4px;"></i>Portal Creadores</a></li>
-                    <li><a href="/pages/roster-portal.html" class="admin-link active"><i class="fas fa-users" style="font-size:9px;margin-right:4px;"></i>Portal Roster</a></li>
-                    <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
+                    <li class="nav-dropdown admin-access">
+                        <button type="button" class="nav-dropdown-toggle active"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Acceso <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/creadores.html"><i class="fas fa-star" style="font-size:9px;margin-right:6px;"></i>Portal Creadores</a></li>
+                            <li><a href="/pages/roster-portal.html" class="active"><i class="fas fa-users" style="font-size:9px;margin-right:6px;"></i>Portal Roster</a></li>
+                            <li><a href="/admin/admin.html"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Admin</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -140,7 +161,7 @@
     import { auth, db, escapeHtml } from "/assets/js/firebase-config.js";
     import { renderActividadList } from "/assets/js/roster-activity.js";
 
-    const JUEGO_LABELS = { valorant: "Valorant", dbd: "Dead by Daylight", fifa: "EA FC" };
+    const JUEGO_LABELS = { valorant: "Valorant Principal", valorantsecundario: "Valorant Secundario", dbd: "Dead by Daylight", fifa: "EA FC" };
 
     const loginScreen = document.getElementById("login-screen");
     const portalShell = document.getElementById("roster-portal-shell");
@@ -153,6 +174,8 @@
     const equipoGrid = document.getElementById("equipo-grid");
 
     let unsubActividad = null;
+    let currentPlayers = [];
+    let currentStats = {};
 
     function stopListeners(){
         if(unsubActividad) unsubActividad();
@@ -192,15 +215,71 @@
         return snapshot.exists() ? snapshot.data() : null;
     }
 
-    function renderMiniCard(player){
+    function normalizeName(value){
+        return String(value || "").trim().toLowerCase();
+    }
+
+    // Deriva partidas jugadas, top agentes y MVPs de cada jugador a partir
+    // del lineup cargado en cada actividad (solo tiene sentido para Valorant).
+    function computeStats(items){
+        const stats = {};
+        items.forEach(item => {
+            if(!Array.isArray(item.lineup)) return;
+            item.lineup.forEach(row => {
+                if(!row || !row.jugador) return;
+                const key = normalizeName(row.jugador);
+                if(!stats[key]) stats[key] = { matches: 0, mvpCount: 0, agentCounts: {} };
+                stats[key].matches += 1;
+                if(row.mvp) stats[key].mvpCount += 1;
+                if(row.agente){
+                    stats[key].agentCounts[row.agente] = (stats[key].agentCounts[row.agente] || 0) + 1;
+                }
+            });
+        });
+        return stats;
+    }
+
+    function renderPlayerCard(player, stats){
+        const topAgents = stats
+            ? Object.entries(stats.agentCounts).sort((a, b) => b[1] - a[1]).slice(0, 3)
+            : [];
+        const matches = stats ? stats.matches : 0;
+
         return `
-<div class="mini-card">
-    <img src="${escapeHtml(assetUrl(player.foto)) || '/imagenes/logo.jpg'}" alt="${escapeHtml(player.nombre) || 'Jugador'}" onerror="this.src='/imagenes/logo.jpg'">
-    <div>
-        <h4>${escapeHtml(player.nombre) || "Jugador"}</h4>
-        <p>${escapeHtml(player.rol || "")}</p>
+<div class="player-card">
+    <div class="player-card-head">
+        <img src="${escapeHtml(assetUrl(player.foto)) || '/imagenes/logo.jpg'}" alt="${escapeHtml(player.nombre) || 'Jugador'}" onerror="this.src='/imagenes/logo.jpg'">
+        <div>
+            <h4>${escapeHtml(player.nombre) || "Jugador"}</h4>
+            <p class="player-role">${escapeHtml(player.rol || "")}</p>
+        </div>
+        ${stats && stats.mvpCount ? `<span class="player-mvp-badge"><i class="fas fa-crown"></i> ${stats.mvpCount} MVP</span>` : ""}
+    </div>
+    <div class="player-card-stats">
+        <div class="player-stat-row">
+            <span>Partidas jugadas</span>
+            <span class="stat-value">${matches}</span>
+        </div>
+        ${topAgents.length ? `
+        <div class="player-agents">
+            ${topAgents.map(([agente, count]) => {
+                const pct = matches ? Math.round((count / matches) * 100) : 0;
+                return `
+            <div class="player-agent-row">
+                <span class="agent-name">${escapeHtml(agente)}</span>
+                <div class="agent-bar"><div class="agent-bar-fill" style="width:${pct}%"></div></div>
+                <span class="agent-pct">${pct}%</span>
+            </div>`;
+            }).join("")}
+        </div>` : `<p class="player-no-stats">Todavía sin partidas registradas.</p>`}
     </div>
 </div>`;
+    }
+
+    function renderEquipoGrid(){
+        equipoGrid.innerHTML = currentPlayers.length
+            ? currentPlayers.map(player => renderPlayerCard(player, currentStats[normalizeName(player.nombre)])).join("")
+            : `<p class="loading">Todavía no hay jugadores cargados.</p>`;
     }
 
     async function loadEquipo(juego){
@@ -210,13 +289,11 @@
         }
         try{
             const snapshot = await getDocs(query(collection(db, "rosters"), where("juego", "==", juego)));
-            const players = snapshot.docs
+            currentPlayers = snapshot.docs
                 .map(d => d.data())
                 .filter(item => item.activo !== false)
                 .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
-            equipoGrid.innerHTML = players.length
-                ? players.map(renderMiniCard).join("")
-                : `<p class="loading">Todavía no hay jugadores cargados.</p>`;
+            renderEquipoGrid();
         }catch(error){
             console.error(error);
             equipoGrid.innerHTML = `<p class="loading">No se pudo cargar el equipo.</p>`;
@@ -235,6 +312,8 @@
                     .map(d => d.data())
                     .filter(item => item.visiblePortal === true);
                 actividadList.innerHTML = renderActividadList(items);
+                currentStats = computeStats(items);
+                renderEquipoGrid();
             },
             (error) => {
                 console.error(error);

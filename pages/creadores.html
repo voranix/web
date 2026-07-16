@@ -18,7 +18,7 @@
         .creadores-subtitle{ color:var(--gris); font-size:13px; }
         .creadores-user{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
         .creadores-user strong{ font-size:13px; }
-        .creadores-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:22px; }
+        .creadores-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:22px; }
         .tag-chip{
             display:inline-flex; align-self:flex-start; font-size:10px; letter-spacing:2px; text-transform:uppercase;
             color:var(--naranja); border:1px solid rgba(255,106,0,0.3); background:rgba(255,106,0,0.06);
@@ -29,7 +29,7 @@
             transition:var(--ease); display:flex; flex-direction:column;
         }
         .acceso-card:hover{ transform:translateY(-6px); border-color:var(--morado); box-shadow:0 8px 30px var(--morado-glow); }
-        .acceso-img{ width:100%; height:170px; object-fit:cover; display:block; background:var(--bg-2); }
+        .acceso-img{ width:100%; aspect-ratio:16/9; height:auto; object-fit:cover; display:block; background:var(--bg-2); }
         .acceso-body{ padding:22px; display:flex; flex-direction:column; gap:10px; flex:1; }
         .acceso-body h3{ font-size:1.05rem; color:#fff; margin-bottom:0; }
         .acceso-body > p{ font-size:13px; text-align:left; line-height:1.7; margin:0; }
@@ -46,7 +46,7 @@
         .overlay-links-block{ margin-bottom:36px; }
         .overlay-links-title{ font-size:1.3rem; letter-spacing:1px; margin-bottom:6px; }
         .overlay-links-sub{ font-size:13px; margin-bottom:18px; }
-        .overlay-links-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; }
+        .overlay-links-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr)); gap:18px; }
         .overlay-link-card{
             background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
             padding:20px; display:flex; flex-direction:column; gap:12px;
@@ -88,9 +88,14 @@
                     <li><a href="/pages/influencers.html">Influencers</a></li>
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
                     <li><a href="/pages/contacto.html">Contacto</a></li>
-                    <li><a href="/pages/creadores.html" class="admin-link active"><i class="fas fa-star" style="font-size:9px;margin-right:4px;"></i>Portal Creadores</a></li>
-                    <li><a href="/pages/roster-portal.html" class="admin-link"><i class="fas fa-users" style="font-size:9px;margin-right:4px;"></i>Portal Roster</a></li>
-                    <li><a href="/admin/admin.html" class="admin-link"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Admin</a></li>
+                    <li class="nav-dropdown admin-access">
+                        <button type="button" class="nav-dropdown-toggle active"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Acceso <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/creadores.html" class="active"><i class="fas fa-star" style="font-size:9px;margin-right:6px;"></i>Portal Creadores</a></li>
+                            <li><a href="/pages/roster-portal.html"><i class="fas fa-users" style="font-size:9px;margin-right:6px;"></i>Portal Roster</a></li>
+                            <li><a href="/admin/admin.html"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Admin</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </nav>
         </div>
