@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /pages/creadores.html
+Disallow: /pages/roster-portal.html
+
+Sitemap: https://voranix.web.app/sitemap.xml

@@ -320,3 +320,139 @@ exports.enviarAccesoCreador = onCall(
         return { detalle };
     }
 );
+
+// ---------------------------------------------------------------------
+// obtenerUltimoAcceso: devuelve, para cada UID pedido, cuándo se creó la
+// cuenta y cuándo fue su último inicio de sesión (dato que solo vive en
+// Firebase Auth, Firestore no lo sabe). Usado por la tabla de Usuarios
+// del admin para mostrar "Último ingreso".
+// ---------------------------------------------------------------------
+
+exports.obtenerUltimoAcceso = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+    }
+
+    const callerSnap = await admin.firestore().doc(`users/${request.auth.uid}`).get();
+    const callerProfile = callerSnap.exists ? callerSnap.data() : null;
+    if (!callerProfile || !profileRoles(callerProfile).includes("admin")) {
+        throw new HttpsError("permission-denied", "Solo un admin puede ver esta información.");
+    }
+
+    const uids = Array.isArray(request.data?.uids) ? request.data.uids : [];
+    if (!uids.length) return { estados: [] };
+
+    // getUsers acepta maximo 100 identificadores por llamada.
+    const estados = [];
+    for (let i = 0; i < uids.length; i += 100) {
+        const lote = uids.slice(i, i + 100).map(uid => ({ uid }));
+        const { users, notFound } = await admin.auth().getUsers(lote);
+        users.forEach(u => {
+            estados.push({
+                uid: u.uid,
+                lastSignInTime: u.metadata.lastSignInTime || null,
+                creationTime: u.metadata.creationTime || null
+            });
+        });
+        notFound.forEach(n => estados.push({ uid: n.uid, lastSignInTime: null, creationTime: null, noEncontrado: true }));
+    }
+
+    return { estados };
+});
+
+// ---------------------------------------------------------------------
+// enviarComunicado: manda un mismo correo (asunto + mensaje libre) a un
+// grupo de cuentas (creadores, roster, capitanes, etc.). Pensado para
+// avisos generales desde el admin, no para el flujo de "primer acceso".
+// ---------------------------------------------------------------------
+
+function construirCorreoComunicado({ displayName, asunto, mensajeHtml }) {
+    const nombre = displayName || "";
+    return `
+<div style="background:#06060e;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;background:#0d0d1e;border-radius:12px;overflow:hidden;border:1px solid #2a2a40;">
+    <div style="padding:28px 28px 8px;text-align:center;">
+      <img src="https://voranix.web.app/imagenes/logopng.png" alt="VORANIX" width="56" height="56" style="width:56px;height:56px;margin:0 auto 14px;display:block;">
+      <h1 style="color:#ffffff;font-size:20px;margin:0 0 4px;">${asunto}</h1>
+    </div>
+    <div style="padding:8px 28px 28px;">
+      <p style="color:#b8b8d0;font-size:14px;line-height:1.7;margin:0 0 14px;">Hola ${nombre},</p>
+      <div style="color:#dcdce8;font-size:14px;line-height:1.8;">${mensajeHtml}</div>
+    </div>
+    <div style="border-top:1px solid #2a2a40;padding:20px 28px;text-align:center;">
+      <p style="color:#9090b0;font-size:12px;margin:0 0 4px;">— Equipo VORANIX</p>
+      <p style="color:#55556a;font-size:11px;margin:0;">Este correo se envió a cuentas del staff/roster/creadores de VORANIX.</p>
+    </div>
+  </div>
+</div>`;
+}
+
+exports.enviarComunicado = onCall(
+    { secrets: [SMTP_USER, SMTP_PASS], timeoutSeconds: 300 },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+        }
+
+        const callerSnap = await admin.firestore().doc(`users/${request.auth.uid}`).get();
+        const callerProfile = callerSnap.exists ? callerSnap.data() : null;
+        if (!callerProfile || !profileRoles(callerProfile).includes("admin")) {
+            throw new HttpsError("permission-denied", "Solo un admin puede enviar comunicados.");
+        }
+
+        const uids = Array.isArray(request.data?.uids) ? request.data.uids : [];
+        const asunto = String(request.data?.asunto || "").trim();
+        const mensaje = String(request.data?.mensaje || "").trim();
+        if (!uids.length) throw new HttpsError("invalid-argument", "Debes indicar al menos un destinatario.");
+        if (!asunto) throw new HttpsError("invalid-argument", "Debes indicar un asunto.");
+        if (!mensaje) throw new HttpsError("invalid-argument", "Debes indicar un mensaje.");
+
+        const smtpUser = SMTP_USER.value();
+        const smtpPass = SMTP_PASS.value();
+        if (!smtpUser || !smtpPass) {
+            throw new HttpsError("failed-precondition", "SMTP no configurado (SMTP_USER/SMTP_PASS).");
+        }
+
+        const mensajeHtml = mensaje
+            .split(/\n{2,}/)
+            .map(parrafo => `<p style="margin:0 0 12px;">${parrafo.replace(/\n/g, "<br>")}</p>`)
+            .join("");
+
+        // Mismo limite de 1 mensaje/1.2s que enviarAccesoCreador, por el mismo
+        // motivo: Gmail corta la conexión si le llegan muchos correos juntos.
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: smtpUser, pass: smtpPass },
+            pool: true,
+            maxConnections: 1,
+            rateDelta: 1200,
+            rateLimit: 1
+        });
+
+        const detalle = [];
+        for (const uid of uids) {
+            try {
+                const profileSnap = await admin.firestore().doc(`users/${uid}`).get();
+                const profile = profileSnap.exists ? profileSnap.data() : {};
+                const authUser = await admin.auth().getUser(uid);
+                const email = authUser.email || profile.email;
+                if (!email) throw new Error(`${uid} no tiene email`);
+
+                await transporter.sendMail({
+                    from: `VORANIX <${smtpUser}>`,
+                    to: email,
+                    subject: asunto,
+                    html: construirCorreoComunicado({ displayName: profile.displayName, asunto, mensajeHtml })
+                });
+
+                detalle.push({ uid, email, status: "enviado" });
+            } catch (err) {
+                logger.error(`enviarComunicado: fallo con ${uid}`, err);
+                detalle.push({ uid, status: "error", error: String(err?.message || err) });
+            }
+        }
+
+        transporter.close();
+        return { detalle };
+    }
+);

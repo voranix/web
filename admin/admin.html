@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin VORANIX</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="/imagenes/logopng.png">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{ --morado:#7b2cff; --naranja:#ff6a00; --bg:#0a0a0f; --sidebar:#0d0d18; --card:#111122; --text:#ffffff; --muted:#a9a9bc; --danger:#ff3b5c; --ok:#00c853; }
@@ -205,6 +207,32 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
         <div class="modal-actions">
             <button class="btn secondary" type="button" id="cancel-modal">Cancelar</button>
             <button class="btn" type="submit" id="save-item">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<div id="message-modal" class="modal hidden">
+    <form id="message-form" class="modal-card">
+        <div class="modal-head">
+            <h2>Enviar mensaje</h2>
+            <button class="btn secondary small" type="button" id="close-message-modal">Cerrar</button>
+        </div>
+        <p class="help" id="message-recipients-info" style="margin-bottom:14px;"></p>
+        <div class="form-grid">
+            <div class="field full">
+                <label>Asunto</label>
+                <input name="asunto" type="text" required placeholder="Ej: Aviso importante para el equipo">
+            </div>
+            <div class="field full">
+                <label>Mensaje</label>
+                <textarea name="mensaje" required placeholder="Escribe el mensaje. Cada línea en blanco separa un párrafo." style="min-height:180px;"></textarea>
+                <span class="help">Se manda por correo a cada cuenta seleccionada, con el mismo diseño que los avisos de acceso.</span>
+            </div>
+        </div>
+        <div id="message-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="cancel-message-modal">Cancelar</button>
+            <button class="btn" type="submit" id="send-message-btn">Enviar</button>
         </div>
     </form>
 </div>
@@ -592,6 +620,7 @@ let editingId = null;
 let editingData = {};
 let usersCache = [];
 let valorantRosterNamesCache = {}; // keyed por juego: "valorant" | "valorantsecundario"
+let lastAccessCache = {}; // keyed por uid: { lastSignInTime, creationTime }
 
 // Referencias del DOM usadas por el login, layout y modal.
 const loginScreen = document.getElementById("login-screen");
@@ -610,6 +639,10 @@ const formFields = document.getElementById("form-fields");
 const formError = document.getElementById("form-error");
 const modalTitle = document.getElementById("modal-title");
 const sidebar = document.getElementById("sidebar");
+const messageModal = document.getElementById("message-modal");
+const messageForm = document.getElementById("message-form");
+const messageError = document.getElementById("message-error");
+const messageRecipientsInfo = document.getElementById("message-recipients-info");
 
 function showError(target, message){
     target.textContent = message || "";
@@ -928,7 +961,16 @@ const JUEGO_DASH_LABELS = { valorant: "Valorant A", valorantsecundario: "Valoran
 
 function relativeTime(timestamp){
     if(!timestamp || typeof timestamp.toDate !== "function") return "";
-    const date = timestamp.toDate();
+    return relativeTimeFromDate(timestamp.toDate());
+}
+
+// Igual que relativeTime pero para fechas planas (Date o string ISO), como
+// las que devuelve Firebase Auth (lastSignInTime/creationTime), que no son
+// Timestamps de Firestore.
+function relativeTimeFromDate(dateInput){
+    if(!dateInput) return "";
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+    if(Number.isNaN(date.getTime())) return "";
     const diffMin = Math.round((Date.now() - date.getTime()) / 60000);
     if(diffMin < 1) return "recién";
     if(diffMin < 60) return `hace ${diffMin} min`;
@@ -1183,6 +1225,67 @@ async function enviarAcceso(uids){
     }
 }
 
+let messageRecipientUids = [];
+
+function openMessageModal(uids){
+    messageRecipientUids = uids;
+    messageError.textContent = "";
+    messageForm.reset();
+    messageRecipientsInfo.textContent = uids.length === 1
+        ? "Se enviará a 1 cuenta seleccionada."
+        : `Se enviará a ${uids.length} cuentas seleccionadas.`;
+    messageModal.classList.remove("hidden");
+}
+
+function closeMessageModal(){
+    messageModal.classList.add("hidden");
+    messageForm.reset();
+    messageRecipientUids = [];
+}
+
+document.getElementById("close-message-modal").addEventListener("click", closeMessageModal);
+document.getElementById("cancel-message-modal").addEventListener("click", closeMessageModal);
+
+messageForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    messageError.textContent = "";
+
+    if(!messageRecipientUids.length){
+        messageError.textContent = "No hay destinatarios seleccionados.";
+        return;
+    }
+
+    const formData = new FormData(messageForm);
+    const asunto = String(formData.get("asunto") || "").trim();
+    const mensaje = String(formData.get("mensaje") || "").trim();
+    if(!asunto || !mensaje){
+        messageError.textContent = "Completa el asunto y el mensaje.";
+        return;
+    }
+
+    const label = messageRecipientUids.length === 1 ? "1 cuenta" : `${messageRecipientUids.length} cuentas`;
+    if(!confirm(`¿Enviar este mensaje a ${label}?`)) return;
+
+    const sendBtn = document.getElementById("send-message-btn");
+    sendBtn.disabled = true;
+    try{
+        const enviarComunicado = httpsCallable(functionsInstance, "enviarComunicado");
+        const result = await enviarComunicado({ uids: messageRecipientUids, asunto, mensaje });
+        const detalle = result.data.detalle || [];
+        const ok = detalle.filter(d => d.status === "enviado").length;
+        const fail = detalle.filter(d => d.status !== "enviado");
+        let msg = `Enviados: ${ok}/${detalle.length}.`;
+        if(fail.length) msg += `\nFallaron: ${fail.map(f => `${f.uid} (${f.error})`).join(", ")}`;
+        alert(msg);
+        closeMessageModal();
+    }catch(error){
+        console.error(error);
+        messageError.textContent = "No se pudo enviar: " + (error.message || error);
+    }finally{
+        sendBtn.disabled = false;
+    }
+});
+
 async function renderUsers(){
     // La vista de usuarios usa lecturas directas de Firestore y edición por modal.
     unsubscribeList = null;
@@ -1221,13 +1324,14 @@ async function renderUsers(){
     </div>
     <div class="bulk-bar hidden" id="bulk-bar">
         <span class="count" id="bulk-count"></span>
+        <button class="btn secondary small" type="button" id="bulk-message-btn">Enviar mensaje</button>
         <button class="btn secondary small" type="button" id="bulk-send-access-btn">Enviar acceso a seleccionados</button>
         <button class="btn danger small" type="button" id="bulk-delete-btn">Eliminar seleccionados</button>
     </div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th class="select-col"><input type="checkbox" id="select-all"></th><th>Nombre</th><th>Email</th><th>Rol</th><th>Activo</th><th>Acciones</th></tr></thead>
-            <tbody id="users-body"><tr><td colspan="6">Cargando...</td></tr></tbody>
+            <thead><tr><th class="select-col"><input type="checkbox" id="select-all"></th><th>Nombre</th><th>Email</th><th>Rol</th><th>Activo</th><th>Último ingreso</th><th>Acciones</th></tr></thead>
+            <tbody id="users-body"><tr><td colspan="7">Cargando...</td></tr></tbody>
         </table>
     </div>
 </div>`;
@@ -1273,6 +1377,7 @@ async function renderUsers(){
     const selectAllBox = document.getElementById("select-all");
     const bulkBar = document.getElementById("bulk-bar");
     const bulkCount = document.getElementById("bulk-count");
+    const bulkMessageBtn = document.getElementById("bulk-message-btn");
     const bulkSendAccessBtn = document.getElementById("bulk-send-access-btn");
     const bulkDeleteBtn = document.getElementById("bulk-delete-btn");
     const selected = new Set();
@@ -1304,20 +1409,27 @@ async function renderUsers(){
         const currentUids = new Set(usersCache.map(user => user.uid));
         Array.from(selected).forEach(uid => { if(!currentUids.has(uid)) selected.delete(uid); });
 
-        const rows = filtered.map(user => `
+        const rows = filtered.map(user => {
+            const acceso = lastAccessCache[user.uid];
+            const ultimoIngreso = acceso?.lastSignInTime
+                ? `<span title="${escapeHtml(new Date(acceso.lastSignInTime).toLocaleString("es-CL"))}">${escapeHtml(relativeTimeFromDate(acceso.lastSignInTime))}</span>`
+                : (acceso ? `<span class="muted">Nunca</span>` : `<span class="muted">…</span>`);
+            return `
 <tr>
 <td class="select-col"><input type="checkbox" data-select="${user.uid}" ${selected.has(user.uid) ? "checked" : ""}></td>
 <td>${user.displayName ? escapeHtml(user.displayName) : "-"}</td>
 <td>${user.email ? escapeHtml(user.email) : "-"}</td>
 <td>${profileRoles(user).length ? escapeHtml(profileRoles(user).join(", ")) : "-"}</td>
 <td>${user.active === false ? "No" : "Sí"}</td>
+<td>${ultimoIngreso}</td>
 <td><div class="actions">
     <button class="btn secondary small" type="button" data-user-edit="${user.uid}">Editar</button>
     ${profileRoles(user).some(r => ["creador", "capitan", "jugador"].includes(r)) ? `<button class="btn small" type="button" data-send-access="${user.uid}">Enviar acceso</button>` : ""}
 </div></td>
-</tr>`);
+</tr>`;
+        });
 
-        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="6" class="empty">Sin resultados.</td></tr>`;
+        body.innerHTML = rows.length ? rows.join("") : `<tr><td colspan="7" class="empty">Sin resultados.</td></tr>`;
         countLabel.textContent = `${filtered.length} de ${usersCache.length}`;
         updateBulkBar();
     }
@@ -1339,6 +1451,14 @@ async function renderUsers(){
         if(selectAllBox.checked) idsOnScreen.forEach(id => selected.add(id));
         else idsOnScreen.forEach(id => selected.delete(id));
         renderFilteredUsers();
+    });
+
+    bulkMessageBtn.addEventListener("click", () => {
+        if(!selected.size){
+            alert("Selecciona al menos una cuenta para enviarle un mensaje.");
+            return;
+        }
+        openMessageModal(Array.from(selected));
     });
 
     bulkSendAccessBtn.addEventListener("click", () => {
@@ -1372,11 +1492,22 @@ async function renderUsers(){
     try{
         const snapshot = await getDocs(collection(db, "users"));
         usersCache = snapshot.docs.map(item => ({ uid: item.id, ...item.data() }));
-        console.log("users", usersCache);
         renderFilteredUsers();
     }catch(error){
         console.error(error);
-        body.innerHTML = `<tr><td colspan="6" class="empty">No se pudieron cargar los usuarios.</td></tr>`;
+        body.innerHTML = `<tr><td colspan="7" class="empty">No se pudieron cargar los usuarios.</td></tr>`;
+        return;
+    }
+
+    // El último ingreso vive solo en Firebase Auth (no en Firestore), asi que
+    // se pide aparte via Cloud Function y se repinta la tabla al llegar.
+    try{
+        const obtenerUltimoAcceso = httpsCallable(functionsInstance, "obtenerUltimoAcceso");
+        const result = await obtenerUltimoAcceso({ uids: usersCache.map(u => u.uid) });
+        (result.data.estados || []).forEach(estado => { lastAccessCache[estado.uid] = estado; });
+        renderFilteredUsers();
+    }catch(error){
+        console.error("No se pudo obtener el último ingreso:", error);
     }
 }
 
