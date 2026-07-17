@@ -193,6 +193,37 @@ function dbdTipoJugadorLabel(tipo) {
     return DBD_TIPO_JUGADOR_LABELS[key] || tipoJugadorLabel(tipo);
 }
 
+const FIFA_ROLE_LABELS = {
+    "portero": "Portero",
+    "ct/portero": "CT/Portero",
+    "centrales": "Centrales",
+    "ct/centrales": "CT/Centrales",
+    "laterales": "Laterales",
+    "medios centro": "Medios Centro",
+    "delanteros": "Delanteros"
+};
+
+function fifaRoleLabel(rol) {
+    const key = normalizeText(rol);
+    return FIFA_ROLE_LABELS[key] || rol || "Jugador";
+}
+
+// Mismo criterio que streamers.html/influencers.html: bandera segun el pais
+// guardado en el perfil, Chile por defecto si no se especificó.
+function flagPath(pais) {
+    const key = normalizeText(pais);
+    if (key === "mexico") return "/imagenes/flags/mexico.png";
+    if (key === "argentina") return "/imagenes/flags/argentina.png";
+    return "/imagenes/flags/chile.png";
+}
+
+function flagAlt(pais) {
+    const key = normalizeText(pais);
+    if (key === "mexico") return "México";
+    if (key === "argentina") return "Argentina";
+    return "Chile";
+}
+
 function normalizeName(value){
     return String(value || "").trim().toLowerCase();
 }
@@ -242,20 +273,22 @@ function renderStatsBlock(stats){
 
 function renderCard(player, i, key, stats){
     const isDbd = key === "dbd";
+    const isFifa = key === "fifa";
     const rankImg = rankImgPath(player.rango);
     const tipoLabel = isDbd ? dbdTipoJugadorLabel(player.tipoJugador) : tipoJugadorLabel(player.tipoJugador);
     const rankText = rankLabel(player.rango);
+    const rolText = isDbd ? dbdRoleLabel(player.rol) : (isFifa ? fifaRoleLabel(player.rol) : rolLabel(player.rol));
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.05}s">
     <img src="${assetUrl(player.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(player.nombre) || 'Jugador'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
-        <p class="categoria">${isDbd ? escapeHtml(dbdRoleLabel(player.rol)) : escapeHtml(rolLabel(player.rol))}</p>
+        <p class="categoria">${escapeHtml(rolText)}</p>
         <h3>${escapeHtml(player.nombre) || "Jugador"}</h3>
         ${tipoLabel ? `<p class="games">${escapeHtml(tipoLabel)}</p>` : ""}
         ${isDbd && player.personaje ? `<p class="games">${escapeHtml(player.personaje)}</p>` : ""}
         ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${escapeHtml(rankText) || 'Rango'}" onerror="this.style.display='none'">` : ""}
         ${rankText ? `<div class="stats"><p style="color:var(--diamond)">${escapeHtml(rankText)}</p></div>` : ""}
-        <img class="flag" src="/imagenes/flags/chile.png" alt="Chile">
+        <img class="flag" src="${flagPath(player.pais)}" alt="${flagAlt(player.pais)}">
         ${renderStatsBlock(stats)}
     </div>
 </div>`;

@@ -322,6 +322,17 @@ const PAISES = [
     ["argentina", "Argentina"]
 ];
 
+const FIFA_ROLES = [
+    ["", "Sin rol"],
+    ["portero", "Portero"],
+    ["ct/portero", "CT/Portero"],
+    ["centrales", "Centrales"],
+    ["ct/centrales", "CT/Centrales"],
+    ["laterales", "Laterales"],
+    ["medios centro", "Medios Centro"],
+    ["delanteros", "Delanteros"]
+];
+
 const ACTIVIDAD_TIPOS = [
     ["torneo", "Torneo"],
     ["scrim", "Scrim"],
@@ -377,6 +388,7 @@ const sections = {
             ["rol", "Rol", "select", VALORANT_ROLES],
             ["rango", "Rango", "select", VALORANT_RANKS],
             ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
+            ["pais", "País", "select", PAISES],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
         ]
@@ -391,6 +403,7 @@ const sections = {
             ["rol", "Rol", "select", VALORANT_ROLES],
             ["rango", "Rango", "select", VALORANT_RANKS],
             ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
+            ["pais", "País", "select", PAISES],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
         ]
@@ -402,9 +415,10 @@ const sections = {
         fields: [
             ["nombre", "Nombre", "text"],
             ["juego", "Juego", "select", [["fifa", "EA FC"]]],
-            ["rol", "Rol", "text"],
+            ["rol", "Rol", "select", FIFA_ROLES],
             ["rango", "Rango", "text"],
             ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
+            ["pais", "País", "select", PAISES],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
         ]
@@ -419,6 +433,7 @@ const sections = {
             ["rol", "Rol", "select", DBD_ROLES],
             ["personaje", "Personaje principal", "text"],
             ["tipoJugador", "Tipo de Jugador", "select", DBD_TIPO_JUGADOR],
+            ["pais", "País", "select", PAISES],
             ["foto", "Imagen", "image"],
             ["activo", "Activo", "boolean"]
         ]
