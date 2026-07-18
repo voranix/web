@@ -375,14 +375,26 @@ button { cursor: pointer; }
 .roster-tab:hover { color:#fff; border-color:var(--morado); }
 .roster-tab.active { color:#fff; border-color:var(--morado); background:var(--grad-subtle); box-shadow:0 0 0 1px var(--morado-light) inset; }
 
-/* Capitán separado del resto de la plantilla */
+/* Capitán separado del resto de la plantilla: tarjeta compacta horizontal,
+   no el card grande vertical de la grilla de jugadores. */
 .roster-group-label { display:flex; align-items:center; gap:8px; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--naranja); margin:0 0 16px; }
 .roster-group-label:not(:first-child) { margin-top:36px; }
-.roster-grid-captain { grid-template-columns:repeat(auto-fit,minmax(200px,240px)); }
-.roster-grid-captain .card { border-color:rgba(255,106,0,0.35); }
-.roster-grid-captain .card:hover { border-color:var(--naranja); box-shadow:0 12px 40px var(--naranja-glow); }
+.roster-captain-list { display:flex; flex-direction:column; gap:12px; }
+.roster-captain-card {
+    display:flex; align-items:center; gap:16px; max-width:480px;
+    background:var(--grad-subtle); border:1px solid rgba(255,106,0,0.35); border-radius:var(--r-lg);
+    padding:14px 20px; transition:border-color .2s;
+}
+.roster-captain-card:hover { border-color:var(--naranja); }
+.roster-captain-card img:first-child { width:60px; height:60px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid var(--naranja); }
+.roster-captain-card-body { min-width:0; flex:1; }
+.roster-captain-card .categoria { font-size:10.5px; color:#00e5ff; letter-spacing:1.5px; margin-bottom:4px; }
+.roster-captain-card h3 { font-size:1rem; color:#fff; margin-bottom:2px; }
+.roster-captain-card .games { font-size:12px; color:var(--diamond); }
+.roster-captain-card .flag { width:22px; height:auto; border-radius:2px; flex-shrink:0; opacity:.9; }
 
-/* Listado de partidos (solo pagina publica de rosters, no el portal) */
+/* Listado de partidos (solo pagina publica de rosters, no el portal). Cada
+   fila se puede desplegar para ver el line-up (stats) que carga el capitán. */
 .match-panel { margin-top:48px; }
 .match-panel-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:22px; padding-bottom:14px; border-bottom:1px solid var(--border); }
 .match-panel-title { display:flex; align-items:center; gap:8px; font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:1px; }
@@ -393,23 +405,27 @@ button { cursor: pointer; }
 .match-view-btn.active { color:var(--naranja); border-bottom-color:var(--naranja); }
 .match-list { display:flex; flex-direction:column; }
 .match-empty { color:var(--gris); font-size:13px; text-align:center; padding:30px 0; }
-.match-row {
-    display:grid; grid-template-columns:84px 1fr; gap:20px; align-items:center;
-    padding:18px 20px; background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
-    margin-bottom:10px; transition:border-color .2s;
-}
+.match-row { background:var(--card); border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:10px; transition:border-color .2s; overflow:hidden; }
 .match-row:hover { border-color:var(--border-accent); }
-.match-row-date { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border-right:1px solid var(--border); padding-right:16px; }
-.match-date { font-size:15px; font-weight:800; color:#fff; letter-spacing:.5px; }
+.match-row-main { display:flex; align-items:center; gap:20px; padding:16px 20px; cursor:pointer; }
+.match-row-date { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-width:56px; border-right:1px solid var(--border); padding-right:16px; flex-shrink:0; }
+.match-date { font-size:14px; font-weight:800; color:#fff; letter-spacing:.5px; }
 .match-time { font-size:11px; color:var(--gris-dark); margin-top:2px; }
-.match-row-top { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.match-row-center { flex:1; min-width:0; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.match-team { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.match-team img { width:24px; height:24px; object-fit:contain; }
+.match-team span { font-size:11px; font-weight:800; color:#fff; letter-spacing:.5px; }
+.match-row-info { min-width:0; }
 .match-tipo-badge {
-    font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:#fff;
-    background:linear-gradient(90deg,var(--morado),var(--naranja)); padding:3px 10px; border-radius:12px;
+    display:inline-block; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:#fff;
+    background:linear-gradient(90deg,var(--morado),var(--naranja)); padding:3px 10px; border-radius:12px; margin-bottom:6px;
 }
-.match-title { font-size:.95rem; color:#fff; margin-bottom:2px; }
-.match-resultado { font-size:13px; color:var(--naranja-light); font-weight:700; margin-top:2px; }
-.match-desc { font-size:12.5px; color:var(--gris); margin-top:4px; line-height:1.6; }
+.match-title { font-size:.9rem; color:#fff; }
+.match-resultado { font-size:12.5px; color:var(--naranja-light); font-weight:700; margin-top:2px; }
+.match-expand-btn { background:none; border:none; color:var(--gris-dark); font-size:13px; cursor:pointer; padding:6px; flex-shrink:0; transition:transform .2s, color .2s; }
+.match-row.open .match-expand-btn { transform:rotate(180deg); color:var(--naranja); }
+.match-row-lineup { display:none; padding:14px 20px 18px; border-top:1px dashed var(--border); }
+.match-row.open .match-row-lineup { display:block; }
 
 /* Estadísticas de partidas embebidas en la tarjeta del jugador (solo Valorant, viene del lineup) */
 .card-match-stats { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); text-align:left; }
@@ -769,10 +785,11 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     .about-right h2, .about-right > p { text-align: center; }
     .about-stats { justify-content: center; }
 
-    .match-row { grid-template-columns: 64px 1fr; gap: 14px; padding: 14px 16px; }
-    .match-row-date { padding-right: 12px; }
+    .match-row-main { gap: 14px; padding: 14px 16px; flex-wrap: wrap; }
+    .match-row-date { min-width: 48px; padding-right: 12px; }
     .match-panel-head { justify-content: flex-start; }
     .match-view-toggle { gap: 14px; }
+    .roster-captain-card { max-width: none; }
 
     .rosters-grid,
     .projects-grid,

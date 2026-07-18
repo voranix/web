@@ -381,23 +381,50 @@ function parseMatchDate(item){
     return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hours, minutes);
 }
 
-function renderMatchRow(item){
+// Line-up (jugador + agente + MVP) que el capitán carga por partida, con el
+// mismo look que ya usaba assets/js/roster-activity.js para no inventar un
+// estilo nuevo para el mismo tipo de dato.
+function renderMatchLineup(lineup){
+    const rows = (lineup || []).filter(row => row && (row.jugador || row.agente));
+    if(!rows.length) return `<p class="match-empty">Sin line-up cargado para esta partida.</p>`;
+    const sorted = [...rows].sort((a, b) => (b.mvp ? 1 : 0) - (a.mvp ? 1 : 0));
+    return `
+<p class="actividad-lineup-title"><i class="fas fa-users"></i> Line-up</p>
+<ul class="actividad-lineup-list">
+    ${sorted.map(row => `
+    <li class="${row.mvp ? "is-mvp" : ""}">
+        ${row.mvp ? `<i class="fas fa-crown" title="MVP"></i>` : ""}
+        <span class="lineup-player">${escapeHtml(row.jugador || "?")}</span>
+        ${row.agente ? `<span class="lineup-agent">${escapeHtml(row.agente)}</span>` : ""}
+    </li>`).join("")}
+</ul>`;
+}
+
+function renderMatchRow(item, idx){
     const date = parseMatchDate(item);
     const dateLabel = date ? date.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }) : "";
+    const hasLineup = Array.isArray(item.lineup) && item.lineup.some(row => row && (row.jugador || row.agente));
     return `
-<div class="match-row">
-    <div class="match-row-date">
-        <span class="match-date">${escapeHtml(dateLabel)}</span>
-        ${item.hora ? `<span class="match-time">${escapeHtml(item.hora)}</span>` : ""}
-    </div>
-    <div class="match-row-body">
-        <div class="match-row-top">
-            <span class="match-tipo-badge">${escapeHtml(matchTipoLabel(item.tipo))}</span>
+<div class="match-row" data-match-row="${idx}">
+    <div class="match-row-main"${hasLineup ? "" : ' style="cursor:default"'}>
+        <div class="match-row-date">
+            <span class="match-date">${escapeHtml(dateLabel)}</span>
+            ${item.hora ? `<span class="match-time">${escapeHtml(item.hora)}</span>` : ""}
         </div>
-        <h4 class="match-title">${escapeHtml(item.titulo) || "Partido"}</h4>
-        ${item.resultado ? `<p class="match-resultado">${escapeHtml(item.resultado)}</p>` : ""}
-        ${item.descripcion ? `<p class="match-desc">${escapeHtml(item.descripcion)}</p>` : ""}
+        <div class="match-row-center">
+            <div class="match-team">
+                <img src="/imagenes/logopng.png" alt="VORANIX">
+                <span>VORANIX</span>
+            </div>
+            <div class="match-row-info">
+                <span class="match-tipo-badge">${escapeHtml(matchTipoLabel(item.tipo))}</span>
+                <h4 class="match-title">${escapeHtml(item.titulo) || "Partido"}</h4>
+                ${item.resultado ? `<p class="match-resultado">${escapeHtml(item.resultado)}</p>` : ""}
+            </div>
+        </div>
+        ${hasLineup ? `<button type="button" class="match-expand-btn" aria-label="Ver stats de la partida"><i class="fas fa-chevron-down"></i></button>` : ""}
     </div>
+    ${hasLineup ? `<div class="match-row-lineup">${renderMatchLineup(item.lineup)}</div>` : ""}
 </div>`;
 }
 
@@ -421,9 +448,28 @@ function renderMatchList(items, matchView){
     </div>
     <div class="match-list">
         ${activeList.length
-            ? activeList.map(({ item }) => renderMatchRow(item)).join("")
+            ? activeList.map(({ item }, idx) => renderMatchRow(item, idx)).join("")
             : `<p class="match-empty">${matchView === "jugados" ? "Todavía no hay partidos jugados." : "No hay partidos próximos agendados."}</p>`}
     </div>
+</div>`;
+}
+
+// Tarjeta compacta y horizontal para el capitán (separada del resto de la
+// plantilla, pero sin usar el mismo card vertical grande de los jugadores).
+function renderCaptainCard(player, key){
+    const isDbd = key === "dbd";
+    const isFifa = key === "fifa";
+    const rolText = isDbd ? dbdRoleLabel(player.rol) : (isFifa ? fifaRoleLabel(player.rol) : rolLabel(player.rol));
+    const rankText = rankLabel(player.rango);
+    return `
+<div class="roster-captain-card">
+    <img src="${assetUrl(player.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(player.nombre) || 'Capitán'}" onerror="this.src='/imagenes/logo.jpg'">
+    <div class="roster-captain-card-body">
+        <p class="categoria">${escapeHtml(rolText)}</p>
+        <h3>${escapeHtml(player.nombre) || "Capitán"}</h3>
+        ${rankText ? `<p class="games">${escapeHtml(rankText)}</p>` : ""}
+    </div>
+    <img class="flag" src="${flagPath(player.pais)}" alt="${flagAlt(player.pais)}">
 </div>`;
 }
 
@@ -433,7 +479,8 @@ function renderTabPanel(key, players, actividad, matchView){
         .map((player, i) => renderCard(player, i, key, stats ? stats[normalizeName(player.nombre)] : null))
         .join("");
 
-    // El capitán se muestra separado del resto de la plantilla, no mezclado en la misma grilla.
+    // El capitán se muestra separado del resto de la plantilla, en una
+    // tarjeta compacta horizontal (no el card grande de la grilla).
     const captains = players.filter(p => normalizeText(p.tipoJugador) === "capitan");
     const rest = players.filter(p => normalizeText(p.tipoJugador) !== "capitan");
 
@@ -441,7 +488,7 @@ function renderTabPanel(key, players, actividad, matchView){
 <p class="roster-tab-desc">Equipo competitivo de ${escapeHtml(rosterLabel(key))}</p>
 ${captains.length ? `
 <p class="roster-group-label"><i class="fas fa-crown"></i> Capitán</p>
-<div class="roster-grid roster-grid-captain">${renderGroup(captains)}</div>
+<div class="roster-captain-list">${captains.map(player => renderCaptainCard(player, key)).join("")}</div>
 <p class="roster-group-label">Plantilla</p>` : ""}
 <div class="roster-grid">${rest.length ? renderGroup(rest) : (players.length ? "" : `<p class="loading">Todavía no hay jugadores cargados.</p>`)}</div>
 ${renderMatchList(actividad, matchView)}`;
@@ -492,6 +539,11 @@ async function loadRosters(){
             if(viewButton && viewButton.dataset.matchView !== matchView){
                 matchView = viewButton.dataset.matchView;
                 render();
+                return;
+            }
+            const matchRow = event.target.closest("[data-match-row]");
+            if(matchRow && matchRow.querySelector(".match-row-lineup")){
+                matchRow.classList.toggle("open");
             }
         });
 
