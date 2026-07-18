@@ -454,34 +454,15 @@ function renderMatchList(items, matchView){
 </div>`;
 }
 
-// Tarjeta compacta y horizontal para el capitán (separada del resto de la
-// plantilla, pero sin usar el mismo card vertical grande de los jugadores).
-function renderCaptainCard(player, key){
-    const isDbd = key === "dbd";
-    const isFifa = key === "fifa";
-    const rolText = isDbd ? dbdRoleLabel(player.rol) : (isFifa ? fifaRoleLabel(player.rol) : rolLabel(player.rol));
-    const rankText = rankLabel(player.rango);
-    return `
-<div class="roster-captain-card">
-    <img src="${assetUrl(player.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(player.nombre) || 'Capitán'}" onerror="this.src='/imagenes/logo.jpg'">
-    <div class="roster-captain-card-body">
-        <p class="categoria">${escapeHtml(rolText)}</p>
-        <h3>${escapeHtml(player.nombre) || "Capitán"}</h3>
-        ${rankText ? `<p class="games">${escapeHtml(rankText)}</p>` : ""}
-    </div>
-    <img class="flag" src="${flagPath(player.pais)}" alt="${flagAlt(player.pais)}">
-</div>`;
-}
-
 function renderTabPanel(key, players, actividad, matchView){
     const stats = (key === "valorant" || key === "valorantsecundario") ? computeStats(actividad) : null;
     const renderGroup = (list) => list
         .map((player, i) => renderCard(player, i, key, stats ? stats[normalizeName(player.nombre)] : null))
         .join("");
 
-    // El capitán se muestra separado del resto de la plantilla, en una
-    // tarjeta compacta horizontal (no el card grande de la grilla). DBD no
-    // usa "capitan" como valor, usa "lider_presencial" (Líder/Presencial).
+    // El capitán es la misma tarjeta que el resto de la plantilla, solo
+    // separada en su propia fila (no una tarjeta distinta ni más grande).
+    // DBD no usa "capitan" como valor, usa "lider_presencial" (Líder/Presencial).
     const isCaptainTipo = (tipo) => ["capitan", "lider_presencial"].includes(normalizeText(tipo));
     const captains = players.filter(p => isCaptainTipo(p.tipoJugador));
     const rest = players.filter(p => !isCaptainTipo(p.tipoJugador));
@@ -490,7 +471,7 @@ function renderTabPanel(key, players, actividad, matchView){
 <p class="roster-tab-desc">Equipo competitivo de ${escapeHtml(rosterLabel(key))}</p>
 ${captains.length ? `
 <p class="roster-group-label"><i class="fas fa-crown"></i> Capitán</p>
-<div class="roster-captain-list">${captains.map(player => renderCaptainCard(player, key)).join("")}</div>
+<div class="roster-grid roster-grid-captain">${renderGroup(captains)}</div>
 <p class="roster-group-label">Plantilla</p>` : ""}
 <div class="roster-grid">${rest.length ? renderGroup(rest) : (players.length ? "" : `<p class="loading">Todavía no hay jugadores cargados.</p>`)}</div>
 ${renderMatchList(actividad, matchView)}`;
