@@ -381,17 +381,17 @@ button { cursor: pointer; }
 .roster-group-label:not(:first-child) { margin-top:36px; }
 .roster-captain-list { display:flex; flex-direction:column; gap:12px; }
 .roster-captain-card {
-    display:flex; align-items:center; gap:16px; max-width:480px;
+    display:flex; align-items:center; gap:12px; width:240px;
     background:var(--grad-subtle); border:1px solid rgba(255,106,0,0.35); border-radius:var(--r-lg);
-    padding:14px 20px; transition:border-color .2s;
+    padding:12px 14px; transition:border-color .2s;
 }
 .roster-captain-card:hover { border-color:var(--naranja); }
-.roster-captain-card img:first-child { width:60px; height:60px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid var(--naranja); }
+.roster-captain-card img:first-child { width:48px; height:48px; border-radius:50%; object-fit:cover; flex-shrink:0; border:2px solid var(--naranja); }
 .roster-captain-card-body { min-width:0; flex:1; }
-.roster-captain-card .categoria { font-size:10.5px; color:#00e5ff; letter-spacing:1.5px; margin-bottom:4px; }
-.roster-captain-card h3 { font-size:1rem; color:#fff; margin-bottom:2px; }
-.roster-captain-card .games { font-size:12px; color:var(--diamond); }
-.roster-captain-card .flag { width:22px; height:auto; border-radius:2px; flex-shrink:0; opacity:.9; }
+.roster-captain-card .categoria { font-size:10px; color:#00e5ff; letter-spacing:1.2px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.roster-captain-card h3 { font-size:.9rem; color:#fff; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.roster-captain-card .games { font-size:11px; color:var(--diamond); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.roster-captain-card .flag { width:20px; height:auto; border-radius:2px; flex-shrink:0; opacity:.9; }
 
 /* Listado de partidos (solo pagina publica de rosters, no el portal). Cada
    fila se puede desplegar para ver el line-up (stats) que carga el capitán. */
@@ -789,7 +789,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     .match-row-date { min-width: 48px; padding-right: 12px; }
     .match-panel-head { justify-content: flex-start; }
     .match-view-toggle { gap: 14px; }
-    .roster-captain-card { max-width: none; }
+    .roster-captain-card { width: 100%; max-width: 320px; }
 
     .rosters-grid,
     .projects-grid,
