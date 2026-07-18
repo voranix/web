@@ -12,6 +12,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
+<div id="page-loader" class="page-loader">
+    <div class="page-loader-mark">
+        <div class="page-loader-ring"></div>
+        <img class="page-loader-logo" src="/imagenes/logopng.png" alt="VORANIX">
+    </div>
+</div>
+<script src="/assets/js/page-loader.js"></script>
+
 
 <header class="header header-sub header-rosters">
     <div class="menu">
@@ -89,7 +97,6 @@
 <script type="module">
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { db, escapeHtml } from "/assets/js/firebase-config.js";
-import { renderActividadList } from "/assets/js/roster-activity.js";
 
 const content = document.getElementById("rosters-content");
 
@@ -345,16 +352,99 @@ async function loadActividad(){
     }
 }
 
-function renderTabPanel(key, players, actividad){
+// Torneos/scrims/etc de esta página se muestran como filas de partido con
+// tabs Próximos/Jugados (distinto del timeline del Portal Roster, que sigue
+// usando renderActividadList sin tocar).
+const MATCH_TIPO_LABELS = {
+    torneo: "Torneo",
+    scrim: "Scrim",
+    entrenamiento: "Práctica",
+    reunion: "Reunión",
+    premier: "Premier",
+    liga: "Liga"
+};
+
+function matchTipoLabel(tipo){
+    return MATCH_TIPO_LABELS[normalizeText(tipo)] || tipo || "Partido";
+}
+
+function parseMatchDate(item){
+    const dateStr = item.fechaInicio || item.fechaFin;
+    if(!dateStr) return null;
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+    if(!match) return null;
+    let hours = 23, minutes = 59;
+    if(item.hora){
+        const horaMatch = /^(\d{2}):(\d{2})/.exec(item.hora);
+        if(horaMatch){ hours = Number(horaMatch[1]); minutes = Number(horaMatch[2]); }
+    }
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hours, minutes);
+}
+
+function renderMatchRow(item){
+    const date = parseMatchDate(item);
+    const dateLabel = date ? date.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit" }) : "";
+    return `
+<div class="match-row">
+    <div class="match-row-date">
+        <span class="match-date">${escapeHtml(dateLabel)}</span>
+        ${item.hora ? `<span class="match-time">${escapeHtml(item.hora)}</span>` : ""}
+    </div>
+    <div class="match-row-body">
+        <div class="match-row-top">
+            <span class="match-tipo-badge">${escapeHtml(matchTipoLabel(item.tipo))}</span>
+        </div>
+        <h4 class="match-title">${escapeHtml(item.titulo) || "Partido"}</h4>
+        ${item.resultado ? `<p class="match-resultado">${escapeHtml(item.resultado)}</p>` : ""}
+        ${item.descripcion ? `<p class="match-desc">${escapeHtml(item.descripcion)}</p>` : ""}
+    </div>
+</div>`;
+}
+
+function renderMatchList(items, matchView){
+    const now = Date.now();
+    const withDate = items
+        .map(item => ({ item, date: parseMatchDate(item) }))
+        .filter(x => x.date);
+    const proximos = withDate.filter(x => x.date.getTime() >= now).sort((a, b) => a.date - b.date);
+    const jugados = withDate.filter(x => x.date.getTime() < now).sort((a, b) => b.date - a.date);
+    const activeList = matchView === "jugados" ? jugados : proximos;
+
+    return `
+<div class="match-panel">
+    <div class="match-panel-head">
+        <span class="match-panel-title"><i class="fas fa-chevron-right"></i> Partidos</span>
+        <div class="match-view-toggle">
+            <button type="button" class="match-view-btn${matchView !== "jugados" ? " active" : ""}" data-match-view="proximos">Próximos</button>
+            <button type="button" class="match-view-btn${matchView === "jugados" ? " active" : ""}" data-match-view="jugados">Jugados</button>
+        </div>
+    </div>
+    <div class="match-list">
+        ${activeList.length
+            ? activeList.map(({ item }) => renderMatchRow(item)).join("")
+            : `<p class="match-empty">${matchView === "jugados" ? "Todavía no hay partidos jugados." : "No hay partidos próximos agendados."}</p>`}
+    </div>
+</div>`;
+}
+
+function renderTabPanel(key, players, actividad, matchView){
     const stats = (key === "valorant" || key === "valorantsecundario") ? computeStats(actividad) : null;
-    const cards = players
+    const renderGroup = (list) => list
         .map((player, i) => renderCard(player, i, key, stats ? stats[normalizeName(player.nombre)] : null))
         .join("");
+
+    // El capitán se muestra separado del resto de la plantilla, no mezclado en la misma grilla.
+    const captains = players.filter(p => normalizeText(p.tipoJugador) === "capitan");
+    const rest = players.filter(p => normalizeText(p.tipoJugador) !== "capitan");
+
     return `
 <p class="roster-tab-desc">Equipo competitivo de ${escapeHtml(rosterLabel(key))}</p>
-<div class="roster-grid">${cards || `<p class="loading">Todavía no hay jugadores cargados.</p>`}</div>
-<div class="section-divider"><h2>Eventos</h2></div>
-${renderActividadList(actividad)}`;
+${captains.length ? `
+<p class="roster-group-label"><i class="fas fa-crown"></i> Capitán</p>
+<div class="roster-grid roster-grid-captain">${renderGroup(captains)}</div>
+<p class="roster-group-label">Plantilla</p>` : ""}
+<div class="roster-grid">${rest.length ? renderGroup(rest) : (players.length ? "" : `<p class="loading">Todavía no hay jugadores cargados.</p>`)}</div>
+${renderMatchList(actividad, matchView)}`;
 }
 
 async function loadRosters(){
@@ -380,21 +470,29 @@ async function loadRosters(){
 
         const hashKey = normalizeText(location.hash.replace("#", ""));
         let activeKey = availableKeys.includes(hashKey) ? hashKey : availableKeys[0];
+        let matchView = "proximos";
 
         function render(){
             content.innerHTML = `
 <div class="roster-section-nav" role="tablist">
     ${availableKeys.map(key => `<button type="button" class="roster-tab${key === activeKey ? " active" : ""}" data-roster-tab="${key}" role="tab" aria-selected="${key === activeKey}">${escapeHtml(rosterLabel(key))}</button>`).join("")}
 </div>
-<div id="roster-tab-panel">${renderTabPanel(activeKey, grouped[activeKey] || [], actividadByRoster[activeKey] || [])}</div>`;
+<div id="roster-tab-panel">${renderTabPanel(activeKey, grouped[activeKey] || [], actividadByRoster[activeKey] || [], matchView)}</div>`;
         }
 
         content.addEventListener("click", (event) => {
             const tabButton = event.target.closest("[data-roster-tab]");
-            if(!tabButton || tabButton.dataset.rosterTab === activeKey) return;
-            activeKey = tabButton.dataset.rosterTab;
-            history.replaceState(null, "", `#${activeKey}`);
-            render();
+            if(tabButton && tabButton.dataset.rosterTab !== activeKey){
+                activeKey = tabButton.dataset.rosterTab;
+                history.replaceState(null, "", `#${activeKey}`);
+                render();
+                return;
+            }
+            const viewButton = event.target.closest("[data-match-view]");
+            if(viewButton && viewButton.dataset.matchView !== matchView){
+                matchView = viewButton.dataset.matchView;
+                render();
+            }
         });
 
         render();

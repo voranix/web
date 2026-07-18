@@ -3,6 +3,21 @@
 /* ================= RESET ================= */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* ================= PAGE LOADER ================= */
+.page-loader{
+    position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center;
+    background:#06060e; transition:opacity .45s ease, visibility .45s ease;
+}
+.page-loader.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+.page-loader-mark{ position:relative; width:96px; height:96px; display:flex; align-items:center; justify-content:center; }
+.page-loader-ring{
+    position:absolute; inset:0; border-radius:50%; border:2px solid rgba(255,255,255,0.06);
+    border-top-color:#7b2cff; border-right-color:#ff6a00; animation:pageLoaderSpin .9s linear infinite;
+}
+.page-loader-logo{ width:56px; height:56px; object-fit:contain; animation:pageLoaderPulse 1.6s ease-in-out infinite; }
+@keyframes pageLoaderSpin{ to{ transform:rotate(360deg); } }
+@keyframes pageLoaderPulse{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(.9); opacity:.7; } }
+
 /* ================= VARIABLES ================= */
 :root {
     --morado: #7b2cff;
@@ -359,6 +374,42 @@ button { cursor: pointer; }
 }
 .roster-tab:hover { color:#fff; border-color:var(--morado); }
 .roster-tab.active { color:#fff; border-color:var(--morado); background:var(--grad-subtle); box-shadow:0 0 0 1px var(--morado-light) inset; }
+
+/* Capitán separado del resto de la plantilla */
+.roster-group-label { display:flex; align-items:center; gap:8px; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--naranja); margin:0 0 16px; }
+.roster-group-label:not(:first-child) { margin-top:36px; }
+.roster-grid-captain { grid-template-columns:repeat(auto-fit,minmax(200px,240px)); }
+.roster-grid-captain .card { border-color:rgba(255,106,0,0.35); }
+.roster-grid-captain .card:hover { border-color:var(--naranja); box-shadow:0 12px 40px var(--naranja-glow); }
+
+/* Listado de partidos (solo pagina publica de rosters, no el portal) */
+.match-panel { margin-top:48px; }
+.match-panel-head { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:22px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+.match-panel-title { display:flex; align-items:center; gap:8px; font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:1px; }
+.match-panel-title i { color:var(--morado-light); font-size:12px; }
+.match-view-toggle { display:flex; gap:18px; }
+.match-view-btn { background:none; border:none; color:var(--gris-dark); font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:700; cursor:pointer; padding:4px 0; border-bottom:2px solid transparent; transition:var(--ease); }
+.match-view-btn:hover { color:#fff; }
+.match-view-btn.active { color:var(--naranja); border-bottom-color:var(--naranja); }
+.match-list { display:flex; flex-direction:column; }
+.match-empty { color:var(--gris); font-size:13px; text-align:center; padding:30px 0; }
+.match-row {
+    display:grid; grid-template-columns:84px 1fr; gap:20px; align-items:center;
+    padding:18px 20px; background:var(--card); border:1px solid var(--border); border-radius:var(--r-md);
+    margin-bottom:10px; transition:border-color .2s;
+}
+.match-row:hover { border-color:var(--border-accent); }
+.match-row-date { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; border-right:1px solid var(--border); padding-right:16px; }
+.match-date { font-size:15px; font-weight:800; color:#fff; letter-spacing:.5px; }
+.match-time { font-size:11px; color:var(--gris-dark); margin-top:2px; }
+.match-row-top { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.match-tipo-badge {
+    font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:#fff;
+    background:linear-gradient(90deg,var(--morado),var(--naranja)); padding:3px 10px; border-radius:12px;
+}
+.match-title { font-size:.95rem; color:#fff; margin-bottom:2px; }
+.match-resultado { font-size:13px; color:var(--naranja-light); font-weight:700; margin-top:2px; }
+.match-desc { font-size:12.5px; color:var(--gris); margin-top:4px; line-height:1.6; }
 
 /* Estadísticas de partidas embebidas en la tarjeta del jugador (solo Valorant, viene del lineup) */
 .card-match-stats { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); text-align:left; }
@@ -717,6 +768,11 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     .about-grid { grid-template-columns: 1fr; gap: 32px; }
     .about-right h2, .about-right > p { text-align: center; }
     .about-stats { justify-content: center; }
+
+    .match-row { grid-template-columns: 64px 1fr; gap: 14px; padding: 14px 16px; }
+    .match-row-date { padding-right: 12px; }
+    .match-panel-head { justify-content: flex-start; }
+    .match-view-toggle { gap: 14px; }
 
     .rosters-grid,
     .projects-grid,
