@@ -355,6 +355,16 @@ const VALORANT_AGENTS = [
     "Vyse", "Tejo", "Waylay"
 ];
 
+// Nombre de la segunda columna del line-up según el juego (antes solo
+// existía para Valorant con "agente"; ahora todos los rosters pueden
+// cargar line-up por partida, cada uno con su propio vocabulario).
+const LINEUP_NOUN_BY_GAME = {
+    valorant: "agente",
+    valorantsecundario: "agente",
+    fifa: "posición",
+    dbd: "personaje"
+};
+
 function ACTIVIDAD_FIELDS(juegoValue, juegoLabel, tipos){
     const fields = [
         ["juego", "Juego", "select", [[juegoValue, juegoLabel]]],
@@ -364,11 +374,9 @@ function ACTIVIDAD_FIELDS(juegoValue, juegoLabel, tipos){
         ["fechaFin", "Fecha de término", "date"],
         ["hora", "Hora", "time"],
         ["resultado", "Resultado / Lugar", "text"],
-        ["descripcion", "Descripción", "textarea"]
+        ["descripcion", "Descripción", "textarea"],
+        ["lineup", `Equipo usado (jugador + ${LINEUP_NOUN_BY_GAME[juegoValue] || "detalle"})`, "lineup"]
     ];
-    if(juegoValue === "valorant" || juegoValue === "valorantsecundario"){
-        fields.push(["lineup", "Equipo usado (jugador + agente)", "lineup"]);
-    }
     fields.push(
         ["visiblePortal", "Visible en Portal Roster", "boolean"],
         ["visiblePublico", "Visible en página pública", "boolean"]
@@ -1716,6 +1724,17 @@ function createLineupSelect(name, options, selectedValue, placeholderLabel){
     return wrap;
 }
 
+// Segunda columna del line-up por juego: Valorant elige agente de una lista
+// fija, FIFA elige posición (mismos valores que el rol de jugador), y DBD
+// queda en texto libre porque el universo de personajes es demasiado grande
+// para curar una lista.
+const LINEUP_SECOND_FIELD = {
+    valorant: { label: "Selecciona agente", options: VALORANT_AGENTS, freeText: false },
+    valorantsecundario: { label: "Selecciona agente", options: VALORANT_AGENTS, freeText: false },
+    fifa: { label: "Selecciona posición", options: FIFA_ROLES.filter(([value]) => value).map(([, label]) => label), freeText: false },
+    dbd: { label: "Personaje jugado", options: [], freeText: true }
+};
+
 async function initLineupField(fieldName, existingRows, rosterJuego){
     const container = formFields.querySelector(`[data-lineup-field="${fieldName}"]`);
     if(!container) return;
@@ -1723,17 +1742,28 @@ async function initLineupField(fieldName, existingRows, rosterJuego){
     const addBtn = container.querySelector("[data-lineup-add]");
     delete valorantRosterNamesCache[rosterJuego]; // recargar por si se agregaron/editaron jugadores
     const players = await fetchValorantRosterNames(rosterJuego);
+    const secondField = LINEUP_SECOND_FIELD[rosterJuego] || LINEUP_SECOND_FIELD.valorant;
 
     function addRow(jugador = "", agente = "", mvp = false){
         const row = document.createElement("div");
         row.className = "lineup-row" + (mvp ? " is-mvp" : "");
         row.style.cssText = "display:flex;gap:8px;margin-bottom:8px;align-items:center;";
 
-        // Si el agente guardado no está en la lista (agente nuevo del juego), se agrega igual para no perder el dato.
-        const agentOptions = agente && !VALORANT_AGENTS.includes(agente) ? [agente, ...VALORANT_AGENTS] : VALORANT_AGENTS;
-
         row.appendChild(createLineupSelect(`${fieldName}_jugador`, players, jugador, "Selecciona jugador"));
-        row.appendChild(createLineupSelect(`${fieldName}_agente`, agentOptions, agente, "Selecciona agente"));
+
+        if(secondField.freeText){
+            const input = document.createElement("input");
+            input.type = "text";
+            input.name = `${fieldName}_agente`;
+            input.value = agente;
+            input.placeholder = secondField.label;
+            input.style.cssText = "flex:1;min-width:0;background:#07070d;color:#fff;border:1px solid #272738;border-radius:6px;padding:12px;";
+            row.appendChild(input);
+        }else{
+            // Si el valor guardado no está en la lista (dato nuevo), se agrega igual para no perderlo.
+            const agentOptions = agente && !secondField.options.includes(agente) ? [agente, ...secondField.options] : secondField.options;
+            row.appendChild(createLineupSelect(`${fieldName}_agente`, agentOptions, agente, secondField.label));
+        }
 
         const mvpInput = document.createElement("input");
         mvpInput.type = "hidden";

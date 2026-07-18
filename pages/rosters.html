@@ -480,9 +480,11 @@ function renderTabPanel(key, players, actividad, matchView){
         .join("");
 
     // El capitán se muestra separado del resto de la plantilla, en una
-    // tarjeta compacta horizontal (no el card grande de la grilla).
-    const captains = players.filter(p => normalizeText(p.tipoJugador) === "capitan");
-    const rest = players.filter(p => normalizeText(p.tipoJugador) !== "capitan");
+    // tarjeta compacta horizontal (no el card grande de la grilla). DBD no
+    // usa "capitan" como valor, usa "lider_presencial" (Líder/Presencial).
+    const isCaptainTipo = (tipo) => ["capitan", "lider_presencial"].includes(normalizeText(tipo));
+    const captains = players.filter(p => isCaptainTipo(p.tipoJugador));
+    const rest = players.filter(p => !isCaptainTipo(p.tipoJugador));
 
     return `
 <p class="roster-tab-desc">Equipo competitivo de ${escapeHtml(rosterLabel(key))}</p>
