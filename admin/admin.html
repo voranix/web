@@ -167,10 +167,16 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .tarea-titulo{ color:#fff; font-size:13px; font-weight:600; margin-bottom:4px; }
 .tarea-desc{ color:var(--muted); font-size:12px; margin-bottom:8px; line-height:1.5; }
 .tarea-footer{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; }
-.tarea-responsable{ font-size:11px; color:#9d5bff; background:rgba(123,44,255,.12); border-radius:20px; padding:3px 9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tarea-responsable{ font-size:11px; color:#9d5bff; background:rgba(123,44,255,.12); border-radius:20px; padding:3px 9px; max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .tarea-actions{ display:flex; gap:4px; flex-shrink:0; }
 .tarea-actions button{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; padding:2px 5px; }
 .tarea-actions button:hover{ color:#fff; }
+.tarea-fecha{ font-size:11px; color:var(--muted); margin-bottom:8px; }
+.tarea-fecha.is-vencida{ color:var(--danger); font-weight:700; }
+.tarea-responsables-list{ display:flex; flex-wrap:wrap; gap:12px; padding:12px; background:#07070d; border:1px solid #272738; border-radius:6px; }
+.tarea-responsables-list label{ display:flex; align-items:center; gap:6px; font-weight:normal; font-size:13px; }
+.tarea-responsables-list label input{ width:auto; }
+.tarea-responsables-list label.tarea-todos{ padding-right:12px; border-right:1px solid #272738; font-weight:700; }
 @media(max-width:1100px){ .tareas-board{ grid-template-columns:repeat(2,1fr); } }
 @media(max-width:640px){ .tareas-board{ grid-template-columns:1fr; } }
 @media(max-width:1024px){
@@ -318,13 +324,17 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
                 <label>Descripción</label>
                 <textarea name="descripcion" placeholder="Detalles opcionales..."></textarea>
             </div>
-            <div class="field">
-                <label for="tarea-responsable-select">Responsable</label>
-                <select name="responsable" id="tarea-responsable-select" aria-label="Responsable"></select>
+            <div class="field full">
+                <label>Responsables</label>
+                <div id="tarea-responsables-list" class="tarea-responsables-list"></div>
             </div>
             <div class="field">
                 <label for="tarea-estado-select">Estado</label>
                 <select name="estado" id="tarea-estado-select" aria-label="Estado"></select>
+            </div>
+            <div class="field">
+                <label for="tarea-fecha-input">Fecha límite</label>
+                <input type="date" name="fechaLimite" id="tarea-fecha-input">
             </div>
         </div>
         <div id="tarea-error" class="error"></div>
@@ -914,7 +924,7 @@ function selectSection(key){
     if(key === "users") renderUsers();
     else if(key === "dashboard") renderDashboardSection();
     else if(key === "comunicados") renderComunicadosSection();
-    else if(key === "tablero") renderTableroSection("ideas");
+    else if(key === "tablero") renderTableroSection("tareas");
     else if(sections[key]?.singleton) renderOverlaySection();
     else renderCrudSection(sections[key]);
 }
@@ -1173,18 +1183,43 @@ async function loadDashboardPendientes(){
     const el = document.getElementById("dash-pendientes");
     if(!el) return;
     try{
-        const snapshot = await getDocs(collection(db, "mensajes"));
-        const noLeidos = snapshot.docs.map(d => d.data()).filter(m => !m.leido);
-        if(!noLeidos.length){
-            el.innerHTML = `<p class="dashboard-empty">No hay mensajes pendientes. 🎉</p>`;
+        const [mensajesSnap, tareasSnap] = await Promise.all([
+            getDocs(collection(db, "mensajes")),
+            getDocs(collection(db, "tareas")).catch(() => ({ docs: [] })) // por si la cuenta no llegó a cargar tareas
+        ]);
+        const noLeidos = mensajesSnap.docs.map(d => d.data()).filter(m => !m.leido);
+        const misTareas = tareasSnap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(t => (t.estado || "pendiente") !== "hecho" && tareaEsMia(t));
+
+        if(!noLeidos.length && !misTareas.length){
+            el.innerHTML = `<p class="dashboard-empty">No hay pendientes. 🎉</p>`;
             return;
         }
+
+        const estadoLabels = Object.fromEntries(TAREA_ESTADOS);
+        const tareasHtml = misTareas.slice(0, 5).map(t => `
+<li>
+    <span class="dashboard-tag">Tarea</span>
+    <strong>${escapeHtml(t.titulo) || "Sin título"}</strong>
+    <span class="dashboard-meta">${t.fechaLimite ? "Vence " + escapeHtml(formatFechaCorta(t.fechaLimite)) : escapeHtml(estadoLabels[t.estado] || "Por Hacer")}</span>
+</li>`).join("");
+
+        const mensajesHtml = noLeidos.slice(0, 5).map(m => `
+<li>
+    <span class="dashboard-tag">Mensaje</span>
+    <strong>${escapeHtml(m.nombre) || "Anónimo"}</strong>
+    <span class="dashboard-meta">${escapeHtml(m.asunto) || "Sin asunto"}</span>
+</li>`).join("");
+
         el.innerHTML = `
-<p class="dashboard-highlight">${noLeidos.length} mensaje(s) sin leer</p>
-<ul class="dashboard-list">
-    ${noLeidos.slice(0, 5).map(m => `<li><strong>${escapeHtml(m.nombre) || "Anónimo"}</strong><span class="dashboard-meta">${escapeHtml(m.asunto) || "Sin asunto"}</span></li>`).join("")}
-</ul>
-<button class="btn secondary small" type="button" data-goto-section="mensajes" style="margin-top:12px;">Ver mensajes</button>`;
+${misTareas.length ? `<p class="dashboard-highlight">${misTareas.length} tarea(s) pendiente(s) para vos</p>` : ""}
+${noLeidos.length ? `<p class="dashboard-highlight">${noLeidos.length} mensaje(s) sin leer</p>` : ""}
+<ul class="dashboard-list">${tareasHtml}${mensajesHtml}</ul>
+<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+    ${misTareas.length ? `<button class="btn secondary small" type="button" data-goto-section="tablero">Ver tablero</button>` : ""}
+    ${noLeidos.length ? `<button class="btn secondary small" type="button" data-goto-section="mensajes">Ver mensajes</button>` : ""}
+</div>`;
     }catch(error){
         console.error(error);
         el.innerHTML = `<p class="dashboard-empty">No se pudo cargar.</p>`;
@@ -1665,14 +1700,39 @@ function renderIdeasBoard(container){
     });
 }
 
+function tareaResponsables(tarea){
+    return Array.isArray(tarea.responsables) ? tarea.responsables : [];
+}
+
+function tareaEsMia(tarea){
+    return tareaResponsables(tarea).some(r => r.uid === currentUser.uid);
+}
+
+// Formatea "2026-08-15" -> "15/08" sin depender de zona horaria (evita el
+// corrimiento de un día que da `new Date("2026-08-15")` en algunos navegadores).
+function formatFechaCorta(fechaIso){
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaIso || "");
+    return match ? `${match[3]}/${match[2]}` : "";
+}
+
+function tareaVencida(tarea){
+    if(!tarea.fechaLimite || tarea.estado === "hecho") return false;
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(tarea.fechaLimite);
+    if(!match) return false;
+    const limite = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 23, 59);
+    return limite.getTime() < Date.now();
+}
+
 function renderTareaCard(tarea){
-    const isMine = tarea.responsableUid === currentUser.uid;
+    const responsables = tareaResponsables(tarea);
+    const nombres = responsables.length ? responsables.map(r => r.nombre).join(", ") : "Sin asignar";
     return `
-<div class="tarea-card${isMine ? " is-mine" : ""}" draggable="true" data-tarea-id="${tarea.id}">
+<div class="tarea-card${tareaEsMia(tarea) ? " is-mine" : ""}" draggable="true" data-tarea-id="${tarea.id}">
     <p class="tarea-titulo">${escapeHtml(tarea.titulo) || "Sin título"}</p>
     ${tarea.descripcion ? `<p class="tarea-desc">${escapeHtml(tarea.descripcion)}</p>` : ""}
+    ${tarea.fechaLimite ? `<p class="tarea-fecha${tareaVencida(tarea) ? " is-vencida" : ""}">📅 ${escapeHtml(formatFechaCorta(tarea.fechaLimite))}</p>` : ""}
     <div class="tarea-footer">
-        <span class="tarea-responsable">${escapeHtml(tarea.responsableNombre) || "Sin asignar"}</span>
+        <span class="tarea-responsable" title="${escapeHtml(nombres)}">${escapeHtml(nombres)}</span>
         <div class="tarea-actions">
             <button type="button" data-tarea-edit="${tarea.id}" title="Editar">✎</button>
             <button type="button" data-tarea-delete="${tarea.id}" title="Eliminar">✕</button>
@@ -1703,7 +1763,7 @@ async function renderTareasBoard(container){
 
     function renderColumns(){
         const soloMias = soloMiasCheckbox.checked;
-        const filtered = soloMias ? allTareas.filter(t => t.responsableUid === currentUser.uid) : allTareas;
+        const filtered = soloMias ? allTareas.filter(tareaEsMia) : allTareas;
         TAREA_ESTADOS.forEach(([value]) => {
             const listEl = document.querySelector(`[data-estado-list="${value}"]`);
             const items = filtered.filter(t => (t.estado || "pendiente") === value);
@@ -1773,10 +1833,26 @@ function openTareaModal(tarea, staffAccounts){
     tareaForm.reset();
     tareaForm.titulo.value = tarea?.titulo || "";
     tareaForm.descripcion.value = tarea?.descripcion || "";
+    document.getElementById("tarea-fecha-input").value = tarea?.fechaLimite || "";
 
-    const responsableSelect = document.getElementById("tarea-responsable-select");
-    responsableSelect.innerHTML = `<option value="">Sin asignar</option>` +
-        staffAccounts.map(u => `<option value="${u.uid}" ${tarea?.responsableUid === u.uid ? "selected" : ""}>${escapeHtml(u.displayName || u.email)}</option>`).join("");
+    const selectedUids = new Set(tareaResponsables(tarea || {}).map(r => r.uid));
+    const listEl = document.getElementById("tarea-responsables-list");
+    listEl.innerHTML = `
+<label class="tarea-todos"><input type="checkbox" id="tarea-responsable-todos"> Todos</label>
+${staffAccounts.map(u => `
+<label><input type="checkbox" data-responsable-uid="${u.uid}" data-responsable-nombre="${escapeHtml(u.displayName || u.email)}" ${selectedUids.has(u.uid) ? "checked" : ""}> ${escapeHtml(u.displayName || u.email)}</label>`).join("")}`;
+
+    const todosCheckbox = document.getElementById("tarea-responsable-todos");
+    const personCheckboxes = () => Array.from(listEl.querySelectorAll("[data-responsable-uid]"));
+    todosCheckbox.checked = staffAccounts.length > 0 && staffAccounts.every(u => selectedUids.has(u.uid));
+    todosCheckbox.addEventListener("change", () => {
+        personCheckboxes().forEach(cb => { cb.checked = todosCheckbox.checked; });
+    });
+    personCheckboxes().forEach(cb => {
+        cb.addEventListener("change", () => {
+            todosCheckbox.checked = personCheckboxes().every(c => c.checked);
+        });
+    });
 
     const estadoSelect = document.getElementById("tarea-estado-select");
     estadoSelect.innerHTML = TAREA_ESTADOS.map(([value, label]) => `<option value="${value}" ${(tarea?.estado || "pendiente") === value ? "selected" : ""}>${label}</option>`).join("");
@@ -1817,18 +1893,15 @@ tareaForm.addEventListener("submit", async (event) => {
         return;
     }
 
-    const responsableUid = String(formData.get("responsable") || "");
-    const responsableSelect = document.getElementById("tarea-responsable-select");
-    const responsableNombre = responsableUid
-        ? (responsableSelect.querySelector(`option[value="${responsableUid}"]`)?.textContent || "")
-        : "";
+    const responsables = Array.from(document.querySelectorAll("#tarea-responsables-list [data-responsable-uid]:checked"))
+        .map(cb => ({ uid: cb.dataset.responsableUid, nombre: cb.dataset.responsableNombre }));
 
     const payload = {
         titulo,
         descripcion: String(formData.get("descripcion") || "").trim(),
         estado: String(formData.get("estado") || "pendiente"),
-        responsableUid,
-        responsableNombre,
+        fechaLimite: String(formData.get("fechaLimite") || ""),
+        responsables,
         updatedAt: serverTimestamp()
     };
 
