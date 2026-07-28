@@ -28,8 +28,16 @@ service cloud.firestore {
       return hasRole("admin");
     }
 
+    // El valor guardado sigue siendo "editor" (para no migrar cuentas ya
+    // creadas); en la interfaz se muestra como "Staff". Puede modificar todo
+    // el contenido excepto usuarios y accesos de creadores (eso queda
+    // exclusivo de admin).
+    function isStaff() {
+      return hasRole("admin") || hasRole("editor");
+    }
+
     function isStaffOrCreador() {
-      return hasRole("admin") || hasRole("editor") || hasRole("creador");
+      return isStaff() || hasRole("creador");
     }
 
     function isCapitanDe(juego) {
@@ -47,46 +55,46 @@ service cloud.firestore {
 
     match /streamers/{doc} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
 
     match /rosters/{doc} {
       allow read: if true;
-      allow create: if isAdmin() || isCapitanDe(request.resource.data.juego);
-      allow update, delete: if isAdmin() ||
+      allow create: if isStaff() || isCapitanDe(request.resource.data.juego);
+      allow update, delete: if isStaff() ||
         (isCapitanDe(resource.data.juego) && request.resource.data.juego == resource.data.juego);
     }
 
     match /equipoActividad/{doc} {
       allow read: if resource.data.visiblePublico == true || isEquipoMiembro(resource.data.juego) || isAdmin();
-      allow create: if isAdmin() || isCapitanDe(request.resource.data.juego);
-      allow update, delete: if isAdmin() ||
+      allow create: if isStaff() || isCapitanDe(request.resource.data.juego);
+      allow update, delete: if isStaff() ||
         (isCapitanDe(resource.data.juego) && request.resource.data.juego == resource.data.juego);
     }
 
     match /influencers/{doc} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
 
     match /staff/{doc} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
 
     match /sponsors/{doc} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
 
     match /overlayConfig/{doc} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
 
     match /proyectos/{doc} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
 
     match /mensajes/{doc} {
@@ -104,12 +112,23 @@ service cloud.firestore {
       }
 
       allow create: if isValidMensaje();
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if isStaff();
     }
 
+    // "accesos" son los permisos/torneos exclusivos de creadores: queda
+    // admin-only a propósito (es "datos de creadores", excluido de staff).
     match /accesos/{doc} {
       allow read: if isStaffOrCreador();
       allow write: if isAdmin();
+    }
+
+    // Tablero de ideas y tareas: herramienta interna del equipo de staff.
+    match /ideas/{doc} {
+      allow read, write: if isStaff();
+    }
+
+    match /tareas/{doc} {
+      allow read, write: if isStaff();
     }
 
     match /{document=**} {

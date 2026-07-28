@@ -396,8 +396,11 @@ exports.enviarComunicado = onCall(
 
         const callerSnap = await admin.firestore().doc(`users/${request.auth.uid}`).get();
         const callerProfile = callerSnap.exists ? callerSnap.data() : null;
-        if (!callerProfile || !profileRoles(callerProfile).includes("admin")) {
-            throw new HttpsError("permission-denied", "Solo un admin puede enviar comunicados.");
+        const callerRoles = profileRoles(callerProfile);
+        const callerIsStaff = callerRoles.some(r => ["admin", "editor"].includes(r));
+        const callerIsCapitan = callerRoles.includes("capitan");
+        if (!callerProfile || (!callerIsStaff && !callerIsCapitan)) {
+            throw new HttpsError("permission-denied", "No tienes permiso para enviar comunicados.");
         }
 
         const uids = Array.isArray(request.data?.uids) ? request.data.uids : [];
@@ -406,6 +409,22 @@ exports.enviarComunicado = onCall(
         if (!uids.length) throw new HttpsError("invalid-argument", "Debes indicar al menos un destinatario.");
         if (!asunto) throw new HttpsError("invalid-argument", "Debes indicar un asunto.");
         if (!mensaje) throw new HttpsError("invalid-argument", "Debes indicar un mensaje.");
+
+        // Un capitán (sin ser staff) solo puede escribirle a su propio equipo
+        // o a cuentas de staff/admin — nunca a otros equipos ni a creadores.
+        if (!callerIsStaff) {
+            const callerEquipo = callerProfile.equipoJuego || "";
+            for (const uid of uids) {
+                const targetSnap = await admin.firestore().doc(`users/${uid}`).get();
+                const targetProfile = targetSnap.exists ? targetSnap.data() : null;
+                const targetRoles = profileRoles(targetProfile);
+                const targetIsStaff = targetRoles.some(r => ["admin", "editor"].includes(r));
+                const targetIsSameTeam = !!targetProfile && targetProfile.equipoJuego === callerEquipo;
+                if (!targetIsStaff && !targetIsSameTeam) {
+                    throw new HttpsError("permission-denied", `No puedes enviar mensajes a cuentas fuera de tu equipo o de staff (${uid}).`);
+                }
+            }
+        }
 
         const smtpUser = SMTP_USER.value();
         const smtpPass = SMTP_PASS.value();
@@ -449,6 +468,76 @@ exports.enviarComunicado = onCall(
             } catch (err) {
                 logger.error(`enviarComunicado: fallo con ${uid}`, err);
                 detalle.push({ uid, status: "error", error: String(err?.message || err) });
+            }
+        }
+
+        transporter.close();
+        return { detalle };
+    }
+);
+
+// ---------------------------------------------------------------------
+// enviarComunicadoContacto: mismo tipo de correo que enviarComunicado, pero
+// para destinatarios que NO tienen cuenta (streamers/influencers) — se
+// manda directo a un email, sin pasar por Firebase Auth. Solo staff/admin,
+// nunca capitanes (streamers/influencers no son "su equipo").
+// ---------------------------------------------------------------------
+
+exports.enviarComunicadoContacto = onCall(
+    { secrets: [SMTP_USER, SMTP_PASS], timeoutSeconds: 300 },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+        }
+
+        const callerSnap = await admin.firestore().doc(`users/${request.auth.uid}`).get();
+        const callerProfile = callerSnap.exists ? callerSnap.data() : null;
+        if (!callerProfile || !profileRoles(callerProfile).some(r => ["admin", "editor"].includes(r))) {
+            throw new HttpsError("permission-denied", "Solo staff/admin puede enviar comunicados a streamers o influencers.");
+        }
+
+        const contactos = Array.isArray(request.data?.contactos) ? request.data.contactos : [];
+        const asunto = String(request.data?.asunto || "").trim();
+        const mensaje = String(request.data?.mensaje || "").trim();
+        if (!contactos.length) throw new HttpsError("invalid-argument", "Debes indicar al menos un destinatario.");
+        if (!asunto) throw new HttpsError("invalid-argument", "Debes indicar un asunto.");
+        if (!mensaje) throw new HttpsError("invalid-argument", "Debes indicar un mensaje.");
+
+        const smtpUser = SMTP_USER.value();
+        const smtpPass = SMTP_PASS.value();
+        if (!smtpUser || !smtpPass) {
+            throw new HttpsError("failed-precondition", "SMTP no configurado (SMTP_USER/SMTP_PASS).");
+        }
+
+        const mensajeHtml = mensaje
+            .split(/\n{2,}/)
+            .map(parrafo => `<p style="margin:0 0 12px;">${parrafo.replace(/\n/g, "<br>")}</p>`)
+            .join("");
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: smtpUser, pass: smtpPass },
+            pool: true,
+            maxConnections: 1,
+            rateDelta: 1200,
+            rateLimit: 1
+        });
+
+        const detalle = [];
+        for (const contacto of contactos) {
+            const email = String(contacto?.email || "").trim();
+            try {
+                if (!email || !email.includes("@")) throw new Error("Email inválido");
+                await transporter.sendMail({
+                    from: `VORANIX <${smtpUser}>`,
+                    to: email,
+                    subject: asunto,
+                    html: construirCorreoComunicado({ displayName: contacto?.nombre, asunto, mensajeHtml })
+                });
+                detalle.push({ uid: email, email, status: "enviado" });
+            } catch (err) {
+                logger.error(`enviarComunicadoContacto: fallo con ${email}`, err);
+                detalle.push({ uid: email, status: "error", error: String(err?.message || err) });
             }
         }
 

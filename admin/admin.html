@@ -49,12 +49,20 @@ button{ cursor:pointer; }
 .brand img{ width:46px; height:46px; object-fit:contain; }
 .brand strong{ font-size:18px; }
 .nav{ display:flex; flex-direction:column; gap:2px; }
-.nav-group{ margin-bottom:10px; }
+.nav-group{ margin-bottom:6px; }
 .nav-group:last-child{ margin-bottom:0; }
-.nav-group-label{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); opacity:.65; padding:0 10px 6px; }
-.nav-group .nav-group-label:not(:first-child){ margin-top:4px; }
-.nav button{ display:flex; align-items:center; gap:8px; width:100%; background:transparent; color:#ddd; border:1px solid transparent; border-radius:6px; padding:8px 10px; text-align:left; margin-bottom:2px; font-size:12px; line-height:1.3; }
-.nav button.active,.nav button:hover{ background:#151528; border-color:rgba(123,44,255,.7); color:#fff; }
+.nav-group-label{
+    width:100%; display:flex; align-items:center; justify-content:space-between; gap:6px;
+    background:none; border:none; cursor:pointer; color:var(--muted); opacity:.75; font-family:inherit;
+    font-size:10px; letter-spacing:1.5px; text-transform:uppercase; padding:8px 10px 6px;
+}
+.nav-group-label:hover{ opacity:1; color:#fff; }
+.nav-group-arrow{ font-style:normal; font-size:9px; transition:transform .15s; flex-shrink:0; }
+.nav-group.collapsed .nav-group-arrow{ transform:rotate(-90deg); }
+.nav-group-items{ display:flex; flex-direction:column; gap:2px; }
+.nav-group.collapsed .nav-group-items{ display:none; }
+.nav button[data-section]{ display:flex; align-items:center; gap:8px; width:100%; background:transparent; color:#ddd; border:1px solid transparent; border-radius:6px; padding:8px 10px; text-align:left; margin-bottom:2px; font-size:12px; line-height:1.3; }
+.nav button[data-section].active,.nav button[data-section]:hover{ background:#151528; border-color:rgba(123,44,255,.7); color:#fff; }
 .nav-icon{ font-size:14px; width:18px; text-align:center; flex-shrink:0; }
 .main{ min-width:0; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 .topbar{ min-height:70px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid rgba(255,255,255,.08); padding:14px 24px; background:rgba(10,10,15,.85); flex:0 0 auto; z-index:5; backdrop-filter:blur(10px); flex-wrap:wrap; }
@@ -107,6 +115,64 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .dashboard-highlight{ color:#fff; font-weight:700; margin-bottom:12px; }
 .dashboard-empty{ color:var(--muted); font-size:13px; padding:8px 0; }
 @media(max-width:900px){ .dashboard-grid{ grid-template-columns:1fr; } }
+
+.comunicados-groups{ display:flex; flex-wrap:wrap; gap:10px; }
+.comunicados-group-chip{
+    display:flex; align-items:center; gap:8px; background:#151528; border:1px solid #33334a;
+    border-radius:20px; padding:10px 16px; font-size:13px; cursor:pointer; font-weight:normal;
+}
+.comunicados-group-chip input{ width:auto; }
+.comunicados-list{ max-height:340px; overflow-y:auto; border:1px solid #272738; border-radius:6px; }
+.comunicados-row{
+    display:flex; align-items:center; gap:12px; padding:10px 14px; font-size:13px;
+    border-bottom:1px solid #21212f; cursor:pointer; font-weight:normal;
+}
+.comunicados-row:last-child{ border-bottom:none; }
+.comunicados-row:hover{ background:#151528; }
+.comunicados-row input{ width:auto; flex-shrink:0; }
+.comunicados-row-name{ color:#fff; font-weight:600; flex-shrink:0; }
+.comunicados-row-email{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+.comunicados-tag{ font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--morado); background:rgba(123,44,255,.15); border:1px solid rgba(123,44,255,.4); border-radius:20px; padding:2px 9px; white-space:nowrap; flex-shrink:0; }
+
+.tablero-tabs{ display:flex; gap:10px; margin-bottom:22px; }
+
+/* Tablero de ideas (estilo Mural, grilla de notas) */
+.ideas-composer{ background:var(--card); border:1px solid #272738; border-radius:8px; padding:16px; margin-bottom:22px; }
+.ideas-composer textarea{ width:100%; min-height:70px; background:#07070d; color:#fff; border:1px solid #272738; border-radius:6px; padding:12px; resize:vertical; }
+.ideas-composer-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; flex-wrap:wrap; }
+.ideas-color-picker{ display:flex; gap:8px; }
+.idea-color-dot{ width:24px; height:24px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+.idea-color-dot.active{ border-color:#fff; }
+.ideas-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+.idea-card{ border:1px solid; border-radius:8px; padding:16px; min-height:110px; display:flex; flex-direction:column; justify-content:space-between; }
+.idea-text{ color:#fff; font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
+.idea-footer{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+.idea-author{ font-size:11px; color:var(--muted); }
+.idea-delete{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:2px 6px; }
+.idea-delete:hover{ color:var(--danger); }
+
+/* Tablero de tareas (estilo Trello/Jira, 4 columnas con drag & drop) */
+.tareas-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+.tareas-filter{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); font-weight:normal; }
+.tareas-filter input{ width:auto; }
+.tareas-board{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; align-items:start; }
+.tareas-column{ background:rgba(255,255,255,.02); border:1px solid #272738; border-radius:8px; padding:14px; min-height:200px; }
+.tareas-column h4{ font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+.tareas-column-count{ color:var(--morado); }
+.tareas-column-list{ display:flex; flex-direction:column; gap:10px; min-height:40px; }
+.tareas-empty{ color:var(--muted); font-size:12px; text-align:center; padding:16px 0; }
+.tarea-card{ background:var(--card); border:1px solid #272738; border-radius:6px; padding:12px; cursor:grab; transition:border-color .2s; }
+.tarea-card:hover{ border-color:var(--morado); }
+.tarea-card.is-mine{ border-left:3px solid var(--morado); }
+.tarea-titulo{ color:#fff; font-size:13px; font-weight:600; margin-bottom:4px; }
+.tarea-desc{ color:var(--muted); font-size:12px; margin-bottom:8px; line-height:1.5; }
+.tarea-footer{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; }
+.tarea-responsable{ font-size:11px; color:#9d5bff; background:rgba(123,44,255,.12); border-radius:20px; padding:3px 9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tarea-actions{ display:flex; gap:4px; flex-shrink:0; }
+.tarea-actions button{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; padding:2px 5px; }
+.tarea-actions button:hover{ color:#fff; }
+@media(max-width:1100px){ .tareas-board{ grid-template-columns:repeat(2,1fr); } }
+@media(max-width:640px){ .tareas-board{ grid-template-columns:1fr; } }
 @media(max-width:1024px){
     .admin-shell{ grid-template-columns:1fr; }
     .sidebar{ position:fixed; inset:0 auto 0 0; width:260px; z-index:15; transform:translateX(-100%); transition:.25s; box-shadow:12px 0 30px rgba(0,0,0,.35); }
@@ -233,6 +299,39 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
         <div class="modal-actions">
             <button class="btn secondary" type="button" id="cancel-message-modal">Cancelar</button>
             <button class="btn" type="submit" id="send-message-btn">Enviar</button>
+        </div>
+    </form>
+</div>
+
+<div id="tarea-modal" class="modal hidden">
+    <form id="tarea-form" class="modal-card">
+        <div class="modal-head">
+            <h2 id="tarea-modal-title">Nueva tarea</h2>
+            <button class="btn secondary small" type="button" id="close-tarea-modal">Cerrar</button>
+        </div>
+        <div class="form-grid">
+            <div class="field full">
+                <label>Título</label>
+                <input name="titulo" type="text" required placeholder="Ej: Preparar overlay para el torneo">
+            </div>
+            <div class="field full">
+                <label>Descripción</label>
+                <textarea name="descripcion" placeholder="Detalles opcionales..."></textarea>
+            </div>
+            <div class="field">
+                <label for="tarea-responsable-select">Responsable</label>
+                <select name="responsable" id="tarea-responsable-select" aria-label="Responsable"></select>
+            </div>
+            <div class="field">
+                <label for="tarea-estado-select">Estado</label>
+                <select name="estado" id="tarea-estado-select" aria-label="Estado"></select>
+            </div>
+        </div>
+        <div id="tarea-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn danger small hidden" type="button" id="tarea-delete-btn">Eliminar</button>
+            <button class="btn secondary" type="button" id="cancel-tarea-modal">Cancelar</button>
+            <button class="btn" type="submit">Guardar</button>
         </div>
     </form>
 </div>
@@ -480,6 +579,7 @@ const sections = {
             ["juegos", "Juegos", "text"],
             ["horario", "Horario", "text"],
             ["pais", "País", "select", PAISES],
+            ["email", "Email (para comunicados)", "text"],
             ["foto", "Imagen", "imageurl"],
             ["instagram", "Instagram", "url"],
             ["twitch", "Twitch", "url"],
@@ -493,6 +593,7 @@ const sections = {
             ["nombre", "Nombre", "text"],
             ["categoria", "Categoría", "text"],
             ["pais", "País", "select", PAISES],
+            ["email", "Email (para comunicados)", "text"],
             ["foto", "Imagen", "imageurl"],
             ["instagram", "Instagram", "url"],
             ["tiktok", "TikTok", "url"],
@@ -580,11 +681,19 @@ const sections = {
     },
     dashboard: {
         label: "Bienvenida"
+    },
+    comunicados: {
+        label: "Comunicados"
+    },
+    tablero: {
+        label: "Tablero"
     }
 };
 
 const NAV_GROUPS = [
     { label: "Inicio", keys: ["dashboard"] },
+    { label: "Comunicación", keys: ["comunicados"] },
+    { label: "Equipo", keys: ["tablero"] },
     { label: "Rosters", keys: ["valorant", "valorantsecundario", "fifa", "dbd"] },
     { label: "Actividad de Equipos", keys: ["actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
     { label: "Comunidad", keys: ["streamers", "influencers", "staff"] },
@@ -596,6 +705,8 @@ const NAV_GROUPS = [
 // acá, se usa sections[key].label completo como fallback.
 const NAV_META = {
     dashboard: { icon: "🏠", short: "Inicio" },
+    comunicados: { icon: "📣", short: "Comunicados" },
+    tablero: { icon: "🗒️", short: "Tablero" },
     valorant: { icon: "🔫", short: "Valorant A" },
     valorantsecundario: { icon: "🔫", short: "Valorant B" },
     fifa: { icon: "⚽", short: "FIFA" },
@@ -666,6 +777,9 @@ const messageModal = document.getElementById("message-modal");
 const messageForm = document.getElementById("message-form");
 const messageError = document.getElementById("message-error");
 const messageRecipientsInfo = document.getElementById("message-recipients-info");
+const tareaModal = document.getElementById("tarea-modal");
+const tareaForm = document.getElementById("tarea-form");
+const tareaError = document.getElementById("tarea-error");
 
 function showError(target, message){
     target.textContent = message || "";
@@ -674,6 +788,16 @@ function showError(target, message){
 function profileRoles(data){
     if(!data) return [];
     return Array.isArray(data.roles) ? data.roles : (data.role ? [data.role] : []);
+}
+
+// El valor guardado en Firestore sigue siendo "editor" (evita migrar cuentas
+// ya creadas); en toda la interfaz se muestra como "Staff".
+const ROLE_DISPLAY_LABELS = { editor: "Staff" };
+function roleLabel(role){
+    return ROLE_DISPLAY_LABELS[role] || role;
+}
+function rolesLabel(roles){
+    return roles.map(roleLabel).join(", ");
 }
 
 function hasValidRole(profile){
@@ -713,7 +837,7 @@ function showAdmin(){
     loginScreen.classList.add("hidden");
     adminShell.classList.remove("hidden");
     userEmail.textContent = currentProfile.email || currentUser.email;
-    roleBadge.textContent = profileRoles(currentProfile).join(", ").toUpperCase();
+    roleBadge.textContent = rolesLabel(profileRoles(currentProfile)).toUpperCase();
     buildNav();
     selectSection(currentSection);
 }
@@ -724,9 +848,25 @@ function visibleSectionKeys(){
     if(isCapitan() && !isStaff()){
         const juego = currentProfile?.equipoJuego || "";
         const actividadKey = juego ? "actividad" + juego.charAt(0).toUpperCase() + juego.slice(1) : "";
-        return ["dashboard", juego, actividadKey].filter(key => sections[key]);
+        return ["dashboard", "comunicados", juego, actividadKey].filter(key => sections[key]);
     }
     return Object.keys(sections);
+}
+
+// Qué grupos del nav están colapsados queda guardado por navegador, no por
+// cuenta (es solo una preferencia visual, no hace falta más que eso).
+const NAV_COLLAPSE_KEY = "voranixAdminNavCollapsedGroups";
+
+function getCollapsedGroups(){
+    try{
+        return new Set(JSON.parse(localStorage.getItem(NAV_COLLAPSE_KEY) || "[]"));
+    }catch(error){
+        return new Set();
+    }
+}
+
+function setCollapsedGroups(set){
+    localStorage.setItem(NAV_COLLAPSE_KEY, JSON.stringify(Array.from(set)));
 }
 
 function buildNav(){
@@ -740,13 +880,22 @@ function buildNav(){
         return `<button type="button" data-section="${key}" class="${key === currentSection ? "active" : ""}"><span class="nav-icon">${meta.icon || "•"}</span>${label}</button>`;
     };
 
+    const collapsed = getCollapsedGroups();
+
     nav.innerHTML = NAV_GROUPS.map(group => {
         const groupKeys = group.keys.filter(key => allowed.has(key));
         if(!groupKeys.length) return "";
+        // El grupo que contiene la sección activa nunca queda colapsado, para
+        // no esconder de golpe dónde estás parado.
+        const hasActive = groupKeys.includes(currentSection);
+        const isCollapsed = collapsed.has(group.label) && !hasActive;
         return `
-<div class="nav-group">
-    <div class="nav-group-label">${group.label}</div>
-    ${groupKeys.map(navButton).join("")}
+<div class="nav-group${isCollapsed ? " collapsed" : ""}" data-nav-group="${group.label}">
+    <button type="button" class="nav-group-label" data-nav-toggle>
+        <span>${group.label}</span>
+        <i class="nav-group-arrow">▾</i>
+    </button>
+    <div class="nav-group-items">${groupKeys.map(navButton).join("")}</div>
 </div>`;
     }).join("");
 }
@@ -764,6 +913,8 @@ function selectSection(key){
     if(unsubscribeList) unsubscribeList();
     if(key === "users") renderUsers();
     else if(key === "dashboard") renderDashboardSection();
+    else if(key === "comunicados") renderComunicadosSection();
+    else if(key === "tablero") renderTableroSection("ideas");
     else if(sections[key]?.singleton) renderOverlaySection();
     else renderCrudSection(sections[key]);
 }
@@ -1149,6 +1300,553 @@ async function renderDashboardSection(){
     loadDashboardRecientes();
 }
 
+// Grupos rápidos de destinatarios para Comunicados (solo staff los ve, un
+// capitán tiene su propia versión reducida, ver initComunicadosCapitan).
+const COMUNICADOS_GRUPOS_STAFF = [
+    { label: "Todo el staff", match: (c) => c.type === "uid" && c.roles.some(r => ["admin", "editor"].includes(r)) },
+    { label: "Todos los capitanes", match: (c) => c.type === "uid" && c.roles.includes("capitan") },
+    { label: "Todos los jugadores", match: (c) => c.type === "uid" && c.roles.includes("jugador") },
+    { label: "Valorant Principal", match: (c) => c.type === "uid" && c.equipoJuego === "valorant" },
+    { label: "Valorant Secundario", match: (c) => c.type === "uid" && c.equipoJuego === "valorantsecundario" },
+    { label: "FIFA", match: (c) => c.type === "uid" && c.equipoJuego === "fifa" },
+    { label: "DBD", match: (c) => c.type === "uid" && c.equipoJuego === "dbd" },
+    { label: "Streamers", match: (c) => c.type === "contact" && c.tag === "Streamer" },
+    { label: "Influencers", match: (c) => c.type === "contact" && c.tag === "Influencer" },
+    { label: "Absolutamente todos", match: () => true }
+];
+
+let comunicadosContacts = [];
+let comunicadosSelected = new Set();
+
+function comunicadosKey(c){ return `${c.type}:${c.id}`; }
+
+async function loadComunicadosContacts(){
+    const usersSnap = await getDocs(collection(db, "users"));
+    const users = usersSnap.docs
+        .map(d => {
+            const data = d.data();
+            const roles = profileRoles(data);
+            return {
+                type: "uid", id: d.id,
+                nombre: data.displayName || data.email || d.id,
+                email: data.email || "",
+                roles, equipoJuego: data.equipoJuego || "",
+                tag: rolesLabel(roles) || "Sin rol",
+                active: data.active !== false
+            };
+        })
+        .filter(c => c.active);
+
+    let contacts = users;
+
+    if(isStaff()){
+        const [streamersSnap, influencersSnap] = await Promise.all([
+            getDocs(collection(db, "streamers")),
+            getDocs(collection(db, "influencers"))
+        ]);
+        const streamers = streamersSnap.docs.map(d => d.data())
+            .filter(s => s.email && s.activo !== false)
+            .map(s => ({ type: "contact", id: s.email, nombre: s.nombre || s.email, email: s.email, roles: [], equipoJuego: "", tag: "Streamer" }));
+        const influencers = influencersSnap.docs.map(d => d.data())
+            .filter(i => i.email && i.activo !== false)
+            .map(i => ({ type: "contact", id: i.email, nombre: i.nombre || i.email, email: i.email, roles: [], equipoJuego: "", tag: "Influencer" }));
+        contacts = contacts.concat(streamers, influencers);
+    }
+
+    return contacts;
+}
+
+async function handleComunicadosSubmit(event, errorEl){
+    event.preventDefault();
+    errorEl.textContent = "";
+
+    if(!comunicadosSelected.size){
+        errorEl.textContent = "Selecciona al menos un destinatario.";
+        return;
+    }
+
+    const formData = new FormData(event.target);
+    const asunto = String(formData.get("asunto") || "").trim();
+    const mensaje = String(formData.get("mensaje") || "").trim();
+    if(!asunto || !mensaje){
+        errorEl.textContent = "Completa el asunto y el mensaje.";
+        return;
+    }
+
+    const selectedContacts = comunicadosContacts.filter(c => comunicadosSelected.has(comunicadosKey(c)));
+    const uids = selectedContacts.filter(c => c.type === "uid").map(c => c.id);
+    const contactos = selectedContacts.filter(c => c.type === "contact").map(c => ({ email: c.email, nombre: c.nombre }));
+
+    const label = selectedContacts.length === 1 ? "1 destinatario" : `${selectedContacts.length} destinatarios`;
+    if(!confirm(`¿Enviar este mensaje a ${label}?`)) return;
+
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    try{
+        const resultados = [];
+        if(uids.length){
+            const fn = httpsCallable(functionsInstance, "enviarComunicado");
+            const r = await fn({ uids, asunto, mensaje });
+            resultados.push(...(r.data.detalle || []));
+        }
+        if(contactos.length){
+            const fn2 = httpsCallable(functionsInstance, "enviarComunicadoContacto");
+            const r2 = await fn2({ contactos, asunto, mensaje });
+            resultados.push(...(r2.data.detalle || []));
+        }
+        const ok = resultados.filter(d => d.status === "enviado").length;
+        const fail = resultados.filter(d => d.status !== "enviado");
+        let msg = `Enviados: ${ok}/${resultados.length}.`;
+        if(fail.length) msg += `\nFallaron: ${fail.map(f => `${f.uid} (${f.error})`).join(", ")}`;
+        alert(msg);
+        comunicadosSelected.clear();
+        selectSection("comunicados");
+    }catch(error){
+        console.error(error);
+        errorEl.textContent = "No se pudo enviar: " + (error.message || error);
+    }finally{
+        submitBtn.disabled = false;
+    }
+}
+
+function comunicadosFormHtml(){
+    return `
+<form id="comunicados-form">
+    <div class="field">
+        <label>Asunto</label>
+        <input name="asunto" type="text" required placeholder="Ej: Reunión de equipo esta semana">
+    </div>
+    <div class="field">
+        <label>Mensaje</label>
+        <textarea name="mensaje" required style="min-height:160px;" placeholder="Escribe el mensaje. Cada línea en blanco separa un párrafo."></textarea>
+    </div>
+    <div id="comunicados-selected-info" class="help" style="margin-bottom:14px;">No hay destinatarios seleccionados.</div>
+    <div id="comunicados-error" class="error"></div>
+    <button class="btn" type="submit">Enviar</button>
+</form>`;
+}
+
+async function initComunicadosCapitan(){
+    const infoEl = document.getElementById("comunicados-selected-info");
+    const errorEl = document.getElementById("comunicados-error");
+    const form = document.getElementById("comunicados-form");
+
+    comunicadosContacts = await loadComunicadosContacts();
+    const myEquipo = currentProfile?.equipoJuego || "";
+    const equipoContacts = comunicadosContacts.filter(c => c.type === "uid" && c.equipoJuego === myEquipo && c.id !== currentUser.uid);
+    const staffContacts = comunicadosContacts.filter(c => c.type === "uid" && c.roles.some(r => ["admin", "editor"].includes(r)));
+
+    document.getElementById("comunicados-count-equipo").textContent = `(${equipoContacts.length})`;
+    document.getElementById("comunicados-count-staff").textContent = `(${staffContacts.length})`;
+
+    function updateSelection(){
+        comunicadosSelected.clear();
+        if(document.querySelector('[data-group="equipo"]').checked) equipoContacts.forEach(c => comunicadosSelected.add(comunicadosKey(c)));
+        if(document.querySelector('[data-group="staff"]').checked) staffContacts.forEach(c => comunicadosSelected.add(comunicadosKey(c)));
+        infoEl.textContent = comunicadosSelected.size ? `${comunicadosSelected.size} destinatario(s) seleccionados.` : "Selecciona al menos un grupo.";
+    }
+
+    document.querySelectorAll("[data-group]").forEach(cb => cb.addEventListener("change", updateSelection));
+    updateSelection();
+
+    form.addEventListener("submit", (event) => handleComunicadosSubmit(event, errorEl));
+}
+
+async function initComunicadosStaff(){
+    const listEl = document.getElementById("comunicados-list");
+    const searchEl = document.getElementById("comunicados-search");
+    const groupsEl = document.getElementById("comunicados-groups");
+    const infoEl = document.getElementById("comunicados-selected-info");
+    const errorEl = document.getElementById("comunicados-error");
+    const form = document.getElementById("comunicados-form");
+
+    groupsEl.innerHTML = COMUNICADOS_GRUPOS_STAFF.map((g, i) => `<button type="button" class="btn secondary small" data-quickgroup="${i}">${escapeHtml(g.label)}</button>`).join("");
+
+    listEl.innerHTML = `<p class="loading">Cargando...</p>`;
+    comunicadosContacts = await loadComunicadosContacts();
+
+    function updateInfo(){
+        infoEl.textContent = comunicadosSelected.size ? `${comunicadosSelected.size} destinatario(s) seleccionados.` : "No hay destinatarios seleccionados.";
+    }
+
+    function renderList(){
+        const term = normalizeSearch(searchEl.value.trim());
+        const filtered = comunicadosContacts.filter(c => !term || normalizeSearch(`${c.nombre} ${c.email}`).includes(term));
+        listEl.innerHTML = filtered.length ? filtered.map(c => `
+<label class="comunicados-row">
+    <input type="checkbox" data-contact="${comunicadosKey(c)}" ${comunicadosSelected.has(comunicadosKey(c)) ? "checked" : ""}>
+    <span class="comunicados-row-name">${escapeHtml(c.nombre)}</span>
+    <span class="comunicados-row-email muted">${escapeHtml(c.email || "sin email")}</span>
+    <span class="comunicados-tag">${escapeHtml(c.tag)}</span>
+</label>`).join("") : `<p class="loading">Sin resultados.</p>`;
+        updateInfo();
+    }
+
+    searchEl.addEventListener("input", renderList);
+
+    listEl.addEventListener("change", (event) => {
+        const cb = event.target.closest("[data-contact]");
+        if(!cb) return;
+        if(cb.checked) comunicadosSelected.add(cb.dataset.contact);
+        else comunicadosSelected.delete(cb.dataset.contact);
+        updateInfo();
+    });
+
+    groupsEl.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-quickgroup]");
+        if(!btn) return;
+        const grupo = COMUNICADOS_GRUPOS_STAFF[Number(btn.dataset.quickgroup)];
+        comunicadosContacts.filter(grupo.match).forEach(c => comunicadosSelected.add(comunicadosKey(c)));
+        renderList();
+    });
+
+    renderList();
+
+    form.addEventListener("submit", (event) => handleComunicadosSubmit(event, errorEl));
+}
+
+function renderComunicadosSection(){
+    unsubscribeList = null;
+    sectionTitle.textContent = "Comunicados";
+    sectionSubtitle.textContent = "Enviar mensajes por correo a cuentas y contactos de VORANIX";
+    comunicadosSelected.clear();
+
+    const staffMode = isStaff();
+
+    if(staffMode){
+        content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Comunicados</h2>
+        <p class="muted">Elegí uno o más grupos rápidos, o afiná la selección manualmente en la lista.</p>
+    </div>
+</div>
+<div class="panel" style="padding:22px;">
+    <div class="comunicados-groups" id="comunicados-groups"></div>
+    <div class="field" style="margin-top:18px;">
+        <input type="search" id="comunicados-search" placeholder="Buscar por nombre o email...">
+    </div>
+    <div id="comunicados-list" class="comunicados-list"></div>
+    <div style="margin-top:18px;">${comunicadosFormHtml()}</div>
+</div>`;
+        initComunicadosStaff();
+    }else{
+        content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Comunicados</h2>
+        <p class="muted">Como capitán, podés escribirle a tu equipo o al staff.</p>
+    </div>
+</div>
+<div class="panel" style="padding:22px;">
+    <div class="comunicados-groups">
+        <label class="comunicados-group-chip"><input type="checkbox" data-group="equipo"> Mi equipo <span class="muted" id="comunicados-count-equipo"></span></label>
+        <label class="comunicados-group-chip"><input type="checkbox" data-group="staff"> Staff <span class="muted" id="comunicados-count-staff"></span></label>
+    </div>
+    <div style="margin-top:18px;">${comunicadosFormHtml()}</div>
+</div>`;
+        initComunicadosCapitan();
+    }
+}
+
+// ======================= TABLERO (ideas + tareas) =======================
+
+const IDEA_COLORS = ["#7b2cff", "#ff6a00", "#00c853", "#00b8d4", "#ffca28", "#ff3b5c"];
+
+const TAREA_ESTADOS = [
+    ["pendiente", "Por Hacer"],
+    ["en_progreso", "En Progreso"],
+    ["revision", "En Revisión"],
+    ["hecho", "Hecho"]
+];
+
+async function fetchStaffAccounts(){
+    const snapshot = await getDocs(collection(db, "users"));
+    return snapshot.docs
+        .map(d => ({ uid: d.id, ...d.data() }))
+        .filter(u => u.active !== false && profileRoles(u).some(r => ["admin", "editor"].includes(r)));
+}
+
+function renderTableroSection(tableroTab){
+    if(unsubscribeList) unsubscribeList();
+    unsubscribeList = null;
+    sectionTitle.textContent = "Tablero";
+    sectionSubtitle.textContent = "Ideas y tareas del equipo de staff";
+    const tab = tableroTab || "ideas";
+
+    content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Tablero de equipo</h2>
+        <p class="muted">Dejá ideas para el equipo y asigná tareas, como Mural y Trello en un solo lugar.</p>
+    </div>
+</div>
+<div class="tablero-tabs">
+    <button type="button" class="btn ${tab === "ideas" ? "" : "secondary"} small" data-tablero-tab="ideas">💡 Ideas</button>
+    <button type="button" class="btn ${tab === "tareas" ? "" : "secondary"} small" data-tablero-tab="tareas">✅ Tareas</button>
+</div>
+<div id="tablero-panel"></div>`;
+
+    const panel = document.getElementById("tablero-panel");
+    if(tab === "tareas") renderTareasBoard(panel);
+    else renderIdeasBoard(panel);
+}
+
+function renderIdeasBoard(container){
+    container.innerHTML = `
+<div class="ideas-composer">
+    <textarea id="idea-texto" placeholder="Escribe una idea para el equipo..." maxlength="500"></textarea>
+    <div class="ideas-composer-row">
+        <div class="ideas-color-picker" id="idea-color-picker">
+            ${IDEA_COLORS.map((c, i) => `<button type="button" class="idea-color-dot${i === 0 ? " active" : ""}" style="background:${c}" data-color="${c}"></button>`).join("")}
+        </div>
+        <button class="btn small" type="button" id="idea-add-btn">+ Agregar idea</button>
+    </div>
+</div>
+<div id="ideas-grid" class="ideas-grid"><p class="loading">Cargando...</p></div>`;
+
+    let selectedColor = IDEA_COLORS[0];
+    container.querySelectorAll(".idea-color-dot").forEach(dotEl => {
+        dotEl.addEventListener("click", () => {
+            container.querySelectorAll(".idea-color-dot").forEach(d => d.classList.remove("active"));
+            dotEl.classList.add("active");
+            selectedColor = dotEl.dataset.color;
+        });
+    });
+
+    const textarea = document.getElementById("idea-texto");
+    document.getElementById("idea-add-btn").addEventListener("click", async () => {
+        const texto = textarea.value.trim();
+        if(!texto) return;
+        try{
+            await addDoc(collection(db, "ideas"), {
+                texto,
+                color: selectedColor,
+                autorNombre: currentProfile.displayName || currentProfile.email || currentUser.email,
+                autorUid: currentUser.uid,
+                createdAt: serverTimestamp()
+            });
+            textarea.value = "";
+        }catch(error){
+            console.error(error);
+            alert("No se pudo agregar la idea.");
+        }
+    });
+
+    const grid = document.getElementById("ideas-grid");
+    unsubscribeList = onSnapshot(collection(db, "ideas"), (snapshot) => {
+        const ideas = snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        grid.innerHTML = ideas.length ? ideas.map(idea => `
+<div class="idea-card" style="border-color:${idea.color}55;background:${idea.color}14;">
+    <p class="idea-text">${escapeHtml(idea.texto)}</p>
+    <div class="idea-footer">
+        <span class="idea-author">${escapeHtml(idea.autorNombre || "Alguien")}</span>
+        <button type="button" class="idea-delete" data-idea-delete="${idea.id}" title="Eliminar">✕</button>
+    </div>
+</div>`).join("") : `<p class="loading">Todavía no hay ideas. ¡Agregá la primera!</p>`;
+    }, (error) => {
+        console.error(error);
+        grid.innerHTML = `<p class="loading">No se pudieron cargar las ideas.</p>`;
+    });
+
+    grid.addEventListener("click", async (event) => {
+        const delBtn = event.target.closest("[data-idea-delete]");
+        if(!delBtn) return;
+        if(!confirm("¿Eliminar esta idea?")) return;
+        try{
+            await deleteDoc(doc(db, "ideas", delBtn.dataset.ideaDelete));
+        }catch(error){
+            console.error(error);
+            alert("No se pudo eliminar la idea.");
+        }
+    });
+}
+
+function renderTareaCard(tarea){
+    const isMine = tarea.responsableUid === currentUser.uid;
+    return `
+<div class="tarea-card${isMine ? " is-mine" : ""}" draggable="true" data-tarea-id="${tarea.id}">
+    <p class="tarea-titulo">${escapeHtml(tarea.titulo) || "Sin título"}</p>
+    ${tarea.descripcion ? `<p class="tarea-desc">${escapeHtml(tarea.descripcion)}</p>` : ""}
+    <div class="tarea-footer">
+        <span class="tarea-responsable">${escapeHtml(tarea.responsableNombre) || "Sin asignar"}</span>
+        <div class="tarea-actions">
+            <button type="button" data-tarea-edit="${tarea.id}" title="Editar">✎</button>
+            <button type="button" data-tarea-delete="${tarea.id}" title="Eliminar">✕</button>
+        </div>
+    </div>
+</div>`;
+}
+
+async function renderTareasBoard(container){
+    container.innerHTML = `
+<div class="tareas-toolbar">
+    <button class="btn small" type="button" id="tarea-add-btn">+ Nueva tarea</button>
+    <label class="tareas-filter"><input type="checkbox" id="tarea-solo-mias"> Mostrar solo mis tareas</label>
+</div>
+<div id="tareas-board" class="tareas-board">
+    ${TAREA_ESTADOS.map(([value, label]) => `
+    <div class="tareas-column">
+        <h4>${label} <span class="tareas-column-count" id="tareas-count-${value}"></span></h4>
+        <div class="tareas-column-list" data-estado-list="${value}"></div>
+    </div>`).join("")}
+</div>`;
+
+    const staffAccounts = await fetchStaffAccounts();
+    document.getElementById("tarea-add-btn").addEventListener("click", () => openTareaModal(null, staffAccounts));
+
+    const soloMiasCheckbox = document.getElementById("tarea-solo-mias");
+    let allTareas = [];
+
+    function renderColumns(){
+        const soloMias = soloMiasCheckbox.checked;
+        const filtered = soloMias ? allTareas.filter(t => t.responsableUid === currentUser.uid) : allTareas;
+        TAREA_ESTADOS.forEach(([value]) => {
+            const listEl = document.querySelector(`[data-estado-list="${value}"]`);
+            const items = filtered.filter(t => (t.estado || "pendiente") === value);
+            document.getElementById(`tareas-count-${value}`).textContent = items.length ? `(${items.length})` : "";
+            listEl.innerHTML = items.length ? items.map(renderTareaCard).join("") : `<p class="tareas-empty">Sin tareas.</p>`;
+        });
+    }
+
+    soloMiasCheckbox.addEventListener("change", renderColumns);
+
+    unsubscribeList = onSnapshot(collection(db, "tareas"), (snapshot) => {
+        allTareas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderColumns();
+    }, (error) => {
+        console.error(error);
+        TAREA_ESTADOS.forEach(([value]) => {
+            document.querySelector(`[data-estado-list="${value}"]`).innerHTML = `<p class="tareas-empty">No se pudieron cargar las tareas.</p>`;
+        });
+    });
+
+    const board = document.getElementById("tareas-board");
+
+    board.addEventListener("dragstart", (event) => {
+        const card = event.target.closest("[data-tarea-id]");
+        if(card) event.dataTransfer.setData("text/plain", card.dataset.tareaId);
+    });
+
+    board.querySelectorAll("[data-estado-list]").forEach(listEl => {
+        listEl.addEventListener("dragover", (event) => event.preventDefault());
+        listEl.addEventListener("drop", async (event) => {
+            event.preventDefault();
+            const id = event.dataTransfer.getData("text/plain");
+            const nuevoEstado = listEl.dataset.estadoList;
+            if(!id) return;
+            try{
+                await updateDoc(doc(db, "tareas", id), { estado: nuevoEstado, updatedAt: serverTimestamp() });
+            }catch(error){
+                console.error(error);
+                alert("No se pudo mover la tarea.");
+            }
+        });
+    });
+
+    board.addEventListener("click", (event) => {
+        const editBtn = event.target.closest("[data-tarea-edit]");
+        if(editBtn){
+            const tarea = allTareas.find(t => t.id === editBtn.dataset.tareaEdit);
+            if(tarea) openTareaModal(tarea, staffAccounts);
+            return;
+        }
+        const delBtn = event.target.closest("[data-tarea-delete]");
+        if(delBtn && confirm("¿Eliminar esta tarea?")){
+            deleteDoc(doc(db, "tareas", delBtn.dataset.tareaDelete)).catch(error => {
+                console.error(error);
+                alert("No se pudo eliminar la tarea.");
+            });
+        }
+    });
+}
+
+let editingTareaId = null;
+
+function openTareaModal(tarea, staffAccounts){
+    editingTareaId = tarea ? tarea.id : null;
+    document.getElementById("tarea-modal-title").textContent = tarea ? "Editar tarea" : "Nueva tarea";
+    tareaError.textContent = "";
+    tareaForm.reset();
+    tareaForm.titulo.value = tarea?.titulo || "";
+    tareaForm.descripcion.value = tarea?.descripcion || "";
+
+    const responsableSelect = document.getElementById("tarea-responsable-select");
+    responsableSelect.innerHTML = `<option value="">Sin asignar</option>` +
+        staffAccounts.map(u => `<option value="${u.uid}" ${tarea?.responsableUid === u.uid ? "selected" : ""}>${escapeHtml(u.displayName || u.email)}</option>`).join("");
+
+    const estadoSelect = document.getElementById("tarea-estado-select");
+    estadoSelect.innerHTML = TAREA_ESTADOS.map(([value, label]) => `<option value="${value}" ${(tarea?.estado || "pendiente") === value ? "selected" : ""}>${label}</option>`).join("");
+
+    document.getElementById("tarea-delete-btn").classList.toggle("hidden", !tarea);
+    tareaModal.classList.remove("hidden");
+}
+
+function closeTareaModal(){
+    tareaModal.classList.add("hidden");
+    tareaForm.reset();
+    editingTareaId = null;
+}
+
+document.getElementById("close-tarea-modal").addEventListener("click", closeTareaModal);
+document.getElementById("cancel-tarea-modal").addEventListener("click", closeTareaModal);
+
+document.getElementById("tarea-delete-btn").addEventListener("click", async () => {
+    if(!editingTareaId) return;
+    if(!confirm("¿Eliminar esta tarea?")) return;
+    try{
+        await deleteDoc(doc(db, "tareas", editingTareaId));
+        closeTareaModal();
+    }catch(error){
+        console.error(error);
+        alert("No se pudo eliminar la tarea.");
+    }
+});
+
+tareaForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    tareaError.textContent = "";
+
+    const formData = new FormData(tareaForm);
+    const titulo = String(formData.get("titulo") || "").trim();
+    if(!titulo){
+        tareaError.textContent = "Escribe un título.";
+        return;
+    }
+
+    const responsableUid = String(formData.get("responsable") || "");
+    const responsableSelect = document.getElementById("tarea-responsable-select");
+    const responsableNombre = responsableUid
+        ? (responsableSelect.querySelector(`option[value="${responsableUid}"]`)?.textContent || "")
+        : "";
+
+    const payload = {
+        titulo,
+        descripcion: String(formData.get("descripcion") || "").trim(),
+        estado: String(formData.get("estado") || "pendiente"),
+        responsableUid,
+        responsableNombre,
+        updatedAt: serverTimestamp()
+    };
+
+    try{
+        if(editingTareaId){
+            await updateDoc(doc(db, "tareas", editingTareaId), payload);
+        }else{
+            payload.createdAt = serverTimestamp();
+            payload.creadorUid = currentUser.uid;
+            await addDoc(collection(db, "tareas"), payload);
+        }
+        closeTareaModal();
+    }catch(error){
+        console.error(error);
+        tareaError.textContent = "No se pudo guardar la tarea.";
+    }
+});
+
 async function renderOverlaySection(){
     // Config de un solo documento (overlayConfig/config), sin tabla ni modal.
     unsubscribeList = null;
@@ -1332,7 +2030,7 @@ async function renderUsers(){
         <select id="users-filter-role">
             <option value="">Rol: Todos</option>
             <option value="admin">Rol: admin</option>
-            <option value="editor">Rol: editor</option>
+            <option value="editor">Rol: Staff</option>
             <option value="creador">Rol: creador</option>
             <option value="capitan">Rol: capitan</option>
             <option value="jugador">Rol: jugador</option>
@@ -1442,7 +2140,7 @@ async function renderUsers(){
 <td class="select-col"><input type="checkbox" data-select="${user.uid}" ${selected.has(user.uid) ? "checked" : ""}></td>
 <td>${user.displayName ? escapeHtml(user.displayName) : "-"}</td>
 <td>${user.email ? escapeHtml(user.email) : "-"}</td>
-<td>${profileRoles(user).length ? escapeHtml(profileRoles(user).join(", ")) : "-"}</td>
+<td>${profileRoles(user).length ? escapeHtml(rolesLabel(profileRoles(user))) : "-"}</td>
 <td>${user.active === false ? "No" : "Sí"}</td>
 <td>${ultimoIngreso}</td>
 <td><div class="actions">
@@ -1580,7 +2278,7 @@ function userFieldHtml(name, value, disabled = false){
     if(name === "roles"){
         const selected = Array.isArray(value) ? value : [];
         const options = [
-            ["admin", "admin"], ["editor", "editor"], ["creador", "creador"],
+            ["admin", "admin"], ["editor", "staff"], ["creador", "creador"],
             ["capitan", "capitan"], ["jugador", "jugador"], ["viewer", "viewer"]
         ];
         return `
@@ -1970,6 +2668,17 @@ async function saveItem(event){
 }
 
 nav.addEventListener("click", (event) => {
+    const toggle = event.target.closest("[data-nav-toggle]");
+    if(toggle){
+        const groupEl = toggle.closest("[data-nav-group]");
+        const label = groupEl.dataset.navGroup;
+        const collapsed = getCollapsedGroups();
+        if(collapsed.has(label)) collapsed.delete(label);
+        else collapsed.add(label);
+        setCollapsedGroups(collapsed);
+        groupEl.classList.toggle("collapsed");
+        return;
+    }
     const button = event.target.closest("[data-section]");
     if(button) selectSection(button.dataset.section);
 });
@@ -1982,10 +2691,16 @@ content.addEventListener("click", async (event) => {
     const disableButton = event.target.closest("[data-disable]");
     const sendAccessButton = event.target.closest("[data-send-access]");
     const gotoSectionButton = event.target.closest("[data-goto-section]");
+    const tableroTabButton = event.target.closest("[data-tablero-tab]");
 
     try{
         if(gotoSectionButton){
             selectSection(gotoSectionButton.dataset.gotoSection);
+            return;
+        }
+
+        if(tableroTabButton){
+            renderTableroSection(tableroTabButton.dataset.tableroTab);
             return;
         }
 
