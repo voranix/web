@@ -1,0 +1,27 @@
+name: Deploy to Firebase
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias de Functions
+        working-directory: functions
+        run: npm ci
+
+      - name: Autenticar con Firebase (service account)
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "${HOME}/gcp-key.json"
+
+      - name: Deploy a Firebase (hosting, functions, firestore rules, storage rules)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /home/runner/gcp-key.json
+        run: npx firebase-tools@latest deploy --project voranix-2ecc9 --only hosting,functions,firestore:rules,storage --non-interactive
