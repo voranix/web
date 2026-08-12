@@ -293,7 +293,7 @@ button { cursor: pointer; }
 .instagram-section { text-align:center; }
 .instagram-section h2 { margin-bottom:32px; }
 .instagram-card { border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--border); background:var(--card); }
-.instagram-card iframe { width:100%; max-width:100%; min-height:280px; display:block; }
+.instagram-card iframe { width:100%; max-width:100%; display:block; }
 .instagram-mobile { display:none; }
 
 /* ================= PROJECTS HOME ================= */
