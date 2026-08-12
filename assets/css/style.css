@@ -258,27 +258,44 @@ button { cursor: pointer; }
     content:""; position:absolute; right:-220px; top:20%; width:560px; height:560px; border-radius:50%;
     background:radial-gradient(circle, rgba(255,106,0,0.08) 0%, transparent 70%); pointer-events:none;
 }
-.rosters-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:24px; margin-top:40px; }
+.rosters-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr)); gap:28px; margin-top:44px; }
 .roster-box {
     position:relative; border-radius:var(--r-lg); overflow:hidden;
-    border:1px solid var(--border); transition:var(--ease); text-decoration:none; display:block;
-    background:var(--card);
+    border:1px solid var(--border); transition:var(--ease); text-decoration:none;
+    display:flex; flex-direction:column; background:var(--card);
 }
-.roster-box img { width:100%; aspect-ratio:16/9; height:auto; object-fit:cover; display:block; transition:var(--ease); }
-.roster-box:hover img { transform:scale(1.06); filter:brightness(0.65); }
-.roster-content { padding:24px; position:relative; z-index:2; }
-.roster-content h3 { font-size:1.2rem; color:#fff; margin-bottom:8px; }
-.roster-content p { font-size:13px; text-align:left; margin-bottom:16px; }
-.roster-valorant:hover { border-color:#ff4655; box-shadow:0 0 30px rgba(255,70,85,0.2); }
-.roster-fifa:hover { border-color:#00ff87; box-shadow:0 0 30px rgba(0,255,135,0.2); }
-.roster-dbd:hover { border-color:#c41e3a; box-shadow:0 0 30px rgba(196,30,58,0.25); }
+.roster-box:hover { transform:translateY(-8px); box-shadow:0 20px 40px rgba(0,0,0,0.35); }
+.roster-media { position:relative; overflow:hidden; }
+.roster-media img { width:100%; aspect-ratio:16/9; height:auto; object-fit:cover; display:block; transition:var(--ease); }
+.roster-box:hover .roster-media img { transform:scale(1.08); filter:brightness(0.55); }
+.roster-media::after {
+    content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:linear-gradient(to top, var(--card) 0%, rgba(13,13,30,0.15) 40%, transparent 70%);
+}
+.roster-content { padding:22px 24px 26px; position:relative; z-index:2; flex:1; display:flex; flex-direction:column; }
+.roster-content h3 { font-size:1.35rem; color:#fff; margin-bottom:8px; letter-spacing:.3px; }
+.roster-content p { font-size:13px; text-align:left; margin-bottom:18px; flex:1; }
+.roster-valorant:hover { border-color:#ff4655; box-shadow:0 20px 40px rgba(255,70,85,0.18); }
+.roster-fifa:hover { border-color:#00ff87; box-shadow:0 20px 40px rgba(0,255,135,0.18); }
+.roster-dbd:hover { border-color:#c41e3a; box-shadow:0 20px 40px rgba(196,30,58,0.2); }
 .roster-badge {
-    display:inline-block; font-size:9px; letter-spacing:2px; text-transform:uppercase;
-    padding:3px 10px; border-radius:12px; margin-bottom:12px;
+    position:absolute; top:16px; left:16px; z-index:2;
+    display:inline-flex; align-items:center; gap:6px; font-size:9px; letter-spacing:2px; text-transform:uppercase;
+    padding:5px 12px; border-radius:20px; backdrop-filter:blur(8px);
 }
-.roster-badge.valorant { background:rgba(255,70,85,0.15); color:#ff4655; border:1px solid rgba(255,70,85,0.3); }
-.roster-badge.fc { background:rgba(0,255,135,0.1); color:#00ff87; border:1px solid rgba(0,255,135,0.3); }
-.roster-badge.dbd { background:rgba(196,30,58,0.15); color:#ff4d6d; border:1px solid rgba(196,30,58,0.3); }
+.roster-badge::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.roster-badge.valorant { background:rgba(255,70,85,0.18); color:#ff4655; border:1px solid rgba(255,70,85,0.35); }
+.roster-badge.fc { background:rgba(0,255,135,0.14); color:#00ff87; border:1px solid rgba(0,255,135,0.35); }
+.roster-badge.dbd { background:rgba(196,30,58,0.18); color:#ff4d6d; border:1px solid rgba(196,30,58,0.35); }
+.roster-link {
+    display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:800;
+    letter-spacing:1.5px; text-transform:uppercase; color:var(--morado-light); transition:var(--ease); width:fit-content;
+}
+.roster-link i { font-size:10px; transition:transform .2s; }
+.roster-box:hover .roster-link i { transform:translateX(4px); }
+.roster-valorant:hover .roster-link { color:#ff4655; }
+.roster-fifa:hover .roster-link { color:#00ff87; }
+.roster-dbd:hover .roster-link { color:#ff4d6d; }
 
 /* ================= INSTAGRAM ================= */
 .instagram-section { text-align:center; }
