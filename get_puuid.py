@@ -1,8 +1,9 @@
+import os
 import requests
 
 game_name = "KeKeZin"
 tag_line = "mawz"
-api_key = "RGAPI-b9fe2dbd-38c7-4841-a543-7c99b0437a09" # Pon aquí tu llave actual
+api_key = os.environ["RIOT_API_KEY"]
 
 url = f"https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{game_name}/{tag_line}"
 headers = {"X-Riot-Token": api_key}
