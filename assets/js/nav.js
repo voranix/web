@@ -2,7 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const toggle = document.getElementById("menu-toggle");
     const navbar = document.querySelector(".navbar");
     if (toggle && navbar) {
-        toggle.addEventListener("click", () => navbar.classList.toggle("active"));
+        toggle.addEventListener("click", () => {
+            const isOpen = navbar.classList.toggle("active");
+            toggle.setAttribute("aria-expanded", String(isOpen));
+        });
     }
 
     document.querySelectorAll(".nav-dropdown").forEach((dropdown) => {

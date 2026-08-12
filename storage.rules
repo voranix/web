@@ -10,10 +10,15 @@ service firebase.storage {
       return firestore.get(/databases/(default)/documents/users/$(request.auth.uid));
     }
 
+    function userRoles() {
+      let data = userDoc().data;
+      return ("roles" in data) ? data.roles : (("role" in data) ? [data.role] : []);
+    }
+
     function hasValidRole() {
       return signedIn()
         && userDoc().data.active != false
-        && userDoc().data.role in ['admin', 'editor'];
+        && userRoles().hasAny(['admin', 'editor']);
     }
 
     match /{allPaths=**} {

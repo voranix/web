@@ -39,37 +39,46 @@ const ASUNTOS = {
     general: "Consulta general"
 };
 
+// Mismo criterio que assets/js/firebase-config.js: escapar los campos que
+// vienen del usuario antes de interpolarlos en HTML de correo (los formularios
+// públicos no validan que "nombre", "mensaje", etc. no traigan HTML/links).
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+}
+
 function construirCorreoHtml(data) {
-    const asuntoLabel = ASUNTOS[data.asunto] || data.asunto || "Sin especificar";
+    const asuntoLabel = escapeHtml(ASUNTOS[data.asunto] || data.asunto || "Sin especificar");
     const extra = [];
-    if (data.juego) extra.push(`<li><strong>Juego:</strong> ${data.juego}</li>`);
-    if (data.nivel) extra.push(`<li><strong>Nivel/Rango:</strong> ${data.nivel}</li>`);
-    if (data.id_juego) extra.push(`<li><strong>ID juego:</strong> ${data.id_juego}</li>`);
-    if (data.redes) extra.push(`<li><strong>Redes:</strong> ${data.redes}</li>`);
-    if (data.descripcion) extra.push(`<li><strong>Descripción:</strong> ${data.descripcion}</li>`);
-    if (data.equipo) extra.push(`<li><strong>Equipo:</strong> ${data.equipo}</li>`);
-    if (data.juego_torneo) extra.push(`<li><strong>Juego (torneo):</strong> ${data.juego_torneo}</li>`);
+    if (data.juego) extra.push(`<li><strong>Juego:</strong> ${escapeHtml(data.juego)}</li>`);
+    if (data.nivel) extra.push(`<li><strong>Nivel/Rango:</strong> ${escapeHtml(data.nivel)}</li>`);
+    if (data.id_juego) extra.push(`<li><strong>ID juego:</strong> ${escapeHtml(data.id_juego)}</li>`);
+    if (data.redes) extra.push(`<li><strong>Redes:</strong> ${escapeHtml(data.redes)}</li>`);
+    if (data.descripcion) extra.push(`<li><strong>Descripción:</strong> ${escapeHtml(data.descripcion)}</li>`);
+    if (data.equipo) extra.push(`<li><strong>Equipo:</strong> ${escapeHtml(data.equipo)}</li>`);
+    if (data.juego_torneo) extra.push(`<li><strong>Juego (torneo):</strong> ${escapeHtml(data.juego_torneo)}</li>`);
 
     return `
         <h2>Nuevo mensaje de contacto - VORANIX</h2>
-        <p><strong>Nombre:</strong> ${data.nombre}</p>
-        <p><strong>Email:</strong> ${data.email}</p>
+        <p><strong>Nombre:</strong> ${escapeHtml(data.nombre)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(data.email)}</p>
         <p><strong>Motivo:</strong> ${asuntoLabel}</p>
         ${extra.length ? `<ul>${extra.join("")}</ul>` : ""}
         <p><strong>Mensaje:</strong></p>
-        <p>${(data.mensaje || "").replace(/\n/g, "<br>")}</p>
+        <p>${escapeHtml(data.mensaje || "").replace(/\n/g, "<br>")}</p>
     `;
 }
 
 function construirCorreoConfirmacionHtml(data) {
-    const asuntoLabel = ASUNTOS[data.asunto] || data.asunto || "tu consulta";
+    const asuntoLabel = escapeHtml(ASUNTOS[data.asunto] || data.asunto || "tu consulta");
     return `
 <div style="background:#06060e;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
   <div style="max-width:560px;margin:0 auto;background:#0d0d1e;border-radius:12px;overflow:hidden;border:1px solid #2a2a40;">
     <img src="https://voranix.web.app/imagenes/header-email.jpg" alt="VORANIX" style="width:100%;display:block;">
     <div style="padding:32px 28px;text-align:center;">
       <img src="https://voranix.web.app/imagenes/logopng.png" alt="VORANIX" width="64" height="64" style="width:64px;height:64px;margin:0 auto 16px;display:block;">
-      <h1 style="color:#ffffff;font-size:22px;margin:0 0 12px;">¡Gracias por escribirnos, ${data.nombre}!</h1>
+      <h1 style="color:#ffffff;font-size:22px;margin:0 0 12px;">¡Gracias por escribirnos, ${escapeHtml(data.nombre)}!</h1>
       <p style="color:#b8b8d0;font-size:14px;line-height:1.7;margin:0 0 8px;">
         Recibimos tu mensaje sobre <strong style="color:#ffffff;">${asuntoLabel}</strong>.
       </p>
@@ -835,8 +844,11 @@ function portalesDe(roles) {
 }
 
 function construirCorreoAcceso({ displayName, email, resetLink, portales }) {
-    const nombre = displayName || "";
+    const nombre = escapeHtml(displayName || "");
     const titulo = portales.length === 1 ? portales[0].nombre : "los portales";
+    // portales[].url y resetLink los arma el propio backend (PORTAL_INFO /
+    // admin.auth().generatePasswordResetLink), no vienen del usuario: no hace
+    // falta escaparlos.
     const links = portales
         .map(p => `<a href="${p.url}">${p.nombre}: ${p.url}</a>`)
         .join("<br>");
@@ -849,7 +861,7 @@ function construirCorreoAcceso({ displayName, email, resetLink, portales }) {
         <a href="${resetLink}">${resetLink}</a></p>
         <p><strong>Paso 2 — Entrá al portal</strong><br>
         Una vez configurada tu contraseña, ingresá con tu email
-        (<strong>${email}</strong>) en:<br>
+        (<strong>${escapeHtml(email)}</strong>) en:<br>
         ${links}</p>
         <p>Cualquier duda, escribinos por Discord.</p>
         <p>— Equipo VORANIX</p>
@@ -980,14 +992,16 @@ exports.obtenerUltimoAcceso = onCall(async (request) => {
 // avisos generales desde el admin, no para el flujo de "primer acceso".
 // ---------------------------------------------------------------------
 
+// mensajeHtml ya viene escapado por el caller (se escapa el mensaje crudo
+// antes de partirlo en párrafos, ver enviarComunicado/enviarComunicadoContacto)
 function construirCorreoComunicado({ displayName, asunto, mensajeHtml }) {
-    const nombre = displayName || "";
+    const nombre = escapeHtml(displayName || "");
     return `
 <div style="background:#06060e;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
   <div style="max-width:560px;margin:0 auto;background:#0d0d1e;border-radius:12px;overflow:hidden;border:1px solid #2a2a40;">
     <div style="padding:28px 28px 8px;text-align:center;">
       <img src="https://voranix.web.app/imagenes/logopng.png" alt="VORANIX" width="56" height="56" style="width:56px;height:56px;margin:0 auto 14px;display:block;">
-      <h1 style="color:#ffffff;font-size:20px;margin:0 0 4px;">${asunto}</h1>
+      <h1 style="color:#ffffff;font-size:20px;margin:0 0 4px;">${escapeHtml(asunto)}</h1>
     </div>
     <div style="padding:8px 28px 28px;">
       <p style="color:#b8b8d0;font-size:14px;line-height:1.7;margin:0 0 14px;">Hola ${nombre},</p>
@@ -1046,7 +1060,7 @@ exports.enviarComunicado = onCall(
             throw new HttpsError("failed-precondition", "SMTP no configurado (SMTP_USER/SMTP_PASS).");
         }
 
-        const mensajeHtml = mensaje
+        const mensajeHtml = escapeHtml(mensaje)
             .split(/\n{2,}/)
             .map(parrafo => `<p style="margin:0 0 12px;">${parrafo.replace(/\n/g, "<br>")}</p>`)
             .join("");
@@ -1123,7 +1137,7 @@ exports.enviarComunicadoContacto = onCall(
             throw new HttpsError("failed-precondition", "SMTP no configurado (SMTP_USER/SMTP_PASS).");
         }
 
-        const mensajeHtml = mensaje
+        const mensajeHtml = escapeHtml(mensaje)
             .split(/\n{2,}/)
             .map(parrafo => `<p style="margin:0 0 12px;">${parrafo.replace(/\n/g, "<br>")}</p>`)
             .join("");
