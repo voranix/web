@@ -14,12 +14,34 @@
         .creadores-shell{ padding:36px 0 90px; }
         .creadores-topbar{
             display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;
-            padding:0 0 26px; border-bottom:1px solid var(--border); margin-bottom:30px;
+            padding:0 0 26px; border-bottom:1px solid var(--border); margin-bottom:26px; position:relative;
+        }
+        .creadores-topbar::after{
+            content:""; position:absolute; left:0; bottom:-1px; width:64px; height:2px; background:var(--grad);
         }
         .creadores-title{ text-align:left; font-size:clamp(1.5rem,4vw,2.1rem); letter-spacing:2px; margin-bottom:6px; }
-        .creadores-subtitle{ color:var(--gris); font-size:13px; }
+        .creadores-subtitle{ display:flex; align-items:center; gap:8px; color:var(--gris); font-size:13px; }
+        .creadores-subtitle i{ color:var(--naranja); font-size:11px; }
         .creadores-user{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
         .creadores-user strong{ font-size:13px; }
+
+        .creadores-stats-strip{
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr)); gap:14px;
+            margin-bottom:40px;
+        }
+        .creadores-stat-tile{
+            display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--border);
+            border-radius:var(--r-lg); padding:16px 18px; transition:border-color .2s, transform .2s;
+        }
+        .creadores-stat-tile:hover{ border-color:var(--border-accent); transform:translateY(-3px); }
+        .creadores-stat-icon{
+            width:42px; height:42px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+            font-size:16px; color:#fff; background:var(--grad);
+        }
+        .creadores-stat-icon.is-pending{ background:rgba(255,255,255,.08); }
+        .creadores-stat-value{ font-size:1.15rem; font-weight:800; color:#fff; line-height:1.2; }
+        .creadores-stat-label{ font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:1px; }
+
         .creadores-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:22px; }
         .tag-chip{
             display:inline-flex; align-self:flex-start; font-size:10px; letter-spacing:2px; text-transform:uppercase;
@@ -28,9 +50,9 @@
         }
         .acceso-card{
             background:var(--card); border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--border);
-            transition:var(--ease); display:flex; flex-direction:column;
+            border-top:3px solid var(--morado); transition:var(--ease); display:flex; flex-direction:column;
         }
-        .acceso-card:hover{ transform:translateY(-6px); border-color:var(--morado); box-shadow:0 8px 30px var(--morado-glow); }
+        .acceso-card:hover{ transform:translateY(-6px); border-color:var(--morado); border-top-color:var(--naranja); box-shadow:0 8px 30px var(--morado-glow); }
         .acceso-img{ width:100%; aspect-ratio:16/9; height:auto; object-fit:cover; display:block; background:var(--bg-2); }
         .acceso-body{ padding:22px; display:flex; flex-direction:column; gap:10px; flex:1; }
         .acceso-body h3{ font-size:1.05rem; color:#fff; margin-bottom:0; }
@@ -46,18 +68,30 @@
         .meta-line{ font-size:11px; color:var(--gris-dark); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
         .acceso-card .btn{ margin-top:auto; align-self:flex-start; }
         .overlay-links-block{ margin-bottom:36px; }
-        .overlay-links-title{ font-size:1.3rem; letter-spacing:1px; margin-bottom:6px; }
+        .overlay-links-title{
+            display:flex; align-items:center; gap:10px; font-size:1.05rem; letter-spacing:1px;
+            margin-bottom:14px; padding-left:14px; border-left:3px solid var(--morado);
+        }
+        .overlay-links-title i{ color:var(--naranja); font-size:.95em; }
         .overlay-links-sub{ font-size:13px; margin-bottom:18px; }
         .overlay-links-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr)); gap:18px; }
         .overlay-link-card{
-            background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg);
-            padding:20px; display:flex; flex-direction:column; gap:12px;
+            background:var(--card); border:1px solid var(--border); border-top:3px solid var(--morado); border-radius:var(--r-lg);
+            padding:20px; display:flex; flex-direction:column; gap:12px; transition:border-color .2s, transform .2s;
         }
+        .overlay-link-card:hover{ border-color:var(--border-accent); border-top-color:var(--naranja); transform:translateY(-3px); }
         .overlay-link-url{
             font-size:12px; color:var(--gris); word-break:break-all; background:rgba(255,255,255,0.04);
             border:1px solid var(--border); border-radius:var(--r-sm); padding:10px 12px;
         }
         .overlay-link-card .btn{ align-self:flex-start; }
+        .bot-status-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .bot-status-icon{
+            width:36px; height:36px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+            font-size:14px; color:#fff;
+        }
+        .bot-status-icon.is-ok{ background:rgba(0,200,83,.18); color:#00c853; }
+        .bot-status-icon.is-pending{ background:rgba(255,193,7,.18); color:#ffc107; }
         @media (max-width:600px){
             .creadores-topbar{ flex-direction:column; }
             .creadores-user{ justify-content:flex-start; width:100%; }
@@ -94,6 +128,7 @@
                     </li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/rivals.html">Rivals</a></li>
                     <li><a href="/pages/streamers.html">Streamers</a></li>
                     <li><a href="/pages/influencers.html">Influencers</a></li>
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
@@ -135,7 +170,7 @@
     <div class="creadores-topbar">
         <div>
             <h1 class="creadores-title">Portal Creadores</h1>
-            <p class="creadores-subtitle">Accesos, torneos y eventos exclusivos para creadores VORANIX.</p>
+            <p class="creadores-subtitle"><i class="fas fa-star"></i> Accesos, torneos y eventos exclusivos para creadores VORANIX.</p>
         </div>
         <div class="creadores-user">
             <strong id="user-email"></strong>
@@ -144,25 +179,43 @@
         </div>
     </div>
 
+    <div id="creadores-stats-strip" class="creadores-stats-strip hidden"></div>
+
     <div class="overlay-links-block">
-        <h2 class="overlay-links-title">Tu overlay para streams</h2>
-        <p class="muted overlay-links-sub">Pegá estos links como Fuente de Navegador en OBS (Agregar → Fuente de navegador → URL). Por ahora son los mismos para todos los creadores.</p>
-        <div class="overlay-links-grid">
-            <div class="overlay-link-card">
-                <span class="tag-chip">Horizontal</span>
-                <p class="overlay-link-url" id="overlay-url-horizontal"></p>
-                <button class="btn secondary" type="button" data-copy="horizontal">Copiar link</button>
+        <h2 class="overlay-links-title"><i class="fab fa-twitch"></i> Tu usuario de Twitch</h2>
+        <p class="muted overlay-links-sub">Lo usamos para armar tu overlay personalizado y para conectar el bot a tu canal, sin mezclarse con los de otros creadores.</p>
+        <form id="twitch-login-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;max-width:440px;">
+            <div class="field" style="flex:1;min-width:200px;margin:0;">
+                <label for="twitch-login-input">Usuario de Twitch (sin @)</label>
+                <input id="twitch-login-input" type="text" placeholder="ej: tu_usuario" autocomplete="off">
             </div>
-            <div class="overlay-link-card">
-                <span class="tag-chip">Vertical</span>
-                <p class="overlay-link-url" id="overlay-url-vertical"></p>
-                <button class="btn secondary" type="button" data-copy="vertical">Copiar link</button>
-            </div>
-        </div>
+            <button class="btn" type="submit">Guardar</button>
+        </form>
+        <div id="twitch-login-msg" class="muted" style="margin-top:8px;font-size:12px;"></div>
     </div>
 
-    <div id="accesos-grid" class="creadores-grid">
-        <p class="loading">Cargando accesos...</p>
+    <div id="bot-status-block" class="overlay-links-block hidden">
+        <h2 class="overlay-links-title"><i class="fas fa-robot"></i> Bot de chat</h2>
+        <div id="bot-status-content"></div>
+    </div>
+
+    <div class="overlay-links-block">
+        <h2 class="overlay-links-title"><i class="fas fa-desktop"></i> Tu overlay para streams</h2>
+        <p class="muted overlay-links-sub" id="overlay-links-sub">Pegá estos links como Fuente de Navegador en OBS (Agregar → Fuente de navegador → URL).</p>
+        <div id="overlay-links-content"></div>
+    </div>
+
+    <div id="proyectos-block" class="overlay-links-block hidden">
+        <h2 class="overlay-links-title"><i class="fas fa-diagram-project"></i> Proyectos VORANIX</h2>
+        <p class="muted overlay-links-sub">Novedades, colaboraciones y próximos lanzamientos del estudio.</p>
+        <div id="proyectos-grid" class="creadores-grid"></div>
+    </div>
+
+    <div class="overlay-links-block">
+        <h2 class="overlay-links-title"><i class="fas fa-ticket"></i> Accesos exclusivos</h2>
+        <div id="accesos-grid" class="creadores-grid">
+            <p class="loading">Cargando accesos...</p>
+        </div>
     </div>
 </section>
 
@@ -177,7 +230,7 @@
             <div class="footer-social">
                 <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener" aria-label="Discord"><i class="fab fa-discord"></i></a>
                 <a href="https://www.instagram.com/voranixstudio/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="https://www.twitch.tv/voranix_gaming" target="_blank" rel="noopener" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
+                <a href="https://www.twitch.tv/voranixstudio" target="_blank" rel="noopener" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
                 <a href="https://www.tiktok.com/@voranix_gaming" target="_blank" rel="noopener" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
             </div>
         </div>
@@ -191,6 +244,7 @@
         <div class="footer-col">
             <h4>Competitivo</h4>
             <a href="/pages/rosters.html">Rosters</a>
+            <a href="/pages/rivals.html">Voranix Rivals</a>
             <a href="/pages/streamers.html">Streamers</a>
             <a href="/pages/influencers.html">Influencers</a>
             <a href="/pages/patrocinadores.html">Patrocinadores</a>
@@ -217,10 +271,13 @@
     import {
         doc,
         getDoc,
+        updateDoc,
         collection,
         onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { auth, db, escapeHtml } from "/assets/js/firebase-config.js";
+
+    const TWITCH_BOT_AUTH_CANAL_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/twitchBotAuthStart?tipo=canal";
 
     const CATEGORIAS = {
         torneo: "Torneo",
@@ -237,12 +294,21 @@
     const userEmailEl = document.getElementById("user-email");
     const roleBadge = document.getElementById("role-badge");
     const accesosGrid = document.getElementById("accesos-grid");
+    const proyectosBlock = document.getElementById("proyectos-block");
+    const proyectosGrid = document.getElementById("proyectos-grid");
+    const statsStrip = document.getElementById("creadores-stats-strip");
 
     let unsubAccesos = null;
+    let unsubProyectos = null;
+    let accesosCount = 0;
+    let proyectosCount = 0;
+    let botConectado = null; // null = todavía sin consultar
 
     function stopListeners(){
         if(unsubAccesos) unsubAccesos();
         unsubAccesos = null;
+        if(unsubProyectos) unsubProyectos();
+        unsubProyectos = null;
     }
 
     function showLogin(){
@@ -250,23 +316,105 @@
         creadoresShell.classList.add("hidden");
     }
 
+    let currentUser = null;
+    let currentProfile = null;
+
     function showShell(user, profile){
+        currentUser = user;
+        currentProfile = profile;
         loginScreen.classList.add("hidden");
         creadoresShell.classList.remove("hidden");
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
         roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
-        renderOverlayLinks();
+        renderTwitchLoginForm(profile);
+        renderOverlayLinks(profile);
+        renderBotStatus(profile.twitchLogin || "");
+        renderStatsStrip();
     }
 
-    function renderOverlayLinks(){
-        const urls = {
-            horizontal: `${location.origin}/overlay/horizontal.html`,
-            vertical: `${location.origin}/overlay/vertical.html`
-        };
-        document.getElementById("overlay-url-horizontal").textContent = urls.horizontal;
-        document.getElementById("overlay-url-vertical").textContent = urls.vertical;
+    // Resumen rápido de la cuenta: estado de Twitch/bot y cuánto contenido
+    // exclusivo hay disponible ahora mismo. Sale de datos que ya se piden
+    // para las otras secciones, sin lecturas extra.
+    function renderStatsStrip(){
+        const twitchLogin = currentProfile?.twitchLogin || "";
+        const tiles = [
+            {
+                icon: "fab fa-twitch", pending: !twitchLogin,
+                value: twitchLogin ? "Conectado" : "Sin cargar", label: "Usuario de Twitch"
+            },
+            {
+                icon: "fas fa-robot", pending: !twitchLogin || botConectado !== true,
+                value: !twitchLogin ? "—" : (botConectado === null ? "..." : (botConectado ? "Conectado" : "Pendiente")),
+                label: "Bot de chat"
+            },
+            { icon: "fas fa-ticket", pending: accesosCount === 0, value: accesosCount, label: "Accesos disponibles" },
+            { icon: "fas fa-diagram-project", pending: proyectosCount === 0, value: proyectosCount, label: "Proyectos activos" }
+        ];
 
-        document.querySelectorAll("[data-copy]").forEach(btn => {
+        statsStrip.classList.remove("hidden");
+        statsStrip.innerHTML = tiles.map(tile => `
+<div class="creadores-stat-tile">
+    <div class="creadores-stat-icon${tile.pending ? " is-pending" : ""}"><i class="${tile.icon}"></i></div>
+    <div>
+        <div class="creadores-stat-value">${escapeHtml(String(tile.value))}</div>
+        <div class="creadores-stat-label">${escapeHtml(tile.label)}</div>
+    </div>
+</div>`).join("");
+    }
+
+    function renderTwitchLoginForm(profile){
+        document.getElementById("twitch-login-input").value = profile.twitchLogin || "";
+        document.getElementById("twitch-login-msg").textContent = "";
+    }
+
+    document.getElementById("twitch-login-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const msgEl = document.getElementById("twitch-login-msg");
+        const input = document.getElementById("twitch-login-input");
+        const twitchLogin = input.value.trim().toLowerCase().replace(/^@/, "");
+        if(!currentUser) return;
+        try{
+            await updateDoc(doc(db, "users", currentUser.uid), { twitchLogin });
+            currentProfile = { ...currentProfile, twitchLogin };
+            msgEl.textContent = "¡Guardado!";
+            renderOverlayLinks(currentProfile);
+            renderBotStatus(twitchLogin);
+            renderStatsStrip();
+        }catch(error){
+            console.error(error);
+            msgEl.textContent = "No se pudo guardar. Intentá de nuevo.";
+        }
+    });
+
+    function renderOverlayLinks(profile){
+        const content = document.getElementById("overlay-links-content");
+        const twitchLogin = profile.twitchLogin || "";
+
+        if(!twitchLogin){
+            content.innerHTML = `<p class="muted">Cargá tu usuario de Twitch arriba para generar tus links personalizados de overlay.</p>`;
+            return;
+        }
+
+        const urls = {
+            horizontal: `${location.origin}/overlay/horizontal.html?canal=${encodeURIComponent(twitchLogin)}`,
+            vertical: `${location.origin}/overlay/vertical.html?canal=${encodeURIComponent(twitchLogin)}`
+        };
+
+        content.innerHTML = `
+<div class="overlay-links-grid">
+    <div class="overlay-link-card">
+        <span class="tag-chip">Horizontal</span>
+        <p class="overlay-link-url">${escapeHtml(urls.horizontal)}</p>
+        <button class="btn secondary" type="button" data-copy="horizontal">Copiar link</button>
+    </div>
+    <div class="overlay-link-card">
+        <span class="tag-chip">Vertical</span>
+        <p class="overlay-link-url">${escapeHtml(urls.vertical)}</p>
+        <button class="btn secondary" type="button" data-copy="vertical">Copiar link</button>
+    </div>
+</div>`;
+
+        content.querySelectorAll("[data-copy]").forEach(btn => {
             btn.addEventListener("click", async () => {
                 try{
                     await navigator.clipboard.writeText(urls[btn.dataset.copy]);
@@ -279,6 +427,44 @@
                 }
             });
         });
+    }
+
+    async function renderBotStatus(twitchLogin){
+        const block = document.getElementById("bot-status-block");
+        const content = document.getElementById("bot-status-content");
+        if(!twitchLogin){
+            block.classList.add("hidden");
+            botConectado = null;
+            return;
+        }
+        block.classList.remove("hidden");
+        content.innerHTML = `<p class="muted">Consultando estado...</p>`;
+        try{
+            const snapshot = await getDoc(doc(db, "twitchBotAuth", twitchLogin));
+            if(snapshot.exists()){
+                const data = snapshot.data();
+                const fecha = data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "";
+                botConectado = true;
+                content.innerHTML = `
+<div class="bot-status-row">
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">El bot está conectado a tu canal${fecha ? ` desde el ${escapeHtml(fecha)}` : ""}.</p>
+</div>`;
+            }else{
+                botConectado = false;
+                content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste el bot a tu canal.</p>
+</div>
+<a class="btn" href="${TWITCH_BOT_AUTH_CANAL_URL}" target="_blank" rel="noopener">Conectar el bot a mi canal</a>`;
+            }
+        }catch(error){
+            console.error(error);
+            botConectado = null;
+            content.innerHTML = `<p class="muted">No se pudo consultar el estado del bot.</p>`;
+        }
+        renderStatsStrip();
     }
 
     function profileRoles(profile){
@@ -340,12 +526,43 @@
 </div>`;
     }
 
+    function renderProyecto(item){
+        const img = assetUrl(item.img);
+        return `
+<div class="acceso-card fade-up">
+    ${img ? `<img class="acceso-img" src="${escapeHtml(img)}" alt="${escapeHtml(item.titulo || "Proyecto")}" onerror="this.style.display='none'">` : ""}
+    <div class="acceso-body">
+        ${item.upcoming ? `<span class="tag-chip">Próximamente</span>` : ""}
+        <h3>${escapeHtml(item.titulo || "Sin título")}</h3>
+        ${item.descripcion ? `<p>${escapeHtml(item.descripcion)}</p>` : ""}
+        ${item.fecha ? `<div class="meta-line">${escapeHtml(item.fecha)}</div>` : ""}
+        ${item.link ? `<a class="btn btn-sm" href="${escapeHtml(item.link)}" target="_blank" rel="noopener">Ver más</a>` : ""}
+    </div>
+</div>`;
+    }
+
+    function loadProyectos(){
+        unsubProyectos = onSnapshot(collection(db, "proyectos"), (snapshot) => {
+            const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            proyectosCount = docs.length;
+            proyectosBlock.classList.toggle("hidden", docs.length === 0);
+            proyectosGrid.innerHTML = docs.map(renderProyecto).join("");
+            renderStatsStrip();
+        }, (error) => {
+            console.error(error);
+            proyectosBlock.classList.remove("hidden");
+            proyectosGrid.innerHTML = `<p class="loading">No se pudieron cargar los proyectos.</p>`;
+        });
+    }
+
     function loadAccesos(){
         unsubAccesos = onSnapshot(collection(db, "accesos"), (snapshot) => {
             const docs = snapshot.docs
                 .map(d => ({ id: d.id, ...d.data() }))
                 .filter(item => item.activo !== false)
                 .sort(sortByCreatedAtDesc);
+            accesosCount = docs.length;
+            renderStatsStrip();
 
             accesosGrid.innerHTML = docs.length
                 ? docs.map(renderAcceso).join("")
@@ -389,6 +606,7 @@
             }
             showShell(user, profile);
             loadAccesos();
+            loadProyectos();
         }catch(error){
             console.error(error);
             loginError.textContent = "No se pudo verificar tu cuenta. Intenta de nuevo.";

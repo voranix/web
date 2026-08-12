@@ -26,7 +26,7 @@ function formatFecha(value) {
     return date.toLocaleDateString("es-CL", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function formatRango(item) {
+export function formatRango(item) {
     const inicio = formatFecha(item.fechaInicio);
     const fin = formatFecha(item.fechaFin);
     let rango = inicio;
@@ -54,6 +54,15 @@ function isUpcoming(item) {
     const date = parseEventDate(item);
     if (!date) return true;
     return date.getTime() >= Date.now();
+}
+
+// El más próximo entre los que todavía no pasaron (usado por el resumen
+// del Portal Roster). Devuelve null si no hay ninguno.
+export function getProximoEvento(items) {
+    const proximos = (items || []).filter(isUpcoming);
+    if (!proximos.length) return null;
+    proximos.sort((a, b) => (parseEventDate(a)?.getTime() || 0) - (parseEventDate(b)?.getTime() || 0));
+    return proximos[0];
 }
 
 function renderLineup(lineup) {

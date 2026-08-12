@@ -49,8 +49,19 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
-      allow create, update, delete: if isAdmin();
+      // isStaff() (no solo isAdmin()) puede LISTAR la colección completa:
+      // lo necesita el Tablero para armar el selector de "Responsables" de
+      // una tarea. Sigue sin poder crear/editar/borrar cuentas (eso es
+      // exclusivo de admin, "staff... menos usuarios").
+      allow read: if isStaff() || (signedIn() && request.auth.uid == userId);
+      // Un creador puede autogestionar su propio usuario de Twitch (para
+      // armar su link de overlay personalizado y ver el estado del bot en
+      // su canal) sin poder tocar roles ni ningún otro campo de su cuenta.
+      allow update: if isAdmin() || (
+        signedIn() && request.auth.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["twitchLogin"])
+      );
+      allow create, delete: if isAdmin();
     }
 
     match /streamers/{doc} {
@@ -66,7 +77,7 @@ service cloud.firestore {
     }
 
     match /equipoActividad/{doc} {
-      allow read: if resource.data.visiblePublico == true || isEquipoMiembro(resource.data.juego) || isAdmin();
+      allow read: if isStaff() || resource.data.visiblePublico == true || isEquipoMiembro(resource.data.juego);
       allow create: if isStaff() || isCapitanDe(request.resource.data.juego);
       allow update, delete: if isStaff() ||
         (isCapitanDe(resource.data.juego) && request.resource.data.juego == resource.data.juego);
@@ -90,6 +101,26 @@ service cloud.firestore {
     match /overlayConfig/{doc} {
       allow read: if true;
       allow write: if isStaff();
+    }
+
+    match /overlayComandos/{doc} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    match /overlayCodigos/{doc} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
+    // Evento actual disparado por un comando de chat (banner tipo noticiero
+    // en el overlay), un doc por canal de Twitch: solo lo escribe el Admin
+    // SDK desde twitchChatWebhook. "_general" es la excepción: un mensaje
+    // para TODOS los streams a la vez, que sí puede escribir el staff
+    // directo desde el admin (sin pasar por una Cloud Function).
+    match /overlayEventoActual/{doc} {
+      allow read: if true;
+      allow write: if doc == "_general" && isStaff();
     }
 
     match /proyectos/{doc} {
@@ -129,6 +160,47 @@ service cloud.firestore {
 
     match /tareas/{doc} {
       allow read, write: if isStaff();
+    }
+
+    // Voranix Rivals: temporada competitiva entre 2 Alianzas. Lectura pública
+    // (es la página de resultados en vivo), pero la carga de equipos/puntajes
+    // queda exclusiva de admin (ni Staff), a pedido explícito del usuario.
+    match /alianzas/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /rivalsPuntos/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /rivalsActividades/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /rivalsConfig/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Alertas de raid de Twitch para el overlay: solo las escribe el Admin
+    // SDK desde la Cloud Function del webhook de EventSub, nunca un cliente.
+    match /raidAlerts/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Qué canales autorizaron al bot: los docs por canal (broadcasterId,
+    // broadcasterLogin, authorizedAt) no tienen nada sensible y se dejan
+    // leer para que el Portal Creadores muestre "tu canal ya está
+    // conectado". El doc "_bot" sí tiene el token del bot y queda bloqueado.
+    // La escritura siempre queda exclusiva del Admin SDK (viene de un OAuth
+    // real contra Twitch, nunca de un cliente).
+    match /twitchBotAuth/{doc} {
+      allow read: if doc != "_bot";
+      allow write: if false;
     }
 
     match /{document=**} {

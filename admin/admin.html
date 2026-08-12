@@ -114,6 +114,10 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .dashboard-meta{ color:var(--muted); font-size:12px; margin-left:auto; }
 .dashboard-highlight{ color:#fff; font-weight:700; margin-bottom:12px; }
 .dashboard-empty{ color:var(--muted); font-size:13px; padding:8px 0; }
+.dashboard-tag-alerta{ color:var(--danger); background:rgba(255,59,92,.15); border-color:rgba(255,59,92,.4); }
+.dashboard-card-mini{ padding:12px 20px; }
+.dashboard-mini{ font-size:12.5px; color:#ddd; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.dashboard-mini.muted{ color:var(--muted); }
 @media(max-width:900px){ .dashboard-grid{ grid-template-columns:1fr; } }
 
 .comunicados-groups{ display:flex; flex-wrap:wrap; gap:10px; }
@@ -136,20 +140,43 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 
 .tablero-tabs{ display:flex; gap:10px; margin-bottom:22px; }
 
-/* Tablero de ideas (estilo Mural, grilla de notas) */
-.ideas-composer{ background:var(--card); border:1px solid #272738; border-radius:8px; padding:16px; margin-bottom:22px; }
-.ideas-composer textarea{ width:100%; min-height:70px; background:#07070d; color:#fff; border:1px solid #272738; border-radius:6px; padding:12px; resize:vertical; }
-.ideas-composer-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; flex-wrap:wrap; }
+/* Tablero de ideas: pizarra libre (notas, áreas de trabajo, dibujo a mano) */
+.pizarra-toolbar{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
+.pizarra-tools{ display:flex; gap:6px; flex-wrap:wrap; }
+.pizarra-tool{ background:var(--card); border:1px solid #272738; color:#ddd; border-radius:6px; padding:8px 12px; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+.pizarra-tool:hover{ border-color:var(--morado); }
+.pizarra-tool.active{ background:rgba(123,44,255,.18); border-color:var(--morado); color:#fff; }
 .ideas-color-picker{ display:flex; gap:8px; }
-.idea-color-dot{ width:24px; height:24px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+.idea-color-dot{ width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
 .idea-color-dot.active{ border-color:#fff; }
-.ideas-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
-.idea-card{ border:1px solid; border-radius:8px; padding:16px; min-height:110px; display:flex; flex-direction:column; justify-content:space-between; }
-.idea-text{ color:#fff; font-size:13px; line-height:1.6; white-space:pre-wrap; word-break:break-word; }
-.idea-footer{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
-.idea-author{ font-size:11px; color:var(--muted); }
-.idea-delete{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:2px 6px; }
-.idea-delete:hover{ color:var(--danger); }
+.pizarra-hint{ font-size:11px; color:var(--muted); width:100%; }
+.pizarra-wrap{ overflow:auto; border:1px solid #272738; border-radius:8px; background:#07070d; max-height:65vh; }
+.pizarra-canvas{
+    position:relative; width:1600px; height:1000px;
+    background-image:radial-gradient(circle, #23233a 1.5px, transparent 1.5px);
+    background-size:24px 24px;
+}
+.pizarra-canvas.tool-nota,.pizarra-canvas.tool-area{ cursor:crosshair; }
+.pizarra-canvas.tool-lapiz{ cursor:cell; }
+.pizarra-area{ position:absolute; border:2px dashed; border-radius:10px; background:rgba(255,255,255,.03); }
+.pizarra-area-title{ position:absolute; top:-12px; left:12px; background:#0b0b16; padding:0 8px; font-size:12px; font-weight:700; color:#fff; border:none; outline:none; max-width:80%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pizarra-area-title[contenteditable="true"]{ white-space:pre-wrap; cursor:text; }
+.pizarra-area-actions{ position:absolute; top:-13px; right:8px; display:flex; gap:4px; }
+.pizarra-area-edit,.pizarra-area-del{ background:#0b0b16; border:none; color:var(--muted); cursor:pointer; font-size:12px; padding:1px 5px; border-radius:4px; }
+.pizarra-area-edit:hover{ color:#fff; }
+.pizarra-area-del:hover{ color:var(--danger); }
+.pizarra-nota{ position:absolute; width:180px; min-height:110px; border:1px solid; border-radius:8px; padding:10px 10px 22px; box-shadow:0 6px 18px rgba(0,0,0,.35); cursor:grab; touch-action:none; }
+.pizarra-nota.dragging{ cursor:grabbing; z-index:40; opacity:.9; }
+.pizarra-nota-text{ font-size:13px; color:#fff; line-height:1.5; white-space:pre-wrap; word-break:break-word; outline:none; min-height:60px; cursor:text; padding-right:38px; }
+.pizarra-nota-author{ position:absolute; bottom:6px; left:10px; font-size:10px; color:rgba(255,255,255,.55); }
+.pizarra-nota-actions{ position:absolute; top:4px; right:6px; display:flex; gap:2px; }
+.pizarra-nota-edit,.pizarra-nota-del{ background:none; border:none; color:rgba(255,255,255,.55); cursor:pointer; font-size:12px; padding:2px 5px; }
+.pizarra-nota-edit:hover{ color:#fff; }
+.pizarra-nota-del:hover{ color:var(--danger); }
+.pizarra-svg{ position:absolute; inset:0; width:100%; height:100%; }
+.pizarra-stroke-del{ position:absolute; width:18px; height:18px; border-radius:50%; background:#0b0b16; border:1px solid var(--muted); color:var(--muted); font-size:10px; line-height:16px; text-align:center; cursor:pointer; padding:0; }
+.pizarra-stroke-del:hover{ color:var(--danger); border-color:var(--danger); }
+@media(max-width:768px){ .pizarra-wrap{ max-height:55vh; } }
 
 /* Tablero de tareas (estilo Trello/Jira, 4 columnas con drag & drop) */
 .tareas-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
@@ -177,6 +204,54 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .tarea-responsables-list label{ display:flex; align-items:center; gap:6px; font-weight:normal; font-size:13px; }
 .tarea-responsables-list label input{ width:auto; }
 .tarea-responsables-list label.tarea-todos{ padding-right:12px; border-right:1px solid #272738; font-weight:700; }
+
+/* Voranix Rivals (admin: Alianzas / Puntajes / Configuración) */
+.rivals-denied{ color:var(--muted); padding:20px 0; }
+.rivals-toolbar{ display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+.rivals-alianzas-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+.rivals-alianza-card{ background:var(--card); border:1px solid #272738; border-radius:8px; padding:16px; border-top:4px solid var(--morado); }
+.rivals-alianza-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.rivals-alianza-head img{ width:40px; height:40px; border-radius:8px; object-fit:cover; background:#07070d; }
+.rivals-alianza-head h4{ color:#fff; font-size:15px; }
+.rivals-color-dot{ width:14px; height:14px; border-radius:50%; display:inline-block; flex-shrink:0; }
+.rivals-miembros-count{ color:var(--muted); font-size:12px; margin-bottom:10px; }
+.rivals-miembro-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+.rivals-miembro-row select{ flex:1; min-width:0; }
+.rivals-puntos-summary{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+.rivals-puntos-summary-card{ background:var(--card); border:1px solid #272738; border-radius:8px; padding:14px 18px; flex:1; min-width:180px; }
+.rivals-puntos-summary-card h4{ font-size:13px; color:#fff; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.rivals-puntos-summary-card .total{ font-size:22px; font-weight:700; color:#fff; }
+.rivals-punto-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,.03); border-radius:6px; margin-bottom:8px; flex-wrap:wrap; }
+.rivals-punto-row .rivals-punto-alianza{ font-size:11px; padding:3px 9px; border-radius:20px; color:#fff; font-weight:600; }
+.rivals-punto-row .rivals-punto-cat{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+.rivals-punto-row .rivals-punto-titulo{ color:#fff; font-weight:600; flex:1; min-width:160px; }
+.rivals-punto-row .rivals-punto-puntos{ font-weight:700; color:var(--morado); }
+.rivals-punto-row .rivals-punto-actions{ display:flex; gap:4px; }
+.rivals-punto-row .rivals-punto-actions button{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; padding:2px 5px; }
+.rivals-punto-row .rivals-punto-actions button:hover{ color:#fff; }
+
+/* Actividades (calendario de Rivals) */
+[data-modo-config]{ display:none; }
+.rivals-actividad-row{ display:flex; align-items:center; gap:10px; padding:12px; background:rgba(255,255,255,.03); border-radius:6px; margin-bottom:8px; flex-wrap:wrap; }
+.rivals-actividad-estado{ font-size:10px; text-transform:uppercase; letter-spacing:.5px; padding:3px 9px; border-radius:20px; font-weight:700; }
+.rivals-actividad-estado.activa{ background:rgba(0,200,83,.15); color:#00c853; border:1px solid rgba(0,200,83,.4); }
+.rivals-actividad-estado.proxima{ background:rgba(0,184,212,.15); color:#00b8d4; border:1px solid rgba(0,184,212,.4); }
+.rivals-actividad-estado.finalizada{ background:rgba(255,255,255,.06); color:var(--muted); border:1px solid #33334a; }
+.rivals-actividad-titulo{ color:#fff; font-weight:600; flex:1; min-width:180px; }
+.rivals-actividad-fecha{ font-size:11px; color:var(--muted); }
+.rivals-actividad-modo{ font-size:10px; color:var(--morado); text-transform:uppercase; letter-spacing:.5px; }
+.rivals-actividad-actions{ display:flex; gap:4px; }
+.rivals-actividad-actions button{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; padding:2px 5px; }
+.rivals-actividad-actions button:hover{ color:#fff; }
+.actividad-bono-row,.actividad-puesto-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+.actividad-bono-row input[type="text"],.actividad-puesto-row input[type="text"]{ flex:1; }
+.actividad-bono-row input[type="number"],.actividad-puesto-row input[type="number"]{ width:100px; }
+.rivals-resultado-alianza-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,.03); border-radius:6px; margin-bottom:8px; }
+.rivals-resultado-alianza-row strong{ min-width:140px; color:#fff; }
+.rivals-resultado-alianza-row input[type="number"]{ width:90px; }
+.rivals-resultado-bono-list{ display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; }
+.rivals-resultado-bono-list label{ display:flex; align-items:center; gap:6px; font-size:12px; font-weight:normal; color:var(--muted); }
+.rivals-resultado-bono-list input{ width:60px; }
 @media(max-width:1100px){ .tareas-board{ grid-template-columns:repeat(2,1fr); } }
 @media(max-width:640px){ .tareas-board{ grid-template-columns:1fr; } }
 @media(max-width:1024px){
@@ -341,6 +416,326 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
         <div class="modal-actions">
             <button class="btn danger small hidden" type="button" id="tarea-delete-btn">Eliminar</button>
             <button class="btn secondary" type="button" id="cancel-tarea-modal">Cancelar</button>
+            <button class="btn" type="submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<div id="alianza-modal" class="modal hidden">
+    <form id="alianza-form" class="modal-card">
+        <div class="modal-head">
+            <h2 id="alianza-modal-title">Nueva Alianza</h2>
+            <button class="btn secondary small" type="button" id="close-alianza-modal">Cerrar</button>
+        </div>
+        <div class="form-grid">
+            <div class="field">
+                <label>Nombre</label>
+                <input name="nombre" type="text" required placeholder="Ej: Alianza Roja">
+            </div>
+            <div class="field">
+                <label>Color</label>
+                <input name="colorHex" type="color" value="#7b2cff">
+            </div>
+            <div class="field full">
+                <label>Logo</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input name="logo" type="text" placeholder="Ruta o URL de imagen" style="flex:1;">
+                </div>
+                <input name="logoFile" type="file" accept="image/*">
+            </div>
+            <div class="field full">
+                <label>Lema (opcional)</label>
+                <input name="lema" type="text" placeholder="Ej: Unidos ganamos">
+            </div>
+            <div class="field">
+                <label>Activa</label>
+                <select name="activo"><option value="true">Sí</option><option value="false">No</option></select>
+            </div>
+            <div class="field full">
+                <label>Miembros</label>
+                <div id="alianza-miembros-rows"></div>
+                <button type="button" class="btn secondary small" id="alianza-miembro-add">+ Agregar miembro</button>
+                <span class="help">Vinculá streamers, influencers, rosters o creadores ya cargados en el sitio.</span>
+            </div>
+        </div>
+        <div id="alianza-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn danger small hidden" type="button" id="alianza-delete-btn">Eliminar</button>
+            <button class="btn secondary" type="button" id="cancel-alianza-modal">Cancelar</button>
+            <button class="btn" type="submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<div id="rivals-punto-modal" class="modal hidden">
+    <form id="rivals-punto-form" class="modal-card">
+        <div class="modal-head">
+            <h2 id="rivals-punto-modal-title">Nuevo puntaje</h2>
+            <button class="btn secondary small" type="button" id="close-rivals-punto-modal">Cerrar</button>
+        </div>
+        <div class="form-grid">
+            <div class="field">
+                <label for="rivals-punto-alianza-select">Alianza</label>
+                <select name="alianzaId" id="rivals-punto-alianza-select" required></select>
+            </div>
+            <div class="field">
+                <label>Categoría</label>
+                <select name="categoria">
+                    <option value="contenido">Contenido en redes</option>
+                    <option value="videojuegos">Videojuegos</option>
+                    <option value="presencial">Presencial / en vivo</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Puntos</label>
+                <input name="puntos" type="number" step="1" required placeholder="Ej: 10">
+            </div>
+            <div class="field">
+                <label>Fecha</label>
+                <input name="fecha" type="date">
+            </div>
+            <div class="field full">
+                <label>Título</label>
+                <input name="titulo" type="text" required placeholder="Ej: Reto TikTok semana 3">
+            </div>
+            <div class="field full">
+                <label>Descripción (opcional)</label>
+                <textarea name="descripcion" placeholder="Detalles..."></textarea>
+            </div>
+            <div class="field">
+                <label>¿Momento destacado?</label>
+                <select name="destacado"><option value="false">No</option><option value="true">Sí</option></select>
+            </div>
+            <div class="field">
+                <label>Link / imagen del momento (opcional)</label>
+                <input name="mediaUrl" type="text" placeholder="URL de clip, video o imagen">
+            </div>
+        </div>
+        <div id="rivals-punto-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn danger small hidden" type="button" id="rivals-punto-delete-btn">Eliminar</button>
+            <button class="btn secondary" type="button" id="cancel-rivals-punto-modal">Cancelar</button>
+            <button class="btn" type="submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<div id="actividad-modal" class="modal hidden">
+    <form id="actividad-form" class="modal-card">
+        <div class="modal-head">
+            <h2 id="actividad-modal-title">Nueva actividad</h2>
+            <button class="btn secondary small" type="button" id="close-actividad-modal">Cerrar</button>
+        </div>
+        <div class="form-grid">
+            <div class="field full">
+                <label>Título</label>
+                <input name="titulo" type="text" required placeholder="Ej: Trivia Flash">
+            </div>
+            <div class="field full">
+                <label>Descripción</label>
+                <textarea name="descripcion" placeholder="Qué tienen que hacer..."></textarea>
+            </div>
+            <div class="field full">
+                <label>Reglas de puntaje</label>
+                <textarea name="reglasPuntaje" placeholder="Ej: Cada publicación +1. Bonus: etiquetar Voranix +1."></textarea>
+                <span class="help">Texto libre, se muestra tal cual en la página pública (no se interpreta).</span>
+            </div>
+            <div class="field">
+                <label>Categoría</label>
+                <select name="categoria">
+                    <option value="contenido">Contenido en redes</option>
+                    <option value="videojuegos">Videojuegos</option>
+                    <option value="presencial">Presencial / en vivo</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="actividad-frecuencia-select">Frecuencia</label>
+                <select name="frecuencia" id="actividad-frecuencia-select">
+                    <option value="diaria">Diaria</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="mensual">Mensual</option>
+                </select>
+                <span class="help">Semanales: publicar el domingo antes. Mensuales: publicar 2 semanas antes.</span>
+            </div>
+            <div class="field">
+                <label for="actividad-fecha-evento-input">Fecha del evento</label>
+                <input type="date" name="fechaEvento" id="actividad-fecha-evento-input" required>
+            </div>
+            <div class="field">
+                <label for="actividad-fecha-publicacion-input">Fecha de publicación</label>
+                <input type="date" name="fechaPublicacion" id="actividad-fecha-publicacion-input">
+                <span class="help">Se sugiere sola según la frecuencia, pero la podés cambiar.</span>
+            </div>
+            <div class="field full">
+                <label for="actividad-modo-select">Modo de puntaje</label>
+                <select name="modoPuntaje" id="actividad-modo-select">
+                    <option value="publicaciones">Por publicación (+ bonos)</option>
+                    <option value="enfrentamiento">Enfrentamiento (ganador/perdedor/MVP)</option>
+                    <option value="carrera">Carrera / podio</option>
+                    <option value="robo">Robo de puntos</option>
+                    <option value="manual">Manual (sin formulario rápido)</option>
+                </select>
+                <span class="help">Define el formulario rápido para cargar el resultado real en Puntajes.</span>
+            </div>
+
+            <div class="field full" data-modo-config="publicaciones">
+                <label>Puntos por publicación</label>
+                <input name="puntosPorPublicacion" type="number" step="1" placeholder="Ej: 1">
+                <label style="margin-top:14px;">Bonos (opcional)</label>
+                <div id="actividad-bonos-rows"></div>
+                <button type="button" class="btn secondary small" id="actividad-bono-add">+ Agregar bono</button>
+            </div>
+
+            <div class="field" data-modo-config="enfrentamiento">
+                <label>Puntos ganador</label>
+                <input name="puntosGanador" type="number" step="1" placeholder="Ej: 15">
+            </div>
+            <div class="field" data-modo-config="enfrentamiento">
+                <label>Puntos perdedor</label>
+                <input name="puntosPerdedor" type="number" step="1" placeholder="Ej: 5">
+            </div>
+            <div class="field" data-modo-config="enfrentamiento">
+                <label>Puntos MVP (opcional)</label>
+                <input name="puntosMvp" type="number" step="1" placeholder="Ej: 3">
+            </div>
+
+            <div class="field full" data-modo-config="carrera">
+                <label>Puestos</label>
+                <div id="actividad-puestos-rows"></div>
+                <button type="button" class="btn secondary small" id="actividad-puesto-add">+ Agregar puesto</button>
+            </div>
+
+            <div class="field" data-modo-config="robo">
+                <label>Puntos a robar</label>
+                <input name="puntosRobados" type="number" step="1" placeholder="Ej: 5">
+            </div>
+        </div>
+        <div id="actividad-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn danger small hidden" type="button" id="actividad-delete-btn">Eliminar</button>
+            <button class="btn secondary" type="button" id="cancel-actividad-modal">Cancelar</button>
+            <button class="btn" type="submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<div id="actividad-resultado-modal" class="modal hidden">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h2>Registrar resultado de actividad</h2>
+            <button class="btn secondary small" type="button" id="close-actividad-resultado-modal">Cerrar</button>
+        </div>
+        <div class="field full">
+            <label for="actividad-resultado-select">Actividad</label>
+            <select id="actividad-resultado-select"></select>
+        </div>
+        <div id="actividad-resultado-form-wrap"></div>
+    </div>
+</div>
+
+<div id="comando-modal" class="modal hidden">
+    <form id="comando-form" class="modal-card">
+        <div class="modal-head">
+            <h2 id="comando-modal-title">Nuevo comando</h2>
+            <button class="btn secondary small" type="button" id="close-comando-modal">Cerrar</button>
+        </div>
+        <div class="form-grid">
+            <div class="field full">
+                <label>Comando(s)</label>
+                <input name="trigger" type="text" required placeholder="Ej: !vrx, !voranix">
+                <span class="help">Separá varios con coma o espacio. Se detectan aunque el mensaje siga con más texto después.</span>
+            </div>
+            <div class="field">
+                <label for="comando-tipo-select">Qué hace</label>
+                <select name="tipo" id="comando-tipo-select">
+                    <option value="chat">Solo responde en el chat</option>
+                    <option value="pantalla">Solo muestra un banner en pantalla</option>
+                    <option value="ambos">Responde en el chat y muestra un banner</option>
+                    <option value="codigo">Código de descuento vigente (chat + pantalla)</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Cooldown (segundos)</label>
+                <input name="cooldownSegundos" type="number" step="1" min="0" value="30">
+                <span class="help">Mientras no pase este tiempo desde el último uso, se ignora en silencio — evita spam e interrupciones al stream.</span>
+            </div>
+            <div class="field">
+                <label>Activo</label>
+                <select name="activo"><option value="true">Sí</option><option value="false">No</option></select>
+            </div>
+
+            <div class="field full" data-tipo-config="chat ambos">
+                <label>Respuesta en el chat</label>
+                <textarea name="respuestaChat" placeholder="Texto que contesta el bot"></textarea>
+            </div>
+
+            <div class="field full" data-tipo-config="pantalla ambos">
+                <label>Titular en pantalla</label>
+                <input name="tituloPantalla" type="text" placeholder="Ej: ¡Sorteo activo!">
+            </div>
+            <div class="field full" data-tipo-config="pantalla ambos">
+                <label>Detalle / comentario (opcional)</label>
+                <textarea name="detallePantalla" placeholder="Texto más chico debajo del titular"></textarea>
+            </div>
+            <div class="field full" data-tipo-config="pantalla ambos codigo">
+                <label>Imagen (opcional)</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input name="imagen" type="text" placeholder="Ruta o URL de imagen" style="flex:1;">
+                </div>
+                <input name="imagenFile" type="file" accept="image/*">
+            </div>
+            <div class="field" data-tipo-config="pantalla ambos codigo">
+                <label>Color de la etiqueta</label>
+                <input name="color" type="color" value="#7b2cff">
+            </div>
+            <div class="field full" data-tipo-config="codigo">
+                <span class="help">Este comando contesta y muestra automáticamente el código marcado como "Activo" en la pestaña Códigos de descuento — no hace falta cargarle texto acá.</span>
+            </div>
+        </div>
+        <div id="comando-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn danger small hidden" type="button" id="comando-delete-btn">Eliminar</button>
+            <button class="btn secondary" type="button" id="cancel-comando-modal">Cancelar</button>
+            <button class="btn" type="submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<div id="codigo-modal" class="modal hidden">
+    <form id="codigo-form" class="modal-card">
+        <div class="modal-head">
+            <h2 id="codigo-modal-title">Nuevo código de descuento</h2>
+            <button class="btn secondary small" type="button" id="close-codigo-modal">Cerrar</button>
+        </div>
+        <div class="form-grid">
+            <div class="field">
+                <label>Código</label>
+                <input name="codigo" type="text" required placeholder="Ej: VORANIX10">
+            </div>
+            <div class="field">
+                <label>Marca (opcional)</label>
+                <input name="marca" type="text" placeholder="Ej: Kenko Foods">
+            </div>
+            <div class="field full">
+                <label>Descripción</label>
+                <input name="descripcion" type="text" placeholder="Ej: 10% de descuento en toda la tienda">
+            </div>
+            <div class="field full">
+                <label>Imagen (opcional)</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input name="imagen" type="text" placeholder="Ruta o URL de imagen" style="flex:1;">
+                </div>
+                <input name="imagenFile" type="file" accept="image/*">
+            </div>
+            <div class="field">
+                <label>Activo</label>
+                <select name="activo"><option value="true">Sí</option><option value="false">No</option></select>
+            </div>
+        </div>
+        <div id="codigo-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn danger small hidden" type="button" id="codigo-delete-btn">Eliminar</button>
+            <button class="btn secondary" type="button" id="cancel-codigo-modal">Cancelar</button>
             <button class="btn" type="submit">Guardar</button>
         </div>
     </form>
@@ -593,6 +988,8 @@ const sections = {
             ["foto", "Imagen", "imageurl"],
             ["instagram", "Instagram", "url"],
             ["twitch", "Twitch", "url"],
+            ["kick", "Kick", "url"],
+            ["tiktok", "TikTok", "url"],
             ["activo", "Activo", "boolean"]
         ]
     },
@@ -606,6 +1003,8 @@ const sections = {
             ["email", "Email (para comunicados)", "text"],
             ["foto", "Imagen", "imageurl"],
             ["instagram", "Instagram", "url"],
+            ["twitch", "Twitch", "url"],
+            ["kick", "Kick", "url"],
             ["tiktok", "TikTok", "url"],
             ["activo", "Activo", "boolean"]
         ]
@@ -652,12 +1051,14 @@ const sections = {
         label: "Mensajes",
         collection: "mensajes",
         hideAdd: true,
+        note: "Se borran automáticamente al mes de recibidos. Marcá \"Importante\" en los que querés conservar.",
         fields: [
             ["nombre", "Nombre", "text"],
             ["email", "Email", "text"],
             ["asunto", "Motivo", "text"],
             ["mensaje", "Mensaje", "textarea"],
-            ["leido", "Leído", "boolean"]
+            ["leido", "Leído", "boolean"],
+            ["importante", "Importante", "boolean"]
         ]
     },
     accesos: {
@@ -697,6 +1098,9 @@ const sections = {
     },
     tablero: {
         label: "Tablero"
+    },
+    rivals: {
+        label: "Voranix Rivals"
     }
 };
 
@@ -704,6 +1108,7 @@ const NAV_GROUPS = [
     { label: "Inicio", keys: ["dashboard"] },
     { label: "Comunicación", keys: ["comunicados"] },
     { label: "Equipo", keys: ["tablero"] },
+    { label: "Voranix Rivals", keys: ["rivals"] },
     { label: "Rosters", keys: ["valorant", "valorantsecundario", "fifa", "dbd"] },
     { label: "Actividad de Equipos", keys: ["actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
     { label: "Comunidad", keys: ["streamers", "influencers", "staff"] },
@@ -717,6 +1122,7 @@ const NAV_META = {
     dashboard: { icon: "🏠", short: "Inicio" },
     comunicados: { icon: "📣", short: "Comunicados" },
     tablero: { icon: "🗒️", short: "Tablero" },
+    rivals: { icon: "⚔️", short: "Rivals" },
     valorant: { icon: "🔫", short: "Valorant A" },
     valorantsecundario: { icon: "🔫", short: "Valorant B" },
     fifa: { icon: "⚽", short: "FIFA" },
@@ -748,11 +1154,10 @@ const DASHBOARD_FEED_COLLECTIONS = [
 ];
 
 const OVERLAY_FIELDS = [
-    ["comando", "Comando del bot", "text"],
-    ["comandoRespuesta", "Respuesta del comando", "textarea"],
     ["timerLabel", "Etiqueta del timer", "text"],
     ["timerFecha", "Fecha/hora del timer", "datetime-local"],
     ["mensajeTicker", "Mensaje rotativo / novedades", "textarea"],
+    ["tickerColor", "Color del ticker", "color"],
     ["logoOverlay", "Logo del overlay", "image"]
 ];
 
@@ -790,6 +1195,22 @@ const messageRecipientsInfo = document.getElementById("message-recipients-info")
 const tareaModal = document.getElementById("tarea-modal");
 const tareaForm = document.getElementById("tarea-form");
 const tareaError = document.getElementById("tarea-error");
+const alianzaModal = document.getElementById("alianza-modal");
+const alianzaForm = document.getElementById("alianza-form");
+const alianzaError = document.getElementById("alianza-error");
+const rivalsPuntoModal = document.getElementById("rivals-punto-modal");
+const rivalsPuntoForm = document.getElementById("rivals-punto-form");
+const rivalsPuntoError = document.getElementById("rivals-punto-error");
+const actividadModal = document.getElementById("actividad-modal");
+const actividadForm = document.getElementById("actividad-form");
+const actividadError = document.getElementById("actividad-error");
+const actividadResultadoModal = document.getElementById("actividad-resultado-modal");
+const comandoModal = document.getElementById("comando-modal");
+const comandoForm = document.getElementById("comando-form");
+const comandoError = document.getElementById("comando-error");
+const codigoModal = document.getElementById("codigo-modal");
+const codigoForm = document.getElementById("codigo-form");
+const codigoError = document.getElementById("codigo-error");
 
 function showError(target, message){
     target.textContent = message || "";
@@ -883,6 +1304,9 @@ function buildNav(){
     const keys = visibleSectionKeys();
     const allowed = new Set(keys);
     if(isAdmin()) allowed.add("users");
+    // Rivals (armar Alianzas y cargar puntajes) queda admin-only: Staff no
+    // debería ni ver el ítem en el menú.
+    if(!isAdmin()) allowed.delete("rivals");
 
     const navButton = (key) => {
         const meta = NAV_META[key] || {};
@@ -912,7 +1336,7 @@ function buildNav(){
 
 function selectSection(key){
     const keys = visibleSectionKeys();
-    if(key === "users"){
+    if(key === "users" || key === "rivals"){
         if(!isAdmin()) key = keys[0] || "dashboard";
     }else if(!keys.includes(key)){
         key = keys[0] || "dashboard";
@@ -925,7 +1349,8 @@ function selectSection(key){
     else if(key === "dashboard") renderDashboardSection();
     else if(key === "comunicados") renderComunicadosSection();
     else if(key === "tablero") renderTableroSection("tareas");
-    else if(sections[key]?.singleton) renderOverlaySection();
+    else if(key === "rivals") renderRivalsSection("alianzas");
+    else if(key === "overlay") renderOverlaySection("general");
     else renderCrudSection(sections[key]);
 }
 
@@ -1013,7 +1438,7 @@ function toolbarHtml(section, searchId, placeholder){
 function renderCrudSection(section){
     // Cada seccion de contenido usa la misma tabla y se actualiza en tiempo real.
     sectionTitle.textContent = section.label;
-    sectionSubtitle.textContent = `Colección: ${section.collection}`;
+    sectionSubtitle.textContent = section.note || `Colección: ${section.collection}`;
     content.innerHTML = `
 <div class="section-head">
     <div>
@@ -1128,12 +1553,17 @@ ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[
         }
     });
 
-    unsubscribeList = onSnapshot(collection(db, section.collection), (snapshot) => {
-        const docs = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
-        console.log(section.collection, docs.map(d => d));
-        currentDocs = section.filterValue
-            ? docs.filter(item => String(item.juego || "").toLowerCase() === section.filterValue)
-            : docs;
+    // Filtrar por juego con un where() (no client-side) es necesario para
+    // equipoActividad: su regla de lectura depende de resource.data (juego /
+    // visiblePublico), y Firestore rechaza una lista completa sin filtro si
+    // no puede garantizar que TODOS los documentos posibles cumplen la regla
+    // para ese usuario (capitanes/staff no-admin quedaban sin poder cargar nada).
+    const listRef = section.filterValue
+        ? query(collection(db, section.collection), where("juego", "==", section.filterValue))
+        : collection(db, section.collection);
+
+    unsubscribeList = onSnapshot(listRef, (snapshot) => {
+        currentDocs = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
         renderFilteredRows();
     }, (error) => {
         console.error(error);
@@ -1179,50 +1609,54 @@ function parseActividadDate(item){
     return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), hours, minutes);
 }
 
-async function loadDashboardPendientes(){
-    const el = document.getElementById("dash-pendientes");
+async function loadDashboardTareas(){
+    const el = document.getElementById("dash-tareas");
     if(!el) return;
     try{
-        const [mensajesSnap, tareasSnap] = await Promise.all([
-            getDocs(collection(db, "mensajes")),
-            getDocs(collection(db, "tareas")).catch(() => ({ docs: [] })) // por si la cuenta no llegó a cargar tareas
-        ]);
-        const noLeidos = mensajesSnap.docs.map(d => d.data()).filter(m => !m.leido);
+        const tareasSnap = await getDocs(collection(db, "tareas"));
         const misTareas = tareasSnap.docs
             .map(d => ({ id: d.id, ...d.data() }))
-            .filter(t => (t.estado || "pendiente") !== "hecho" && tareaEsMia(t));
+            .filter(t => (t.estado || "pendiente") !== "hecho" && tareaEsMia(t))
+            .sort((a, b) => (a.fechaLimite || "9999").localeCompare(b.fechaLimite || "9999"));
 
-        if(!noLeidos.length && !misTareas.length){
-            el.innerHTML = `<p class="dashboard-empty">No hay pendientes. 🎉</p>`;
+        if(!misTareas.length){
+            el.innerHTML = `<p class="dashboard-empty">No tenés tareas pendientes en el tablero. 🎉</p>`;
             return;
         }
 
         const estadoLabels = Object.fromEntries(TAREA_ESTADOS);
-        const tareasHtml = misTareas.slice(0, 5).map(t => `
+        const tareasHtml = misTareas.slice(0, 6).map(t => `
 <li>
-    <span class="dashboard-tag">Tarea</span>
+    <span class="dashboard-tag${tareaVencida(t) ? " dashboard-tag-alerta" : ""}">${escapeHtml(estadoLabels[t.estado] || "Por Hacer")}</span>
     <strong>${escapeHtml(t.titulo) || "Sin título"}</strong>
-    <span class="dashboard-meta">${t.fechaLimite ? "Vence " + escapeHtml(formatFechaCorta(t.fechaLimite)) : escapeHtml(estadoLabels[t.estado] || "Por Hacer")}</span>
-</li>`).join("");
-
-        const mensajesHtml = noLeidos.slice(0, 5).map(m => `
-<li>
-    <span class="dashboard-tag">Mensaje</span>
-    <strong>${escapeHtml(m.nombre) || "Anónimo"}</strong>
-    <span class="dashboard-meta">${escapeHtml(m.asunto) || "Sin asunto"}</span>
+    <span class="dashboard-meta">${t.fechaLimite ? (tareaVencida(t) ? "Venció " : "Vence ") + escapeHtml(formatFechaCorta(t.fechaLimite)) : ""}</span>
 </li>`).join("");
 
         el.innerHTML = `
-${misTareas.length ? `<p class="dashboard-highlight">${misTareas.length} tarea(s) pendiente(s) para vos</p>` : ""}
-${noLeidos.length ? `<p class="dashboard-highlight">${noLeidos.length} mensaje(s) sin leer</p>` : ""}
-<ul class="dashboard-list">${tareasHtml}${mensajesHtml}</ul>
-<div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-    ${misTareas.length ? `<button class="btn secondary small" type="button" data-goto-section="tablero">Ver tablero</button>` : ""}
-    ${noLeidos.length ? `<button class="btn secondary small" type="button" data-goto-section="mensajes">Ver mensajes</button>` : ""}
-</div>`;
+<p class="dashboard-highlight">${misTareas.length} tarea(s) asignada(s) a vos</p>
+<ul class="dashboard-list">${tareasHtml}</ul>
+<button class="btn secondary small" type="button" data-goto-section="tablero" style="margin-top:12px;">Ver tablero</button>`;
     }catch(error){
         console.error(error);
         el.innerHTML = `<p class="dashboard-empty">No se pudo cargar.</p>`;
+    }
+}
+
+// Los mensajes de contacto ya no son lo más urgente del día a día (se
+// borran solos al mes), así que en Inicio quedan como un aviso chico en vez
+// de una lista completa como las tareas/eventos.
+async function loadDashboardMensajes(){
+    const el = document.getElementById("dash-mensajes");
+    if(!el) return;
+    try{
+        const mensajesSnap = await getDocs(collection(db, "mensajes"));
+        const noLeidos = mensajesSnap.docs.map(d => d.data()).filter(m => !m.leido);
+        el.innerHTML = noLeidos.length
+            ? `<p class="dashboard-mini">✉️ ${noLeidos.length} mensaje(s) de contacto sin leer. <button class="btn secondary small" type="button" data-goto-section="mensajes">Ver</button></p>`
+            : `<p class="dashboard-mini muted">✉️ No hay mensajes sin leer.</p>`;
+    }catch(error){
+        console.error(error);
+        el.innerHTML = `<p class="dashboard-mini muted">No se pudo cargar.</p>`;
     }
 }
 
@@ -1317,8 +1751,8 @@ async function renderDashboardSection(){
 <div class="dashboard-grid">
     ${canSeePendientes ? `
     <div class="panel dashboard-card">
-        <h3>📬 Pendientes</h3>
-        <div id="dash-pendientes"><p class="loading">Cargando...</p></div>
+        <h3>✅ Mis tareas del tablero</h3>
+        <div id="dash-tareas"><p class="loading">Cargando...</p></div>
     </div>` : ""}
     <div class="panel dashboard-card">
         <h3>📅 Próximos eventos</h3>
@@ -1328,9 +1762,16 @@ async function renderDashboardSection(){
         <h3>🆕 Cambios recientes</h3>
         <div id="dash-recientes"><p class="loading">Cargando...</p></div>
     </div>
+    ${canSeePendientes ? `
+    <div class="panel dashboard-card dashboard-card-wide dashboard-card-mini">
+        <div id="dash-mensajes"><p class="loading">Cargando...</p></div>
+    </div>` : ""}
 </div>`;
 
-    if(canSeePendientes) loadDashboardPendientes();
+    if(canSeePendientes){
+        loadDashboardTareas();
+        loadDashboardMensajes();
+    }
     loadDashboardProximos();
     loadDashboardRecientes();
 }
@@ -1628,75 +2069,421 @@ function renderTableroSection(tableroTab){
     else renderIdeasBoard(panel);
 }
 
+const PIZARRA_W = 1600;
+const PIZARRA_H = 1000;
+
+// Coloca el cursor al final de un elemento contenteditable (para que al
+// entrar a editar una nota/área no te tape el texto ya escrito).
+function placeCaretAtEnd(el){
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
 function renderIdeasBoard(container){
     container.innerHTML = `
-<div class="ideas-composer">
-    <textarea id="idea-texto" placeholder="Escribe una idea para el equipo..." maxlength="500"></textarea>
-    <div class="ideas-composer-row">
-        <div class="ideas-color-picker" id="idea-color-picker">
-            ${IDEA_COLORS.map((c, i) => `<button type="button" class="idea-color-dot${i === 0 ? " active" : ""}" style="background:${c}" data-color="${c}"></button>`).join("")}
-        </div>
-        <button class="btn small" type="button" id="idea-add-btn">+ Agregar idea</button>
+<div class="pizarra-toolbar">
+    <div class="pizarra-tools">
+        <button type="button" class="pizarra-tool active" data-pizarra-tool="mover">🖐️ Mover</button>
+        <button type="button" class="pizarra-tool" data-pizarra-tool="nota">🗒️ Nota</button>
+        <button type="button" class="pizarra-tool" data-pizarra-tool="area">⬛ Área</button>
+        <button type="button" class="pizarra-tool" data-pizarra-tool="lapiz">✏️ Dibujar</button>
     </div>
+    <div class="ideas-color-picker" id="idea-color-picker">
+        ${IDEA_COLORS.map((c, i) => `<button type="button" class="idea-color-dot${i === 0 ? " active" : ""}" style="background:${c}" data-color="${c}"></button>`).join("")}
+    </div>
+    <span class="pizarra-hint">"Nota" + tocar la pizarra agrega un posit. "Área" + arrastrar delimita una zona de trabajo. "Dibujar" traza a mano libre. Doble clic (o ✎) para editar texto.</span>
 </div>
-<div id="ideas-grid" class="ideas-grid"><p class="loading">Cargando...</p></div>`;
+<div class="pizarra-wrap">
+    <div id="pizarra-canvas" class="pizarra-canvas"><svg class="pizarra-svg"></svg></div>
+</div>`;
 
-    let selectedColor = IDEA_COLORS[0];
+    const canvas = document.getElementById("pizarra-canvas");
+    let tool = "mover";
+    let color = IDEA_COLORS[0];
+    let latestDocs = [];
+    let busy = false; // true mientras se arrastra/dibuja/edita texto: pausa el re-render por snapshot
+    let pendingEditNotaId = null;
+    let pendingEditAreaId = null;
+
+    container.querySelectorAll("[data-pizarra-tool]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            tool = btn.dataset.pizarraTool;
+            container.querySelectorAll("[data-pizarra-tool]").forEach(b => b.classList.toggle("active", b === btn));
+            canvas.classList.remove("tool-nota", "tool-area", "tool-lapiz");
+            if(tool !== "mover") canvas.classList.add("tool-" + tool);
+        });
+    });
+
     container.querySelectorAll(".idea-color-dot").forEach(dotEl => {
         dotEl.addEventListener("click", () => {
             container.querySelectorAll(".idea-color-dot").forEach(d => d.classList.remove("active"));
             dotEl.classList.add("active");
-            selectedColor = dotEl.dataset.color;
+            color = dotEl.dataset.color;
         });
     });
 
-    const textarea = document.getElementById("idea-texto");
-    document.getElementById("idea-add-btn").addEventListener("click", async () => {
-        const texto = textarea.value.trim();
-        if(!texto) return;
+    function canvasPoint(event){
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: Math.max(0, Math.min(PIZARRA_W, event.clientX - rect.left)),
+            y: Math.max(0, Math.min(PIZARRA_H, event.clientY - rect.top))
+        };
+    }
+
+    function autorInfo(){
+        return {
+            autorNombre: currentProfile.displayName || currentProfile.email || currentUser.email,
+            autorUid: currentUser.uid
+        };
+    }
+
+    function enterNotaEditMode(textEl){
+        busy = true;
+        const id = textEl.dataset.notaText;
+        textEl.setAttribute("contenteditable", "true");
+        textEl.focus();
+        placeCaretAtEnd(textEl);
+        textEl.addEventListener("blur", function onBlur(){
+            textEl.removeEventListener("blur", onBlur);
+            const nuevoTexto = textEl.innerText.trim();
+            busy = false;
+            const localDoc = latestDocs.find(d => d.id === id);
+            if(localDoc) localDoc.texto = nuevoTexto;
+            updateDoc(doc(db, "ideas", id), { texto: nuevoTexto }).catch(err => console.error(err));
+            renderCanvas(latestDocs);
+        });
+    }
+
+    function enterAreaTitleEditMode(titleEl){
+        busy = true;
+        const id = titleEl.dataset.areaTitle;
+        titleEl.setAttribute("contenteditable", "true");
+        titleEl.focus();
+        placeCaretAtEnd(titleEl);
+        titleEl.addEventListener("keydown", function onKeydown(e){
+            if(e.key === "Enter"){ e.preventDefault(); titleEl.blur(); }
+        });
+        titleEl.addEventListener("blur", function onBlur(){
+            titleEl.removeEventListener("blur", onBlur);
+            const nuevoTitulo = titleEl.innerText.trim() || "Área de trabajo";
+            busy = false;
+            const localDoc = latestDocs.find(d => d.id === id);
+            if(localDoc) localDoc.titulo = nuevoTitulo;
+            updateDoc(doc(db, "ideas", id), { titulo: nuevoTitulo }).catch(err => console.error(err));
+            renderCanvas(latestDocs);
+        });
+    }
+
+    function renderCanvas(docs){
+        latestDocs = docs;
+        if(busy) return;
+
+        const notas = docs.filter(d => (d.tipo || "nota") === "nota");
+        const areas = docs.filter(d => d.tipo === "area");
+        const trazos = docs.filter(d => d.tipo === "trazo");
+
+        const strokesSvg = trazos.map(t => {
+            const pts = (t.puntos || []).map(p => `${p.x},${p.y}`).join(" ");
+            return `<polyline points="${pts}" fill="none" stroke="${t.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`;
+        }).join("");
+
+        const areasHtml = areas.map(area => `
+<div class="pizarra-area" data-pizarra-area="${area.id}" style="left:${area.x}px;top:${area.y}px;width:${area.width}px;height:${area.height}px;border-color:${area.color};">
+    <div class="pizarra-area-title" data-area-title="${area.id}" contenteditable="false">${escapeHtml(area.titulo || "Área de trabajo")}</div>
+    <div class="pizarra-area-actions">
+        <button type="button" class="pizarra-area-edit" data-area-edit="${area.id}" title="Editar título">✎</button>
+        <button type="button" class="pizarra-area-del" data-area-delete="${area.id}" title="Eliminar área">✕</button>
+    </div>
+</div>`).join("");
+
+        const notasHtml = notas.map(nota => `
+<div class="pizarra-nota" data-pizarra-nota="${nota.id}" style="left:${nota.x}px;top:${nota.y}px;border-color:${nota.color}77;background:${nota.color}1f;">
+    <div class="pizarra-nota-actions">
+        <button type="button" class="pizarra-nota-edit" data-nota-edit="${nota.id}" title="Editar">✎</button>
+        <button type="button" class="pizarra-nota-del" data-nota-delete="${nota.id}" title="Eliminar">✕</button>
+    </div>
+    <div class="pizarra-nota-text" data-nota-text="${nota.id}" contenteditable="false">${escapeHtml(nota.texto || "")}</div>
+    <span class="pizarra-nota-author">${escapeHtml(nota.autorNombre || "Alguien")}</span>
+</div>`).join("");
+
+        const strokeDelHtml = trazos.map(t => {
+            const first = (t.puntos || [])[0] || { x: 0, y: 0 };
+            return `<button type="button" class="pizarra-stroke-del" data-stroke-delete="${t.id}" style="left:${Math.max(0, first.x - 9)}px;top:${Math.max(0, first.y - 9)}px;" title="Eliminar trazo">✕</button>`;
+        }).join("");
+
+        canvas.innerHTML = `<svg class="pizarra-svg">${strokesSvg}</svg>${areasHtml}${notasHtml}${strokeDelHtml}`;
+
+        if(pendingEditNotaId){
+            const id = pendingEditNotaId; pendingEditNotaId = null;
+            const el = canvas.querySelector(`[data-nota-text="${id}"]`);
+            if(el) enterNotaEditMode(el);
+        }
+        if(pendingEditAreaId){
+            const id = pendingEditAreaId; pendingEditAreaId = null;
+            const el = canvas.querySelector(`[data-area-title="${id}"]`);
+            if(el) enterAreaTitleEditMode(el);
+        }
+    }
+
+    async function crearNota(pt){
         try{
-            await addDoc(collection(db, "ideas"), {
-                texto,
-                color: selectedColor,
-                autorNombre: currentProfile.displayName || currentProfile.email || currentUser.email,
-                autorUid: currentUser.uid,
+            const ref = await addDoc(collection(db, "ideas"), {
+                tipo: "nota",
+                x: Math.round(Math.max(0, Math.min(PIZARRA_W - 180, pt.x - 90))),
+                y: Math.round(Math.max(0, Math.min(PIZARRA_H - 110, pt.y - 55))),
+                texto: "",
+                color,
+                ...autorInfo(),
                 createdAt: serverTimestamp()
             });
-            textarea.value = "";
+            pendingEditNotaId = ref.id;
         }catch(error){
             console.error(error);
-            alert("No se pudo agregar la idea.");
+            alert("No se pudo crear la nota.");
         }
+    }
+
+    function startDragNota(event, notaEl){
+        event.preventDefault();
+        const id = notaEl.dataset.pizarraNota;
+        const startLeft = parseFloat(notaEl.style.left);
+        const startTop = parseFloat(notaEl.style.top);
+        const startX = event.clientX, startY = event.clientY;
+        busy = true;
+        notaEl.classList.add("dragging");
+        notaEl.setPointerCapture(event.pointerId);
+
+        function onMove(e){
+            const nx = Math.max(0, Math.min(PIZARRA_W - notaEl.offsetWidth, startLeft + (e.clientX - startX)));
+            const ny = Math.max(0, Math.min(PIZARRA_H - notaEl.offsetHeight, startTop + (e.clientY - startY)));
+            notaEl.style.left = nx + "px";
+            notaEl.style.top = ny + "px";
+        }
+        function onUp(){
+            notaEl.removeEventListener("pointermove", onMove);
+            notaEl.removeEventListener("pointerup", onUp);
+            notaEl.classList.remove("dragging");
+            const finalX = parseFloat(notaEl.style.left);
+            const finalY = parseFloat(notaEl.style.top);
+            busy = false;
+            // Si no se movió, era un click (ej. el primero de un doble clic para
+            // editar): no re-renderizar ni escribir en Firestore por las dudas.
+            if(finalX === startLeft && finalY === startTop) return;
+            const localDoc = latestDocs.find(d => d.id === id);
+            if(localDoc){ localDoc.x = finalX; localDoc.y = finalY; }
+            updateDoc(doc(db, "ideas", id), { x: finalX, y: finalY }).catch(err => console.error(err));
+            renderCanvas(latestDocs);
+        }
+        notaEl.addEventListener("pointermove", onMove);
+        notaEl.addEventListener("pointerup", onUp);
+    }
+
+    function startDragArea(event, areaEl){
+        event.preventDefault();
+        const id = areaEl.dataset.pizarraArea;
+        const startLeft = parseFloat(areaEl.style.left);
+        const startTop = parseFloat(areaEl.style.top);
+        const startX = event.clientX, startY = event.clientY;
+        busy = true;
+        areaEl.setPointerCapture(event.pointerId);
+
+        function onMove(e){
+            const nx = Math.max(0, Math.min(PIZARRA_W - areaEl.offsetWidth, startLeft + (e.clientX - startX)));
+            const ny = Math.max(0, Math.min(PIZARRA_H - areaEl.offsetHeight, startTop + (e.clientY - startY)));
+            areaEl.style.left = nx + "px";
+            areaEl.style.top = ny + "px";
+        }
+        function onUp(){
+            areaEl.removeEventListener("pointermove", onMove);
+            areaEl.removeEventListener("pointerup", onUp);
+            const finalX = parseFloat(areaEl.style.left);
+            const finalY = parseFloat(areaEl.style.top);
+            busy = false;
+            if(finalX === startLeft && finalY === startTop) return;
+            const localDoc = latestDocs.find(d => d.id === id);
+            if(localDoc){ localDoc.x = finalX; localDoc.y = finalY; }
+            updateDoc(doc(db, "ideas", id), { x: finalX, y: finalY }).catch(err => console.error(err));
+            renderCanvas(latestDocs);
+        }
+        areaEl.addEventListener("pointermove", onMove);
+        areaEl.addEventListener("pointerup", onUp);
+    }
+
+    function startDrawArea(event, startPt){
+        busy = true;
+        const previewEl = document.createElement("div");
+        previewEl.className = "pizarra-area";
+        previewEl.style.left = startPt.x + "px";
+        previewEl.style.top = startPt.y + "px";
+        previewEl.style.width = "0px";
+        previewEl.style.height = "0px";
+        previewEl.style.borderColor = color;
+        canvas.appendChild(previewEl);
+        canvas.setPointerCapture(event.pointerId);
+
+        function onMove(e){
+            const pt = canvasPoint(e);
+            previewEl.style.left = Math.min(pt.x, startPt.x) + "px";
+            previewEl.style.top = Math.min(pt.y, startPt.y) + "px";
+            previewEl.style.width = Math.abs(pt.x - startPt.x) + "px";
+            previewEl.style.height = Math.abs(pt.y - startPt.y) + "px";
+        }
+        async function onUp(){
+            canvas.removeEventListener("pointermove", onMove);
+            canvas.removeEventListener("pointerup", onUp);
+            const x = parseFloat(previewEl.style.left);
+            const y = parseFloat(previewEl.style.top);
+            const w = parseFloat(previewEl.style.width);
+            const h = parseFloat(previewEl.style.height);
+            previewEl.remove();
+            if(w < 30 || h < 30){ busy = false; renderCanvas(latestDocs); return; }
+            try{
+                const ref = await addDoc(collection(db, "ideas"), {
+                    tipo: "area", x: Math.round(x), y: Math.round(y), width: Math.round(w), height: Math.round(h),
+                    titulo: "Área de trabajo", color, ...autorInfo(), createdAt: serverTimestamp()
+                });
+                pendingEditAreaId = ref.id;
+            }catch(error){
+                console.error(error);
+                alert("No se pudo crear el área.");
+            }
+            busy = false;
+            renderCanvas(latestDocs);
+        }
+        canvas.addEventListener("pointermove", onMove);
+        canvas.addEventListener("pointerup", onUp);
+    }
+
+    function startDrawTrazo(event, startPt){
+        busy = true;
+        const points = [startPt];
+        const svgNs = "http://www.w3.org/2000/svg";
+        const previewLine = document.createElementNS(svgNs, "polyline");
+        previewLine.setAttribute("fill", "none");
+        previewLine.setAttribute("stroke", color);
+        previewLine.setAttribute("stroke-width", "3");
+        previewLine.setAttribute("stroke-linecap", "round");
+        previewLine.setAttribute("stroke-linejoin", "round");
+        previewLine.setAttribute("points", `${startPt.x},${startPt.y}`);
+        canvas.querySelector(".pizarra-svg").appendChild(previewLine);
+        canvas.setPointerCapture(event.pointerId);
+
+        function onMove(e){
+            const pt = canvasPoint(e);
+            const last = points[points.length - 1];
+            if(Math.hypot(pt.x - last.x, pt.y - last.y) < 3) return;
+            points.push(pt);
+            previewLine.setAttribute("points", points.map(p => `${p.x},${p.y}`).join(" "));
+        }
+        async function onUp(){
+            canvas.removeEventListener("pointermove", onMove);
+            canvas.removeEventListener("pointerup", onUp);
+            previewLine.remove();
+            if(points.length < 2){ busy = false; renderCanvas(latestDocs); return; }
+            try{
+                await addDoc(collection(db, "ideas"), {
+                    tipo: "trazo", puntos: points, color, ...autorInfo(), createdAt: serverTimestamp()
+                });
+            }catch(error){
+                console.error(error);
+                alert("No se pudo guardar el trazo.");
+            }
+            busy = false;
+            renderCanvas(latestDocs);
+        }
+        canvas.addEventListener("pointermove", onMove);
+        canvas.addEventListener("pointerup", onUp);
+    }
+
+    // Detección propia de doble clic/doble tap (en vez de "dblclick" nativo):
+    // el preventDefault() del arrastre suprime los eventos de click/dblclick
+    // sintéticos del navegador, y esto además funciona igual de bien con touch.
+    let lastTap = { id: null, time: 0 };
+    function isDoubleTap(id){
+        const now = Date.now();
+        const isDouble = lastTap.id === id && (now - lastTap.time) < 400;
+        lastTap = isDouble ? { id: null, time: 0 } : { id, time: now };
+        return isDouble;
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+        if(event.target.closest("[data-nota-delete],[data-area-delete],[data-stroke-delete],[data-nota-edit],[data-area-edit]")) return;
+        if(event.target.closest("[contenteditable='true']")) return;
+
+        const notaEl = event.target.closest("[data-pizarra-nota]");
+        const areaEl = event.target.closest("[data-pizarra-area]");
+
+        if(tool === "mover"){
+            if(notaEl){
+                if(isDoubleTap(notaEl.dataset.pizarraNota)){
+                    const textEl = notaEl.querySelector("[data-nota-text]");
+                    if(textEl) enterNotaEditMode(textEl);
+                    return;
+                }
+                startDragNota(event, notaEl);
+            }else if(areaEl){
+                if(isDoubleTap(areaEl.dataset.pizarraArea)){
+                    const titleEl = areaEl.querySelector("[data-area-title]");
+                    if(titleEl) enterAreaTitleEditMode(titleEl);
+                    return;
+                }
+                startDragArea(event, areaEl);
+            }
+            return;
+        }
+        if(notaEl || areaEl) return;
+
+        const pt = canvasPoint(event);
+        if(tool === "nota") crearNota(pt);
+        else if(tool === "area") startDrawArea(event, pt);
+        else if(tool === "lapiz") startDrawTrazo(event, pt);
     });
 
-    const grid = document.getElementById("ideas-grid");
+    canvas.addEventListener("click", async (event) => {
+        const notaEditBtn = event.target.closest("[data-nota-edit]");
+        if(notaEditBtn){
+            const el = canvas.querySelector(`[data-nota-text="${notaEditBtn.dataset.notaEdit}"]`);
+            if(el) enterNotaEditMode(el);
+            return;
+        }
+        const areaEditBtn = event.target.closest("[data-area-edit]");
+        if(areaEditBtn){
+            const el = canvas.querySelector(`[data-area-title="${areaEditBtn.dataset.areaEdit}"]`);
+            if(el) enterAreaTitleEditMode(el);
+            return;
+        }
+        const notaDel = event.target.closest("[data-nota-delete]");
+        if(notaDel){
+            if(confirm("¿Eliminar esta nota?")) await deleteDoc(doc(db, "ideas", notaDel.dataset.notaDelete)).catch(err => console.error(err));
+            return;
+        }
+        const areaDel = event.target.closest("[data-area-delete]");
+        if(areaDel){
+            if(confirm("¿Eliminar esta área? (las notas de adentro no se borran)")) await deleteDoc(doc(db, "ideas", areaDel.dataset.areaDelete)).catch(err => console.error(err));
+            return;
+        }
+        const strokeDel = event.target.closest("[data-stroke-delete]");
+        if(strokeDel) await deleteDoc(doc(db, "ideas", strokeDel.dataset.strokeDelete)).catch(err => console.error(err));
+    });
+
     unsubscribeList = onSnapshot(collection(db, "ideas"), (snapshot) => {
-        const ideas = snapshot.docs
-            .map(d => ({ id: d.id, ...d.data() }))
-            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-        grid.innerHTML = ideas.length ? ideas.map(idea => `
-<div class="idea-card" style="border-color:${idea.color}55;background:${idea.color}14;">
-    <p class="idea-text">${escapeHtml(idea.texto)}</p>
-    <div class="idea-footer">
-        <span class="idea-author">${escapeHtml(idea.autorNombre || "Alguien")}</span>
-        <button type="button" class="idea-delete" data-idea-delete="${idea.id}" title="Eliminar">✕</button>
-    </div>
-</div>`).join("") : `<p class="loading">Todavía no hay ideas. ¡Agregá la primera!</p>`;
+        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        docs.forEach((item, i) => {
+            if(!item.tipo) item.tipo = "nota";
+            if(item.tipo === "nota" && (item.x === undefined || item.y === undefined)){
+                item.x = 40 + (i % 6) * 200;
+                item.y = 40 + Math.floor(i / 6) * 160;
+                updateDoc(doc(db, "ideas", item.id), { x: item.x, y: item.y }).catch(() => {});
+            }
+        });
+        renderCanvas(docs);
     }, (error) => {
         console.error(error);
-        grid.innerHTML = `<p class="loading">No se pudieron cargar las ideas.</p>`;
-    });
-
-    grid.addEventListener("click", async (event) => {
-        const delBtn = event.target.closest("[data-idea-delete]");
-        if(!delBtn) return;
-        if(!confirm("¿Eliminar esta idea?")) return;
-        try{
-            await deleteDoc(doc(db, "ideas", delBtn.dataset.ideaDelete));
-        }catch(error){
-            console.error(error);
-            alert("No se pudo eliminar la idea.");
-        }
+        canvas.innerHTML = `<p class="loading" style="padding:20px;">No se pudieron cargar las ideas.</p>`;
     });
 }
 
@@ -1755,8 +2542,20 @@ async function renderTareasBoard(container){
     </div>`).join("")}
 </div>`;
 
-    const staffAccounts = await fetchStaffAccounts();
-    document.getElementById("tarea-add-btn").addEventListener("click", () => openTareaModal(null, staffAccounts));
+    // Si esto falla (ej. permisos), no debe tumbar el resto del tablero: las
+    // tarjetas de tareas tienen que verse igual, solo quedaría vacío el
+    // selector de "Responsables" al crear/editar una tarea.
+    let staffAccounts = [];
+    try{
+        staffAccounts = await fetchStaffAccounts();
+    }catch(error){
+        console.error("No se pudo cargar la lista de staff:", error);
+    }
+    // Si mientras se esperaba el fetch de arriba el usuario ya cambió de
+    // pestaña/sección, este panel ya no existe: no seguir tocando el DOM.
+    const addBtn = document.getElementById("tarea-add-btn");
+    if(!addBtn) return;
+    addBtn.addEventListener("click", () => openTareaModal(null, staffAccounts));
 
     const soloMiasCheckbox = document.getElementById("tarea-solo-mias");
     let allTareas = [];
@@ -1920,18 +2719,1019 @@ tareaForm.addEventListener("submit", async (event) => {
     }
 });
 
-async function renderOverlaySection(){
-    // Config de un solo documento (overlayConfig/config), sin tabla ni modal.
+// ---------------------------------------------------------------------
+// Voranix Rivals: temporada de 2 Alianzas. Sección admin-only (gate se
+// chequea acá adentro, igual que selectSection() ya redirige si no es
+// admin). No usa el sistema genérico de "sections"/fieldHtml() porque el
+// picker de miembros cruza colecciones y el selector de alianza necesita
+// datos en vivo, algo que ese sistema no contempla.
+// ---------------------------------------------------------------------
+
+const RIVALS_MIEMBRO_TIPOS = [
+    ["streamer", "Streamer"],
+    ["influencer", "Influencer"],
+    ["roster", "Roster"],
+    ["creador", "Creador"]
+];
+
+const RIVALS_CATEGORIAS = [
+    ["contenido", "Contenido en redes"],
+    ["videojuegos", "Videojuegos"],
+    ["presencial", "Presencial / en vivo"]
+];
+
+const JUEGO_LABELS_CORTOS = { valorant: "Valorant A", valorantsecundario: "Valorant B", fifa: "FIFA", dbd: "DBD" };
+
+// Trae {id, nombre, foto} desde la colección que corresponda a cada tipo de
+// miembro. Sin cache: Alianzas se edita pocas veces por temporada.
+async function fetchRivalsMiembroOptions(tipo){
+    if(tipo === "streamer" || tipo === "influencer"){
+        const snapshot = await getDocs(collection(db, tipo === "streamer" ? "streamers" : "influencers"));
+        return snapshot.docs.map(d => ({ id: d.id, nombre: d.data().nombre || "Sin nombre", foto: d.data().foto || "" }));
+    }
+    if(tipo === "roster"){
+        const snapshot = await getDocs(collection(db, "rosters"));
+        return snapshot.docs.map(d => {
+            const data = d.data();
+            const juego = JUEGO_LABELS_CORTOS[data.juego] || data.juego || "";
+            return { id: d.id, nombre: `${data.nombre || "Sin nombre"}${juego ? " (" + juego + ")" : ""}`, foto: data.foto || "" };
+        });
+    }
+    if(tipo === "creador"){
+        const snapshot = await getDocs(collection(db, "users"));
+        return snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(u => profileRoles(u).includes("creador"))
+            .map(u => ({ id: u.id, nombre: u.displayName || u.email || "Sin nombre", foto: "" }));
+    }
+    return [];
+}
+
+function renderRivalsSection(tab){
+    if(unsubscribeList) unsubscribeList();
+    unsubscribeList = null;
+    sectionTitle.textContent = "Voranix Rivals";
+    sectionSubtitle.textContent = "Temporada competitiva: Alianzas y puntajes";
+
+    if(!isAdmin()){
+        content.innerHTML = `<p class="rivals-denied">Esta sección es exclusiva de administradores.</p>`;
+        return;
+    }
+
+    const currentTab = tab || "alianzas";
+    content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Voranix Rivals</h2>
+        <p class="muted">Armá las Alianzas y cargá los puntajes de la temporada. La página pública se actualiza sola.</p>
+    </div>
+</div>
+<div class="tablero-tabs">
+    <button type="button" class="btn ${currentTab === "alianzas" ? "" : "secondary"} small" data-rivals-tab="alianzas">🛡️ Alianzas</button>
+    <button type="button" class="btn ${currentTab === "actividades" ? "" : "secondary"} small" data-rivals-tab="actividades">📅 Actividades</button>
+    <button type="button" class="btn ${currentTab === "puntos" ? "" : "secondary"} small" data-rivals-tab="puntos">🏆 Puntajes</button>
+    <button type="button" class="btn ${currentTab === "config" ? "" : "secondary"} small" data-rivals-tab="config">⚙️ Temporada</button>
+</div>
+<div id="rivals-panel"></div>`;
+
+    const panel = document.getElementById("rivals-panel");
+    if(currentTab === "actividades") renderActividadesPanel(panel);
+    else if(currentTab === "puntos") renderPuntosPanel(panel);
+    else if(currentTab === "config") renderRivalsConfigPanel(panel);
+    else renderAlianzasPanel(panel);
+}
+
+function renderAlianzasPanel(container){
+    container.innerHTML = `
+<div class="rivals-toolbar">
+    <button class="btn small" type="button" id="alianza-add-btn">+ Nueva Alianza</button>
+</div>
+<div id="alianzas-grid" class="rivals-alianzas-grid"><p class="loading">Cargando...</p></div>`;
+
+    document.getElementById("alianza-add-btn").addEventListener("click", () => openAlianzaModal(null));
+
+    const grid = document.getElementById("alianzas-grid");
+    let currentAlianzas = [];
+    const unsub = onSnapshot(collection(db, "alianzas"), (snapshot) => {
+        currentAlianzas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        grid.innerHTML = currentAlianzas.length ? currentAlianzas.map(alianza => `
+<div class="rivals-alianza-card" style="border-top-color:${alianza.colorHex || "#7b2cff"};">
+    <div class="rivals-alianza-head">
+        ${alianza.logo ? `<img src="${escapeHtml(assetUrl(alianza.logo))}" alt="${escapeHtml(alianza.nombre)}">` : ""}
+        <h4>${escapeHtml(alianza.nombre) || "Sin nombre"}</h4>
+        <span class="rivals-color-dot" style="background:${alianza.colorHex || "#7b2cff"};"></span>
+    </div>
+    ${alianza.lema ? `<p class="help">"${escapeHtml(alianza.lema)}"</p>` : ""}
+    <p class="rivals-miembros-count">${(alianza.miembros || []).length} miembro(s) · ${alianza.activo === false ? "Inactiva" : "Activa"}</p>
+    <div class="actions">
+        <button class="btn secondary small" type="button" data-alianza-edit="${alianza.id}">Editar</button>
+        <button class="btn danger small" type="button" data-alianza-delete="${alianza.id}">Eliminar</button>
+    </div>
+</div>`).join("") : `<p class="loading">Todavía no hay Alianzas creadas.</p>`;
+    }, (error) => {
+        console.error(error);
+        grid.innerHTML = `<p class="loading">No se pudieron cargar las Alianzas.</p>`;
+    });
+    unsubscribeList = unsub;
+
+    grid.addEventListener("click", async (event) => {
+        const editBtn = event.target.closest("[data-alianza-edit]");
+        if(editBtn){
+            const alianza = currentAlianzas.find(a => a.id === editBtn.dataset.alianzaEdit);
+            if(alianza) openAlianzaModal(alianza);
+            return;
+        }
+        const delBtn = event.target.closest("[data-alianza-delete]");
+        if(delBtn && confirm("¿Eliminar esta Alianza? Los puntajes ya cargados no se borran.")){
+            deleteDoc(doc(db, "alianzas", delBtn.dataset.alianzaDelete)).catch(error => {
+                console.error(error);
+                alert("No se pudo eliminar la Alianza.");
+            });
+        }
+    });
+}
+
+let editingAlianzaId = null;
+
+function addAlianzaMiembroRow(miembro){
+    const rowsWrap = document.getElementById("alianza-miembros-rows");
+    const row = document.createElement("div");
+    row.className = "rivals-miembro-row";
+
+    const tipoSelect = document.createElement("select");
+    tipoSelect.innerHTML = RIVALS_MIEMBRO_TIPOS.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+    tipoSelect.value = miembro?.tipo || "streamer";
+
+    const miembroSelect = document.createElement("select");
+    miembroSelect.className = "rivals-miembro-select";
+
+    async function loadMiembroOptions(selectedId){
+        miembroSelect.innerHTML = `<option value="">Cargando...</option>`;
+        const options = await fetchRivalsMiembroOptions(tipoSelect.value);
+        miembroSelect.innerHTML = options.length
+            ? options.map(o => `<option value="${o.id}" data-nombre="${escapeHtml(o.nombre)}" data-foto="${escapeHtml(o.foto)}">${escapeHtml(o.nombre)}</option>`).join("")
+            : `<option value="">Sin opciones cargadas</option>`;
+        if(selectedId) miembroSelect.value = selectedId;
+    }
+
+    tipoSelect.addEventListener("change", () => loadMiembroOptions());
+    loadMiembroOptions(miembro?.id);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "btn danger small";
+    removeBtn.textContent = "✕";
+    removeBtn.addEventListener("click", () => row.remove());
+
+    row.appendChild(tipoSelect);
+    row.appendChild(miembroSelect);
+    row.appendChild(removeBtn);
+    rowsWrap.appendChild(row);
+}
+
+function openAlianzaModal(alianza){
+    editingAlianzaId = alianza ? alianza.id : null;
+    document.getElementById("alianza-modal-title").textContent = alianza ? "Editar Alianza" : "Nueva Alianza";
+    alianzaError.textContent = "";
+    alianzaForm.reset();
+    alianzaForm.nombre.value = alianza?.nombre || "";
+    alianzaForm.colorHex.value = alianza?.colorHex || "#7b2cff";
+    alianzaForm.logo.value = alianza?.logo || "";
+    alianzaForm.lema.value = alianza?.lema || "";
+    alianzaForm.activo.value = alianza?.activo === false ? "false" : "true";
+    document.getElementById("alianza-delete-btn").classList.toggle("hidden", !editingAlianzaId);
+
+    const rowsWrap = document.getElementById("alianza-miembros-rows");
+    rowsWrap.innerHTML = "";
+    const miembros = Array.isArray(alianza?.miembros) ? alianza.miembros : [];
+    if(miembros.length) miembros.forEach(addAlianzaMiembroRow);
+
+    alianzaModal.classList.remove("hidden");
+}
+
+function closeAlianzaModal(){
+    alianzaModal.classList.add("hidden");
+    alianzaForm.reset();
+    editingAlianzaId = null;
+}
+
+document.getElementById("close-alianza-modal").addEventListener("click", closeAlianzaModal);
+document.getElementById("cancel-alianza-modal").addEventListener("click", closeAlianzaModal);
+document.getElementById("alianza-miembro-add").addEventListener("click", () => addAlianzaMiembroRow(null));
+
+document.getElementById("alianza-delete-btn").addEventListener("click", async () => {
+    if(!editingAlianzaId) return;
+    if(!confirm("¿Eliminar esta Alianza? Los puntajes ya cargados no se borran.")) return;
+    try{
+        await deleteDoc(doc(db, "alianzas", editingAlianzaId));
+        closeAlianzaModal();
+    }catch(error){
+        console.error(error);
+        alert("No se pudo eliminar la Alianza.");
+    }
+});
+
+alianzaForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    alianzaError.textContent = "";
+
+    const formData = new FormData(alianzaForm);
+    const nombre = String(formData.get("nombre") || "").trim();
+    if(!nombre){
+        alianzaError.textContent = "Escribe un nombre.";
+        return;
+    }
+
+    const miembros = Array.from(document.querySelectorAll("#alianza-miembros-rows .rivals-miembro-row")).map(row => {
+        const [tipoSelect, miembroSelect] = row.querySelectorAll("select");
+        const opt = miembroSelect.selectedOptions[0];
+        return {
+            tipo: tipoSelect.value,
+            id: miembroSelect.value || "",
+            nombre: opt?.dataset.nombre || "",
+            foto: opt?.dataset.foto || ""
+        };
+    }).filter(m => m.id);
+
+    try{
+        const logoFile = formData.get("logoFile");
+        let logo = String(formData.get("logo") || "").trim();
+        if(logoFile && logoFile.size) logo = await uploadImage(logoFile, "alianzas", "logo");
+
+        const payload = {
+            nombre,
+            colorHex: String(formData.get("colorHex") || "#7b2cff"),
+            logo,
+            lema: String(formData.get("lema") || "").trim(),
+            activo: formData.get("activo") === "true",
+            miembros,
+            updatedAt: serverTimestamp()
+        };
+
+        if(editingAlianzaId){
+            await updateDoc(doc(db, "alianzas", editingAlianzaId), payload);
+        }else{
+            payload.createdAt = serverTimestamp();
+            await addDoc(collection(db, "alianzas"), payload);
+        }
+        closeAlianzaModal();
+    }catch(error){
+        console.error(error);
+        alianzaError.textContent = "No se pudo guardar la Alianza.";
+    }
+});
+
+// Suma los puntos de una Alianza: los "roba" restan al que se los robaron y
+// suman al que robó, todo desde un solo documento (ver plan de Actividades).
+function totalPuntosAlianza(puntos, alianzaId){
+    let total = 0;
+    puntos.forEach(p => {
+        if(p.alianzaId === alianzaId) total += Number(p.puntos) || 0;
+        if(p.tipo === "roba" && p.alianzaVictimaId === alianzaId) total -= Number(p.puntos) || 0;
+    });
+    return total;
+}
+
+function renderPuntosPanel(container){
+    container.innerHTML = `
+<div class="rivals-toolbar">
+    <button class="btn small" type="button" id="actividad-resultado-btn">📅 Registrar resultado de actividad</button>
+    <button class="btn secondary small" type="button" id="punto-add-btn">✏️ Puntaje manual</button>
+</div>
+<div id="rivals-puntos-summary" class="rivals-puntos-summary"></div>
+<div id="rivals-puntos-list"></div>`;
+
+    let currentAlianzas = [];
+    let currentPuntos = [];
+    let currentActividades = [];
+    const listEl = document.getElementById("rivals-puntos-list");
+    const summaryEl = document.getElementById("rivals-puntos-summary");
+
+    function renderAll(){
+        summaryEl.innerHTML = currentAlianzas.length ? currentAlianzas.map(alianza => `
+<div class="rivals-puntos-summary-card" style="border-top:3px solid ${alianza.colorHex || "#7b2cff"};">
+    <h4><span class="rivals-color-dot" style="background:${alianza.colorHex || "#7b2cff"};"></span>${escapeHtml(alianza.nombre)}</h4>
+    <span class="total">${totalPuntosAlianza(currentPuntos, alianza.id)} pts</span>
+</div>`).join("") : `<p class="loading">Creá primero las Alianzas en la otra pestaña.</p>`;
+
+        const ordenados = [...currentPuntos].sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+        listEl.innerHTML = ordenados.length ? ordenados.map(p => {
+            if(p.tipo === "roba"){
+                return `
+<div class="rivals-punto-row">
+    <span class="rivals-punto-alianza" style="background:#ff3b5c;">🔥 Robo</span>
+    <span class="rivals-punto-titulo">${escapeHtml(p.alianzaNombre)} le robó ${p.puntos} pts a ${escapeHtml(p.alianzaVictimaNombre)}</span>
+    <span class="rivals-punto-fecha rivals-punto-cat">${escapeHtml(formatFechaCorta(p.fecha))}</span>
+    <div class="rivals-punto-actions">
+        <button type="button" data-punto-delete="${p.id}" title="Eliminar">✕</button>
+    </div>
+</div>`;
+            }
+            return `
+<div class="rivals-punto-row">
+    <span class="rivals-punto-alianza" style="background:${p.alianzaColor || "#7b2cff"};">${escapeHtml(p.alianzaNombre || "?")}</span>
+    <span class="rivals-punto-cat">${escapeHtml(Object.fromEntries(RIVALS_CATEGORIAS)[p.categoria] || p.categoria)}</span>
+    <span class="rivals-punto-titulo">${escapeHtml(p.titulo) || "Sin título"}</span>
+    <span class="rivals-punto-puntos">${p.puntos > 0 ? "+" : ""}${p.puntos} pts</span>
+    ${p.destacado ? `<span title="Momento destacado">⭐</span>` : ""}
+    <div class="rivals-punto-actions">
+        <button type="button" data-punto-edit="${p.id}" title="Editar">✎</button>
+        <button type="button" data-punto-delete="${p.id}" title="Eliminar">✕</button>
+    </div>
+</div>`;
+        }).join("") : `<p class="loading">Todavía no hay puntajes cargados.</p>`;
+    }
+
+    const unsubAlianzas = onSnapshot(collection(db, "alianzas"), (snapshot) => {
+        currentAlianzas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderAll();
+    });
+    const unsubPuntos = onSnapshot(collection(db, "rivalsPuntos"), (snapshot) => {
+        currentPuntos = snapshot.docs.map(d => {
+            const data = d.data();
+            const alianza = currentAlianzas.find(a => a.id === data.alianzaId);
+            return { id: d.id, ...data, alianzaColor: alianza?.colorHex };
+        });
+        renderAll();
+    }, (error) => {
+        console.error(error);
+        listEl.innerHTML = `<p class="loading">No se pudieron cargar los puntajes.</p>`;
+    });
+    const unsubActividades = onSnapshot(collection(db, "rivalsActividades"), (snapshot) => {
+        currentActividades = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => String(b.fechaEvento || "").localeCompare(String(a.fechaEvento || "")));
+    });
+    unsubscribeList = () => { unsubAlianzas(); unsubPuntos(); unsubActividades(); };
+
+    document.getElementById("punto-add-btn").addEventListener("click", () => {
+        if(!currentAlianzas.length){
+            alert("Primero creá las Alianzas en la otra pestaña.");
+            return;
+        }
+        openRivalsPuntoModal(null, currentAlianzas);
+    });
+
+    document.getElementById("actividad-resultado-btn").addEventListener("click", () => {
+        if(!currentAlianzas.length){
+            alert("Primero creá las Alianzas en la otra pestaña.");
+            return;
+        }
+        if(!currentActividades.length){
+            alert("Primero creá alguna Actividad en la pestaña Actividades.");
+            return;
+        }
+        openActividadResultadoModal(currentActividades, currentAlianzas);
+    });
+
+    listEl.addEventListener("click", (event) => {
+        const editBtn = event.target.closest("[data-punto-edit]");
+        if(editBtn){
+            const punto = currentPuntos.find(p => p.id === editBtn.dataset.puntoEdit);
+            if(punto) openRivalsPuntoModal(punto, currentAlianzas);
+            return;
+        }
+        const delBtn = event.target.closest("[data-punto-delete]");
+        if(delBtn && confirm("¿Eliminar este puntaje?")){
+            deleteDoc(doc(db, "rivalsPuntos", delBtn.dataset.puntoDelete)).catch(error => {
+                console.error(error);
+                alert("No se pudo eliminar el puntaje.");
+            });
+        }
+    });
+}
+
+let editingPuntoId = null;
+
+function openRivalsPuntoModal(punto, alianzas){
+    editingPuntoId = punto ? punto.id : null;
+    document.getElementById("rivals-punto-modal-title").textContent = punto ? "Editar puntaje" : "Nuevo puntaje";
+    rivalsPuntoError.textContent = "";
+    rivalsPuntoForm.reset();
+
+    const alianzaSelect = document.getElementById("rivals-punto-alianza-select");
+    alianzaSelect.innerHTML = alianzas.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)}</option>`).join("");
+    alianzaSelect.value = punto?.alianzaId || alianzas[0]?.id || "";
+
+    rivalsPuntoForm.categoria.value = punto?.categoria || "contenido";
+    rivalsPuntoForm.puntos.value = punto?.puntos ?? "";
+    rivalsPuntoForm.fecha.value = punto?.fecha || "";
+    rivalsPuntoForm.titulo.value = punto?.titulo || "";
+    rivalsPuntoForm.descripcion.value = punto?.descripcion || "";
+    rivalsPuntoForm.destacado.value = punto?.destacado ? "true" : "false";
+    rivalsPuntoForm.mediaUrl.value = punto?.mediaUrl || "";
+    document.getElementById("rivals-punto-delete-btn").classList.toggle("hidden", !editingPuntoId);
+
+    rivalsPuntoModal.classList.remove("hidden");
+}
+
+function closeRivalsPuntoModal(){
+    rivalsPuntoModal.classList.add("hidden");
+    rivalsPuntoForm.reset();
+    editingPuntoId = null;
+}
+
+document.getElementById("close-rivals-punto-modal").addEventListener("click", closeRivalsPuntoModal);
+document.getElementById("cancel-rivals-punto-modal").addEventListener("click", closeRivalsPuntoModal);
+
+document.getElementById("rivals-punto-delete-btn").addEventListener("click", async () => {
+    if(!editingPuntoId) return;
+    if(!confirm("¿Eliminar este puntaje?")) return;
+    try{
+        await deleteDoc(doc(db, "rivalsPuntos", editingPuntoId));
+        closeRivalsPuntoModal();
+    }catch(error){
+        console.error(error);
+        alert("No se pudo eliminar el puntaje.");
+    }
+});
+
+rivalsPuntoForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    rivalsPuntoError.textContent = "";
+
+    const formData = new FormData(rivalsPuntoForm);
+    const alianzaId = String(formData.get("alianzaId") || "");
+    const alianzaSelect = document.getElementById("rivals-punto-alianza-select");
+    const alianzaNombre = alianzaSelect.selectedOptions[0]?.textContent || "";
+    const titulo = String(formData.get("titulo") || "").trim();
+    const puntos = Number(formData.get("puntos"));
+
+    if(!alianzaId){
+        rivalsPuntoError.textContent = "Elegí una Alianza.";
+        return;
+    }
+    if(!titulo){
+        rivalsPuntoError.textContent = "Escribe un título.";
+        return;
+    }
+    if(!Number.isFinite(puntos)){
+        rivalsPuntoError.textContent = "Los puntos deben ser un número.";
+        return;
+    }
+
+    const payload = {
+        alianzaId,
+        alianzaNombre,
+        categoria: String(formData.get("categoria") || "contenido"),
+        puntos,
+        titulo,
+        descripcion: String(formData.get("descripcion") || "").trim(),
+        destacado: formData.get("destacado") === "true",
+        mediaUrl: String(formData.get("mediaUrl") || "").trim(),
+        fecha: String(formData.get("fecha") || ""),
+        updatedAt: serverTimestamp()
+    };
+
+    try{
+        if(editingPuntoId){
+            await updateDoc(doc(db, "rivalsPuntos", editingPuntoId), payload);
+        }else{
+            payload.createdAt = serverTimestamp();
+            await addDoc(collection(db, "rivalsPuntos"), payload);
+        }
+        closeRivalsPuntoModal();
+    }catch(error){
+        console.error(error);
+        rivalsPuntoError.textContent = "No se pudo guardar el puntaje.";
+    }
+});
+
+const RIVALS_CONFIG_FIELDS = [
+    ["nombreTemporada", "Nombre de la temporada", "text"],
+    ["fechaInicio", "Fecha de inicio", "date"],
+    ["fechaFin", "Fecha de término", "date"],
+    ["estado", "Estado", "select", [["activa", "Activa"], ["finalizada", "Finalizada"]]]
+];
+
+async function renderRivalsConfigPanel(container){
+    container.innerHTML = `
+<div class="panel" style="padding:22px;max-width:520px;">
+    <form id="rivals-config-form">
+        <div class="form-grid" id="rivals-config-fields"></div>
+        <div class="modal-actions">
+            <button class="btn" type="submit">Guardar cambios</button>
+        </div>
+        <div class="error" id="rivals-config-error"></div>
+    </form>
+</div>`;
+
+    const fieldsWrap = document.getElementById("rivals-config-fields");
+    const form = document.getElementById("rivals-config-form");
+    const errorEl = document.getElementById("rivals-config-error");
+
+    let currentData = {};
+    try{
+        const snapshot = await getDoc(doc(db, "rivalsConfig", "actual"));
+        currentData = snapshot.exists() ? snapshot.data() : {};
+    }catch(error){
+        console.error(error);
+    }
+
+    fieldsWrap.innerHTML = RIVALS_CONFIG_FIELDS.map(field => fieldHtml(field, currentData[field[0]])).join("");
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        errorEl.textContent = "";
+        const formData = new FormData(form);
+        const payload = {};
+        RIVALS_CONFIG_FIELDS.forEach(([name]) => { payload[name] = formData.get(name) || ""; });
+        payload.updatedAt = serverTimestamp();
+        try{
+            await setDoc(doc(db, "rivalsConfig", "actual"), payload, { merge: true });
+            currentData = { ...currentData, ...payload };
+        }catch(error){
+            console.error(error);
+            errorEl.textContent = "No se pudo guardar. Revisa los campos y permisos.";
+        }
+    });
+}
+
+// ---------------------------------------------------------------------
+// Actividades de Rivals: calendario con reglas de puntaje. Cada una define
+// un "modoPuntaje" que determina el formulario rápido para cargar el
+// resultado real en Puntajes (ver openActividadResultadoModal).
+// ---------------------------------------------------------------------
+
+const RIVALS_MODO_LABELS = {
+    publicaciones: "Por publicación",
+    enfrentamiento: "Enfrentamiento",
+    carrera: "Carrera/Podio",
+    robo: "Robo de puntos",
+    manual: "Manual"
+};
+
+function estadoActividad(actividad){
+    const hoy = new Date();
+    const evento = new Date(`${actividad.fechaEvento}T23:59:59`);
+    if(evento < hoy) return "finalizada";
+    const eventoInicio = new Date(`${actividad.fechaEvento}T00:00:00`);
+    if(eventoInicio <= hoy) return "activa";
+    return "proxima";
+}
+
+const ESTADO_ACTIVIDAD_LABELS = { activa: "Activa", proxima: "Próxima", finalizada: "Finalizada" };
+
+// Sugerencia de fecha de publicación según la política de la temporada:
+// semanales se publican el domingo antes, mensuales 2 semanas antes. Es solo
+// una ayuda -queda editable-, no una regla forzada por el sistema.
+function sugerirFechaPublicacion(fechaEvento, frecuencia){
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaEvento || "");
+    if(!match) return "";
+    const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    if(frecuencia === "semanal") d.setDate(d.getDate() - 6);
+    else if(frecuencia === "mensual") d.setDate(d.getDate() - 14);
+    return d.toISOString().slice(0, 10);
+}
+
+function renderActividadesPanel(container){
+    container.innerHTML = `
+<div class="rivals-toolbar">
+    <button class="btn small" type="button" id="actividad-add-btn">+ Nueva actividad</button>
+</div>
+<div id="actividades-list"></div>`;
+
+    document.getElementById("actividad-add-btn").addEventListener("click", () => openActividadModal(null));
+
+    const listEl = document.getElementById("actividades-list");
+    let currentActividades = [];
+    const unsub = onSnapshot(collection(db, "rivalsActividades"), (snapshot) => {
+        currentActividades = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => String(a.fechaEvento || "").localeCompare(String(b.fechaEvento || "")));
+        listEl.innerHTML = currentActividades.length ? currentActividades.map(act => {
+            const estado = estadoActividad(act);
+            return `
+<div class="rivals-actividad-row">
+    <span class="rivals-actividad-estado ${estado}">${ESTADO_ACTIVIDAD_LABELS[estado]}</span>
+    <span class="rivals-actividad-titulo">${escapeHtml(act.titulo) || "Sin título"}</span>
+    <span class="rivals-actividad-modo">${escapeHtml(RIVALS_MODO_LABELS[act.modoPuntaje] || act.modoPuntaje || "")}</span>
+    <span class="rivals-actividad-fecha">${escapeHtml(formatFechaCorta(act.fechaEvento))}</span>
+    <div class="rivals-actividad-actions">
+        <button type="button" data-actividad-edit="${act.id}" title="Editar">✎</button>
+        <button type="button" data-actividad-delete="${act.id}" title="Eliminar">✕</button>
+    </div>
+</div>`;
+        }).join("") : `<p class="loading">Todavía no hay actividades cargadas.</p>`;
+    }, (error) => {
+        console.error(error);
+        listEl.innerHTML = `<p class="loading">No se pudieron cargar las actividades.</p>`;
+    });
+    unsubscribeList = unsub;
+
+    listEl.addEventListener("click", (event) => {
+        const editBtn = event.target.closest("[data-actividad-edit]");
+        if(editBtn){
+            const act = currentActividades.find(a => a.id === editBtn.dataset.actividadEdit);
+            if(act) openActividadModal(act);
+            return;
+        }
+        const delBtn = event.target.closest("[data-actividad-delete]");
+        if(delBtn && confirm("¿Eliminar esta actividad? Los puntajes ya registrados con ella no se borran.")){
+            deleteDoc(doc(db, "rivalsActividades", delBtn.dataset.actividadDelete)).catch(error => {
+                console.error(error);
+                alert("No se pudo eliminar la actividad.");
+            });
+        }
+    });
+}
+
+function toggleModoConfigFields(modo){
+    document.querySelectorAll("[data-modo-config]").forEach(el => {
+        el.style.display = el.dataset.modoConfig === modo ? "flex" : "none";
+    });
+}
+
+function addActividadBonoRow(bono){
+    const rowsWrap = document.getElementById("actividad-bonos-rows");
+    const row = document.createElement("div");
+    row.className = "actividad-bono-row";
+    row.innerHTML = `
+<input type="text" class="bono-label" placeholder="Ej: Etiquetar Voranix" value="${escapeHtml(bono?.label || "")}">
+<input type="number" step="1" class="bono-puntos" placeholder="Puntos" value="${bono?.puntos ?? ""}">
+<button type="button" class="btn danger small">✕</button>`;
+    row.querySelector("button").addEventListener("click", () => row.remove());
+    rowsWrap.appendChild(row);
+}
+
+function addActividadPuestoRow(puesto){
+    const rowsWrap = document.getElementById("actividad-puestos-rows");
+    const row = document.createElement("div");
+    row.className = "actividad-puesto-row";
+    row.innerHTML = `
+<input type="text" class="puesto-label" placeholder="Ej: 1°" value="${escapeHtml(puesto?.label || "")}">
+<input type="number" step="1" class="puesto-puntos" placeholder="Puntos" value="${puesto?.puntos ?? ""}">
+<button type="button" class="btn danger small">✕</button>`;
+    row.querySelector("button").addEventListener("click", () => row.remove());
+    rowsWrap.appendChild(row);
+}
+
+let editingActividadId = null;
+let fechaPublicacionTocada = false;
+
+function openActividadModal(actividad){
+    editingActividadId = actividad ? actividad.id : null;
+    fechaPublicacionTocada = !!actividad;
+    document.getElementById("actividad-modal-title").textContent = actividad ? "Editar actividad" : "Nueva actividad";
+    actividadError.textContent = "";
+    actividadForm.reset();
+    actividadForm.titulo.value = actividad?.titulo || "";
+    actividadForm.descripcion.value = actividad?.descripcion || "";
+    actividadForm.reglasPuntaje.value = actividad?.reglasPuntaje || "";
+    actividadForm.categoria.value = actividad?.categoria || "contenido";
+    actividadForm.frecuencia.value = actividad?.frecuencia || "diaria";
+    actividadForm.fechaEvento.value = actividad?.fechaEvento || "";
+    actividadForm.fechaPublicacion.value = actividad?.fechaPublicacion || "";
+    actividadForm.modoPuntaje.value = actividad?.modoPuntaje || "publicaciones";
+    actividadForm.puntosPorPublicacion.value = actividad?.puntosPorPublicacion ?? "";
+    actividadForm.puntosGanador.value = actividad?.puntosGanador ?? "";
+    actividadForm.puntosPerdedor.value = actividad?.puntosPerdedor ?? "";
+    actividadForm.puntosMvp.value = actividad?.puntosMvp ?? "";
+    actividadForm.puntosRobados.value = actividad?.puntosRobados ?? "";
+    document.getElementById("actividad-delete-btn").classList.toggle("hidden", !editingActividadId);
+
+    document.getElementById("actividad-bonos-rows").innerHTML = "";
+    (actividad?.bonuses || []).forEach(addActividadBonoRow);
+    document.getElementById("actividad-puestos-rows").innerHTML = "";
+    (actividad?.puestos || []).forEach(addActividadPuestoRow);
+
+    toggleModoConfigFields(actividadForm.modoPuntaje.value);
+    actividadModal.classList.remove("hidden");
+}
+
+function closeActividadModal(){
+    actividadModal.classList.add("hidden");
+    actividadForm.reset();
+    editingActividadId = null;
+}
+
+document.getElementById("close-actividad-modal").addEventListener("click", closeActividadModal);
+document.getElementById("cancel-actividad-modal").addEventListener("click", closeActividadModal);
+document.getElementById("actividad-bono-add").addEventListener("click", () => addActividadBonoRow(null));
+document.getElementById("actividad-puesto-add").addEventListener("click", () => addActividadPuestoRow(null));
+
+document.getElementById("actividad-modo-select").addEventListener("change", (event) => {
+    toggleModoConfigFields(event.target.value);
+});
+
+function actualizarSugerenciaFechaPublicacion(){
+    if(fechaPublicacionTocada) return;
+    actividadForm.fechaPublicacion.value = sugerirFechaPublicacion(actividadForm.fechaEvento.value, actividadForm.frecuencia.value);
+}
+document.getElementById("actividad-frecuencia-select").addEventListener("change", actualizarSugerenciaFechaPublicacion);
+document.getElementById("actividad-fecha-evento-input").addEventListener("change", actualizarSugerenciaFechaPublicacion);
+document.getElementById("actividad-fecha-publicacion-input").addEventListener("input", () => { fechaPublicacionTocada = true; });
+
+document.getElementById("actividad-delete-btn").addEventListener("click", async () => {
+    if(!editingActividadId) return;
+    if(!confirm("¿Eliminar esta actividad? Los puntajes ya registrados con ella no se borran.")) return;
+    try{
+        await deleteDoc(doc(db, "rivalsActividades", editingActividadId));
+        closeActividadModal();
+    }catch(error){
+        console.error(error);
+        alert("No se pudo eliminar la actividad.");
+    }
+});
+
+actividadForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    actividadError.textContent = "";
+
+    const formData = new FormData(actividadForm);
+    const titulo = String(formData.get("titulo") || "").trim();
+    const fechaEvento = String(formData.get("fechaEvento") || "");
+    if(!titulo){ actividadError.textContent = "Escribe un título."; return; }
+    if(!fechaEvento){ actividadError.textContent = "Elegí la fecha del evento."; return; }
+
+    const modoPuntaje = String(formData.get("modoPuntaje") || "manual");
+    const payload = {
+        titulo,
+        descripcion: String(formData.get("descripcion") || "").trim(),
+        reglasPuntaje: String(formData.get("reglasPuntaje") || "").trim(),
+        categoria: String(formData.get("categoria") || "contenido"),
+        frecuencia: String(formData.get("frecuencia") || "diaria"),
+        fechaEvento,
+        fechaPublicacion: String(formData.get("fechaPublicacion") || "") || fechaEvento,
+        modoPuntaje,
+        updatedAt: serverTimestamp()
+    };
+
+    if(modoPuntaje === "publicaciones"){
+        payload.puntosPorPublicacion = Number(formData.get("puntosPorPublicacion")) || 0;
+        payload.bonuses = Array.from(document.querySelectorAll("#actividad-bonos-rows .actividad-bono-row")).map(row => ({
+            label: row.querySelector(".bono-label").value.trim(),
+            puntos: Number(row.querySelector(".bono-puntos").value) || 0
+        })).filter(b => b.label);
+    }else if(modoPuntaje === "enfrentamiento"){
+        payload.puntosGanador = Number(formData.get("puntosGanador")) || 0;
+        payload.puntosPerdedor = Number(formData.get("puntosPerdedor")) || 0;
+        payload.puntosMvp = Number(formData.get("puntosMvp")) || 0;
+    }else if(modoPuntaje === "carrera"){
+        payload.puestos = Array.from(document.querySelectorAll("#actividad-puestos-rows .actividad-puesto-row")).map(row => ({
+            label: row.querySelector(".puesto-label").value.trim(),
+            puntos: Number(row.querySelector(".puesto-puntos").value) || 0
+        })).filter(p => p.label);
+    }else if(modoPuntaje === "robo"){
+        payload.puntosRobados = Number(formData.get("puntosRobados")) || 0;
+    }
+
+    try{
+        if(editingActividadId){
+            await updateDoc(doc(db, "rivalsActividades", editingActividadId), payload);
+        }else{
+            payload.createdAt = serverTimestamp();
+            await addDoc(collection(db, "rivalsActividades"), payload);
+        }
+        closeActividadModal();
+    }catch(error){
+        console.error(error);
+        actividadError.textContent = "No se pudo guardar la actividad.";
+    }
+});
+
+// ---------------------------------------------------------------------
+// Registrar resultado de una actividad: según su modoPuntaje arma un
+// formulario rápido distinto y crea las entradas correspondientes en
+// rivalsPuntos (ver renderPuntosPanel para cómo se suman después).
+// ---------------------------------------------------------------------
+
+function closeActividadResultadoModal(){
+    actividadResultadoModal.classList.add("hidden");
+    document.getElementById("actividad-resultado-form-wrap").innerHTML = "";
+}
+document.getElementById("close-actividad-resultado-modal").addEventListener("click", closeActividadResultadoModal);
+
+function renderResultadoFormPublicaciones(actividad, alianzas, wrap){
+    wrap.innerHTML = `
+<form id="resultado-inner-form">
+    ${alianzas.map(a => `
+    <div class="rivals-resultado-alianza-row">
+        <strong>${escapeHtml(a.nombre)}</strong>
+        <label>Publicaciones <input type="number" step="1" min="0" value="0" data-cant="${a.id}"></label>
+        <div class="rivals-resultado-bono-list">
+            ${(actividad.bonuses || []).map((b, i) => `<label>${escapeHtml(b.label)} (+${b.puntos}) <input type="number" step="1" min="0" value="0" data-bono="${a.id}:${i}"></label>`).join("")}
+        </div>
+    </div>`).join("")}
+    <div id="actividad-resultado-error" class="error"></div>
+    <div class="modal-actions"><button class="btn" type="submit">Guardar resultado</button></div>
+</form>`;
+
+    document.getElementById("resultado-inner-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try{
+            for(const a of alianzas){
+                const cantidad = Number(wrap.querySelector(`[data-cant="${a.id}"]`).value) || 0;
+                let total = cantidad * (Number(actividad.puntosPorPublicacion) || 0);
+                (actividad.bonuses || []).forEach((b, i) => {
+                    const cant = Number(wrap.querySelector(`[data-bono="${a.id}:${i}"]`).value) || 0;
+                    total += cant * (Number(b.puntos) || 0);
+                });
+                if(total === 0) continue;
+                await addDoc(collection(db, "rivalsPuntos"), {
+                    alianzaId: a.id, alianzaNombre: a.nombre, actividadId: actividad.id,
+                    categoria: actividad.categoria, tipo: "gana", puntos: total,
+                    titulo: actividad.titulo, descripcion: "", destacado: false, mediaUrl: "",
+                    fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+                });
+            }
+            closeActividadResultadoModal();
+        }catch(error){
+            console.error(error);
+            document.getElementById("actividad-resultado-error").textContent = "No se pudo guardar el resultado.";
+        }
+    });
+}
+
+function renderResultadoFormEnfrentamiento(actividad, alianzas, wrap){
+    if(alianzas.length < 2){
+        wrap.innerHTML = `<p class="loading">Hacen falta 2 Alianzas cargadas.</p>`;
+        return;
+    }
+    wrap.innerHTML = `
+<form id="resultado-inner-form">
+    <div class="field">
+        <label>Alianza ganadora</label>
+        <select id="resultado-ganadora">${alianzas.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)}</option>`).join("")}</select>
+    </div>
+    ${actividad.puntosMvp ? `
+    <div class="field">
+        <label>¿De qué Alianza es el MVP? (opcional)</label>
+        <select id="resultado-mvp"><option value="">Sin MVP</option>${alianzas.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)}</option>`).join("")}</select>
+    </div>` : ""}
+    <div id="actividad-resultado-error" class="error"></div>
+    <div class="modal-actions"><button class="btn" type="submit">Guardar resultado</button></div>
+</form>`;
+
+    document.getElementById("resultado-inner-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const ganadoraId = document.getElementById("resultado-ganadora").value;
+        const ganadora = alianzas.find(a => a.id === ganadoraId);
+        const perdedoras = alianzas.filter(a => a.id !== ganadoraId);
+        const mvpId = document.getElementById("resultado-mvp")?.value || "";
+        try{
+            await addDoc(collection(db, "rivalsPuntos"), {
+                alianzaId: ganadora.id, alianzaNombre: ganadora.nombre, actividadId: actividad.id,
+                categoria: actividad.categoria, tipo: "gana",
+                puntos: (Number(actividad.puntosGanador) || 0) + (mvpId === ganadora.id ? (Number(actividad.puntosMvp) || 0) : 0),
+                titulo: `${actividad.titulo} — Ganó ${ganadora.nombre}`, descripcion: "", destacado: false, mediaUrl: "",
+                fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+            });
+            for(const perdedora of perdedoras){
+                await addDoc(collection(db, "rivalsPuntos"), {
+                    alianzaId: perdedora.id, alianzaNombre: perdedora.nombre, actividadId: actividad.id,
+                    categoria: actividad.categoria, tipo: "pierde",
+                    puntos: (Number(actividad.puntosPerdedor) || 0) + (mvpId === perdedora.id ? (Number(actividad.puntosMvp) || 0) : 0),
+                    titulo: `${actividad.titulo} — Perdió ${perdedora.nombre}`, descripcion: "", destacado: false, mediaUrl: "",
+                    fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+                });
+            }
+            closeActividadResultadoModal();
+        }catch(error){
+            console.error(error);
+            document.getElementById("actividad-resultado-error").textContent = "No se pudo guardar el resultado.";
+        }
+    });
+}
+
+function renderResultadoFormCarrera(actividad, alianzas, wrap){
+    const puestos = actividad.puestos || [];
+    if(!puestos.length){
+        wrap.innerHTML = `<p class="loading">Esta actividad no tiene puestos configurados.</p>`;
+        return;
+    }
+    wrap.innerHTML = `
+<form id="resultado-inner-form">
+    ${puestos.map((p, i) => `
+    <div class="field">
+        <label>${escapeHtml(p.label)} (+${p.puntos})</label>
+        <select data-puesto-alianza="${i}"><option value="">Sin asignar</option>${alianzas.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)}</option>`).join("")}</select>
+    </div>`).join("")}
+    <div id="actividad-resultado-error" class="error"></div>
+    <div class="modal-actions"><button class="btn" type="submit">Guardar resultado</button></div>
+</form>`;
+
+    document.getElementById("resultado-inner-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try{
+            for(let i = 0; i < puestos.length; i++){
+                const alianzaId = wrap.querySelector(`[data-puesto-alianza="${i}"]`).value;
+                if(!alianzaId) continue;
+                const alianza = alianzas.find(a => a.id === alianzaId);
+                await addDoc(collection(db, "rivalsPuntos"), {
+                    alianzaId: alianza.id, alianzaNombre: alianza.nombre, actividadId: actividad.id,
+                    categoria: actividad.categoria, tipo: "gana", puntos: Number(puestos[i].puntos) || 0,
+                    titulo: `${actividad.titulo} — ${puestos[i].label}`, descripcion: "", destacado: false, mediaUrl: "",
+                    fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+                });
+            }
+            closeActividadResultadoModal();
+        }catch(error){
+            console.error(error);
+            document.getElementById("actividad-resultado-error").textContent = "No se pudo guardar el resultado.";
+        }
+    });
+}
+
+function renderResultadoFormRobo(actividad, alianzas, wrap){
+    if(alianzas.length < 2){
+        wrap.innerHTML = `<p class="loading">Hacen falta 2 Alianzas cargadas.</p>`;
+        return;
+    }
+    wrap.innerHTML = `
+<form id="resultado-inner-form">
+    <div class="field">
+        <label>Alianza que roba</label>
+        <select id="resultado-robadora">${alianzas.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)}</option>`).join("")}</select>
+    </div>
+    <div class="field">
+        <label>Alianza víctima</label>
+        <select id="resultado-victima"></select>
+    </div>
+    <div id="actividad-resultado-error" class="error"></div>
+    <div class="modal-actions"><button class="btn" type="submit">Guardar resultado</button></div>
+</form>`;
+
+    const robadoraSelect = document.getElementById("resultado-robadora");
+    const victimaSelect = document.getElementById("resultado-victima");
+    function refreshVictimas(){
+        victimaSelect.innerHTML = alianzas.filter(a => a.id !== robadoraSelect.value)
+            .map(a => `<option value="${a.id}">${escapeHtml(a.nombre)}</option>`).join("");
+    }
+    robadoraSelect.addEventListener("change", refreshVictimas);
+    refreshVictimas();
+
+    document.getElementById("resultado-inner-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const robadora = alianzas.find(a => a.id === robadoraSelect.value);
+        const victima = alianzas.find(a => a.id === victimaSelect.value);
+        if(!robadora || !victima || robadora.id === victima.id){
+            document.getElementById("actividad-resultado-error").textContent = "Elegí dos Alianzas distintas.";
+            return;
+        }
+        try{
+            await addDoc(collection(db, "rivalsPuntos"), {
+                alianzaId: robadora.id, alianzaNombre: robadora.nombre,
+                alianzaVictimaId: victima.id, alianzaVictimaNombre: victima.nombre,
+                actividadId: actividad.id, categoria: actividad.categoria, tipo: "roba",
+                puntos: Number(actividad.puntosRobados) || 0,
+                titulo: actividad.titulo, descripcion: "", destacado: true, mediaUrl: "",
+                fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+            });
+            closeActividadResultadoModal();
+        }catch(error){
+            console.error(error);
+            document.getElementById("actividad-resultado-error").textContent = "No se pudo guardar el resultado.";
+        }
+    });
+}
+
+function openActividadResultadoModal(actividades, alianzas){
+    const select = document.getElementById("actividad-resultado-select");
+    select.innerHTML = actividades.map(a => `<option value="${a.id}">${escapeHtml(a.titulo)} (${escapeHtml(formatFechaCorta(a.fechaEvento))})</option>`).join("");
+
+    const wrap = document.getElementById("actividad-resultado-form-wrap");
+    function renderForm(){
+        const actividad = actividades.find(a => a.id === select.value);
+        if(!actividad) return;
+        if(actividad.modoPuntaje === "enfrentamiento") renderResultadoFormEnfrentamiento(actividad, alianzas, wrap);
+        else if(actividad.modoPuntaje === "carrera") renderResultadoFormCarrera(actividad, alianzas, wrap);
+        else if(actividad.modoPuntaje === "robo") renderResultadoFormRobo(actividad, alianzas, wrap);
+        else if(actividad.modoPuntaje === "publicaciones") renderResultadoFormPublicaciones(actividad, alianzas, wrap);
+        else wrap.innerHTML = `<p class="loading">Esta actividad es de modo "Manual": usá el botón "Puntaje manual" para cargarla.</p>`;
+    }
+    select.onchange = renderForm;
+    renderForm();
+    actividadResultadoModal.classList.remove("hidden");
+}
+
+function renderOverlaySection(tab){
+    if(unsubscribeList) unsubscribeList();
     unsubscribeList = null;
     sectionTitle.textContent = "Overlay";
-    sectionSubtitle.textContent = "Colección: overlayConfig";
+    sectionSubtitle.textContent = "Logo, timer, ticker, comandos del bot y códigos de descuento";
+
+    const currentTab = tab || "general";
     content.innerHTML = `
 <div class="section-head">
     <div>
         <h2>Overlay</h2>
-        <p class="muted">Configuración del overlay para OBS. El bot que responde el comando en el chat todavía no está activo — este texto queda guardado para cuando se conecte.</p>
+        <p class="muted">Todo lo que se ve en el overlay de stream: configuración general, comandos del bot de chat y códigos de descuento.</p>
     </div>
 </div>
+<div class="tablero-tabs">
+    <button type="button" class="btn ${currentTab === "general" ? "" : "secondary"} small" data-overlay-tab="general">🖥️ General</button>
+    <button type="button" class="btn ${currentTab === "comandos" ? "" : "secondary"} small" data-overlay-tab="comandos">💬 Comandos</button>
+    <button type="button" class="btn ${currentTab === "codigos" ? "" : "secondary"} small" data-overlay-tab="codigos">🏷️ Códigos de descuento</button>
+</div>
+<div id="overlay-panel"></div>`;
+
+    const panel = document.getElementById("overlay-panel");
+    if(currentTab === "comandos") renderOverlayComandosPanel(panel);
+    else if(currentTab === "codigos") renderOverlayCodigosPanel(panel);
+    else renderOverlayGeneralPanel(panel);
+}
+
+async function renderOverlayGeneralPanel(container){
+    container.innerHTML = `
 <div class="panel">
     <form id="overlay-form" style="padding:22px;">
         <div class="form-grid" id="overlay-fields"></div>
@@ -1940,7 +3740,67 @@ async function renderOverlaySection(){
         </div>
         <div class="error" id="overlay-error"></div>
     </form>
+</div>
+
+<div class="panel" style="margin-top:22px;">
+    <form id="overlay-general-form" style="padding:22px;">
+        <h3 style="margin:0 0 4px;">Mensaje general para todos los streams</h3>
+        <p class="help" style="margin:0 0 16px;">Aparece en el overlay de TODOS los creadores conectados a la vez (tengan o no su link personalizado con ?canal=), como el banner de un comando de chat.</p>
+        <div class="form-grid">
+            <div class="field full">
+                <label>Titular</label>
+                <input name="titulo" type="text" placeholder="Ej: ¡Empieza el torneo!">
+            </div>
+            <div class="field full">
+                <label>Detalle (opcional)</label>
+                <textarea name="detalle" placeholder="Texto más chico debajo del titular"></textarea>
+            </div>
+            <div class="field full">
+                <label>Imagen (opcional)</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input name="imagen" type="text" placeholder="Ruta o URL de imagen" style="flex:1;">
+                </div>
+                <input name="imagenFile" type="file" accept="image/*">
+            </div>
+            <div class="field">
+                <label>Color de la etiqueta</label>
+                <input name="color" type="color" value="#7b2cff">
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn" type="submit">Enviar a todos los streams ahora</button>
+        </div>
+        <div class="error" id="overlay-general-error"></div>
+    </form>
 </div>`;
+
+    const generalForm = document.getElementById("overlay-general-form");
+    const generalError = document.getElementById("overlay-general-error");
+    generalForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        generalError.textContent = "";
+        const formData = new FormData(generalForm);
+        const titulo = String(formData.get("titulo") || "").trim();
+        if(!titulo){ generalError.textContent = "Escribe un titular."; return; }
+
+        try{
+            const imagenFile = formData.get("imagenFile");
+            let imagen = String(formData.get("imagen") || "").trim();
+            if(imagenFile && imagenFile.size) imagen = await uploadImage(imagenFile, "overlayEventoActual", "imagen");
+
+            await setDoc(doc(db, "overlayEventoActual", "_general"), {
+                titulo,
+                detalle: String(formData.get("detalle") || "").trim(),
+                imagen,
+                color: String(formData.get("color") || "#7b2cff"),
+                activadoAt: serverTimestamp()
+            });
+            generalForm.reset();
+        }catch(error){
+            console.error(error);
+            generalError.textContent = "No se pudo enviar el mensaje.";
+        }
+    });
 
     const fieldsWrap = document.getElementById("overlay-fields");
     const form = document.getElementById("overlay-form");
@@ -1955,6 +3815,8 @@ async function renderOverlaySection(){
     }
 
     fieldsWrap.innerHTML = OVERLAY_FIELDS.map(field => fieldHtml(field, currentData[field[0]])).join("");
+    const colorInput = form.querySelector('input[name="tickerColor"]');
+    if(colorInput && !colorInput.value) colorInput.value = "#ffffff";
 
     form.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -1986,6 +3848,280 @@ async function renderOverlaySection(){
     });
 }
 
+const OVERLAY_TIPO_LABELS = { chat: "Chat", pantalla: "Pantalla", ambos: "Chat + Pantalla", codigo: "Código vigente" };
+
+function toggleTipoConfigFields(tipo){
+    document.querySelectorAll("[data-tipo-config]").forEach(el => {
+        el.style.display = el.dataset.tipoConfig.split(" ").includes(tipo) ? "flex" : "none";
+    });
+}
+
+function renderOverlayComandosPanel(container){
+    container.innerHTML = `
+<div class="rivals-toolbar">
+    <button class="btn small" type="button" id="comando-add-btn">+ Nuevo comando</button>
+</div>
+<div id="comandos-list"></div>`;
+
+    document.getElementById("comando-add-btn").addEventListener("click", () => openComandoModal(null));
+
+    // El cooldown ahora es por canal (ultimoDisparoPorCanal: {canal: timestamp}),
+    // así que "último uso" muestra el más reciente entre todos los canales
+    // que lo dispararon, junto con cuántos canales distintos lo usaron.
+    function resumenUltimoDisparo(cmd){
+        const porCanal = cmd.ultimoDisparoPorCanal || {};
+        const canales = Object.keys(porCanal);
+        if(!canales.length) return "Nunca";
+        let ultimoCanal = canales[0];
+        let ultimoMs = porCanal[ultimoCanal]?.toMillis?.() || 0;
+        for(const canal of canales){
+            const ms = porCanal[canal]?.toMillis?.() || 0;
+            if(ms > ultimoMs){ ultimoMs = ms; ultimoCanal = canal; }
+        }
+        const fecha = ultimoMs ? new Date(ultimoMs).toLocaleString("es-CL") : "Nunca";
+        return `${fecha} (${ultimoCanal}${canales.length > 1 ? `, +${canales.length - 1} canal(es)` : ""})`;
+    }
+
+    const listEl = document.getElementById("comandos-list");
+    let currentComandos = [];
+    const unsub = onSnapshot(collection(db, "overlayComandos"), (snapshot) => {
+        currentComandos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        listEl.innerHTML = currentComandos.length ? currentComandos.map(cmd => {
+            const ultimo = resumenUltimoDisparo(cmd);
+            return `
+<div class="rivals-actividad-row">
+    <span class="rivals-actividad-estado ${cmd.activo === false ? "finalizada" : "activa"}">${cmd.activo === false ? "Inactivo" : "Activo"}</span>
+    <span class="rivals-actividad-titulo">${escapeHtml(cmd.trigger) || "Sin comando"}</span>
+    <span class="rivals-actividad-modo">${OVERLAY_TIPO_LABELS[cmd.tipo] || cmd.tipo || ""} · cooldown ${cmd.cooldownSegundos ?? 0}s</span>
+    <span class="rivals-actividad-fecha">Último uso: ${escapeHtml(ultimo)}</span>
+    <div class="rivals-actividad-actions">
+        <button type="button" data-comando-edit="${cmd.id}" title="Editar">✎</button>
+        <button type="button" data-comando-delete="${cmd.id}" title="Eliminar">✕</button>
+    </div>
+</div>`;
+        }).join("") : `<p class="loading">Todavía no hay comandos cargados.</p>`;
+    }, (error) => {
+        console.error(error);
+        listEl.innerHTML = `<p class="loading">No se pudieron cargar los comandos.</p>`;
+    });
+    unsubscribeList = unsub;
+
+    listEl.addEventListener("click", (event) => {
+        const editBtn = event.target.closest("[data-comando-edit]");
+        if(editBtn){
+            const cmd = currentComandos.find(c => c.id === editBtn.dataset.comandoEdit);
+            if(cmd) openComandoModal(cmd);
+            return;
+        }
+        const delBtn = event.target.closest("[data-comando-delete]");
+        if(delBtn && confirm("¿Eliminar este comando?")){
+            deleteDoc(doc(db, "overlayComandos", delBtn.dataset.comandoDelete)).catch(error => {
+                console.error(error);
+                alert("No se pudo eliminar el comando.");
+            });
+        }
+    });
+}
+
+let editingComandoId = null;
+
+function openComandoModal(comando){
+    editingComandoId = comando ? comando.id : null;
+    document.getElementById("comando-modal-title").textContent = comando ? "Editar comando" : "Nuevo comando";
+    comandoError.textContent = "";
+    comandoForm.reset();
+    comandoForm.trigger.value = comando?.trigger || "";
+    comandoForm.tipo.value = comando?.tipo || "chat";
+    comandoForm.cooldownSegundos.value = comando?.cooldownSegundos ?? 30;
+    comandoForm.activo.value = comando?.activo === false ? "false" : "true";
+    comandoForm.respuestaChat.value = comando?.respuestaChat || "";
+    comandoForm.tituloPantalla.value = comando?.tituloPantalla || "";
+    comandoForm.detallePantalla.value = comando?.detallePantalla || "";
+    comandoForm.imagen.value = comando?.imagen || "";
+    comandoForm.color.value = comando?.color || "#7b2cff";
+    document.getElementById("comando-delete-btn").classList.toggle("hidden", !editingComandoId);
+    toggleTipoConfigFields(comandoForm.tipo.value);
+    comandoModal.classList.remove("hidden");
+}
+
+function closeComandoModal(){
+    comandoModal.classList.add("hidden");
+    comandoForm.reset();
+    editingComandoId = null;
+}
+
+document.getElementById("close-comando-modal").addEventListener("click", closeComandoModal);
+document.getElementById("cancel-comando-modal").addEventListener("click", closeComandoModal);
+document.getElementById("comando-tipo-select").addEventListener("change", (event) => toggleTipoConfigFields(event.target.value));
+
+document.getElementById("comando-delete-btn").addEventListener("click", async () => {
+    if(!editingComandoId) return;
+    if(!confirm("¿Eliminar este comando?")) return;
+    try{
+        await deleteDoc(doc(db, "overlayComandos", editingComandoId));
+        closeComandoModal();
+    }catch(error){
+        console.error(error);
+        alert("No se pudo eliminar el comando.");
+    }
+});
+
+comandoForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    comandoError.textContent = "";
+    const formData = new FormData(comandoForm);
+    const trigger = String(formData.get("trigger") || "").trim();
+    if(!trigger){ comandoError.textContent = "Escribe al menos un comando."; return; }
+
+    try{
+        const imagenFile = formData.get("imagenFile");
+        let imagen = String(formData.get("imagen") || "").trim();
+        if(imagenFile && imagenFile.size) imagen = await uploadImage(imagenFile, "overlayComandos", "imagen");
+
+        const payload = {
+            trigger,
+            tipo: String(formData.get("tipo") || "chat"),
+            respuestaChat: String(formData.get("respuestaChat") || "").trim(),
+            tituloPantalla: String(formData.get("tituloPantalla") || "").trim(),
+            detallePantalla: String(formData.get("detallePantalla") || "").trim(),
+            imagen,
+            color: String(formData.get("color") || "#7b2cff"),
+            cooldownSegundos: Number(formData.get("cooldownSegundos")) || 0,
+            activo: formData.get("activo") === "true",
+            updatedAt: serverTimestamp()
+        };
+
+        if(editingComandoId){
+            await updateDoc(doc(db, "overlayComandos", editingComandoId), payload);
+        }else{
+            payload.createdAt = serverTimestamp();
+            await addDoc(collection(db, "overlayComandos"), payload);
+        }
+        closeComandoModal();
+    }catch(error){
+        console.error(error);
+        comandoError.textContent = "No se pudo guardar el comando.";
+    }
+});
+
+function renderOverlayCodigosPanel(container){
+    container.innerHTML = `
+<div class="rivals-toolbar">
+    <button class="btn small" type="button" id="codigo-add-btn">+ Nuevo código</button>
+</div>
+<div id="codigos-list" class="rivals-alianzas-grid"></div>`;
+
+    document.getElementById("codigo-add-btn").addEventListener("click", () => openCodigoModal(null));
+
+    const grid = document.getElementById("codigos-list");
+    let currentCodigos = [];
+    const unsub = onSnapshot(collection(db, "overlayCodigos"), (snapshot) => {
+        currentCodigos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        grid.innerHTML = currentCodigos.length ? currentCodigos.map(cod => `
+<div class="rivals-alianza-card">
+    ${cod.imagen ? `<div class="rivals-alianza-head"><img src="${escapeHtml(assetUrl(cod.imagen))}" alt="${escapeHtml(cod.codigo)}"></div>` : ""}
+    <h4>${escapeHtml(cod.codigo) || "Sin código"}</h4>
+    ${cod.marca ? `<p class="help">${escapeHtml(cod.marca)}</p>` : ""}
+    <p class="rivals-miembros-count">${escapeHtml(cod.descripcion) || ""} · ${cod.activo === false ? "Inactivo" : "Activo"}</p>
+    <div class="actions">
+        <button class="btn secondary small" type="button" data-codigo-edit="${cod.id}">Editar</button>
+        <button class="btn danger small" type="button" data-codigo-delete="${cod.id}">Eliminar</button>
+    </div>
+</div>`).join("") : `<p class="loading">Todavía no hay códigos cargados.</p>`;
+    }, (error) => {
+        console.error(error);
+        grid.innerHTML = `<p class="loading">No se pudieron cargar los códigos.</p>`;
+    });
+    unsubscribeList = unsub;
+
+    grid.addEventListener("click", async (event) => {
+        const editBtn = event.target.closest("[data-codigo-edit]");
+        if(editBtn){
+            const cod = currentCodigos.find(c => c.id === editBtn.dataset.codigoEdit);
+            if(cod) openCodigoModal(cod);
+            return;
+        }
+        const delBtn = event.target.closest("[data-codigo-delete]");
+        if(delBtn && confirm("¿Eliminar este código de descuento?")){
+            deleteDoc(doc(db, "overlayCodigos", delBtn.dataset.codigoDelete)).catch(error => {
+                console.error(error);
+                alert("No se pudo eliminar el código.");
+            });
+        }
+    });
+}
+
+let editingCodigoId = null;
+
+function openCodigoModal(codigo){
+    editingCodigoId = codigo ? codigo.id : null;
+    document.getElementById("codigo-modal-title").textContent = codigo ? "Editar código" : "Nuevo código de descuento";
+    codigoError.textContent = "";
+    codigoForm.reset();
+    codigoForm.codigo.value = codigo?.codigo || "";
+    codigoForm.marca.value = codigo?.marca || "";
+    codigoForm.descripcion.value = codigo?.descripcion || "";
+    codigoForm.imagen.value = codigo?.imagen || "";
+    codigoForm.activo.value = codigo?.activo === false ? "false" : "true";
+    document.getElementById("codigo-delete-btn").classList.toggle("hidden", !editingCodigoId);
+    codigoModal.classList.remove("hidden");
+}
+
+function closeCodigoModal(){
+    codigoModal.classList.add("hidden");
+    codigoForm.reset();
+    editingCodigoId = null;
+}
+
+document.getElementById("close-codigo-modal").addEventListener("click", closeCodigoModal);
+document.getElementById("cancel-codigo-modal").addEventListener("click", closeCodigoModal);
+
+document.getElementById("codigo-delete-btn").addEventListener("click", async () => {
+    if(!editingCodigoId) return;
+    if(!confirm("¿Eliminar este código de descuento?")) return;
+    try{
+        await deleteDoc(doc(db, "overlayCodigos", editingCodigoId));
+        closeCodigoModal();
+    }catch(error){
+        console.error(error);
+        alert("No se pudo eliminar el código.");
+    }
+});
+
+codigoForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    codigoError.textContent = "";
+    const formData = new FormData(codigoForm);
+    const codigoTexto = String(formData.get("codigo") || "").trim();
+    if(!codigoTexto){ codigoError.textContent = "Escribe el código."; return; }
+
+    try{
+        const imagenFile = formData.get("imagenFile");
+        let imagen = String(formData.get("imagen") || "").trim();
+        if(imagenFile && imagenFile.size) imagen = await uploadImage(imagenFile, "overlayCodigos", "imagen");
+
+        const payload = {
+            codigo: codigoTexto,
+            marca: String(formData.get("marca") || "").trim(),
+            descripcion: String(formData.get("descripcion") || "").trim(),
+            imagen,
+            activo: formData.get("activo") === "true",
+            updatedAt: serverTimestamp()
+        };
+
+        if(editingCodigoId){
+            await updateDoc(doc(db, "overlayCodigos", editingCodigoId), payload);
+        }else{
+            payload.createdAt = serverTimestamp();
+            await addDoc(collection(db, "overlayCodigos"), payload);
+        }
+        closeCodigoModal();
+    }catch(error){
+        console.error(error);
+        codigoError.textContent = "No se pudo guardar el código.";
+    }
+});
+
 const BULK_DELETE_PASSWORD = "VoranixADMIN";
 
 function confirmBulkDelete(count){
@@ -2001,8 +4137,8 @@ function confirmBulkDelete(count){
 
 async function enviarAcceso(uids){
     if(!uids.length) return;
-    const label = uids.length === 1 ? "este creador" : `estos ${uids.length} creadores`;
-    if(!confirm(`¿Enviar correo de acceso a ${label}? Les vamos a mandar un link para configurar su contraseña.`)) return;
+    const label = uids.length === 1 ? "esta cuenta" : `estas ${uids.length} cuentas`;
+    if(!confirm(`¿Enviar correo de acceso a ${label}? Le vamos a mandar un link para configurar/restablecer su contraseña.`)) return;
 
     try{
         const sendFn = httpsCallable(functionsInstance, "enviarAccesoCreador");
@@ -2218,7 +4354,7 @@ async function renderUsers(){
 <td>${ultimoIngreso}</td>
 <td><div class="actions">
     <button class="btn secondary small" type="button" data-user-edit="${user.uid}">Editar</button>
-    ${profileRoles(user).some(r => ["creador", "capitan", "jugador"].includes(r)) ? `<button class="btn small" type="button" data-send-access="${user.uid}">Enviar acceso</button>` : ""}
+    <button class="btn small" type="button" data-send-access="${user.uid}" title="Envía un link para configurar/restablecer la contraseña">Cambiar contraseña</button>
 </div></td>
 </tr>`;
         });
@@ -2256,12 +4392,9 @@ async function renderUsers(){
     });
 
     bulkSendAccessBtn.addEventListener("click", () => {
-        const uids = Array.from(selected).filter(uid => {
-            const user = usersCache.find(u => u.uid === uid);
-            return user && profileRoles(user).some(r => ["creador", "capitan", "jugador"].includes(r));
-        });
+        const uids = Array.from(selected);
         if(!uids.length){
-            alert("Selecciona al menos una cuenta creador, capitán o jugador para enviar el acceso.");
+            alert("Selecciona al menos una cuenta para enviarle el cambio de contraseña.");
             return;
         }
         enviarAcceso(uids);
@@ -2765,6 +4898,8 @@ content.addEventListener("click", async (event) => {
     const sendAccessButton = event.target.closest("[data-send-access]");
     const gotoSectionButton = event.target.closest("[data-goto-section]");
     const tableroTabButton = event.target.closest("[data-tablero-tab]");
+    const rivalsTabButton = event.target.closest("[data-rivals-tab]");
+    const overlayTabButton = event.target.closest("[data-overlay-tab]");
 
     try{
         if(gotoSectionButton){
@@ -2774,6 +4909,16 @@ content.addEventListener("click", async (event) => {
 
         if(tableroTabButton){
             renderTableroSection(tableroTabButton.dataset.tableroTab);
+            return;
+        }
+
+        if(rivalsTabButton){
+            renderRivalsSection(rivalsTabButton.dataset.rivalsTab);
+            return;
+        }
+
+        if(overlayTabButton){
+            renderOverlaySection(overlayTabButton.dataset.overlayTab);
             return;
         }
 

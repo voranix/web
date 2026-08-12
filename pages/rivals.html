@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voranix Rivals | VORANIX</title>
+    <meta name="description" content="Voranix Rivals: la temporada competitiva de VORANIX. Seguí en tiempo real cómo van las Alianzas en Contenido, Videojuegos y Presencial.">
+    <link rel="canonical" href="https://voranix.web.app/pages/rivals.html">
+    <link rel="icon" type="image/png" href="/imagenes/logopng.png">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div id="page-loader" class="page-loader">
+    <div class="page-loader-mark">
+        <div class="page-loader-ring"></div>
+        <img class="page-loader-logo" src="/imagenes/logopng.png" alt="VORANIX">
+    </div>
+</div>
+<script src="/assets/js/page-loader.js"></script>
+
+
+<header class="header header-sub header-rivals">
+    <div class="menu">
+        <div class="menu-content">
+            <button class="menu-toggle" id="menu-toggle">☰</button>
+            <a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="VORANIX"></a>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="/index.html">Inicio</a></li>
+                    <li class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-toggle">Quiénes Somos <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                            <li><a href="/pages/staff.html">Staff</a></li>
+                            <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/pages/reglamento.html">Reglamento</a></li>
+                    <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/rivals.html" class="active">Rivals</a></li>
+                    <li><a href="/pages/streamers.html">Streamers</a></li>
+                    <li><a href="/pages/influencers.html">Influencers</a></li>
+                    <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+                    <li><a href="/pages/contacto.html">Contacto</a></li>
+                    <li class="nav-dropdown admin-access">
+                        <button type="button" class="nav-dropdown-toggle"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Acceso <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/creadores.html"><i class="fas fa-star" style="font-size:9px;margin-right:6px;"></i>Portal Creadores</a></li>
+                            <li><a href="/pages/roster-portal.html"><i class="fas fa-users" style="font-size:9px;margin-right:6px;"></i>Portal Roster</a></li>
+                            <li><a href="/admin/admin.html"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Admin</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <div class="header-content container">
+        <div class="hero-eyebrow"><span></span>TEMPORADA COMPETITIVA</div>
+        <h1>Voranix Rivals</h1>
+        <p>DOS ALIANZAS. UNA TEMPORADA. RESULTADOS EN VIVO</p>
+    </div>
+</header>
+
+<section class="container">
+    <div class="rivals-hero">
+        <h2 id="rivals-temporada-nombre">Cargando temporada...</h2>
+        <p id="rivals-temporada-fechas"></p>
+        <span class="estado-badge" id="rivals-temporada-estado"></span>
+    </div>
+
+    <div class="rivals-vs" id="rivals-vs-total"></div>
+
+    <div class="rivals-categorias" id="rivals-categorias"></div>
+</section>
+
+<section class="container">
+    <div class="section-title">
+        <div class="section-label">Los equipos</div>
+        <h2>Alianzas</h2>
+        <span class="accent-line"></span>
+        <p>Quiénes forman parte de cada Alianza esta temporada</p>
+    </div>
+    <div class="rivals-teams" id="rivals-teams">
+        <p class="loading"><i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--morado);"></i>Cargando Alianzas...</p>
+    </div>
+</section>
+
+<section class="container">
+    <div class="section-title">
+        <div class="section-label">Qué se viene</div>
+        <h2>Actividades</h2>
+        <span class="accent-line"></span>
+        <p>Cómo se ganan (y se pierden) los puntos de la temporada</p>
+    </div>
+    <div id="rivals-actividades-activas" class="rivals-actividades-grid"></div>
+    <div id="rivals-actividades-proximas" class="rivals-actividades-grid"></div>
+    <button type="button" id="rivals-actividades-historial-btn" class="btn btn-sm rivals-historial-toggle hidden">Ver actividades anteriores</button>
+    <div id="rivals-actividades-historial" class="rivals-actividades-grid hidden"></div>
+</section>
+
+<section class="container">
+    <div class="section-title">
+        <div class="section-label">Lo mejor de la temporada</div>
+        <h2>Momentos Destacados</h2>
+        <span class="accent-line"></span>
+        <p>Los hitos que van marcando la competencia</p>
+    </div>
+    <div class="rivals-momentos-grid" id="rivals-momentos">
+        <p class="loading">Todavía no hay momentos destacados.</p>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="footer-inner container">
+        <div class="footer-brand">
+            <div class="footer-brand-head">
+                <img src="/imagenes/logopng.png" alt="VORANIX" class="footer-logo">
+                <span>VORANIX</span>
+            </div>
+            <p class="footer-tagline">Comunidad y estudio de eventos gamer latino. Jugamos, conectamos y evolucionamos junto a nuestra gente.</p>
+            <div class="footer-social">
+                <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener" aria-label="Discord"><i class="fab fa-discord"></i></a>
+                <a href="https://www.instagram.com/voranixstudio/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.twitch.tv/voranixstudio" target="_blank" rel="noopener" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
+                <a href="https://www.tiktok.com/@voranix_gaming" target="_blank" rel="noopener" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+        <div class="footer-col">
+            <h4>Comunidad</h4>
+            <a href="/pages/nosotros.html">Nosotros</a>
+            <a href="/pages/staff.html">Staff</a>
+            <a href="/pages/reglamento.html">Reglamento</a>
+            <a href="/pages/proyectos.html">Proyectos</a>
+        </div>
+        <div class="footer-col">
+            <h4>Competitivo</h4>
+            <a href="/pages/rosters.html">Rosters</a>
+            <a href="/pages/rivals.html">Voranix Rivals</a>
+            <a href="/pages/streamers.html">Streamers</a>
+            <a href="/pages/influencers.html">Influencers</a>
+            <a href="/pages/patrocinadores.html">Patrocinadores</a>
+        </div>
+        <div class="footer-col">
+            <h4>Contacto</h4>
+            <a href="/pages/contacto.html">Escríbenos</a>
+            <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener">Únete al Discord</a>
+        </div>
+    </div>
+    <div class="footer-bottom container">
+        <p>© 2026 <span>VORANIX</span> — Todos los derechos reservados</p>
+    </div>
+</footer>
+
+<script src="/assets/js/nav.js"></script>
+
+<script type="module">
+import { collection, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { db, escapeHtml } from "/assets/js/firebase-config.js";
+
+// A diferencia del resto del sitio (que usa getDocs una sola vez), acá sí
+// hace falta tiempo real: es la página de resultados en vivo de la temporada.
+
+const CATEGORIAS = [
+    ["contenido", "Contenido en redes"],
+    ["videojuegos", "Videojuegos"],
+    ["presencial", "Presencial / en vivo"]
+];
+
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
+
+function fechaCorta(iso) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
+    if (!match) return "";
+    return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+let alianzas = [];
+let puntos = [];
+let actividades = [];
+
+// Los "robo" restan a la víctima y suman al que robó, desde un solo
+// documento (alianzaId = quien gana, alianzaVictimaId = a quien se le robó).
+function totalAlianza(alianzaId, categoria) {
+    let total = 0;
+    puntos.forEach(p => {
+        if (categoria && p.categoria !== categoria) return;
+        if (p.alianzaId === alianzaId) total += Number(p.puntos) || 0;
+        if (p.tipo === "roba" && p.alianzaVictimaId === alianzaId) total -= Number(p.puntos) || 0;
+    });
+    return total;
+}
+
+function renderVsTotal() {
+    const el = document.getElementById("rivals-vs-total");
+    if (alianzas.length < 1) {
+        el.innerHTML = `<p class="loading">Todavía no hay Alianzas cargadas para esta temporada.</p>`;
+        return;
+    }
+    const totales = alianzas.map(a => ({ alianza: a, total: totalAlianza(a.id) }));
+    const sumaTotal = totales.reduce((sum, t) => sum + t.total, 0) || 1;
+
+    el.innerHTML = `
+<div class="rivals-vs-labels">
+    <span>${escapeHtml(totales[0]?.alianza.nombre || "Alianza 1")} — ${totales[0]?.total || 0} pts</span>
+    <span>${escapeHtml(totales[1]?.alianza.nombre || "Alianza 2")} — ${totales[1]?.total || 0} pts</span>
+</div>
+<div class="rivals-vs-bar">
+    ${totales.map(t => `<div class="rivals-vs-fill" style="flex-basis:${Math.max((t.total / sumaTotal) * 100, t.total > 0 ? 8 : 0)}%;background:${escapeHtml(t.alianza.colorHex || "#7b2cff")};">${t.total > 0 ? t.total : ""}</div>`).join("")}
+</div>
+<p class="rivals-vs-total">${sumaTotal} puntos en juego esta temporada</p>`;
+}
+
+function renderCategorias() {
+    const el = document.getElementById("rivals-categorias");
+    if (!alianzas.length) { el.innerHTML = ""; return; }
+    el.innerHTML = CATEGORIAS.map(([catValue, catLabel]) => {
+        const totales = alianzas.map(a => ({ alianza: a, total: totalAlianza(a.id, catValue) }));
+        const sumaTotal = totales.reduce((sum, t) => sum + t.total, 0) || 1;
+        return `
+<div class="rivals-categoria">
+    <h4>${escapeHtml(catLabel)}</h4>
+    <div class="rivals-vs-bar">
+        ${totales.map(t => `<div class="rivals-vs-fill" style="flex-basis:${Math.max((t.total / sumaTotal) * 100, t.total > 0 ? 10 : 0)}%;background:${escapeHtml(t.alianza.colorHex || "#7b2cff")};">${t.total > 0 ? t.total : ""}</div>`).join("")}
+    </div>
+</div>`;
+    }).join("");
+}
+
+function renderTeams() {
+    const el = document.getElementById("rivals-teams");
+    if (!alianzas.length) {
+        el.innerHTML = `<p class="loading">Todavía no se cargaron las Alianzas de esta temporada.</p>`;
+        return;
+    }
+    el.innerHTML = alianzas.map(a => `
+<div class="rivals-team-card" style="border-top-color:${escapeHtml(a.colorHex || "#7b2cff")};">
+    <div class="rivals-team-head">
+        ${a.logo ? `<img src="${escapeHtml(assetUrl(a.logo))}" alt="${escapeHtml(a.nombre)}">` : ""}
+        <h3>${escapeHtml(a.nombre) || "Alianza"}</h3>
+    </div>
+    ${a.lema ? `<p class="rivals-team-lema">"${escapeHtml(a.lema)}"</p>` : ""}
+    <div class="rivals-team-miembros">
+        ${(a.miembros || []).map(m => `
+        <span class="rivals-miembro-chip">
+            ${m.foto ? `<img src="${escapeHtml(assetUrl(m.foto))}" alt="${escapeHtml(m.nombre)}">` : `<span class="sin-foto">${escapeHtml((m.nombre || "?").charAt(0).toUpperCase())}</span>`}
+            ${escapeHtml(m.nombre) || "Sin nombre"}
+        </span>`).join("") || `<span class="help">Todavía sin miembros asignados.</span>`}
+    </div>
+</div>`).join("");
+}
+
+function renderMomentos() {
+    const el = document.getElementById("rivals-momentos");
+    const destacados = puntos
+        .filter(p => p.destacado)
+        .sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+    if (!destacados.length) {
+        el.innerHTML = `<p class="loading">Todavía no hay momentos destacados.</p>`;
+        return;
+    }
+    el.innerHTML = destacados.map(p => {
+        if (p.tipo === "roba") {
+            return `
+<div class="rivals-momento-card">
+    <span class="rivals-momento-tag robo">🔥 Robo de puntos</span>
+    <h4>${escapeHtml(p.alianzaNombre)} le robó ${p.puntos} pts a ${escapeHtml(p.alianzaVictimaNombre)}</h4>
+    ${p.titulo ? `<p>${escapeHtml(p.titulo)}</p>` : ""}
+    <p class="rivals-momento-fecha">${escapeHtml(fechaCorta(p.fecha))}</p>
+</div>`;
+        }
+        const alianza = alianzas.find(a => a.id === p.alianzaId);
+        const esImagen = /\.(png|jpe?g|gif|webp)$/i.test(p.mediaUrl || "");
+        return `
+<div class="rivals-momento-card">
+    <span class="rivals-momento-tag" style="background:${escapeHtml((alianza && alianza.colorHex) || p.alianzaColor || "#7b2cff")};">${escapeHtml(p.alianzaNombre || "?")}</span>
+    <h4>${escapeHtml(p.titulo) || "Momento destacado"}</h4>
+    ${p.descripcion ? `<p>${escapeHtml(p.descripcion)}</p>` : ""}
+    ${p.mediaUrl ? (esImagen
+        ? `<img src="${escapeHtml(p.mediaUrl)}" alt="${escapeHtml(p.titulo)}" style="width:100%;border-radius:10px;margin-bottom:10px;">`
+        : `<a href="${escapeHtml(p.mediaUrl)}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-bottom:10px;">Ver clip</a>`) : ""}
+    <p class="rivals-momento-fecha">${escapeHtml(fechaCorta(p.fecha))}</p>
+</div>`;
+    }).join("");
+}
+
+function estadoActividadPublico(act) {
+    const hoy = new Date();
+    const evento = new Date(`${act.fechaEvento}T23:59:59`);
+    if (evento < hoy) return "finalizada";
+    const eventoInicio = new Date(`${act.fechaEvento}T00:00:00`);
+    if (eventoInicio <= hoy) return "activa";
+    return "proxima";
+}
+
+function actividadCardHtml(act, estado) {
+    return `
+<div class="rivals-actividad-card${estado === "activa" ? " es-activa" : ""}">
+    ${estado !== "finalizada" ? `<span class="estado-tag ${estado}">${estado === "activa" ? "Activa hoy" : "Próxima"}</span>` : ""}
+    <h4>${escapeHtml(act.titulo) || "Actividad"}</h4>
+    ${act.descripcion ? `<p>${escapeHtml(act.descripcion)}</p>` : ""}
+    ${act.reglasPuntaje ? `<div class="rivals-actividad-reglas">${escapeHtml(act.reglasPuntaje)}</div>` : ""}
+    <p class="rivals-actividad-fecha">${escapeHtml(fechaCorta(act.fechaEvento))}</p>
+</div>`;
+}
+
+function renderActividades() {
+    const hoy = new Date().toISOString().slice(0, 10);
+    const publicadas = actividades.filter(act => (act.fechaPublicacion || act.fechaEvento) <= hoy);
+
+    const activas = publicadas.filter(act => estadoActividadPublico(act) === "activa");
+    const proximas = publicadas.filter(act => estadoActividadPublico(act) === "proxima");
+    const finalizadas = publicadas.filter(act => estadoActividadPublico(act) === "finalizada")
+        .sort((a, b) => String(b.fechaEvento || "").localeCompare(String(a.fechaEvento || "")));
+
+    document.getElementById("rivals-actividades-activas").innerHTML = activas.map(a => actividadCardHtml(a, "activa")).join("");
+    document.getElementById("rivals-actividades-proximas").innerHTML = proximas.map(a => actividadCardHtml(a, "proxima")).join("");
+
+    const historialBtn = document.getElementById("rivals-actividades-historial-btn");
+    const historialEl = document.getElementById("rivals-actividades-historial");
+    if (finalizadas.length) {
+        historialBtn.classList.remove("hidden");
+        historialEl.innerHTML = finalizadas.map(a => actividadCardHtml(a, "finalizada")).join("");
+    } else {
+        historialBtn.classList.add("hidden");
+        historialEl.classList.add("hidden");
+    }
+
+    if (!activas.length && !proximas.length && !finalizadas.length) {
+        document.getElementById("rivals-actividades-activas").innerHTML = `<p class="loading">Todavía no hay actividades publicadas.</p>`;
+    }
+}
+
+document.getElementById("rivals-actividades-historial-btn").addEventListener("click", (event) => {
+    const historialEl = document.getElementById("rivals-actividades-historial");
+    const abierto = !historialEl.classList.contains("hidden");
+    historialEl.classList.toggle("hidden", abierto);
+    event.target.textContent = abierto ? "Ver actividades anteriores" : "Ocultar actividades anteriores";
+});
+
+function renderTodo() {
+    renderVsTotal();
+    renderCategorias();
+    renderTeams();
+    renderMomentos();
+    renderActividades();
+}
+
+onSnapshot(collection(db, "alianzas"), (snapshot) => {
+    alianzas = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(a => a.activo !== false);
+    renderTodo();
+}, (error) => {
+    console.error(error);
+    document.getElementById("rivals-teams").innerHTML = `<p class="loading">No se pudieron cargar las Alianzas.</p>`;
+});
+
+onSnapshot(collection(db, "rivalsPuntos"), (snapshot) => {
+    puntos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTodo();
+}, (error) => {
+    console.error(error);
+});
+
+onSnapshot(collection(db, "rivalsActividades"), (snapshot) => {
+    actividades = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderTodo();
+}, (error) => {
+    console.error(error);
+});
+
+onSnapshot(doc(db, "rivalsConfig", "actual"), (snapshot) => {
+    const data = snapshot.exists() ? snapshot.data() : {};
+    document.getElementById("rivals-temporada-nombre").textContent = data.nombreTemporada || "Temporada en preparación";
+    const fechas = [fechaCorta(data.fechaInicio), fechaCorta(data.fechaFin)].filter(Boolean).join(" — ");
+    document.getElementById("rivals-temporada-fechas").textContent = fechas;
+    const estadoEl = document.getElementById("rivals-temporada-estado");
+    const finalizada = data.estado === "finalizada";
+    estadoEl.textContent = finalizada ? "Temporada finalizada" : "Temporada activa";
+    estadoEl.classList.toggle("finalizada", finalizada);
+}, (error) => {
+    console.error(error);
+});
+</script>
+</body>
+</html>

@@ -5,42 +5,180 @@
 <title>VORANIX Overlay - Vertical</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-:root{ --morado:#7b2cff; --naranja:#ff6a00; --text:#ffffff; }
+:root{
+    --morado:#7b2cff; --morado-light:#9d5bff; --naranja:#ff6a00; --naranja-light:#ff8c33;
+    --text:#ffffff; --grad:linear-gradient(180deg, var(--morado) 0%, var(--naranja) 100%);
+    --glow-morado:rgba(123,44,255,.55); --glow-naranja:rgba(255,106,0,.4);
+}
 *{ box-sizing:border-box; margin:0; padding:0; }
 html, body{ width:340px; height:1080px; background:transparent; overflow:hidden; }
 body{ font-family:"Orbitron",sans-serif; color:var(--text); }
 .hidden{ display:none !important; }
+
+/* Sin panel de fondo: los elementos flotan directo sobre el video, con
+   sombra propia para mantenerse legibles sobre cualquier imagen de fondo. */
 .column{
     position:absolute; top:0; right:0; bottom:0; width:100%;
-    display:flex; flex-direction:column; align-items:center; gap:22px; padding:26px 18px;
-    background:rgba(10,10,15,.82); border-left:2px solid var(--morado);
+    display:flex; flex-direction:column; align-items:center; gap:30px; padding:36px 20px;
 }
-.logo{ height:90px; width:90px; object-fit:contain; }
-.timer{ display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; }
-.timer-label{ font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--naranja); }
-.timer-value{ font-size:26px; font-weight:800; letter-spacing:2px; }
-.sponsor{ height:80px; width:100%; display:flex; align-items:center; justify-content:center; }
-.sponsor img{ max-height:80px; max-width:100%; object-fit:contain; }
-.ticker{ font-size:16px; text-align:center; line-height:1.5; letter-spacing:.5px; margin-top:auto; }
+/* La línea de acento solo se ve mientras el ticker está en pantalla
+   (ver .show-line, activado desde overlay.js junto con el ticker). */
+.column::before{
+    content:""; position:absolute; top:0; left:0; bottom:0; width:3px;
+    background:var(--grad); box-shadow:0 0 16px 2px var(--glow-morado), 0 0 26px 4px var(--glow-naranja);
+    opacity:0; transition:opacity .4s ease;
+}
+.column.show-line::before{ opacity:1; }
+
+.logo-wrap{ position:relative; width:170px; height:170px; flex-shrink:0; display:flex; align-items:center; justify-content:center; filter:drop-shadow(0 4px 14px rgba(0,0,0,.6)); }
+.logo-ring{
+    position:absolute; inset:0; border-radius:50%; border:4px solid rgba(255,255,255,.1);
+    border-top-color:var(--morado); border-right-color:var(--naranja); animation:spin 2.2s linear infinite;
+}
+.logo{ width:122px; height:122px; object-fit:contain; border-radius:50%; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+.timer{ display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; }
+.timer-label{ font-size:12px; letter-spacing:2.5px; text-transform:uppercase; color:var(--naranja-light); font-weight:700; text-shadow:0 2px 6px rgba(0,0,0,.9); }
+.timer-value{ font-size:28px; font-weight:800; letter-spacing:2px; text-shadow:0 0 16px var(--glow-morado), 0 2px 8px rgba(0,0,0,.9); font-variant-numeric:tabular-nums; }
+
+.sponsor{ height:130px; width:100%; display:flex; align-items:center; justify-content:center; position:relative; }
+.sponsor img{
+    max-height:120px; max-width:96%; object-fit:contain; position:absolute; opacity:0; transition:opacity .5s ease;
+    filter:drop-shadow(0 4px 12px rgba(0,0,0,.7));
+}
+.sponsor img.show{ opacity:1; }
+
+.codigo-box{ height:120px; width:100%; display:flex; align-items:center; justify-content:center; }
+.codigo-chip{
+    display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center;
+    opacity:0; transform:translateY(8px); transition:opacity .5s ease, transform .5s ease;
+}
+.codigo-chip.show{ opacity:1; transform:translateY(0); }
+.codigo-chip-img{ max-height:50px; max-width:90%; object-fit:contain; filter:drop-shadow(0 4px 10px rgba(0,0,0,.7)); }
+.codigo-chip-img.hidden{ display:none; }
+.codigo-code{ font-size:18px; font-weight:800; letter-spacing:1.2px; text-shadow:0 2px 8px rgba(0,0,0,.9); color:var(--naranja-light); }
+.codigo-desc{ font-size:11px; font-weight:600; opacity:.85; text-shadow:0 2px 6px rgba(0,0,0,.9); max-width:96%; }
+
+.ticker-wrap{ width:100%; margin-top:auto; overflow:hidden; max-height:180px; }
+.ticker{ font-size:17px; text-align:center; line-height:1.6; letter-spacing:.4px; font-weight:700; text-shadow:0 2px 6px rgba(0,0,0,.9), 0 0 18px rgba(0,0,0,.85); opacity:0; transform:translateY(6px); transition:opacity .4s ease, transform .4s ease; }
+.ticker.show{ opacity:1; transform:translateY(0); }
+
+/* Cartel de redes: entra deslizando desde la izquierda, se queda un rato y
+   se retira por el mismo lado. */
+.social-popup{
+    position:absolute; top:50%; left:18px; right:18px; z-index:10;
+    display:flex; align-items:center; gap:12px;
+    background:rgba(10,10,16,.6); border:1px solid rgba(255,255,255,.14); border-radius:16px;
+    padding:14px 16px; filter:drop-shadow(0 8px 24px rgba(0,0,0,.55));
+    transform:translate(-160%, -50%); opacity:0; transition:transform .6s cubic-bezier(.16,1,.3,1), opacity .4s ease;
+}
+.social-popup.show{ transform:translate(0, -50%); opacity:1; }
+.social-popup-mono{
+    width:42px; height:42px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:#fff;
+}
+.social-popup-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.social-popup-platform{ font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--naranja-light); font-weight:700; }
+.social-popup-handle{ font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Banner de raid: entra con un "pop" celebratorio centrado y se retira
+   igual de golpe. Solo se activa con ?canal= en la URL. */
+.raid-banner{
+    position:absolute; top:50%; left:50%; z-index:20;
+    display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; width:280px;
+    background:rgba(10,10,16,.68); border:2px solid var(--morado); border-radius:20px; padding:26px 20px;
+    box-shadow:0 0 24px 4px var(--glow-morado), 0 0 42px 10px var(--glow-naranja), 0 12px 30px rgba(0,0,0,.6);
+    transform:translate(-50%, -50%) scale(.85); opacity:0;
+    transition:transform .55s cubic-bezier(.34,1.56,.64,1), opacity .4s ease;
+}
+.raid-banner.show{ transform:translate(-50%, -50%) scale(1); opacity:1; }
+.raid-banner-logo{ width:92px; height:92px; }
+.raid-banner-logo .logo{ width:66px; height:66px; }
+.raid-banner-title{ font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--naranja-light); font-weight:800; }
+.raid-banner-name{ font-size:26px; font-weight:800; text-shadow:0 0 18px var(--glow-morado); }
+.raid-banner-viewers{ font-size:14px; font-weight:600; opacity:.9; }
+
+/* Banner de comando "estilo noticiero": entra deslizando desde la derecha
+   (mirrado respecto del popup de redes, que entra desde la izquierda) y se
+   ubica más abajo para no superponerse con él. */
+.comando-banner{
+    position:absolute; top:74%; left:18px; right:18px; z-index:15;
+    display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center;
+    background:rgba(10,10,16,.68); border:1px solid rgba(255,255,255,.14); border-radius:16px;
+    padding:18px 16px 16px; overflow:hidden;
+    filter:drop-shadow(0 8px 24px rgba(0,0,0,.55));
+    transform:translate(160%, -50%); opacity:0; transition:transform .6s cubic-bezier(.16,1,.3,1), opacity .4s ease;
+}
+.comando-banner.show{ transform:translate(0, -50%); opacity:1; }
+.comando-banner-bar{ position:absolute; top:0; left:0; right:0; height:5px; background:var(--morado); }
+.comando-banner-img{ width:52px; height:52px; object-fit:contain; border-radius:8px; }
+.comando-banner-img.hidden{ display:none; }
+.comando-banner-tag{ font-size:10px; letter-spacing:2px; text-transform:uppercase; font-weight:800; color:var(--naranja-light); }
+.comando-banner-title{ font-size:18px; font-weight:800; line-height:1.2; }
+.comando-banner-detail{ font-size:13px; font-weight:500; opacity:.88; }
+.comando-banner-detail.hidden{ display:none; }
 </style>
 </head>
 <body>
 
 <div class="column">
-    <img id="overlay-logo" class="logo" alt="VORANIX">
+    <div class="logo-wrap">
+        <div class="logo-ring"></div>
+        <img id="overlay-logo" class="logo" alt="VORANIX">
+    </div>
     <div id="overlay-timer" class="timer hidden">
         <span id="overlay-timer-label" class="timer-label"></span>
         <span id="overlay-timer-value" class="timer-value"></span>
     </div>
     <div id="overlay-sponsors" class="sponsor hidden">
-        <img id="overlay-sponsor-logo" alt="Sponsor">
+        <img id="overlay-sponsor-logo-a" class="sponsor-img" alt="Sponsor">
+        <img id="overlay-sponsor-logo-b" class="sponsor-img" alt="Sponsor">
     </div>
-    <div id="overlay-ticker" class="ticker hidden"></div>
+    <div id="overlay-codigos" class="codigo-box hidden">
+        <div id="overlay-codigo-chip" class="codigo-chip">
+            <img id="overlay-codigo-img" class="codigo-chip-img hidden" alt="">
+            <span id="overlay-codigo-code" class="codigo-code"></span>
+            <span id="overlay-codigo-desc" class="codigo-desc"></span>
+        </div>
+    </div>
+    <div class="ticker-wrap">
+        <div id="overlay-ticker" class="ticker hidden"></div>
+    </div>
+</div>
+
+<div id="comando-banner" class="comando-banner">
+    <span id="comando-banner-bar" class="comando-banner-bar"></span>
+    <img id="comando-banner-img" class="comando-banner-img hidden" alt="">
+    <span class="comando-banner-tag">VORANIX</span>
+    <span id="comando-banner-title" class="comando-banner-title"></span>
+    <span id="comando-banner-detail" class="comando-banner-detail"></span>
+</div>
+
+<div id="social-popup" class="social-popup">
+    <div class="social-popup-mono"></div>
+    <div class="social-popup-text">
+        <span class="social-popup-platform"></span>
+        <span class="social-popup-handle"></span>
+    </div>
+</div>
+
+<div id="raid-banner" class="raid-banner">
+    <div class="logo-wrap raid-banner-logo">
+        <div class="logo-ring"></div>
+        <img src="/imagenes/logopng.png" class="logo" alt="VORANIX">
+    </div>
+    <span class="raid-banner-title">¡Gracias por el raid!</span>
+    <span class="raid-banner-name" id="raid-banner-name"></span>
+    <span class="raid-banner-viewers" id="raid-banner-viewers"></span>
 </div>
 
 <script type="module">
-    import { initOverlay } from "/assets/js/overlay.js";
+    import { initOverlay, initSocialPopup, initRaidAlert, initOverlayEvento } from "/assets/js/overlay.js";
     initOverlay();
+    initSocialPopup();
+    initRaidAlert();
+    initOverlayEvento();
 </script>
 </body>
 </html>

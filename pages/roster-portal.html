@@ -14,20 +14,45 @@
         .roster-portal-shell{ padding:36px 0 90px; }
         .roster-portal-topbar{
             display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;
-            padding:0 0 26px; border-bottom:1px solid var(--border); margin-bottom:30px;
+            padding:0 0 26px; border-bottom:1px solid var(--border); margin-bottom:26px; position:relative;
+        }
+        .roster-portal-topbar::after{
+            content:""; position:absolute; left:0; bottom:-1px; width:64px; height:2px; background:var(--grad);
         }
         .roster-portal-title{ text-align:left; font-size:clamp(1.5rem,4vw,2.1rem); letter-spacing:2px; margin-bottom:6px; }
-        .roster-portal-subtitle{ color:var(--gris); font-size:13px; }
+        .roster-portal-subtitle{ display:flex; align-items:center; gap:8px; color:var(--gris); font-size:13px; }
+        .roster-portal-subtitle i{ color:var(--naranja); font-size:11px; }
         .roster-portal-user{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
         .roster-portal-user strong{ font-size:13px; }
+
+        .roster-stats-strip{
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr)); gap:14px;
+            margin-bottom:40px;
+        }
+        .roster-stat-tile{
+            display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--border);
+            border-radius:var(--r-lg); padding:16px 18px; transition:border-color .2s, transform .2s;
+        }
+        .roster-stat-tile:hover{ border-color:var(--border-accent); transform:translateY(-3px); }
+        .roster-stat-icon{
+            width:42px; height:42px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+            font-size:16px; color:#fff; background:var(--grad);
+        }
+        .roster-stat-value{ font-size:1.3rem; font-weight:800; color:#fff; line-height:1.2; }
+        .roster-stat-label{ font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:1px; }
+
         .roster-portal-section{ margin-bottom:44px; }
-        .roster-portal-section h2{ font-size:1.2rem; letter-spacing:1px; margin-bottom:16px; }
+        .roster-portal-section h2{
+            display:flex; align-items:center; gap:10px; font-size:1.15rem; letter-spacing:1px;
+            margin-bottom:18px; padding-left:14px; border-left:3px solid var(--morado);
+        }
+        .roster-portal-section h2 i{ color:var(--naranja); font-size:.95em; }
         .mini-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:16px; }
         .player-card{
-            background:var(--grad-subtle); border:1px solid var(--border); border-radius:var(--r-lg);
-            padding:18px; transition:border-color .2s;
+            background:var(--grad-subtle); border:1px solid var(--border); border-top:3px solid var(--morado);
+            border-radius:var(--r-lg); padding:18px; transition:border-color .2s, transform .2s, box-shadow .2s;
         }
-        .player-card:hover{ border-color:var(--border-accent); }
+        .player-card:hover{ border-color:var(--border-accent); border-top-color:var(--naranja); transform:translateY(-4px); box-shadow:0 10px 26px rgba(0,0,0,.35); }
         .player-card-head{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
         .player-card-head img{ width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,106,0,.4); flex-shrink:0; }
         .player-card-head h4{ font-size:1rem; color:#fff; margin-bottom:2px; letter-spacing:.3px; }
@@ -82,6 +107,7 @@
                     </li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/rivals.html">Rivals</a></li>
                     <li><a href="/pages/streamers.html">Streamers</a></li>
                     <li><a href="/pages/influencers.html">Influencers</a></li>
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
@@ -123,7 +149,7 @@
     <div class="roster-portal-topbar">
         <div>
             <h1 class="roster-portal-title">Portal Roster</h1>
-            <p class="roster-portal-subtitle" id="equipo-subtitle">Torneos, scrims y entrenamientos de tu equipo.</p>
+            <p class="roster-portal-subtitle"><i class="fas fa-gamepad"></i> <span id="equipo-subtitle">Torneos, scrims y entrenamientos de tu equipo.</span></p>
         </div>
         <div class="roster-portal-user">
             <strong id="user-email"></strong>
@@ -132,15 +158,17 @@
         </div>
     </div>
 
+    <div id="roster-stats-strip" class="roster-stats-strip hidden"></div>
+
     <div class="roster-portal-section">
-        <h2>Actividad del equipo</h2>
+        <h2><i class="fas fa-calendar-day"></i> Actividad del equipo</h2>
         <div id="actividad-list">
             <p class="loading">Cargando actividad...</p>
         </div>
     </div>
 
     <div class="roster-portal-section">
-        <h2>Tu equipo</h2>
+        <h2><i class="fas fa-users"></i> Tu equipo</h2>
         <div id="equipo-grid" class="mini-grid">
             <p class="loading">Cargando equipo...</p>
         </div>
@@ -158,7 +186,7 @@
             <div class="footer-social">
                 <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener" aria-label="Discord"><i class="fab fa-discord"></i></a>
                 <a href="https://www.instagram.com/voranixstudio/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="https://www.twitch.tv/voranix_gaming" target="_blank" rel="noopener" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
+                <a href="https://www.twitch.tv/voranixstudio" target="_blank" rel="noopener" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
                 <a href="https://www.tiktok.com/@voranix_gaming" target="_blank" rel="noopener" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
             </div>
         </div>
@@ -172,6 +200,7 @@
         <div class="footer-col">
             <h4>Competitivo</h4>
             <a href="/pages/rosters.html">Rosters</a>
+            <a href="/pages/rivals.html">Voranix Rivals</a>
             <a href="/pages/streamers.html">Streamers</a>
             <a href="/pages/influencers.html">Influencers</a>
             <a href="/pages/patrocinadores.html">Patrocinadores</a>
@@ -205,7 +234,7 @@
         getDocs
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { auth, db, escapeHtml } from "/assets/js/firebase-config.js";
-    import { renderActividadList } from "/assets/js/roster-activity.js";
+    import { renderActividadList, getProximoEvento, formatRango } from "/assets/js/roster-activity.js";
 
     const JUEGO_LABELS = { valorant: "Valorant Principal", valorantsecundario: "Valorant Secundario", dbd: "Dead by Daylight", fifa: "EA FC" };
 
@@ -218,10 +247,12 @@
     const equipoSubtitle = document.getElementById("equipo-subtitle");
     const actividadList = document.getElementById("actividad-list");
     const equipoGrid = document.getElementById("equipo-grid");
+    const statsStrip = document.getElementById("roster-stats-strip");
 
     let unsubActividad = null;
     let currentPlayers = [];
     let currentStats = {};
+    let currentItems = [];
 
     function stopListeners(){
         if(unsubActividad) unsubActividad();
@@ -328,6 +359,41 @@
             : `<p class="loading">Todavía no hay jugadores cargados.</p>`;
     }
 
+    // Resumen rápido del equipo: jugadores, partidas con line-up registradas,
+    // MVPs acumulados y el próximo evento agendado. Todo sale de los mismos
+    // datos que ya se piden para "Actividad" y "Tu equipo", sin lecturas extra.
+    function renderStatsStrip(){
+        if(!currentPlayers.length && !currentItems.length){
+            statsStrip.classList.add("hidden");
+            return;
+        }
+        statsStrip.classList.remove("hidden");
+
+        const partidasConLineup = currentItems.filter(item => Array.isArray(item.lineup) && item.lineup.length).length;
+        const mvpsTotal = Object.values(currentStats).reduce((sum, s) => sum + (s.mvpCount || 0), 0);
+        const proximo = getProximoEvento(currentItems);
+
+        const tiles = [
+            { icon: "fa-users", value: currentPlayers.length, label: "Jugadores" },
+            { icon: "fa-gamepad", value: partidasConLineup, label: "Partidas registradas" },
+            { icon: "fa-crown", value: mvpsTotal, label: "MVPs del equipo" },
+            {
+                icon: "fa-calendar-day",
+                value: proximo ? escapeHtml(proximo.titulo || "Evento") : "Sin agendar",
+                label: proximo ? escapeHtml(formatRango(proximo)) || "Próximo evento" : "Próximo evento"
+            }
+        ];
+
+        statsStrip.innerHTML = tiles.map(tile => `
+<div class="roster-stat-tile">
+    <div class="roster-stat-icon"><i class="fas ${tile.icon}"></i></div>
+    <div>
+        <div class="roster-stat-value">${tile.value}</div>
+        <div class="roster-stat-label">${tile.label}</div>
+    </div>
+</div>`).join("");
+    }
+
     async function loadEquipo(juego){
         if(!juego){
             equipoGrid.innerHTML = `<p class="loading">Tu cuenta no tiene un equipo asignado todavía.</p>`;
@@ -340,6 +406,7 @@
                 .filter(item => item.activo !== false)
                 .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
             renderEquipoGrid();
+            renderStatsStrip();
         }catch(error){
             console.error(error);
             equipoGrid.innerHTML = `<p class="loading">No se pudo cargar el equipo.</p>`;
@@ -357,9 +424,11 @@
                 const items = snapshot.docs
                     .map(d => d.data())
                     .filter(item => item.visiblePortal === true);
+                currentItems = items;
                 actividadList.innerHTML = renderActividadList(items);
                 currentStats = computeStats(items);
                 renderEquipoGrid();
+                renderStatsStrip();
             },
             (error) => {
                 console.error(error);

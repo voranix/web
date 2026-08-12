@@ -39,6 +39,7 @@
                     </li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
                     <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/rivals.html">Rivals</a></li>
                     <li><a href="/pages/streamers.html" class="active">Streamers</a></li>
                     <li><a href="/pages/influencers.html">Influencers</a></li>
                     <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
@@ -85,7 +86,7 @@
             <div class="footer-social">
                 <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener" aria-label="Discord"><i class="fab fa-discord"></i></a>
                 <a href="https://www.instagram.com/voranixstudio/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                <a href="https://www.twitch.tv/voranix_gaming" target="_blank" rel="noopener" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
+                <a href="https://www.twitch.tv/voranixstudio" target="_blank" rel="noopener" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
                 <a href="https://www.tiktok.com/@voranix_gaming" target="_blank" rel="noopener" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
             </div>
         </div>
@@ -99,6 +100,7 @@
         <div class="footer-col">
             <h4>Competitivo</h4>
             <a href="/pages/rosters.html">Rosters</a>
+            <a href="/pages/rivals.html">Voranix Rivals</a>
             <a href="/pages/streamers.html">Streamers</a>
             <a href="/pages/influencers.html">Influencers</a>
             <a href="/pages/patrocinadores.html">Patrocinadores</a>
@@ -141,9 +143,10 @@ function flagAlt(pais) {
 }
 
 function renderStreamer(streamer, i) {
-    const redesUrl = streamer.twitch || streamer.instagram || "#";
+    const redesUrl = (streamer.enVivo && streamer.enVivoUrl) || streamer.twitch || streamer.instagram || "#";
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.04}s">
+    ${streamer.enVivo ? `<span class="badge-live"><span></span>En vivo</span>` : ""}
     <img src="${assetUrl(streamer.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(streamer.nombre) || 'Streamer'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
         <h3>${escapeHtml(streamer.nombre) || "Streamer"}</h3>
@@ -163,7 +166,10 @@ async function loadStreamers() {
         const list = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(item => item.activo !== false)
-            .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
+            .sort((a, b) => {
+                if (!!b.enVivo !== !!a.enVivo) return b.enVivo ? 1 : -1;
+                return String(a.nombre || "").localeCompare(String(b.nombre || ""));
+            });
         grid.innerHTML = list.length
             ? list.map(renderStreamer).join("")
             : `<p class="loading">No hay streamers publicados.</p>`;
