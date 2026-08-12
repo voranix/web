@@ -150,9 +150,9 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .idea-color-dot{ width:22px; height:22px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
 .idea-color-dot.active{ border-color:#fff; }
 .pizarra-hint{ font-size:11px; color:var(--muted); width:100%; }
-.pizarra-wrap{ overflow:auto; border:1px solid #272738; border-radius:8px; background:#07070d; max-height:65vh; }
+.pizarra-wrap{ overflow:auto; border:1px solid #272738; border-radius:8px; background:#07070d; max-height:80vh; }
 .pizarra-canvas{
-    position:relative; width:1600px; height:1000px;
+    position:relative; width:2400px; height:1500px;
     background-image:radial-gradient(circle, #23233a 1.5px, transparent 1.5px);
     background-size:24px 24px;
 }
@@ -176,7 +176,20 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .pizarra-svg{ position:absolute; inset:0; width:100%; height:100%; }
 .pizarra-stroke-del{ position:absolute; width:18px; height:18px; border-radius:50%; background:#0b0b16; border:1px solid var(--muted); color:var(--muted); font-size:10px; line-height:16px; text-align:center; cursor:pointer; padding:0; }
 .pizarra-stroke-del:hover{ color:var(--danger); border-color:var(--danger); }
-@media(max-width:768px){ .pizarra-wrap{ max-height:55vh; } }
+.pizarra-resize-handle{
+    position:absolute; right:1px; bottom:1px; width:15px; height:15px; cursor:nwse-resize; z-index:3;
+    background:
+        linear-gradient(135deg, transparent 0 40%, rgba(255,255,255,.45) 40% 46%, transparent 46% 56%, rgba(255,255,255,.45) 56% 62%, transparent 62%);
+    opacity:.55; touch-action:none;
+}
+.pizarra-resize-handle:hover{ opacity:1; }
+.pizarra-imagen{ position:absolute; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,.35); cursor:grab; touch-action:none; border:1px solid #272738; }
+.pizarra-imagen.dragging{ cursor:grabbing; z-index:40; opacity:.9; }
+.pizarra-imagen img{ width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+.pizarra-imagen-actions{ position:absolute; top:4px; right:6px; display:flex; gap:2px; z-index:2; }
+.pizarra-imagen-del{ background:rgba(0,0,0,.5); border:none; border-radius:4px; color:#fff; cursor:pointer; font-size:12px; padding:2px 6px; }
+.pizarra-imagen-del:hover{ color:var(--danger); }
+@media(max-width:768px){ .pizarra-wrap{ max-height:65vh; } }
 
 /* Tablero de tareas (estilo Trello/Jira, 4 columnas con drag & drop) */
 .tareas-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
@@ -2069,8 +2082,11 @@ function renderTableroSection(tableroTab){
     else renderIdeasBoard(panel);
 }
 
-const PIZARRA_W = 1600;
-const PIZARRA_H = 1000;
+const PIZARRA_W = 2400;
+const PIZARRA_H = 1500;
+const PIZARRA_NOTA_MIN_W = 140, PIZARRA_NOTA_MIN_H = 80;
+const PIZARRA_AREA_MIN = 60;
+const PIZARRA_IMG_MIN = 60;
 
 // Coloca el cursor al final de un elemento contenteditable (para que al
 // entrar a editar una nota/área no te tape el texto ya escrito).
@@ -2185,6 +2201,7 @@ function renderIdeasBoard(container){
         const notas = docs.filter(d => (d.tipo || "nota") === "nota");
         const areas = docs.filter(d => d.tipo === "area");
         const trazos = docs.filter(d => d.tipo === "trazo");
+        const imagenes = docs.filter(d => d.tipo === "imagen");
 
         const strokesSvg = trazos.map(t => {
             const pts = (t.puntos || []).map(p => `${p.x},${p.y}`).join(" ");
@@ -2198,16 +2215,27 @@ function renderIdeasBoard(container){
         <button type="button" class="pizarra-area-edit" data-area-edit="${area.id}" title="Editar título">✎</button>
         <button type="button" class="pizarra-area-del" data-area-delete="${area.id}" title="Eliminar área">✕</button>
     </div>
+    <div class="pizarra-resize-handle" data-resize="area" data-resize-id="${area.id}" title="Cambiar tamaño"></div>
 </div>`).join("");
 
         const notasHtml = notas.map(nota => `
-<div class="pizarra-nota" data-pizarra-nota="${nota.id}" style="left:${nota.x}px;top:${nota.y}px;border-color:${nota.color}77;background:${nota.color}1f;">
+<div class="pizarra-nota" data-pizarra-nota="${nota.id}" style="left:${nota.x}px;top:${nota.y}px;width:${nota.width || 180}px;min-height:${nota.height || 110}px;border-color:${nota.color}77;background:${nota.color}1f;">
     <div class="pizarra-nota-actions">
         <button type="button" class="pizarra-nota-edit" data-nota-edit="${nota.id}" title="Editar">✎</button>
         <button type="button" class="pizarra-nota-del" data-nota-delete="${nota.id}" title="Eliminar">✕</button>
     </div>
     <div class="pizarra-nota-text" data-nota-text="${nota.id}" contenteditable="false">${escapeHtml(nota.texto || "")}</div>
     <span class="pizarra-nota-author">${escapeHtml(nota.autorNombre || "Alguien")}</span>
+    <div class="pizarra-resize-handle" data-resize="nota" data-resize-id="${nota.id}" title="Cambiar tamaño"></div>
+</div>`).join("");
+
+        const imagenesHtml = imagenes.map(img => `
+<div class="pizarra-imagen" data-pizarra-imagen="${img.id}" style="left:${img.x}px;top:${img.y}px;width:${img.width}px;height:${img.height}px;">
+    <img src="${img.url}" alt="Imagen del tablero" draggable="false">
+    <div class="pizarra-imagen-actions">
+        <button type="button" class="pizarra-imagen-del" data-imagen-delete="${img.id}" title="Eliminar imagen">✕</button>
+    </div>
+    <div class="pizarra-resize-handle" data-resize="imagen" data-resize-id="${img.id}" title="Cambiar tamaño"></div>
 </div>`).join("");
 
         const strokeDelHtml = trazos.map(t => {
@@ -2215,7 +2243,7 @@ function renderIdeasBoard(container){
             return `<button type="button" class="pizarra-stroke-del" data-stroke-delete="${t.id}" style="left:${Math.max(0, first.x - 9)}px;top:${Math.max(0, first.y - 9)}px;" title="Eliminar trazo">✕</button>`;
         }).join("");
 
-        canvas.innerHTML = `<svg class="pizarra-svg">${strokesSvg}</svg>${areasHtml}${notasHtml}${strokeDelHtml}`;
+        canvas.innerHTML = `<svg class="pizarra-svg">${strokesSvg}</svg>${areasHtml}${imagenesHtml}${notasHtml}${strokeDelHtml}`;
 
         if(pendingEditNotaId){
             const id = pendingEditNotaId; pendingEditNotaId = null;
@@ -2235,6 +2263,8 @@ function renderIdeasBoard(container){
                 tipo: "nota",
                 x: Math.round(Math.max(0, Math.min(PIZARRA_W - 180, pt.x - 90))),
                 y: Math.round(Math.max(0, Math.min(PIZARRA_H - 110, pt.y - 55))),
+                width: 180,
+                height: 110,
                 texto: "",
                 color,
                 ...autorInfo(),
@@ -2247,28 +2277,61 @@ function renderIdeasBoard(container){
         }
     }
 
-    function startDragNota(event, notaEl){
+    async function crearImagen(file, pt){
+        if(!file || !file.type || !file.type.startsWith("image/")) return;
+        busy = true;
+        try{
+            const url = await uploadImage(file, "ideas", "pizarra");
+            const dims = await new Promise((resolve) => {
+                const probe = new Image();
+                probe.onload = () => resolve({ w: probe.naturalWidth || 320, h: probe.naturalHeight || 200 });
+                probe.onerror = () => resolve({ w: 320, h: 200 });
+                probe.src = url;
+            });
+            const displayW = Math.min(360, dims.w);
+            const displayH = Math.round(displayW * (dims.h / dims.w));
+            await addDoc(collection(db, "ideas"), {
+                tipo: "imagen",
+                x: Math.round(Math.max(0, Math.min(PIZARRA_W - displayW, pt.x - displayW / 2))),
+                y: Math.round(Math.max(0, Math.min(PIZARRA_H - displayH, pt.y - displayH / 2))),
+                width: displayW,
+                height: displayH,
+                url,
+                ...autorInfo(),
+                createdAt: serverTimestamp()
+            });
+        }catch(error){
+            console.error(error);
+            alert("No se pudo pegar la imagen.");
+        }finally{
+            busy = false;
+        }
+    }
+
+    // Arrastre genérico (mover) para notas, áreas e imágenes: todas se
+    // posicionan igual (left/top absolutos dentro del canvas) y persisten
+    // x/y en el mismo documento de "ideas".
+    function startDragEl(event, el, id){
         event.preventDefault();
-        const id = notaEl.dataset.pizarraNota;
-        const startLeft = parseFloat(notaEl.style.left);
-        const startTop = parseFloat(notaEl.style.top);
+        const startLeft = parseFloat(el.style.left);
+        const startTop = parseFloat(el.style.top);
         const startX = event.clientX, startY = event.clientY;
         busy = true;
-        notaEl.classList.add("dragging");
-        notaEl.setPointerCapture(event.pointerId);
+        el.classList.add("dragging");
+        el.setPointerCapture(event.pointerId);
 
         function onMove(e){
-            const nx = Math.max(0, Math.min(PIZARRA_W - notaEl.offsetWidth, startLeft + (e.clientX - startX)));
-            const ny = Math.max(0, Math.min(PIZARRA_H - notaEl.offsetHeight, startTop + (e.clientY - startY)));
-            notaEl.style.left = nx + "px";
-            notaEl.style.top = ny + "px";
+            const nx = Math.max(0, Math.min(PIZARRA_W - el.offsetWidth, startLeft + (e.clientX - startX)));
+            const ny = Math.max(0, Math.min(PIZARRA_H - el.offsetHeight, startTop + (e.clientY - startY)));
+            el.style.left = nx + "px";
+            el.style.top = ny + "px";
         }
         function onUp(){
-            notaEl.removeEventListener("pointermove", onMove);
-            notaEl.removeEventListener("pointerup", onUp);
-            notaEl.classList.remove("dragging");
-            const finalX = parseFloat(notaEl.style.left);
-            const finalY = parseFloat(notaEl.style.top);
+            el.removeEventListener("pointermove", onMove);
+            el.removeEventListener("pointerup", onUp);
+            el.classList.remove("dragging");
+            const finalX = parseFloat(el.style.left);
+            const finalY = parseFloat(el.style.top);
             busy = false;
             // Si no se movió, era un click (ej. el primero de un doble clic para
             // editar): no re-renderizar ni escribir en Firestore por las dudas.
@@ -2278,39 +2341,45 @@ function renderIdeasBoard(container){
             updateDoc(doc(db, "ideas", id), { x: finalX, y: finalY }).catch(err => console.error(err));
             renderCanvas(latestDocs);
         }
-        notaEl.addEventListener("pointermove", onMove);
-        notaEl.addEventListener("pointerup", onUp);
+        el.addEventListener("pointermove", onMove);
+        el.addEventListener("pointerup", onUp);
     }
 
-    function startDragArea(event, areaEl){
+    // Redimensionado genérico (arrastrando la esquina inferior derecha) para
+    // notas, áreas e imágenes. Guarda width/height en el documento; en las
+    // notas se usa como min-height, así el texto todavía puede empujarla
+    // más alta si hace falta.
+    function startResizeEl(event, handleEl, tipo, id, minW, minH){
         event.preventDefault();
-        const id = areaEl.dataset.pizarraArea;
-        const startLeft = parseFloat(areaEl.style.left);
-        const startTop = parseFloat(areaEl.style.top);
+        event.stopPropagation();
+        const el = handleEl.closest("[data-pizarra-nota],[data-pizarra-area],[data-pizarra-imagen]");
+        if(!el) return;
+        const startW = el.offsetWidth, startH = el.offsetHeight;
         const startX = event.clientX, startY = event.clientY;
+        const left = parseFloat(el.style.left);
+        const top = parseFloat(el.style.top);
         busy = true;
-        areaEl.setPointerCapture(event.pointerId);
+        handleEl.setPointerCapture(event.pointerId);
 
         function onMove(e){
-            const nx = Math.max(0, Math.min(PIZARRA_W - areaEl.offsetWidth, startLeft + (e.clientX - startX)));
-            const ny = Math.max(0, Math.min(PIZARRA_H - areaEl.offsetHeight, startTop + (e.clientY - startY)));
-            areaEl.style.left = nx + "px";
-            areaEl.style.top = ny + "px";
+            const nw = Math.max(minW, Math.min(PIZARRA_W - left, startW + (e.clientX - startX)));
+            const nh = Math.max(minH, Math.min(PIZARRA_H - top, startH + (e.clientY - startY)));
+            el.style.width = nw + "px";
+            if(tipo === "nota") el.style.minHeight = nh + "px"; else el.style.height = nh + "px";
         }
         function onUp(){
-            areaEl.removeEventListener("pointermove", onMove);
-            areaEl.removeEventListener("pointerup", onUp);
-            const finalX = parseFloat(areaEl.style.left);
-            const finalY = parseFloat(areaEl.style.top);
+            handleEl.removeEventListener("pointermove", onMove);
+            handleEl.removeEventListener("pointerup", onUp);
+            const finalW = Math.round(el.offsetWidth);
+            const finalH = Math.round(el.offsetHeight);
             busy = false;
-            if(finalX === startLeft && finalY === startTop) return;
             const localDoc = latestDocs.find(d => d.id === id);
-            if(localDoc){ localDoc.x = finalX; localDoc.y = finalY; }
-            updateDoc(doc(db, "ideas", id), { x: finalX, y: finalY }).catch(err => console.error(err));
+            if(localDoc){ localDoc.width = finalW; localDoc.height = finalH; }
+            updateDoc(doc(db, "ideas", id), { width: finalW, height: finalH }).catch(err => console.error(err));
             renderCanvas(latestDocs);
         }
-        areaEl.addEventListener("pointermove", onMove);
-        areaEl.addEventListener("pointerup", onUp);
+        handleEl.addEventListener("pointermove", onMove);
+        handleEl.addEventListener("pointerup", onUp);
     }
 
     function startDrawArea(event, startPt){
@@ -2411,11 +2480,21 @@ function renderIdeasBoard(container){
     }
 
     canvas.addEventListener("pointerdown", (event) => {
-        if(event.target.closest("[data-nota-delete],[data-area-delete],[data-stroke-delete],[data-nota-edit],[data-area-edit]")) return;
+        const resizeHandle = event.target.closest("[data-resize]");
+        if(resizeHandle){
+            const tipo = resizeHandle.dataset.resize;
+            const id = resizeHandle.dataset.resizeId;
+            const minW = tipo === "nota" ? PIZARRA_NOTA_MIN_W : (tipo === "area" ? PIZARRA_AREA_MIN : PIZARRA_IMG_MIN);
+            const minH = tipo === "nota" ? PIZARRA_NOTA_MIN_H : (tipo === "area" ? PIZARRA_AREA_MIN : PIZARRA_IMG_MIN);
+            startResizeEl(event, resizeHandle, tipo, id, minW, minH);
+            return;
+        }
+        if(event.target.closest("[data-nota-delete],[data-area-delete],[data-imagen-delete],[data-stroke-delete],[data-nota-edit],[data-area-edit]")) return;
         if(event.target.closest("[contenteditable='true']")) return;
 
         const notaEl = event.target.closest("[data-pizarra-nota]");
         const areaEl = event.target.closest("[data-pizarra-area]");
+        const imagenEl = event.target.closest("[data-pizarra-imagen]");
 
         if(tool === "mover"){
             if(notaEl){
@@ -2424,18 +2503,20 @@ function renderIdeasBoard(container){
                     if(textEl) enterNotaEditMode(textEl);
                     return;
                 }
-                startDragNota(event, notaEl);
+                startDragEl(event, notaEl, notaEl.dataset.pizarraNota);
             }else if(areaEl){
                 if(isDoubleTap(areaEl.dataset.pizarraArea)){
                     const titleEl = areaEl.querySelector("[data-area-title]");
                     if(titleEl) enterAreaTitleEditMode(titleEl);
                     return;
                 }
-                startDragArea(event, areaEl);
+                startDragEl(event, areaEl, areaEl.dataset.pizarraArea);
+            }else if(imagenEl){
+                startDragEl(event, imagenEl, imagenEl.dataset.pizarraImagen);
             }
             return;
         }
-        if(notaEl || areaEl) return;
+        if(notaEl || areaEl || imagenEl) return;
 
         const pt = canvasPoint(event);
         if(tool === "nota") crearNota(pt);
@@ -2466,11 +2547,38 @@ function renderIdeasBoard(container){
             if(confirm("¿Eliminar esta área? (las notas de adentro no se borran)")) await deleteDoc(doc(db, "ideas", areaDel.dataset.areaDelete)).catch(err => console.error(err));
             return;
         }
+        const imagenDel = event.target.closest("[data-imagen-delete]");
+        if(imagenDel){
+            if(confirm("¿Eliminar esta imagen?")) await deleteDoc(doc(db, "ideas", imagenDel.dataset.imagenDelete)).catch(err => console.error(err));
+            return;
+        }
         const strokeDel = event.target.closest("[data-stroke-delete]");
         if(strokeDel) await deleteDoc(doc(db, "ideas", strokeDel.dataset.strokeDelete)).catch(err => console.error(err));
     });
 
-    unsubscribeList = onSnapshot(collection(db, "ideas"), (snapshot) => {
+    // Pegar una imagen (Ctrl+V) la agrega al tablero. Se ignora mientras se
+    // está editando texto de una nota/área (para no interferir con pegar
+    // texto ahí) o mientras hay un drag/resize en curso.
+    function onPasteImage(event){
+        if(busy) return;
+        if(document.activeElement && document.activeElement.getAttribute && document.activeElement.getAttribute("contenteditable") === "true") return;
+        const items = (event.clipboardData || window.clipboardData)?.items;
+        if(!items) return;
+        const imageItem = Array.from(items).find(it => it.type && it.type.startsWith("image/"));
+        if(!imageItem) return;
+        event.preventDefault();
+        const file = imageItem.getAsFile();
+        if(!file) return;
+        const wrap = canvas.closest(".pizarra-wrap");
+        const pt = {
+            x: (wrap ? wrap.scrollLeft : 0) + (wrap ? wrap.clientWidth : canvas.clientWidth) / 2,
+            y: (wrap ? wrap.scrollTop : 0) + (wrap ? wrap.clientHeight : canvas.clientHeight) / 2
+        };
+        crearImagen(file, pt);
+    }
+    document.addEventListener("paste", onPasteImage);
+
+    const unsubIdeas = onSnapshot(collection(db, "ideas"), (snapshot) => {
         const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         docs.forEach((item, i) => {
             if(!item.tipo) item.tipo = "nota";
@@ -2485,6 +2593,12 @@ function renderIdeasBoard(container){
         console.error(error);
         canvas.innerHTML = `<p class="loading" style="padding:20px;">No se pudieron cargar las ideas.</p>`;
     });
+    // unsubscribeList es un slot único global: al salir de la sección hay que
+    // cortar tanto el listener de Firestore como el de "paste" en document.
+    unsubscribeList = () => {
+        unsubIdeas();
+        document.removeEventListener("paste", onPasteImage);
+    };
 }
 
 function tareaResponsables(tarea){
