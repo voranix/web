@@ -104,6 +104,29 @@ service cloud.firestore {
     match /overlayComandos/{doc} {
       allow read: if true;
       allow write: if isStaff();
+      // Cada creador puede administrar sus propios comandos, exclusivos de
+      // su canal (canal == su twitchLogin verificado por OAuth), además de
+      // los generales que carga el staff (esos no tienen campo canal).
+      // Nunca puede tocar un comando de otro canal ni "globalizar" el
+      // propio vaciando/cambiando canal.
+      allow create: if hasRole("creador") &&
+        request.resource.data.canal is string && request.resource.data.canal.size() > 0 &&
+        request.resource.data.canal == userProfile().twitchLogin;
+      allow update: if hasRole("creador") &&
+        resource.data.canal == userProfile().twitchLogin &&
+        request.resource.data.canal == resource.data.canal;
+      allow delete: if hasRole("creador") && resource.data.canal == userProfile().twitchLogin;
+    }
+
+    // Layout personalizado del overlay (posición de logo/redes/banner de
+    // comando/banner de raid) por canal, doc id == twitchLogin verificado.
+    // Lectura pública: la lee el propio overlay en OBS, sin sesión. Se deja
+    // leer siempre en true por la misma razón que overlayEventoActual y
+    // raidAlerts (OBS no puede autenticarse) — no expone nada sensible, son
+    // solo coordenadas.
+    match /overlayLayout/{doc} {
+      allow read: if true;
+      allow write: if isStaff() || (hasRole("creador") && doc == userProfile().twitchLogin);
     }
 
     match /overlayCodigos/{doc} {

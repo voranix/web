@@ -388,3 +388,40 @@ export function initOverlayEvento() {
     if (canal) escucharEvento(canal);
     escucharEvento("_general");
 }
+
+// Elementos que cada creador puede reposicionar libremente desde el editor
+// de layout del Portal Creadores (overlayLayout/{canal}.horizontal|vertical).
+// El resto de la pantalla (barra de logo+ticker+timer+sponsors+códigos)
+// queda fija: es un conjunto con animaciones/anchos que dependen de estar
+// todos juntos, así que no se puede desarmar en piezas sueltas sin riesgo.
+const LAYOUT_ELEMENTOS = {
+    logo: () => document.getElementById("logo-block"),
+    social: () => document.getElementById("social-popup"),
+    comando: () => document.getElementById("comando-banner"),
+    raid: () => document.getElementById("raid-banner")
+};
+
+// Si un elemento no tiene posición guardada, se deja tal cual estaba (su
+// CSS original) — así ningún creador que nunca abrió el editor nota ningún
+// cambio en su overlay. Solo se pisan left/top/right/bottom cuando SÍ hay
+// una posición guardada para ese elemento puntual.
+export function initCustomLayout(orientacion) {
+    const params = new URLSearchParams(location.search);
+    const canal = (params.get("canal") || "").toLowerCase().trim();
+    if (!canal) return;
+
+    onSnapshot(doc(db, "overlayLayout", canal), (snapshot) => {
+        const layout = (snapshot.exists() ? snapshot.data()[orientacion] : null) || {};
+        for (const [key, getEl] of Object.entries(LAYOUT_ELEMENTOS)) {
+            const pos = layout[key];
+            if (!pos) continue;
+            const el = getEl();
+            if (!el) continue;
+            el.style.left = `${pos.x}%`;
+            el.style.top = `${pos.y}%`;
+            el.style.right = "auto";
+            el.style.bottom = "auto";
+            el.style.display = pos.visible === false ? "none" : "";
+        }
+    }, (error) => console.error("overlayLayout", error));
+}

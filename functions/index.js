@@ -701,18 +701,27 @@ async function enviarMensajeChat(broadcasterId, botUserId, botToken, clientId, m
 
 // Busca, entre los comandos activos, el primero cuyo/s trigger/s (separados
 // por coma o espacio, igual que antes) coincidan con el texto del chat.
-async function buscarComandoCoincidente(db, texto) {
+// Los comandos con "canal" (los que carga cada creador desde su propio
+// portal) son exclusivos de ESE canal y ganan sobre uno general con el
+// mismo trigger; los comandos sin "canal" (los que carga el staff desde
+// Admin) siguen siendo generales, para todos los canales afiliados.
+async function buscarComandoCoincidente(db, texto, canal) {
     const snapshot = await db.collection("overlayComandos").get();
+    let coincidenciaGeneral = null;
     for (const docSnap of snapshot.docs) {
         const data = docSnap.data();
         if (data.activo === false) continue;
         const triggers = String(data.trigger || "")
             .split(/[,\s]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
-        if (triggers.some(t => texto === t || texto.startsWith(`${t} `))) {
-            return { ref: docSnap.ref, ...data };
+        if (!triggers.some(t => texto === t || texto.startsWith(`${t} `))) continue;
+
+        if (data.canal) {
+            if (data.canal === canal) return { ref: docSnap.ref, ...data };
+        } else if (!coincidenciaGeneral) {
+            coincidenciaGeneral = { ref: docSnap.ref, ...data };
         }
     }
-    return null;
+    return coincidenciaGeneral;
 }
 
 // tipo "codigo": toma el primer código de descuento activo (mismo orden en
@@ -755,7 +764,7 @@ exports.twitchChatWebhook = onRequest(
             const canal = String(event?.broadcaster_user_login || "").toLowerCase();
 
             const db = admin.firestore();
-            const comando = await buscarComandoCoincidente(db, texto);
+            const comando = await buscarComandoCoincidente(db, texto, canal);
             if (!comando) return;
 
             // Cooldown: mientras no pasó el tiempo configurado desde el último

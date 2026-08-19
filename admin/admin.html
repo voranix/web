@@ -4058,6 +4058,7 @@ function renderOverlayComandosPanel(container){
 <div class="rivals-actividad-row">
     <span class="rivals-actividad-estado ${cmd.activo === false ? "finalizada" : "activa"}">${cmd.activo === false ? "Inactivo" : "Activo"}</span>
     <span class="rivals-actividad-titulo">${escapeHtml(cmd.trigger) || "Sin comando"}</span>
+    <span class="dashboard-tag" title="${cmd.canal ? "Comando propio del creador, exclusivo de su canal" : "Comando general, activo en todos los canales afiliados"}">${cmd.canal ? `@${escapeHtml(cmd.canal)}` : "General"}</span>
     <span class="rivals-actividad-modo">${OVERLAY_TIPO_LABELS[cmd.tipo] || cmd.tipo || ""} · cooldown ${cmd.cooldownSegundos ?? 0}s</span>
     <span class="rivals-actividad-fecha">Último uso: ${escapeHtml(ultimo)}</span>
     <div class="rivals-actividad-actions">

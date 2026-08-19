@@ -19,8 +19,13 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
    sombra propia para mantenerse legibles sobre cualquier imagen de fondo. */
 .bar{
     position:absolute; left:0; right:0; bottom:0; height:170px;
-    display:flex; align-items:center; gap:32px; padding:0 44px;
+    display:flex; align-items:center; gap:32px; padding:0 44px 0 260px;
 }
+/* El logo se sacó de la barra para poder moverlo de forma independiente
+   (editor de layout del Portal Creadores); la barra le deja el mismo
+   espacio de siempre (padding-left) para que, sin un layout personalizado
+   guardado, se vea idéntica a como era antes. */
+#logo-block{ position:absolute; left:44px; top:920px; z-index:5; }
 /* La línea de acento solo se ve mientras el ticker está en pantalla
    (ver .show-line, activado desde overlay.js junto con el ticker). */
 .bar::before{
@@ -36,8 +41,6 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
     border-top-color:var(--morado); border-right-color:var(--naranja); animation:spin 2.2s linear infinite;
 }
 .logo{ width:108px; height:108px; object-fit:contain; border-radius:50%; }
-
-.divider{ width:2px; height:70px; background:linear-gradient(180deg, transparent, rgba(255,255,255,.25), transparent); flex-shrink:0; filter:drop-shadow(0 0 6px rgba(0,0,0,.8)); }
 
 .ticker-wrap{
     flex:1; min-width:0; height:100%; display:flex; align-items:center; overflow:hidden; position:relative;
@@ -140,12 +143,14 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
 </head>
 <body>
 
-<div class="bar">
+<div id="logo-block">
     <div class="logo-wrap">
         <div class="logo-ring"></div>
         <img id="overlay-logo" class="logo" alt="VORANIX">
     </div>
-    <div class="divider"></div>
+</div>
+
+<div class="bar">
     <div class="ticker-wrap">
         <div id="overlay-ticker" class="ticker hidden"></div>
     </div>
@@ -199,11 +204,12 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
 </div>
 
 <script type="module">
-    import { initOverlay, initSocialPopup, initRaidAlert, initOverlayEvento } from "/assets/js/overlay.js";
+    import { initOverlay, initSocialPopup, initRaidAlert, initOverlayEvento, initCustomLayout } from "/assets/js/overlay.js";
     initOverlay();
     initSocialPopup();
     initRaidAlert();
     initOverlayEvento();
+    initCustomLayout("horizontal");
 </script>
 </body>
 </html>
