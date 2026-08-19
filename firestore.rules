@@ -54,13 +54,11 @@ service cloud.firestore {
       // una tarea. Sigue sin poder crear/editar/borrar cuentas (eso es
       // exclusivo de admin, "staff... menos usuarios").
       allow read: if isStaff() || (signedIn() && request.auth.uid == userId);
-      // Un creador puede autogestionar su propio usuario de Twitch (para
-      // armar su link de overlay personalizado y ver el estado del bot en
-      // su canal) sin poder tocar roles ni ningún otro campo de su cuenta.
-      allow update: if isAdmin() || (
-        signedIn() && request.auth.uid == userId &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["twitchLogin"])
-      );
+      // twitchLogin ya NO se autogestiona con un write directo del cliente:
+      // se verifica con OAuth contra la cuenta real de Twitch y lo escribe
+      // el SDK de Admin desde twitchBotAuthCallback (bypassa estas reglas).
+      // Esto evita que alguien escriba el canal de otra persona a mano.
+      allow update: if isAdmin();
       allow create, delete: if isAdmin();
     }
 

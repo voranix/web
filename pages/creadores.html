@@ -161,7 +161,9 @@
             <input id="password" type="password" autocomplete="current-password" required>
         </div>
         <button class="btn" type="submit" style="width:100%;">Ingresar</button>
+        <button class="btn secondary small" type="button" id="forgot-password-btn" style="width:100%;margin-top:8px;">¿Olvidaste tu contraseña?</button>
         <div id="login-error" class="error"></div>
+        <div id="forgot-password-msg" class="muted" style="font-size:12px;margin-top:6px;"></div>
     </form>
 </section>
 
@@ -175,6 +177,7 @@
         <div class="creadores-user">
             <strong id="user-email"></strong>
             <span id="role-badge" class="badge"></span>
+            <button class="btn secondary" type="button" id="open-tutorial-btn"><i class="fas fa-circle-question"></i> Tutorial</button>
             <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
         </div>
     </div>
@@ -182,21 +185,9 @@
     <div id="creadores-stats-strip" class="creadores-stats-strip hidden"></div>
 
     <div class="overlay-links-block">
-        <h2 class="overlay-links-title"><i class="fab fa-twitch"></i> Tu usuario de Twitch</h2>
-        <p class="muted overlay-links-sub">Lo usamos para armar tu overlay personalizado y para conectar el bot a tu canal, sin mezclarse con los de otros creadores.</p>
-        <form id="twitch-login-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;max-width:440px;">
-            <div class="field" style="flex:1;min-width:200px;margin:0;">
-                <label for="twitch-login-input">Usuario de Twitch (sin @)</label>
-                <input id="twitch-login-input" type="text" placeholder="ej: tu_usuario" autocomplete="off">
-            </div>
-            <button class="btn" type="submit">Guardar</button>
-        </form>
-        <div id="twitch-login-msg" class="muted" style="margin-top:8px;font-size:12px;"></div>
-    </div>
-
-    <div id="bot-status-block" class="overlay-links-block hidden">
-        <h2 class="overlay-links-title"><i class="fas fa-robot"></i> Bot de chat</h2>
-        <div id="bot-status-content"></div>
+        <h2 class="overlay-links-title"><i class="fab fa-twitch"></i> Tu cuenta de Twitch</h2>
+        <p class="muted overlay-links-sub">Se verifica directo contra tu cuenta real de Twitch (OAuth) y así queda tu overlay y tu bot de chat sin mezclarse con los de otros creadores.</p>
+        <div id="twitch-status-content"><p class="loading">Cargando...</p></div>
     </div>
 
     <div class="overlay-links-block">
@@ -218,6 +209,23 @@
         </div>
     </div>
 </section>
+
+<div id="tutorial-modal" class="modal hidden">
+    <div class="modal-card" style="max-width:560px;">
+        <div class="modal-head">
+            <h2 id="tutorial-title">Cómo funciona el Portal Creadores</h2>
+            <button class="btn secondary small" type="button" id="close-tutorial-modal">Cerrar</button>
+        </div>
+        <div id="tutorial-body"></div>
+        <div class="modal-actions" style="justify-content:space-between;align-items:center;">
+            <span id="tutorial-progress" class="muted" style="font-size:12px;"></span>
+            <div style="display:flex;gap:10px;">
+                <button class="btn secondary" type="button" id="tutorial-prev">Anterior</button>
+                <button class="btn" type="button" id="tutorial-next">Siguiente</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <footer class="footer">
     <div class="footer-inner container">
@@ -267,16 +275,17 @@
     import {
         signInWithEmailAndPassword,
         onAuthStateChanged,
-        signOut
+        signOut,
+        sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import {
         doc,
         getDoc,
-        updateDoc,
         collection,
         onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-    import { auth, db, escapeHtml } from "/assets/js/firebase-config.js";
+    import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
+    import { auth, db, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
 
     const TWITCH_BOT_AUTH_CANAL_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/twitchBotAuthStart?tipo=canal";
 
@@ -301,6 +310,7 @@
 
     let unsubAccesos = null;
     let unsubProyectos = null;
+    let unsubProfile = null;
     let accesosCount = 0;
     let proyectosCount = 0;
     let botConectado = null; // null = todavía sin consultar
@@ -310,6 +320,8 @@
         unsubAccesos = null;
         if(unsubProyectos) unsubProyectos();
         unsubProyectos = null;
+        if(unsubProfile) unsubProfile();
+        unsubProfile = null;
     }
 
     function showLogin(){
@@ -327,10 +339,22 @@
         creadoresShell.classList.remove("hidden");
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
         roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
-        renderTwitchLoginForm(profile);
         renderOverlayLinks(profile);
-        renderBotStatus(profile.twitchLogin || "");
+        renderTwitchStatus(profile);
         renderStatsStrip();
+
+        if(localStorage.getItem(TUTORIAL_SEEN_KEY) !== "1") openTutorial();
+
+        // Escucha en vivo: si el creador conecta su Twitch en otra pestaña
+        // (vuelve del OAuth de Twitch), acá se refleja solo, sin recargar.
+        if(unsubProfile) unsubProfile();
+        unsubProfile = onSnapshot(doc(db, "users", user.uid), snapshot => {
+            if(!snapshot.exists()) return;
+            currentProfile = snapshot.data();
+            renderOverlayLinks(currentProfile);
+            renderTwitchStatus(currentProfile);
+            renderStatsStrip();
+        });
     }
 
     // Resumen rápido de la cuenta: estado de Twitch/bot y cuánto contenido
@@ -363,36 +387,12 @@
 </div>`).join("");
     }
 
-    function renderTwitchLoginForm(profile){
-        document.getElementById("twitch-login-input").value = profile.twitchLogin || "";
-        document.getElementById("twitch-login-msg").textContent = "";
-    }
-
-    document.getElementById("twitch-login-form").addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const msgEl = document.getElementById("twitch-login-msg");
-        const input = document.getElementById("twitch-login-input");
-        const twitchLogin = input.value.trim().toLowerCase().replace(/^@/, "");
-        if(!currentUser) return;
-        try{
-            await updateDoc(doc(db, "users", currentUser.uid), { twitchLogin });
-            currentProfile = { ...currentProfile, twitchLogin };
-            msgEl.textContent = "¡Guardado!";
-            renderOverlayLinks(currentProfile);
-            renderBotStatus(twitchLogin);
-            renderStatsStrip();
-        }catch(error){
-            console.error(error);
-            msgEl.textContent = "No se pudo guardar. Intentá de nuevo.";
-        }
-    });
-
     function renderOverlayLinks(profile){
         const content = document.getElementById("overlay-links-content");
         const twitchLogin = profile.twitchLogin || "";
 
         if(!twitchLogin){
-            content.innerHTML = `<p class="muted">Cargá tu usuario de Twitch arriba para generar tus links personalizados de overlay.</p>`;
+            content.innerHTML = `<p class="muted">Conectá tu cuenta de Twitch arriba para generar tus links personalizados de overlay.</p>`;
             return;
         }
 
@@ -430,36 +430,55 @@
         });
     }
 
-    async function renderBotStatus(twitchLogin){
-        const block = document.getElementById("bot-status-block");
-        const content = document.getElementById("bot-status-content");
+    // El link a Twitch lleva un ?state= firmado por generarEstadoTwitchCanal
+    // (Cloud Function autenticada), nunca un uid crudo: así twitchBotAuthStart
+    // no puede ser usado para pedir un state válido a nombre de otra cuenta.
+    async function conectarTwitch(button){
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Abriendo Twitch...";
+        try{
+            const generarEstado = httpsCallable(functionsInstance, "generarEstadoTwitchCanal");
+            const result = await generarEstado();
+            const url = `${TWITCH_BOT_AUTH_CANAL_URL}&state=${encodeURIComponent(result.data.state)}`;
+            window.open(url, "_blank", "noopener");
+        }catch(error){
+            console.error(error);
+            alert("No se pudo iniciar la conexión con Twitch. Intentá de nuevo.");
+        }
+        button.disabled = false;
+        button.textContent = original;
+    }
+
+    async function renderTwitchStatus(profile){
+        const content = document.getElementById("twitch-status-content");
+        const twitchLogin = profile.twitchLogin || "";
+
         if(!twitchLogin){
-            block.classList.add("hidden");
             botConectado = null;
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste tu cuenta de Twitch.</p>
+</div>
+<button class="btn" type="button" data-connect-twitch>Conectar mi cuenta de Twitch</button>`;
+            content.querySelector("[data-connect-twitch]").addEventListener("click", (event) => conectarTwitch(event.currentTarget));
+            renderStatsStrip();
             return;
         }
-        block.classList.remove("hidden");
+
         content.innerHTML = `<p class="muted">Consultando estado...</p>`;
         try{
             const snapshot = await getDoc(doc(db, "twitchBotAuth", twitchLogin));
-            if(snapshot.exists()){
-                const data = snapshot.data();
-                const fecha = data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "";
-                botConectado = true;
-                content.innerHTML = `
-<div class="bot-status-row">
-    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
-    <p style="margin:0;">El bot está conectado a tu canal${fecha ? ` desde el ${escapeHtml(fecha)}` : ""}.</p>
-</div>`;
-            }else{
-                botConectado = false;
-                content.innerHTML = `
+            const fecha = snapshot.exists() ? (snapshot.data().authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            botConectado = snapshot.exists();
+            content.innerHTML = `
 <div class="bot-status-row" style="margin-bottom:14px;">
-    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
-    <p class="muted" style="margin:0;">Todavía no conectaste el bot a tu canal.</p>
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">Conectado como <b>@${escapeHtml(twitchLogin)}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Twitch.</p>
 </div>
-<a class="btn" href="${TWITCH_BOT_AUTH_CANAL_URL}" target="_blank" rel="noopener">Conectar el bot a mi canal</a>`;
-            }
+<button class="btn secondary" type="button" data-connect-twitch>Reconectar / cambiar de cuenta</button>`;
+            content.querySelector("[data-connect-twitch]").addEventListener("click", (event) => conectarTwitch(event.currentTarget));
         }catch(error){
             console.error(error);
             botConectado = null;
@@ -467,6 +486,70 @@
         }
         renderStatsStrip();
     }
+
+    // Tutorial paso a paso: aparece solo la primera vez que el creador entra
+    // al portal (bandera en localStorage) y después queda disponible desde
+    // el botón "Tutorial" de la barra superior.
+    const TUTORIAL_SEEN_KEY = "voranixCreadoresTutorialSeen";
+    const TUTORIAL_STEPS = [
+        {
+            titulo: "Bienvenido al Portal Creadores",
+            texto: "Acá administrás todo lo que tiene que ver con tu canal dentro de VORANIX: tu cuenta de Twitch, tu overlay para stream, tus comandos de chat y tus accesos exclusivos. Este tutorial te muestra los pasos — después lo volvés a abrir cuando quieras con el botón \"Tutorial\"."
+        },
+        {
+            titulo: "1. Conectá tu cuenta de Twitch",
+            texto: "Tocá \"Conectar mi cuenta de Twitch\" e iniciá sesión con tu cuenta real de Twitch. Queda verificada automáticamente — así tu overlay y tus comandos nunca se mezclan con los de otro creador."
+        },
+        {
+            titulo: "2. Copiá tus links de overlay",
+            texto: "Una vez conectado, te aparecen dos links (horizontal y vertical). Pegalos en OBS como Fuente de Navegador (Agregar → Fuente de navegador → URL) según la orientación de tu stream."
+        },
+        {
+            titulo: "3. Comandos de chat y overlay",
+            texto: "Desde acá vas a poder cargar tus propios comandos de chat y personalizar cómo se ve tu overlay (logo, colores, posición de cada elemento), todo exclusivo de tu canal."
+        },
+        {
+            titulo: "4. Accesos exclusivos",
+            texto: "Más abajo vas a encontrar torneos, eventos y contenido exclusivo para creadores VORANIX, que se va actualizando solo."
+        }
+    ];
+    let tutorialStep = 0;
+
+    const tutorialModal = document.getElementById("tutorial-modal");
+    const tutorialBody = document.getElementById("tutorial-body");
+    const tutorialProgress = document.getElementById("tutorial-progress");
+    const tutorialPrevBtn = document.getElementById("tutorial-prev");
+    const tutorialNextBtn = document.getElementById("tutorial-next");
+
+    function renderTutorialStep(){
+        const step = TUTORIAL_STEPS[tutorialStep];
+        document.getElementById("tutorial-title").textContent = step.titulo;
+        tutorialBody.innerHTML = `<p style="line-height:1.6;">${escapeHtml(step.texto)}</p>`;
+        tutorialProgress.textContent = `Paso ${tutorialStep + 1} de ${TUTORIAL_STEPS.length}`;
+        tutorialPrevBtn.disabled = tutorialStep === 0;
+        tutorialNextBtn.textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? "Entendido" : "Siguiente";
+    }
+
+    function openTutorial(){
+        tutorialStep = 0;
+        renderTutorialStep();
+        tutorialModal.classList.remove("hidden");
+    }
+
+    function closeTutorial(){
+        tutorialModal.classList.add("hidden");
+        localStorage.setItem(TUTORIAL_SEEN_KEY, "1");
+    }
+
+    document.getElementById("open-tutorial-btn").addEventListener("click", openTutorial);
+    document.getElementById("close-tutorial-modal").addEventListener("click", closeTutorial);
+    tutorialPrevBtn.addEventListener("click", () => {
+        if(tutorialStep > 0){ tutorialStep--; renderTutorialStep(); }
+    });
+    tutorialNextBtn.addEventListener("click", () => {
+        if(tutorialStep < TUTORIAL_STEPS.length - 1){ tutorialStep++; renderTutorialStep(); }
+        else closeTutorial();
+    });
 
     function profileRoles(profile){
         if(!profile) return [];
@@ -589,6 +672,21 @@
 
     document.querySelectorAll("[data-logout]").forEach(btn => {
         btn.addEventListener("click", () => signOut(auth));
+    });
+
+    document.getElementById("forgot-password-btn").addEventListener("click", async () => {
+        const msgEl = document.getElementById("forgot-password-msg");
+        const email = document.getElementById("email").value.trim();
+        if(!email){
+            msgEl.textContent = "Escribí tu email arriba y volvé a tocar el botón.";
+            return;
+        }
+        try{
+            await sendPasswordResetEmail(auth, email);
+        }catch(error){
+            console.error(error);
+        }
+        msgEl.textContent = "Si esa cuenta existe, te mandamos un link para restablecer la contraseña.";
     });
 
     onAuthStateChanged(auth, async (user) => {

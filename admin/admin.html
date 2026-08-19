@@ -371,7 +371,9 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
         </div>
         <button class="btn" type="submit">Ingresar</button>
         <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
+        <button class="btn secondary small" type="button" id="forgot-password-btn" style="margin-top:8px;">¿Olvidaste tu contraseña?</button>
         <div id="login-error" class="error"></div>
+        <div id="forgot-password-msg" class="muted" style="font-size:12px;margin-top:6px;"></div>
     </form>
 </section>
 
@@ -808,7 +810,8 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 import {
     signInWithEmailAndPassword,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
 import {
@@ -5138,6 +5141,22 @@ loginForm.addEventListener("submit", async (event) => {
 
 document.querySelectorAll("[data-logout]").forEach(button => {
     button.addEventListener("click", () => signOut(auth));
+});
+
+document.getElementById("forgot-password-btn").addEventListener("click", async () => {
+    const msgEl = document.getElementById("forgot-password-msg");
+    const email = document.getElementById("email").value.trim();
+    if(!email){
+        msgEl.textContent = "Escribí tu email arriba y volvé a tocar el botón.";
+        return;
+    }
+    try{
+        await sendPasswordResetEmail(auth, email);
+        msgEl.textContent = "Si esa cuenta existe, te mandamos un link para restablecer la contraseña.";
+    }catch(error){
+        console.error(error);
+        msgEl.textContent = "Si esa cuenta existe, te mandamos un link para restablecer la contraseña.";
+    }
 });
 
 document.getElementById("hamburger").addEventListener("click", () => sidebar.classList.toggle("open"));

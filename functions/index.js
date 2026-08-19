@@ -537,6 +537,14 @@ async function intercambiarCodigoTwitch(code, clientId, clientSecret) {
     return res.json();
 }
 
+// El state de OAuth para tipo=canal viaja con el uid de Firebase del creador
+// que inició la conexión, firmado con HMAC (reutilizando TWITCH_CLIENT_SECRET
+// como clave) para que nadie pueda armar un link con el uid de otra persona
+// y quedarse con su canal de Twitch en el callback.
+function firmarEstadoCanal(uid, secret) {
+    return crypto.createHmac("sha256", secret).update(uid).digest("hex").slice(0, 32);
+}
+
 async function refrescarTokenBot(clientId, clientSecret) {
     const botSnap = await admin.firestore().doc("twitchBotAuth/_bot").get();
     const bot = botSnap.exists ? botSnap.data() : null;
@@ -558,20 +566,49 @@ async function refrescarTokenBot(clientId, clientSecret) {
     return data.access_token;
 }
 
+// El Portal Creadores llama esto (onCall, autenticado) ANTES de mandar al
+// creador a Twitch: firma el state acá, con el uid que la propia Cloud
+// Function verificó a partir del token de Firebase Auth de la request (no
+// un valor que el cliente pueda inventar). twitchBotAuthStart de abajo
+// nunca firma un uid por su cuenta: solo reenvía este state ya firmado.
+exports.generarEstadoTwitchCanal = onCall(
+    { secrets: [TWITCH_CLIENT_SECRET] },
+    (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores para conectar tu canal de Twitch.");
+        }
+        const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
+        return { state: `canal:${request.auth.uid}:${firma}` };
+    }
+);
+
 // Paso 1 de la autorización: redirige a Twitch. ?tipo=bot es exclusivo de la
 // cuenta oficial (se valida en el callback); ?tipo=canal es el link que se
-// comparte con cada streamer afiliado.
+// comparte con cada streamer afiliado, con un ?state= ya firmado por
+// generarEstadoTwitchCanal (esta función NO firma nada por su cuenta: si
+// aceptara un uid crudo por query string, cualquiera podría pedir un state
+// válido para el uid de otra persona sin haber iniciado sesión como ella).
 exports.twitchBotAuthStart = onRequest(
     { secrets: [TWITCH_CLIENT_ID] },
     (req, res) => {
         const tipo = req.query.tipo === "bot" ? "bot" : "canal";
         const scope = tipo === "bot" ? "user:bot user:read:chat user:write:chat" : "channel:bot";
+        let state = tipo;
+
+        if (tipo === "canal") {
+            state = String(req.query.state || "").trim();
+            if (!state.startsWith("canal:")) {
+                res.status(400).send("Este link para conectar tu canal es inválido o venció. Volvé al Portal Creadores y generalo de nuevo.");
+                return;
+            }
+        }
+
         const params = new URLSearchParams({
             client_id: TWITCH_CLIENT_ID.value(),
             redirect_uri: TWITCH_REDIRECT_URI,
             response_type: "code",
             scope,
-            state: tipo
+            state
         });
         res.redirect(`https://id.twitch.tv/oauth2/authorize?${params}`);
     }
@@ -589,6 +626,18 @@ exports.twitchBotAuthCallback = onRequest(
         try {
             const clientId = TWITCH_CLIENT_ID.value();
             const clientSecret = TWITCH_CLIENT_SECRET.value();
+
+            const estado = String(state || "");
+            let uid = "";
+            if (estado !== "bot") {
+                const partes = estado.split(":");
+                if (partes.length !== 3 || partes[0] !== "canal" || firmarEstadoCanal(partes[1], clientSecret) !== partes[2]) {
+                    res.status(400).send("El link para conectar tu canal venció o no es válido. Volvé al Portal Creadores y generalo de nuevo.");
+                    return;
+                }
+                uid = partes[1];
+            }
+
             const tokenData = await intercambiarCodigoTwitch(String(code || ""), clientId, clientSecret);
             if (!tokenData.access_token) throw new Error(JSON.stringify(tokenData));
 
@@ -599,7 +648,7 @@ exports.twitchBotAuthCallback = onRequest(
             const usuario = userData.data?.[0];
             if (!usuario) throw new Error("No se pudo identificar la cuenta de Twitch");
 
-            if (state === "bot") {
+            if (estado === "bot") {
                 if (usuario.login.toLowerCase() !== TWITCH_BOT_LOGIN_OFICIAL) {
                     res.status(403).send(`Esta cuenta (${usuario.login}) no es la oficial de VORANIX (${TWITCH_BOT_LOGIN_OFICIAL}). Iniciá sesión en Twitch con esa cuenta e intentá de nuevo.`);
                     return;
@@ -611,11 +660,29 @@ exports.twitchBotAuthCallback = onRequest(
                 });
                 res.send("<h2>Listo</h2><p>La cuenta oficial de VORANIX quedó conectada como bot de chat.</p>");
             } else {
-                await admin.firestore().doc(`twitchBotAuth/${usuario.login.toLowerCase()}`).set({
-                    broadcasterId: usuario.id, broadcasterLogin: usuario.login.toLowerCase(),
+                const loginVerificado = usuario.login.toLowerCase();
+
+                // Evita que dos cuentas VORANIX terminen apuntando al mismo canal de
+                // Twitch (si no, sus overlays y comandos personalizados se mezclarían).
+                const duplicados = await admin.firestore().collection("users")
+                    .where("twitchLogin", "==", loginVerificado).get();
+                const deOtraCuenta = duplicados.docs.find(docSnap => docSnap.id !== uid);
+                if (deOtraCuenta) {
+                    res.status(409).send(`El canal de Twitch <b>${usuario.login}</b> ya está conectado a otra cuenta de VORANIX. Si esto es un error, avisale al equipo.`);
+                    return;
+                }
+
+                await admin.firestore().doc(`twitchBotAuth/${loginVerificado}`).set({
+                    broadcasterId: usuario.id, broadcasterLogin: loginVerificado,
                     authorizedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
-                res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${usuario.login}</b> al bot de VORANIX. Los comandos van a funcionar en tu chat a partir de mañana (la sincronización corre una vez por día).</p>`);
+                // twitchLogin queda seteado acá, por el SDK de Admin (no por el
+                // cliente): así queda verificado contra la cuenta real de Twitch,
+                // no un texto que el creador podría escribir a mano.
+                await admin.firestore().doc(`users/${uid}`).set({
+                    twitchLogin: loginVerificado
+                }, { merge: true });
+                res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${usuario.login}</b> al bot de VORANIX. Los comandos van a funcionar en tu chat a partir de mañana (la sincronización corre una vez por día). Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
             }
         } catch (err) {
             logger.error("twitchBotAuthCallback: fallo", err);

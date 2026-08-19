@@ -140,7 +140,9 @@
             <input id="password" type="password" autocomplete="current-password" required>
         </div>
         <button class="btn" type="submit" style="width:100%;">Ingresar</button>
+        <button class="btn secondary small" type="button" id="forgot-password-btn" style="width:100%;margin-top:8px;">¿Olvidaste tu contraseña?</button>
         <div id="login-error" class="error"></div>
+        <div id="forgot-password-msg" class="muted" style="font-size:12px;margin-top:6px;"></div>
     </form>
 </section>
 
@@ -223,7 +225,8 @@
     import {
         signInWithEmailAndPassword,
         onAuthStateChanged,
-        signOut
+        signOut,
+        sendPasswordResetEmail
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import {
         doc,
@@ -453,6 +456,21 @@
 
     document.querySelectorAll("[data-logout]").forEach(btn => {
         btn.addEventListener("click", () => signOut(auth));
+    });
+
+    document.getElementById("forgot-password-btn").addEventListener("click", async () => {
+        const msgEl = document.getElementById("forgot-password-msg");
+        const email = document.getElementById("email").value.trim();
+        if(!email){
+            msgEl.textContent = "Escribí tu email arriba y volvé a tocar el botón.";
+            return;
+        }
+        try{
+            await sendPasswordResetEmail(auth, email);
+        }catch(error){
+            console.error(error);
+        }
+        msgEl.textContent = "Si esa cuenta existe, te mandamos un link para restablecer la contraseña.";
     });
 
     onAuthStateChanged(auth, async (user) => {
