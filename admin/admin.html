@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin VORANIX</title>
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" type="image/png" href="/imagenes/logopng.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/imagenes/icon-32.png">
+<link rel="apple-touch-icon" href="/imagenes/icon-180.png">
+<link rel="manifest" href="/admin/manifest.json">
+<meta name="theme-color" content="#7b2cff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VX Admin">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -114,6 +120,34 @@ button{ cursor:pointer; }
 @media(max-width:1024px){ .sidebar-collapse{ display:none; } }
 .user-box{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
 .badge{ background:rgba(123,44,255,.18); border:1px solid var(--morado); color:#fff; border-radius:999px; padding:6px 12px; font-size:11.5px; font-weight:700; letter-spacing:.3px; }
+
+.notif-bell-wrap{ position:relative; }
+.notif-bell-btn{ position:relative; font-size:15px; padding:9px 12px; }
+.notif-badge{
+    position:absolute; top:-5px; right:-5px; min-width:16px; height:16px; padding:0 4px; border-radius:20px;
+    background:var(--danger); color:#fff; font-size:10px; font-weight:700; display:flex; align-items:center;
+    justify-content:center; line-height:1;
+}
+.notif-panel{
+    position:absolute; top:calc(100% + 10px); right:0; width:320px; max-width:calc(100vw - 24px); max-height:420px;
+    overflow-y:auto; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-md);
+    box-shadow:var(--shadow-md); z-index:50;
+}
+.notif-item{ display:flex; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background var(--ease); }
+.notif-item:last-child{ border-bottom:none; }
+.notif-item:hover{ background:var(--surface-hover); }
+.notif-item.is-unread{ background:rgba(123,44,255,.08); }
+.notif-item-icon{ font-size:15px; flex-shrink:0; margin-top:1px; }
+.notif-item-title{ font-size:12.5px; font-weight:700; color:#fff; line-height:1.4; }
+.notif-item-body{ font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.4; }
+.notif-item-time{ font-size:10px; color:var(--muted); margin-top:5px; }
+.notif-empty{ padding:22px 16px; text-align:center; font-size:12px; color:var(--muted); }
+.notif-activar-btn{
+    display:block; width:100%; background:rgba(123,44,255,.12); border:none; border-bottom:1px solid var(--border);
+    color:var(--morado-light); font-size:11.5px; font-weight:700; padding:10px 14px; cursor:pointer; text-align:left;
+}
+.notif-activar-btn:hover{ background:rgba(123,44,255,.2); }
+.notif-activar-btn:disabled{ opacity:.6; cursor:default; }
 .content{ padding:28px; flex:1 1 auto; overflow-y:auto; }
 .section-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; }
 .section-head h2{ font-size:26px; margin-bottom:6px; letter-spacing:.3px; }
@@ -397,6 +431,16 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
                 </div>
             </div>
             <div class="user-box">
+                <div class="notif-bell-wrap">
+                    <button class="btn secondary notif-bell-btn" type="button" id="notif-bell-btn" title="Notificaciones">
+                        🔔
+                        <span id="notif-badge" class="notif-badge hidden">0</span>
+                    </button>
+                    <div id="notif-panel" class="notif-panel hidden">
+                        <button type="button" id="notif-activar-btn" class="notif-activar-btn hidden">🔔 Activar notificaciones en este dispositivo</button>
+                        <div id="notif-list"></div>
+                    </div>
+                </div>
                 <span id="user-email" class="muted"></span>
                 <span id="role-badge" class="badge"></span>
                 <a class="btn secondary" href="/admin/migrar.html">Migrar</a>
@@ -837,6 +881,13 @@ import {
 
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
 import { auth, db, storage, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
+import { initNotificationBell } from "/assets/js/notificaciones.js";
+
+// Habilita "Agregar a pantalla de inicio" (PWA) y deja el service worker
+// listo para recibir notificaciones push en segundo plano.
+if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("/firebase-messaging-sw.js").catch(err => console.error("service worker:", err));
+}
 
 const RANGO_BASES = [
     ["hierro", "Hierro"],
@@ -1247,6 +1298,13 @@ const sectionTitle = document.getElementById("section-title");
 const sectionSubtitle = document.getElementById("section-subtitle");
 const userEmail = document.getElementById("user-email");
 const roleBadge = document.getElementById("role-badge");
+const notifBell = initNotificationBell({
+    toggleBtn: document.getElementById("notif-bell-btn"),
+    badge: document.getElementById("notif-badge"),
+    panel: document.getElementById("notif-panel"),
+    listEl: document.getElementById("notif-list"),
+    activarBtn: document.getElementById("notif-activar-btn")
+});
 const modal = document.getElementById("modal");
 const itemForm = document.getElementById("item-form");
 const formFields = document.getElementById("form-fields");
@@ -1335,6 +1393,13 @@ function showAdmin(){
     userEmail.textContent = currentProfile.email || currentUser.email;
     roleBadge.textContent = rolesLabel(profileRoles(currentProfile)).toUpperCase();
     buildNav();
+    // Un link de notificación puede traer #tablero (o cualquier otra
+    // sección) para llevar directo ahí en vez de dejar caer en Dashboard.
+    const hashSection = location.hash.replace("#", "");
+    if(hashSection && sections[hashSection]){
+        currentSection = hashSection;
+        history.replaceState(null, "", location.pathname + location.search);
+    }
     selectSection(currentSection);
 }
 
@@ -5188,6 +5253,7 @@ onAuthStateChanged(auth, async (user) => {
     if(!user){
         currentProfile = null;
         if(unsubscribeList) unsubscribeList();
+        notifBell.stop();
         showLogin();
         return;
     }
@@ -5201,6 +5267,7 @@ onAuthStateChanged(auth, async (user) => {
             return;
         }
 
+        notifBell.start(user.uid);
         showAdmin();
     }catch(error){
         console.error("ERROR LOGIN:");

@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Roster - VORANIX</title>
     <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" type="image/png" href="/imagenes/logopng.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/imagenes/icon-32.png">
+    <link rel="apple-touch-icon" href="/imagenes/icon-180.png">
+    <link rel="manifest" href="/pages/manifest-roster.json">
+    <meta name="theme-color" content="#7b2cff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="VX Roster">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -154,6 +160,13 @@
             <p class="roster-portal-subtitle"><i class="fas fa-gamepad"></i> <span id="equipo-subtitle">Torneos, scrims y entrenamientos de tu equipo.</span></p>
         </div>
         <div class="roster-portal-user">
+            <div class="notif-bell-wrap">
+                <button class="btn secondary notif-bell-btn" type="button" id="notif-bell-btn" title="Notificaciones"><i class="fas fa-bell"></i><span id="notif-badge" class="notif-badge hidden">0</span></button>
+                <div id="notif-panel" class="notif-panel hidden">
+                    <button type="button" id="notif-activar-btn" class="notif-activar-btn hidden">🔔 Activar notificaciones en este dispositivo</button>
+                    <div id="notif-list"></div>
+                </div>
+            </div>
             <strong id="user-email"></strong>
             <span id="role-badge" class="badge"></span>
             <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
@@ -239,6 +252,13 @@
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { auth, db, escapeHtml } from "/assets/js/firebase-config.js";
     import { renderActividadList, getProximoEvento, formatRango } from "/assets/js/roster-activity.js";
+    import { initNotificationBell } from "/assets/js/notificaciones.js";
+
+    // Habilita "Agregar a pantalla de inicio" (PWA) y deja el service
+    // worker listo para recibir notificaciones push en segundo plano.
+    if("serviceWorker" in navigator){
+        navigator.serviceWorker.register("/firebase-messaging-sw.js").catch(err => console.error("service worker:", err));
+    }
 
     const JUEGO_LABELS = { valorant: "Valorant Principal", valorantsecundario: "Valorant Secundario", dbd: "Dead by Daylight", fifa: "EA FC" };
 
@@ -252,6 +272,13 @@
     const actividadList = document.getElementById("actividad-list");
     const equipoGrid = document.getElementById("equipo-grid");
     const statsStrip = document.getElementById("roster-stats-strip");
+    const notifBell = initNotificationBell({
+        toggleBtn: document.getElementById("notif-bell-btn"),
+        badge: document.getElementById("notif-badge"),
+        panel: document.getElementById("notif-panel"),
+        listEl: document.getElementById("notif-list"),
+        activarBtn: document.getElementById("notif-activar-btn")
+    });
 
     let unsubActividad = null;
     let currentPlayers = [];
@@ -261,6 +288,7 @@
     function stopListeners(){
         if(unsubActividad) unsubActividad();
         unsubActividad = null;
+        notifBell.stop();
     }
 
     function showLogin(){
@@ -274,6 +302,7 @@
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
         roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
         equipoSubtitle.textContent = `Equipo: ${JUEGO_LABELS[profile.equipoJuego] || "Sin asignar"}`;
+        notifBell.start(user.uid);
     }
 
     function assetUrl(path){

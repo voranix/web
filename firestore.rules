@@ -58,7 +58,12 @@ service cloud.firestore {
       // se verifica con OAuth contra la cuenta real de Twitch y lo escribe
       // el SDK de Admin desde twitchBotAuthCallback (bypassa estas reglas).
       // Esto evita que alguien escriba el canal de otra persona a mano.
-      allow update: if isAdmin();
+      // fcmTokens (tokens de push de sus propios dispositivos) sí lo
+      // autogestiona cada cuenta, sin poder tocar ningún otro campo.
+      allow update: if isAdmin() || (
+        signedIn() && request.auth.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["fcmTokens"])
+      );
       allow create, delete: if isAdmin();
     }
 
@@ -222,6 +227,18 @@ service cloud.firestore {
     match /twitchBotAuth/{doc} {
       allow read: if doc != "_bot";
       allow write: if false;
+    }
+
+    // Centro de notificaciones (campanita en los 3 portales): un doc por
+    // aviso, siempre dirigido a un solo uid. Las escribe el SDK de Admin
+    // desde las Cloud Functions que detectan el cambio (tareas asignadas,
+    // actividad de equipo publicada, accesos/proyectos nuevos, etc.); el
+    // cliente solo puede leer las suyas y marcarlas como leídas.
+    match /notificaciones/{doc} {
+      allow read: if signedIn() && resource.data.paraUid == request.auth.uid;
+      allow update: if signedIn() && resource.data.paraUid == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["leido"]);
+      allow create, delete: if false;
     }
 
     match /{document=**} {

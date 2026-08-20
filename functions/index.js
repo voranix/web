@@ -10,7 +10,7 @@
 // Requiere plan Blaze (cualquier Cloud Function lo requiere).
 // -----------------------------------------------------------------------
 
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
@@ -1247,5 +1247,220 @@ exports.enviarComunicadoContacto = onCall(
 
         transporter.close();
         return { detalle };
+    }
+);
+
+
+// ---------------------------------------------------------------------
+// Notificaciones (campanita en los 3 portales + push a celular vía FCM).
+// Un doc por destinatario en "notificaciones" (queda de historial, sirve
+// aunque el push falle o el navegador no tenga permiso todavía), más el
+// envío push a los tokens FCM guardados en users/{uid}.fcmTokens. Los
+// tokens que Firebase reporta como inválidos/expirados se limpian solos.
+// ---------------------------------------------------------------------
+
+const ACTIVIDAD_TIPO_LABELS_NOTIF = { torneo: "torneo", scrim: "scrim", entrenamiento: "práctica", reunion: "reunión" };
+const TAREA_ESTADO_LABELS_NOTIF = { pendiente: "Por Hacer", en_progreso: "En Progreso", revision: "En Revisión", hecho: "Hecho" };
+
+async function enviarNotificacion(uids, { tipo, titulo, cuerpo, link }) {
+    const db = admin.firestore();
+    const uidsUnicos = [...new Set((uids || []).filter(Boolean))];
+    if (!uidsUnicos.length) return;
+
+    const batch = db.batch();
+    for (const uid of uidsUnicos) {
+        batch.set(db.collection("notificaciones").doc(), {
+            paraUid: uid, tipo, titulo: titulo || "", cuerpo: cuerpo || "", link: link || "",
+            leido: false, createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+    }
+    await batch.commit();
+
+    try {
+        const perfiles = await Promise.all(uidsUnicos.map(uid => db.doc(`users/${uid}`).get()));
+        const tokensPorUid = new Map();
+        for (const snap of perfiles) {
+            const tokens = snap.exists ? snap.data().fcmTokens : null;
+            if (Array.isArray(tokens) && tokens.length) {
+                tokensPorUid.set(snap.id, tokens.map(t => t.token).filter(Boolean));
+            }
+        }
+        const todosLosTokens = [...tokensPorUid.values()].flat();
+        if (!todosLosTokens.length) return;
+
+        const respuesta = await admin.messaging().sendEachForMulticast({
+            tokens: todosLosTokens,
+            notification: { title: titulo || "VORANIX", body: cuerpo || "" },
+            webpush: {
+                fcmOptions: { link: `https://voranix.web.app${link || "/"}` },
+                notification: { icon: "https://voranix.web.app/imagenes/logopng.png" }
+            }
+        });
+
+        const tokensInvalidos = new Set();
+        respuesta.responses.forEach((r, i) => {
+            const code = r.error?.code;
+            if (!r.success && (code === "messaging/registration-token-not-registered" || code === "messaging/invalid-registration-token")) {
+                tokensInvalidos.add(todosLosTokens[i]);
+            }
+        });
+        if (tokensInvalidos.size) {
+            for (const [uid, tokens] of tokensPorUid.entries()) {
+                if (!tokens.some(t => tokensInvalidos.has(t))) continue;
+                const snap = await db.doc(`users/${uid}`).get();
+                const actuales = snap.exists && Array.isArray(snap.data().fcmTokens) ? snap.data().fcmTokens : [];
+                await db.doc(`users/${uid}`).update({
+                    fcmTokens: actuales.filter(t => !tokensInvalidos.has(t.token))
+                });
+            }
+        }
+    } catch (err) {
+        logger.error("enviarNotificacion: fallo al mandar push", err.message);
+    }
+}
+
+async function usuariosConRol(role) {
+    const snap = await admin.firestore().collection("users").get();
+    return snap.docs.filter(d => profileRoles(d.data()).includes(role)).map(d => d.id);
+}
+
+// Reuniones/entrenamientos/scrims/torneos del equipo: avisa a jugadores y
+// capitán de ESE juego apenas queda visible en el Portal Roster.
+exports.onActividadEquipoNotificar = onDocumentWritten("equipoActividad/{actividadId}", async (event) => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    if (!after || after.visiblePortal !== true) return;
+
+    const esNuevo = !before;
+    const cambioRelevante = esNuevo || before.visiblePortal !== true ||
+        before.titulo !== after.titulo || before.fechaInicio !== after.fechaInicio || before.hora !== after.hora;
+    if (!cambioRelevante) return;
+
+    const db = admin.firestore();
+    const usersSnap = await db.collection("users").get();
+    const destinatarios = usersSnap.docs
+        .filter(d => {
+            const data = d.data();
+            const roles = profileRoles(data);
+            return (roles.includes("jugador") || roles.includes("capitan")) && data.equipoJuego === after.juego;
+        })
+        .map(d => d.id);
+    if (!destinatarios.length) return;
+
+    const tipoLabel = ACTIVIDAD_TIPO_LABELS_NOTIF[after.tipo] || "actividad";
+    await enviarNotificacion(destinatarios, {
+        tipo: "actividad",
+        titulo: `${esNuevo ? "Nueva" : "Se actualizó la"} ${tipoLabel}: ${after.titulo || ""}`,
+        cuerpo: after.fechaInicio ? `${after.fechaInicio}${after.hora ? " · " + after.hora : ""}` : "",
+        link: "/pages/roster-portal.html"
+    });
+});
+
+// Accesos exclusivos y proyectos nuevos/actualizados: avisa a todos los
+// creadores (es el contenido que el Portal Creadores les muestra).
+exports.onAccesoNotificar = onDocumentWritten("accesos/{accesoId}", async (event) => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    if (!after) return;
+    const esNuevo = !before;
+    if (!esNuevo && before.titulo === after.titulo && before.descripcion === after.descripcion) return;
+
+    const destinatarios = await usuariosConRol("creador");
+    if (!destinatarios.length) return;
+    await enviarNotificacion(destinatarios, {
+        tipo: "acceso",
+        titulo: `${esNuevo ? "Nuevo acceso" : "Se actualizó un acceso"}: ${after.titulo || ""}`,
+        cuerpo: after.descripcion || "",
+        link: "/pages/creadores.html"
+    });
+});
+
+exports.onProyectoNotificar = onDocumentWritten("proyectos/{proyectoId}", async (event) => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    if (!after) return;
+    const esNuevo = !before;
+    if (!esNuevo && before.titulo === after.titulo && before.descripcion === after.descripcion) return;
+
+    const destinatarios = await usuariosConRol("creador");
+    if (!destinatarios.length) return;
+    await enviarNotificacion(destinatarios, {
+        tipo: "proyecto",
+        titulo: `${esNuevo ? "Nuevo proyecto" : "Se actualizó un proyecto"}: ${after.titulo || ""}`,
+        cuerpo: after.descripcion || "",
+        link: "/pages/creadores.html"
+    });
+});
+
+// Tareas del Tablero: avisa a cada responsable cuando se le asigna una
+// tarea (nueva o agregado después) y, al resto de responsables que ya
+// estaban, cuando cambia algo relevante del contenido/estado.
+exports.onTareaNotificar = onDocumentWritten("tareas/{tareaId}", async (event) => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after = event.data.after.exists ? event.data.after.data() : null;
+    if (!after) return;
+
+    const responsablesAntes = new Set((before?.responsables || []).map(r => r.uid));
+    const responsablesAhora = (after.responsables || []).map(r => r.uid).filter(Boolean);
+    const nuevos = responsablesAhora.filter(uid => !responsablesAntes.has(uid));
+
+    if (!before) {
+        if (responsablesAhora.length) {
+            await enviarNotificacion(responsablesAhora, {
+                tipo: "tarea",
+                titulo: `Nueva tarea asignada: ${after.titulo || ""}`,
+                cuerpo: after.descripcion || "",
+                link: "/admin/admin.html#tablero"
+            });
+        }
+        return;
+    }
+
+    if (nuevos.length) {
+        await enviarNotificacion(nuevos, {
+            tipo: "tarea",
+            titulo: `Se te asignó la tarea: ${after.titulo || ""}`,
+            cuerpo: after.descripcion || "",
+            link: "/admin/admin.html#tablero"
+        });
+    }
+
+    const yaEstaban = responsablesAhora.filter(uid => responsablesAntes.has(uid));
+    const cambioContenido = before.titulo !== after.titulo || before.descripcion !== after.descripcion ||
+        before.fechaLimite !== after.fechaLimite || before.estado !== after.estado;
+    if (cambioContenido && yaEstaban.length) {
+        await enviarNotificacion(yaEstaban, {
+            tipo: "tarea",
+            titulo: `Se actualizó la tarea: ${after.titulo || ""}`,
+            cuerpo: after.estado ? `Estado: ${TAREA_ESTADO_LABELS_NOTIF[after.estado] || after.estado}` : "",
+            link: "/admin/admin.html#tablero"
+        });
+    }
+});
+
+// Chequeo diario: tareas que vencen en 2 días y todavía no están "Hecho".
+// Se dispara una sola vez por tarea (justo cuando fechaLimite cae 2 días
+// adelante), no repite el aviso día a día.
+exports.avisarTareasPorVencer = onSchedule(
+    { schedule: "every day 08:00", timeZone: "America/Santiago" },
+    async () => {
+        const db = admin.firestore();
+        const objetivo = new Date();
+        objetivo.setDate(objetivo.getDate() + 2);
+        const fechaObjetivo = objetivo.toISOString().slice(0, 10);
+
+        const snap = await db.collection("tareas").where("fechaLimite", "==", fechaObjetivo).get();
+        for (const docSnap of snap.docs) {
+            const tarea = docSnap.data();
+            if (tarea.estado === "hecho") continue;
+            const uids = (tarea.responsables || []).map(r => r.uid).filter(Boolean);
+            if (!uids.length) continue;
+            await enviarNotificacion(uids, {
+                tipo: "tarea-vencimiento",
+                titulo: `Vence pronto: ${tarea.titulo || "una tarea"}`,
+                cuerpo: `Fecha límite: ${tarea.fechaLimite}`,
+                link: "/admin/admin.html#tablero"
+            });
+        }
     }
 );

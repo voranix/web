@@ -1,0 +1,14 @@
+{
+    "name": "VORANIX Portal Creadores",
+    "short_name": "VX Creadores",
+    "description": "Accesos, torneos y eventos exclusivos para creadores VORANIX",
+    "start_url": "/pages/creadores.html",
+    "scope": "/pages/creadores.html",
+    "display": "standalone",
+    "background_color": "#06060e",
+    "theme_color": "#7b2cff",
+    "icons": [
+        { "src": "/imagenes/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/imagenes/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    ]
+}
