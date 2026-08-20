@@ -822,6 +822,41 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .reg-back-to-index { display:inline-flex; align-items:center; gap:6px; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--morado-light); text-decoration:none; transition:var(--ease); }
 .reg-back-to-index:hover { color:var(--naranja); }
 
+/* ================= CHIPS REUSABLES (etiqueta + meta con ícono) ================= */
+.tag-chip{
+    display:inline-flex; align-self:flex-start; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--naranja); border:1px solid rgba(255,106,0,0.3); background:rgba(255,106,0,0.06);
+    padding:4px 10px; border-radius:14px; margin-bottom:10px;
+}
+.meta-chip{
+    display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--gris);
+    background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:8px; padding:6px 10px;
+}
+.meta-chip i{ color:var(--morado-light); font-size:11px; }
+
+/* ================= PÁGINA DE DETALLE DE PROYECTO ================= */
+.proyecto-detail { max-width:820px; margin:0 auto; padding:60px 0 100px; }
+.proyecto-hero{ width:100%; max-height:420px; object-fit:cover; border-radius:var(--r-lg); border:1px solid var(--border); margin-bottom:28px; }
+.proyecto-title{ margin-bottom:10px; }
+.proyecto-meta-row{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:22px; }
+.proyecto-desc{ font-size:15px; line-height:1.8; margin-bottom:18px; }
+.proyecto-section{ margin-top:44px; padding-top:32px; border-top:1px solid var(--border); }
+.proyecto-section h2{ font-size:1.15rem; color:#fff; margin-bottom:16px; }
+.proyecto-gallery{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-top:18px; }
+.proyecto-gallery a{ display:block; border-radius:var(--r-md); overflow:hidden; border:1px solid var(--border); transition:var(--ease); }
+.proyecto-gallery a:hover{ border-color:var(--naranja); box-shadow:0 4px 20px var(--naranja-glow); }
+.proyecto-gallery img{ width:100%; height:150px; object-fit:cover; display:block; }
+.proyecto-marcas{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+.proyecto-redes-list{ display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+.proyecto-redes-list a{ display:inline-flex; align-items:center; gap:10px; color:var(--gris); text-decoration:none; font-size:14px; transition:var(--ease); width:fit-content; }
+.proyecto-redes-list a:hover{ color:var(--naranja); }
+.proyecto-redes-list i{ color:var(--morado-light); width:16px; text-align:center; }
+.proyecto-videos{ display:flex; flex-direction:column; gap:22px; margin-top:14px; }
+.video-embed{ position:relative; width:100%; aspect-ratio:16/9; border-radius:var(--r-md); overflow:hidden; border:1px solid var(--border); }
+.video-embed iframe{ position:absolute; inset:0; width:100%; height:100%; border:none; }
+.proyecto-not-found{ text-align:center; padding:100px 0; }
+.proyecto-not-found h2{ margin-bottom:16px; }
+
 @media (max-width: 1024px) {
     .container { width: min(100%, calc(100% - 32px)); }
     .about-grid { gap: 48px; }
