@@ -63,6 +63,11 @@ button{ cursor:pointer; }
 .lineup-select-option.placeholder{ color:#7a7a90; }
 .lineup-mvp-btn{ background:var(--surface-2); border:1px solid var(--border-2); border-radius:6px; padding:8px 10px; font-size:16px; line-height:1; opacity:.4; filter:grayscale(1); flex-shrink:0; }
 .lineup-mvp-btn.active{ opacity:1; filter:none; background:rgba(255,193,7,.15); border-color:#ffc107; box-shadow:0 0 12px rgba(255,193,7,.35); }
+.images-thumbs{ display:flex; flex-wrap:wrap; gap:10px; margin:10px 0; }
+.images-thumb{ position:relative; width:90px; height:90px; border-radius:8px; overflow:hidden; border:1px solid var(--border-2); }
+.images-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+.images-thumb button{ position:absolute; top:3px; right:3px; background:rgba(0,0,0,.6); border:none; border-radius:50%; width:20px; height:20px; color:#fff; font-size:11px; line-height:1; cursor:pointer; }
+.images-thumb button:hover{ background:var(--danger); }
 .lineup-row.is-mvp{ background:rgba(255,193,7,.06); border-radius:8px; padding:4px; margin:-4px -4px 8px; }
 .btn{
     border:0; color:#fff; background:linear-gradient(90deg,var(--morado),var(--naranja)); background-size:140% 100%;
@@ -1146,7 +1151,28 @@ const sections = {
             ["descripcion", "Descripción corta", "textarea"],
             ["textoLargo", "Texto largo", "textarea"],
             ["img", "Imagen", "image"],
+            ["categoria", "Categoría", "select", [
+                ["torneo", "Torneo"],
+                ["evento", "Evento"],
+                ["actividad", "Actividad"],
+                ["proyecto", "Proyecto"],
+                ["general", "General"]
+            ]],
+            ["juego", "Juego (si aplica)", "text"],
+            ["modalidad", "Modalidad (solo si es Acceso Anticipado)", "text"],
+            ["participantes", "Cupos / Participantes (solo si es Acceso Anticipado)", "text"],
+            ["premio", "Premio (solo si es Acceso Anticipado)", "text"],
+            ["requisitos", "Requisitos (solo si es Acceso Anticipado)", "textarea"],
+            ["fechaLimite", "Fecha límite de postulación (solo si es Acceso Anticipado)", "date"],
             ["link", "Link", "url"],
+            ["ubicacion", "Ubicación", "text"],
+            ["marcas", "Marcas con las que se trabajó", "text"],
+            ["redes", "Redes importantes (una URL por línea)", "textarea"],
+            ["videos", "Videos (una URL por línea, YouTube preferentemente)", "textarea"],
+            ["galeria", "Galería de evidencia (imágenes del evento ya ocurrido)", "images"],
+            ["descripcionEvidencia", "Descripción de cómo fue el evento (evidencia post-evento)", "textarea"],
+            ["accesoAnticipado", "Acceso Anticipado (visible en Portal Creadores)", "boolean"],
+            ["publicarEnProyectos", "Mostrar en Proyectos (público)", "boolean"],
             ["upcoming", "Próximo", "boolean"]
         ]
     },
@@ -1177,31 +1203,6 @@ const sections = {
             ["importante", "Importante", "boolean"]
         ]
     },
-    accesos: {
-        label: "Accesos Creadores",
-        collection: "accesos",
-        fields: [
-            ["titulo", "Título", "text"],
-            ["categoria", "Categoría", "select", [
-                ["torneo", "Torneo"],
-                ["evento", "Evento"],
-                ["actividad", "Actividad"],
-                ["proyecto", "Proyecto"],
-                ["general", "General"]
-            ]],
-            ["imagen", "Imagen", "image"],
-            ["descripcion", "Descripción", "textarea"],
-            ["juego", "Juego", "text"],
-            ["modalidad", "Modalidad", "text"],
-            ["participantes", "Cupos / Participantes", "text"],
-            ["premio", "Premio", "text"],
-            ["requisitos", "Requisitos", "textarea"],
-            ["link", "Link (Google Form)", "url"],
-            ["fechaLimite", "Fecha límite", "date"],
-            ["activo", "Activo en Creadores", "boolean"],
-            ["publicarProyectos", "Activo en Proyectos", "boolean"]
-        ]
-    },
     overlay: {
         label: "Overlay",
         singleton: true
@@ -1229,7 +1230,7 @@ const NAV_GROUPS = [
     { label: "Actividad de Equipos", keys: ["actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
     { label: "Comunidad", keys: ["streamers", "influencers", "staff"] },
     { label: "Contenido", keys: ["proyectos", "patrocinadores"] },
-    { label: "Sistema", keys: ["mensajes", "accesos", "overlay", "users"] }
+    { label: "Sistema", keys: ["mensajes", "overlay", "users"] }
 ];
 
 // Icono + nombre corto para el nav lateral (compacto). Si una key no está
@@ -1253,7 +1254,6 @@ const NAV_META = {
     proyectos: { icon: "📁", short: "Proyectos" },
     patrocinadores: { icon: "🤝", short: "Sponsors" },
     mensajes: { icon: "✉️", short: "Mensajes" },
-    accesos: { icon: "🔑", short: "Accesos" },
     overlay: { icon: "🖥️", short: "Overlay" },
     users: { icon: "👤", short: "Usuarios" }
 };
@@ -1265,8 +1265,7 @@ const DASHBOARD_FEED_COLLECTIONS = [
     { collection: "influencers", icon: "⭐", label: "Influencer", nameField: "nombre" },
     { collection: "staff", icon: "🛡️", label: "Staff", nameField: "nombre" },
     { collection: "proyectos", icon: "📁", label: "Proyecto", nameField: "titulo" },
-    { collection: "sponsors", icon: "🤝", label: "Sponsor", nameField: "nombre" },
-    { collection: "accesos", icon: "🔑", label: "Acceso", nameField: "titulo" }
+    { collection: "sponsors", icon: "🤝", label: "Sponsor", nameField: "nombre" }
 ];
 
 const OVERLAY_FIELDS = [
@@ -1500,6 +1499,7 @@ function tableValue(value, type, options){
     if(type === "boolean") return value ? "Sí" : "No";
     if(type === "json") return Array.isArray(value) ? `${value.length} cupón(es)` : "-";
     if(type === "lineup") return Array.isArray(value) && value.length ? `${value.length} jugador(es)` : "-";
+    if(type === "images") return Array.isArray(value) && value.length ? `${value.length} imagen(es)` : "-";
     if(type === "select" && Array.isArray(options)){
         const match = options.find(option => Array.isArray(option) ? option[0] === value : option === value);
         if(match) return escapeHtml(Array.isArray(match) ? match[1] : match);
@@ -1575,7 +1575,10 @@ function renderCrudSection(section){
         <h2>${section.label}</h2>
         <p class="muted">Los cambios se sincronizan en tiempo real con Firestore.</p>
     </div>
-    ${section.hideAdd ? "" : '<button class="btn" type="button" id="add-item">Agregar</button>'}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        ${currentSection === "proyectos" ? '<button class="btn secondary" type="button" id="migrar-accesos-btn">Migrar Accesos antiguos → Proyectos</button>' : ""}
+        ${section.hideAdd ? "" : '<button class="btn" type="button" id="add-item">Agregar</button>'}
+    </div>
 </div>
 <div class="panel">
     ${toolbarHtml(section, "item-search", "Buscar...")}
@@ -1593,6 +1596,8 @@ function renderCrudSection(section){
 
     const addItemBtn = document.getElementById("add-item");
     if(addItemBtn) addItemBtn.addEventListener("click", () => openItemModal());
+    const migrarBtn = document.getElementById("migrar-accesos-btn");
+    if(migrarBtn) migrarBtn.addEventListener("click", migrarAccesosAProyectos);
     const body = document.getElementById("items-body");
     const searchInput = document.getElementById("item-search");
     const countLabel = document.getElementById("item-search-count");
@@ -1674,7 +1679,6 @@ ${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[
         try{
             for(const id of ids){
                 await deleteDoc(doc(db, section.collection, id));
-                if(currentSection === "accesos") await deleteDoc(doc(db, "proyectos", id)).catch(() => {});
             }
             selected.clear();
         }catch(error){
@@ -4674,7 +4678,7 @@ function fieldHtml(field, value){
     // El modal se arma desde la definicion de campos para evitar duplicar formularios.
     const [name, label, type, options] = field;
     const safeValue = value ?? "";
-    const full = ["textarea", "json", "image", "lineup"].includes(type) ? " full" : "";
+    const full = ["textarea", "json", "image", "lineup", "images"].includes(type) ? " full" : "";
 
     if(type === "textarea"){
         return `<div class="field${full}"><label>${label}</label><textarea name="${name}">${escapeHtml(safeValue)}</textarea></div>`;
@@ -4705,6 +4709,10 @@ function fieldHtml(field, value){
 
     if(type === "lineup"){
         return `<div class="field${full}" data-lineup-field="${name}"><label>${label}</label><div class="lineup-rows" data-lineup-rows></div><button type="button" class="btn secondary small" data-lineup-add>+ Agregar jugador</button><span class="help">Selecciona quiénes jugaron y con qué agente. Toca 👑 para marcar al MVP de la partida. Esto alimenta las estadísticas de cada jugador en el Portal Roster.</span></div>`;
+    }
+
+    if(type === "images"){
+        return `<div class="field${full}" data-images-field="${name}"><label>${label}</label><div class="images-thumbs" id="${name}-thumbs"></div><input name="${name}_keep" type="hidden" value="[]"><input name="${name}File" type="file" accept="image/*" multiple><span class="help">Podés subir varias imágenes juntas. Tocá ✕ en una miniatura para sacarla.</span></div>`;
     }
 
     return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${escapeHtml(safeValue)}"></div>`;
@@ -4947,6 +4955,35 @@ async function initLineupField(fieldName, existingRows, rosterJuego){
     addBtn.addEventListener("click", () => addRow());
 }
 
+// Galería multi-imagen (campo tipo "images"): las existentes se muestran
+// como miniaturas que se pueden sacar (✕); las nuevas se suben recién al
+// guardar, desde saveItem, con los File objects del input file[multiple].
+function initImagesField(name, existingUrls){
+    const container = formFields.querySelector(`[data-images-field="${name}"]`);
+    if(!container) return;
+    const thumbsWrap = container.querySelector(".images-thumbs");
+    const keepInput = container.querySelector(`input[name="${name}_keep"]`);
+    let keepUrls = Array.isArray(existingUrls) ? [...existingUrls] : [];
+
+    function render(){
+        keepInput.value = JSON.stringify(keepUrls);
+        thumbsWrap.innerHTML = keepUrls.map((url, i) => `
+<div class="images-thumb">
+    <img src="${escapeHtml(assetUrl(url))}" alt="">
+    <button type="button" data-images-remove="${i}" title="Sacar esta imagen">✕</button>
+</div>`).join("");
+    }
+
+    thumbsWrap.addEventListener("click", (event) => {
+        const removeBtn = event.target.closest("[data-images-remove]");
+        if(!removeBtn) return;
+        keepUrls.splice(Number(removeBtn.dataset.imagesRemove), 1);
+        render();
+    });
+
+    render();
+}
+
 function openItemModal(id = null, data = {}){
     const section = currentSection === "users" ? null : sections[currentSection];
     editingId = id;
@@ -4976,6 +5013,7 @@ ${userFieldHtml("active", getUsersFieldValue(data, "active"))}
         formFields.innerHTML = section.fields.map(field => fieldHtml(field, data[field[0]])).join("");
         const lineupField = section.fields.find(field => field[2] === "lineup");
         if(lineupField) initLineupField(lineupField[0], data[lineupField[0]], section.filterValue);
+        section.fields.filter(field => field[2] === "images").forEach(field => initImagesField(field[0], data[field[0]]));
     }
     modal.classList.remove("hidden");
 }
@@ -4995,24 +5033,40 @@ async function uploadImage(file, bucketPath, fieldName){
     return await getDownloadURL(snapshot.ref);
 }
 
-async function syncAccesoToProyectos(id, payload){
-    // Un acceso/evento con "Activo en Proyectos" también se refleja como
-    // proyecto (mismo id de documento, para poder mantenerlos sincronizados).
-    const proyectoRef = doc(db, "proyectos", id);
-    if(payload.publicarProyectos){
-        await setDoc(proyectoRef, {
-            titulo: payload.titulo || "",
-            fecha: payload.fechaLimite || "",
-            descripcion: payload.descripcion || "",
-            textoLargo: payload.requisitos || "",
-            img: payload.imagen || "",
-            link: payload.link || "",
-            upcoming: true,
-            origenAcceso: true,
-            updatedAt: serverTimestamp()
-        }, { merge: true });
-    }else{
-        await deleteDoc(proyectoRef).catch(() => {});
+// Migración única (idempotente, usa el mismo id de doc): trae lo que haya
+// en la vieja colección "accesos" — ya no se edita desde acá, pero puede
+// tener data real en producción — y lo vuelca a "proyectos" con las
+// banderas de la colección unificada. Correrla de nuevo no duplica nada.
+async function migrarAccesosAProyectos(){
+    if(!confirm("¿Migrar los Accesos antiguos a Proyectos? Es seguro correrlo más de una vez.")) return;
+    try{
+        const snapshot = await getDocs(collection(db, "accesos"));
+        let migrados = 0;
+        for(const docSnap of snapshot.docs){
+            const acceso = docSnap.data();
+            await setDoc(doc(db, "proyectos", docSnap.id), {
+                titulo: acceso.titulo || "",
+                categoria: acceso.categoria || "",
+                img: acceso.imagen || "",
+                descripcion: acceso.descripcion || "",
+                juego: acceso.juego || "",
+                modalidad: acceso.modalidad || "",
+                participantes: acceso.participantes || "",
+                premio: acceso.premio || "",
+                requisitos: acceso.requisitos || "",
+                link: acceso.link || "",
+                fechaLimite: acceso.fechaLimite || "",
+                accesoAnticipado: true,
+                publicarEnProyectos: !!acceso.publicarProyectos,
+                migradoDeAccesos: true,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            migrados++;
+        }
+        alert(`Se migraron ${migrados} acceso(s) a Proyectos.`);
+    }catch(error){
+        console.error(error);
+        alert("No se pudo completar la migración.");
     }
 }
 
@@ -5076,6 +5130,14 @@ async function saveItem(event){
                         mvp: mvps[i] === "true"
                     }))
                     .filter(row => row.jugador || row.agente);
+            }else if(type === "images"){
+                const keepUrls = JSON.parse(formData.get(`${name}_keep`) || "[]");
+                const nuevosArchivos = formData.getAll(`${name}File`).filter(item => item instanceof File && item.size);
+                const nuevasUrls = [];
+                for(const archivo of nuevosArchivos){
+                    nuevasUrls.push(await uploadImage(archivo, section.collection, name));
+                }
+                payload[name] = [...keepUrls, ...nuevasUrls];
             }else if(type === "boolean"){
                 payload[name] = formData.get(name) === "true";
             }else{
@@ -5085,17 +5147,11 @@ async function saveItem(event){
 
         payload.updatedAt = serverTimestamp();
 
-        let savedId = editingId;
         if(editingId){
             await updateDoc(doc(db, section.collection, editingId), payload);
         }else{
             payload.createdAt = serverTimestamp();
-            const created = await addDoc(collection(db, section.collection), payload);
-            savedId = created.id;
-        }
-
-        if(currentSection === "accesos"){
-            await syncAccesoToProyectos(savedId, payload);
+            await addDoc(collection(db, section.collection), payload);
         }
 
         closeModal();
@@ -5172,9 +5228,6 @@ content.addEventListener("click", async (event) => {
         if(deleteButton && confirm("¿Eliminar este registro?")){
             const section = sections[currentSection];
             await deleteDoc(doc(db, section.collection, deleteButton.dataset.delete));
-            if(currentSection === "accesos"){
-                await deleteDoc(doc(db, "proyectos", deleteButton.dataset.delete)).catch(() => {});
-            }
         }
 
         if(roleButton){
