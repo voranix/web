@@ -16,11 +16,9 @@ import {
 import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
 import { app, db, escapeHtml } from "/assets/js/firebase-config.js";
 
-// TODO: reemplazar por la VAPID key real una vez generada en Firebase
-// Console → Configuración del proyecto → Cloud Messaging → Certificados
-// push web → "Generar par de claves". Hasta entonces, activarPush() falla
-// con un mensaje claro (la campanita in-app funciona igual sin esto).
-const VAPID_KEY = "PENDIENTE_VAPID_KEY";
+// Certificado push web generado en Firebase Console → Configuración del
+// proyecto → Cloud Messaging → Certificados push web.
+const VAPID_KEY = "BB5HdkA2NclQBgeGTev84GK12zJGmzb0B_nvQZLJkabHAMmBZeTgnyMB-MCDwxTUEDgo304JTCD1fplZVO1fOK8";
 
 // Pide permiso de notificaciones, genera el token de este dispositivo y lo
 // guarda en users/{uid}.fcmTokens (sin duplicar si ya estaba guardado).
