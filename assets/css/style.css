@@ -614,8 +614,9 @@ button { cursor: pointer; }
 .timeline-item { position:relative; margin-bottom:50px; }
 .timeline-dot { position:absolute; left:-28px; top:6px; width:14px; height:14px; background:var(--morado); border-radius:50%; box-shadow:0 0 12px var(--morado); border:2px solid var(--bg); }
 .timeline-dot.upcoming { background:var(--naranja); box-shadow:0 0 12px var(--naranja); }
-.timeline-content { background:var(--card); padding:22px 26px; border-radius:var(--r-md); border:1px solid var(--border); cursor:pointer; transition:var(--ease); }
+.timeline-content { display:block; background:var(--card); padding:22px 26px; border-radius:var(--r-md); border:1px solid var(--border); cursor:pointer; transition:var(--ease); color:inherit; text-decoration:none; }
 .timeline-content:hover { transform:translateX(8px); border-color:var(--naranja); box-shadow:0 4px 24px var(--naranja-glow); }
+.timeline-content-img { width:100%; max-height:220px; object-fit:cover; border-radius:var(--r-sm); margin-bottom:14px; }
 .timeline-date { font-size:10px; color:var(--naranja); letter-spacing:2px; text-transform:uppercase; }
 .timeline-content h3 { font-size:1rem; color:#fff; margin:6px 0 8px; }
 .timeline-content p { font-size:13px; text-align:left; line-height:1.7; }
@@ -624,9 +625,10 @@ button { cursor: pointer; }
 .upcoming-content h2 { margin-bottom:12px; }
 .upcoming-content > p { margin-bottom:44px; }
 .upcoming-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr)); gap:22px; margin-top:24px; }
-.upcoming-item { background:rgba(255,255,255,0.025); padding:26px 22px; border-radius:var(--r-lg); border:1px solid var(--border); display:flex; align-items:flex-start; gap:16px; text-align:left; transition:var(--ease); }
+.upcoming-item { background:rgba(255,255,255,0.025); padding:26px 22px; border-radius:var(--r-lg); border:1px solid var(--border); display:flex; align-items:flex-start; gap:16px; text-align:left; transition:var(--ease); color:inherit; text-decoration:none; }
 .upcoming-item:hover { border-color:var(--naranja); transform:translateX(6px); }
-.upcoming-icon { font-size:26px; flex-shrink:0; margin-top:2px; }
+.upcoming-icon { font-size:26px; flex-shrink:0; margin-top:2px; color:var(--naranja); }
+.upcoming-icon-img { width:56px; height:56px; object-fit:cover; border-radius:var(--r-sm); flex-shrink:0; }
 .upcoming-item h3 { font-size:.95rem; color:#fff; margin-bottom:6px; }
 .upcoming-item p { font-size:13px; text-align:left; line-height:1.6; }
 

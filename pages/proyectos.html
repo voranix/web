@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Proyectos | VORANIX</title>
-    <meta name="description" content="Proyectos y experiencias creadas por VORANIX: torneos, series de Minecraft, eventos gamer y próximos lanzamientos.">
+    <meta name="description" content="Proyectos y experiencias creadas por VORANIX: torneos, eventos gamer y próximos lanzamientos.">
     <link rel="canonical" href="https://voranix.web.app/pages/proyectos.html">
     <link rel="icon" type="image/png" href="/imagenes/logopng.png">
     <link rel="stylesheet" href="/assets/css/style.css">
@@ -30,11 +30,11 @@
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
                     <li class="nav-dropdown">
-                        <button type="button" class="nav-dropdown-toggle">Quiénes Somos <i class="fas fa-chevron-down"></i></button>
+                        <button type="button" class="nav-dropdown-toggle active">Quiénes Somos <i class="fas fa-chevron-down"></i></button>
                         <ul class="nav-dropdown-menu">
                             <li><a href="/pages/nosotros.html">Nosotros</a></li>
                             <li><a href="/pages/staff.html">Staff</a></li>
-                            <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                            <li><a href="/pages/proyectos.html" class="active">Proyectos</a></li>
                         </ul>
                     </li>
                     <li><a href="/pages/reglamento.html">Reglamento</a></li>
@@ -62,19 +62,26 @@
     </div>
 </header>
 
-<section class="projects container">
-    <div class="projects-intro">
-        <h2 style="text-align:center;font-size:clamp(1.6rem,7vw,3rem);overflow-wrap:anywhere;">PRÓXIMAMENTE</h2>
+<section class="upcoming-projects container" id="upcoming-section" hidden>
+    <div class="upcoming-content">
+        <h2>Próximos proyectos</h2>
+        <p class="muted">Lo que se viene desde VORANIX</p>
+        <div class="upcoming-list" id="upcoming-list"></div>
     </div>
 </section>
 
-<div class="modal show" id="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2>En construcción</h2>
-        <p>Estamos trabajando en esta sección. ¡Vuelve pronto!</p>
+<section class="projects container">
+    <div class="projects-intro">
+        <div class="section-title">
+            <div class="section-label">Nuestra trayectoria</div>
+            <h2>Proyectos realizados</h2>
+            <span class="accent-line"></span>
+        </div>
     </div>
-</div>
+    <div class="timeline-projects" id="timeline-list">
+        <p class="loading"><i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--morado);"></i>Cargando proyectos...</p>
+    </div>
+</section>
 
 <footer class="footer">
     <div class="footer-inner container">
@@ -120,19 +127,76 @@
 
 <script src="/assets/js/nav.js"></script>
 
-<script>
-const modal = document.getElementById("modal");
-const closeBtn = document.querySelector(".close");
+<script type="module">
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { db, escapeHtml } from "/assets/js/firebase-config.js";
 
-closeBtn.onclick = () => modal.classList.remove("show");
+const CATEGORIAS = {
+    torneo: "Torneo", evento: "Evento", actividad: "Actividad", proyecto: "Proyecto", general: "General"
+};
 
-modal.addEventListener("click", (event) => {
-    if(event.target === modal) modal.classList.remove("show");
-});
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
 
-document.addEventListener("keydown", (event) => {
-    if(event.key === "Escape") modal.classList.remove("show");
-});
+const upcomingSection = document.getElementById("upcoming-section");
+const upcomingList = document.getElementById("upcoming-list");
+const timelineList = document.getElementById("timeline-list");
+
+function renderUpcoming(item) {
+    const categoria = CATEGORIAS[item.categoria] || item.categoria || "";
+    return `
+<a class="upcoming-item" href="/pages/proyecto.html?id=${encodeURIComponent(item.id)}">
+    ${item.img ? `<img class="upcoming-icon-img" src="${escapeHtml(assetUrl(item.img))}" alt="" onerror="this.remove()">` : '<i class="fas fa-rocket upcoming-icon"></i>'}
+    <div>
+        <h3>${escapeHtml(item.titulo) || "Sin título"}</h3>
+        ${categoria || item.fecha ? `<p class="meta-line">${[categoria, item.fecha].filter(Boolean).map(escapeHtml).join(" · ")}</p>` : ""}
+        ${item.descripcion ? `<p>${escapeHtml(item.descripcion)}</p>` : ""}
+    </div>
+</a>`;
+}
+
+function renderTimelineItem(item) {
+    const categoria = CATEGORIAS[item.categoria] || item.categoria || "";
+    return `
+<div class="timeline-item">
+    <span class="timeline-dot"></span>
+    <a class="timeline-content" href="/pages/proyecto.html?id=${encodeURIComponent(item.id)}">
+        ${item.img ? `<img class="timeline-content-img" src="${escapeHtml(assetUrl(item.img))}" alt="" onerror="this.remove()">` : ""}
+        <div class="timeline-date">${[categoria, item.fecha].filter(Boolean).map(escapeHtml).join(" · ")}</div>
+        <h3>${escapeHtml(item.titulo) || "Sin título"}</h3>
+        ${item.descripcion ? `<p>${escapeHtml(item.descripcion)}</p>` : ""}
+    </a>
+</div>`;
+}
+
+async function loadProyectos() {
+    try {
+        const snapshot = await getDocs(query(collection(db, "proyectos"), where("publicarEnProyectos", "==", true)));
+        const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const proximos = docs.filter(item => item.upcoming === true);
+        const realizados = docs.filter(item => item.upcoming !== true);
+
+        if (proximos.length) {
+            upcomingSection.hidden = false;
+            upcomingList.innerHTML = proximos.map(renderUpcoming).join("");
+        }
+
+        timelineList.innerHTML = realizados.length
+            ? realizados.map(renderTimelineItem).join("")
+            : (proximos.length ? "" : `<p class="loading">Todavía no hay proyectos publicados.</p>`);
+
+        if (!docs.length) {
+            timelineList.innerHTML = `<p class="loading">Todavía no hay proyectos publicados.</p>`;
+        }
+    } catch (e) {
+        console.error(e);
+        timelineList.innerHTML = `<p class="loading">No se pudieron cargar los proyectos.</p>`;
+    }
+}
+loadProyectos();
 </script>
 </body>
 </html>
