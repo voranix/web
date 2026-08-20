@@ -1043,7 +1043,7 @@
     function renderAcceso(item){
         const categoria = CATEGORIAS[item.categoria] || item.categoria || "General";
         const link = item.link || "";
-        const img = assetUrl(item.imagen);
+        const img = assetUrl(item.img);
 
         const meta = [
             item.juego ? `<span class="meta-chip"><i class="fas fa-gamepad"></i>${escapeHtml(item.juego)}</span>` : "",
@@ -1057,6 +1057,7 @@
     ${img ? `<img class="acceso-img" src="${escapeHtml(img)}" alt="${escapeHtml(item.titulo || categoria)}" onerror="this.style.display='none'">` : ""}
     <div class="acceso-body">
         <span class="tag-chip">${escapeHtml(categoria)}</span>
+        <span class="tag-chip" style="background:rgba(255,140,0,0.12);border-color:var(--naranja);color:var(--naranja);">Acceso Anticipado</span>
         <h3>${escapeHtml(item.titulo || "Sin título")}</h3>
         ${item.descripcion ? `<p>${escapeHtml(item.descripcion)}</p>` : ""}
         ${meta ? `<div class="acceso-meta">${meta}</div>` : ""}
@@ -1097,10 +1098,9 @@
     }
 
     function loadAccesos(){
-        unsubAccesos = onSnapshot(collection(db, "accesos"), (snapshot) => {
+        unsubAccesos = onSnapshot(query(collection(db, "proyectos"), where("accesoAnticipado", "==", true)), (snapshot) => {
             const docs = snapshot.docs
                 .map(d => ({ id: d.id, ...d.data() }))
-                .filter(item => item.activo !== false)
                 .sort(sortByCreatedAtDesc);
             accesosCount = docs.length;
             renderStatsStrip();
