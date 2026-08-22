@@ -376,14 +376,38 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 @media(max-width:768px){
     .topbar{ gap:12px; }
     .badge{ padding:5px 9px; }
-    .table-wrap{ overflow-x:auto; }
-    table{ min-width:760px; }
     .content{ padding:16px; }
     .modal{ padding:12px; }
     .modal-card{ padding:18px; }
     .table-toolbar{ padding:12px; }
     .table-toolbar select{ max-width:none; flex:1 1 140px; }
     .table-toolbar .count{ margin-left:0; width:100%; }
+
+    /* Tablas -> tarjetas: en mobile no tiene sentido forzar scroll
+       horizontal+vertical para llegar a Editar/Eliminar, que quedaban
+       "del otro lado de la pantalla". Cada <tr> pasa a ser una tarjeta
+       y cada <td> se etiqueta con data-label (ver renderFilteredRows /
+       renderFilteredUsers). */
+    .table-wrap table, .table-wrap thead, .table-wrap tbody, .table-wrap tr, .table-wrap td, .table-wrap th{ display:block; width:100%; }
+    .table-wrap thead{ display:none; }
+    table{ min-width:0; }
+    .table-wrap tbody tr{
+        background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md);
+        margin-bottom:12px; padding:4px 14px; overflow:hidden;
+    }
+    .table-wrap tbody tr td.select-col{ display:none; }
+    .table-wrap tbody td{
+        display:flex; align-items:center; justify-content:space-between; gap:14px;
+        padding:10px 0; border-bottom:1px dashed var(--border); text-align:right; min-width:0;
+    }
+    .table-wrap tbody td:last-child{ border-bottom:none; }
+    .table-wrap tbody td::before{
+        content:attr(data-label); font-size:10.5px; font-weight:700; text-transform:uppercase;
+        letter-spacing:.5px; color:var(--muted); text-align:left; flex-shrink:0;
+    }
+    .table-wrap tbody td img{ margin-left:auto; }
+    .table-wrap tbody td .cell-clamp{ max-width:60%; text-align:right; }
+    .table-wrap tbody td .actions{ width:100%; justify-content:flex-end; }
 }
 
 @media(max-width:480px){
@@ -1644,8 +1668,8 @@ function renderCrudSection(section){
             const data = item;
             return `<tr>
 <td class="select-col"><input type="checkbox" data-select="${item.id}" ${selected.has(item.id) ? "checked" : ""}></td>
-${section.fields.map(field => `<td>${tableValue(data[field[0]], field[2], field[3])}</td>`).join("")}
-<td><div class="actions">
+${section.fields.map(field => `<td data-label="${escapeHtml(field[1])}">${tableValue(data[field[0]], field[2], field[3])}</td>`).join("")}
+<td data-label="Acciones"><div class="actions">
     <button class="btn secondary small" type="button" data-edit="${item.id}">Editar</button>
     <button class="btn danger small" type="button" data-delete="${item.id}">Eliminar</button>
 </div></td>
@@ -4585,12 +4609,12 @@ async function renderUsers(){
             return `
 <tr>
 <td class="select-col"><input type="checkbox" data-select="${user.uid}" ${selected.has(user.uid) ? "checked" : ""}></td>
-<td>${user.displayName ? escapeHtml(user.displayName) : "-"}</td>
-<td>${user.email ? escapeHtml(user.email) : "-"}</td>
-<td>${profileRoles(user).length ? escapeHtml(rolesLabel(profileRoles(user))) : "-"}</td>
-<td>${user.active === false ? "No" : "Sí"}</td>
-<td>${ultimoIngreso}</td>
-<td><div class="actions">
+<td data-label="Nombre">${user.displayName ? escapeHtml(user.displayName) : "-"}</td>
+<td data-label="Email">${user.email ? escapeHtml(user.email) : "-"}</td>
+<td data-label="Rol">${profileRoles(user).length ? escapeHtml(rolesLabel(profileRoles(user))) : "-"}</td>
+<td data-label="Activo"><span class="pill ${user.active === false ? "pill-no" : "pill-yes"}">${user.active === false ? "No" : "Sí"}</span></td>
+<td data-label="Último ingreso">${ultimoIngreso}</td>
+<td data-label="Acciones"><div class="actions">
     <button class="btn secondary small" type="button" data-user-edit="${user.uid}">Editar</button>
     <button class="btn small" type="button" data-send-access="${user.uid}" title="Envía un link para configurar/restablecer la contraseña">Cambiar contraseña</button>
 </div></td>
