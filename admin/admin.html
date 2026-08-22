@@ -134,9 +134,9 @@ button{ cursor:pointer; }
     justify-content:center; line-height:1;
 }
 .notif-panel{
-    position:absolute; top:calc(100% + 10px); right:0; width:320px; max-width:calc(100vw - 24px); max-height:420px;
+    position:fixed; width:320px; max-width:calc(100vw - 24px); max-height:420px;
     overflow-y:auto; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-md);
-    box-shadow:var(--shadow-md); z-index:50;
+    box-shadow:var(--shadow-md); z-index:200;
 }
 .notif-item{ display:flex; gap:10px; padding:12px 14px; border-bottom:1px solid var(--border); cursor:pointer; transition:background var(--ease); }
 .notif-item:last-child{ border-bottom:none; }

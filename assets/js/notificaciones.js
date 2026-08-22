@@ -123,14 +123,33 @@ export function initNotificationBell(elementos) {
 </div>`).join("") : `<p class="notif-empty">No tenés notificaciones todavía.</p>`;
     }
 
+    // El panel es position:fixed y se ubica acá en JS (en vez de con
+    // right:0 relativo al botón) porque ese botón puede terminar en
+    // cualquier punto de la fila en mobile (el contenedor hace wrap) y un
+    // ancho fijo anclado a su derecha se termina saliendo de pantalla por
+    // la izquierda. Clampeando left contra el viewport nunca se desborda.
+    function posicionarPanel() {
+        const btnRect = elementos.toggleBtn.getBoundingClientRect();
+        const margen = 12;
+        const anchoPanel = Math.min(320, window.innerWidth - margen * 2);
+        const left = Math.max(margen, Math.min(btnRect.right - anchoPanel, window.innerWidth - anchoPanel - margen));
+        elementos.panel.style.left = `${left}px`;
+        elementos.panel.style.top = `${btnRect.bottom + 10}px`;
+    }
+
     function togglePanel(forzar) {
         panelAbierto = typeof forzar === "boolean" ? forzar : !panelAbierto;
         elementos.panel.classList.toggle("hidden", !panelAbierto);
+        if (panelAbierto) posicionarPanel();
     }
 
     elementos.toggleBtn.addEventListener("click", (event) => {
         event.stopPropagation();
         togglePanel();
+    });
+
+    window.addEventListener("resize", () => {
+        if (panelAbierto) posicionarPanel();
     });
 
     elementos.listEl.addEventListener("click", (event) => {
