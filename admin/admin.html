@@ -355,10 +355,14 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .rivals-resultado-bono-list input{ width:60px; }
 @media(max-width:1100px){ .tareas-board{ grid-template-columns:repeat(2,1fr); } }
 @media(max-width:640px){ .tareas-board{ grid-template-columns:1fr; } }
+.sidebar-backdrop{ display:none; }
 @media(max-width:1024px){
     .admin-shell{ grid-template-columns:1fr; }
     .sidebar{ position:fixed; inset:0 auto 0 0; width:260px; z-index:15; transform:translateX(-100%); transition:.25s; box-shadow:12px 0 30px rgba(0,0,0,.35); }
     .sidebar.open{ transform:translateX(0); }
+    .sidebar-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:14; }
+    .sidebar-backdrop:not(.open){ display:none; }
+    .sidebar-backdrop.open{ display:block; }
     .hamburger{ display:inline-flex; }
     .topbar{ padding:12px 16px; }
     .user-box{ width:100%; justify-content:flex-start; }
@@ -425,6 +429,7 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
         <a class="btn secondary" href="/index.html" style="margin-bottom:16px;">← Ir al sitio</a>
         <nav id="nav" class="nav"></nav>
     </aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
     <main class="main">
         <header class="topbar">
             <div class="topbar-left">
@@ -1305,6 +1310,7 @@ const formFields = document.getElementById("form-fields");
 const formError = document.getElementById("form-error");
 const modalTitle = document.getElementById("modal-title");
 const sidebar = document.getElementById("sidebar");
+const sidebarBackdrop = document.getElementById("sidebar-backdrop");
 const messageModal = document.getElementById("message-modal");
 const messageForm = document.getElementById("message-form");
 const messageError = document.getElementById("message-error");
@@ -1468,6 +1474,7 @@ function selectSection(key){
     currentSection = key;
     buildNav();
     sidebar.classList.remove("open");
+    sidebarBackdrop.classList.remove("open");
     if(unsubscribeList) unsubscribeList();
     if(key === "users") renderUsers();
     else if(key === "dashboard") renderDashboardSection();
@@ -5273,7 +5280,14 @@ document.getElementById("forgot-password-btn").addEventListener("click", async (
     }
 });
 
-document.getElementById("hamburger").addEventListener("click", () => sidebar.classList.toggle("open"));
+document.getElementById("hamburger").addEventListener("click", () => {
+    const abierto = sidebar.classList.toggle("open");
+    sidebarBackdrop.classList.toggle("open", abierto);
+});
+sidebarBackdrop.addEventListener("click", () => {
+    sidebar.classList.remove("open");
+    sidebarBackdrop.classList.remove("open");
+});
 
 const sidebarCollapseBtn = document.getElementById("sidebar-collapse");
 const SIDEBAR_COLLAPSE_KEY = "voranixAdminSidebarCollapsed";
