@@ -317,7 +317,7 @@
 
     function hasPortalAccess(profile){
         return profile && profile.active !== false &&
-            profileRoles(profile).some(role => ["admin", "editor", "capitan", "jugador"].includes(role));
+            profileRoles(profile).some(role => ["admin", "editor", "capitan", "segundocapitan", "jugador"].includes(role));
     }
 
     async function loadProfile(user){

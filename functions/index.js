@@ -889,6 +889,7 @@ exports.sincronizarChatWebhooks = onSchedule(
 const PORTAL_INFO = {
     creador: { url: "https://voranix.web.app/pages/creadores.html", nombre: "Portal Creadores" },
     capitan: { url: "https://voranix.web.app/pages/roster-portal.html", nombre: "Portal Roster" },
+    segundocapitan: { url: "https://voranix.web.app/pages/roster-portal.html", nombre: "Portal Roster" },
     jugador: { url: "https://voranix.web.app/pages/roster-portal.html", nombre: "Portal Roster" },
     admin: { url: "https://voranix.web.app/admin/admin.html", nombre: "Panel Admin" },
     editor: { url: "https://voranix.web.app/admin/admin.html", nombre: "Panel Admin" },
@@ -1102,7 +1103,7 @@ exports.enviarComunicado = onCall(
         const callerProfile = callerSnap.exists ? callerSnap.data() : null;
         const callerRoles = profileRoles(callerProfile);
         const callerIsStaff = callerRoles.some(r => ["admin", "editor"].includes(r));
-        const callerIsCapitan = callerRoles.includes("capitan");
+        const callerIsCapitan = callerRoles.some(r => ["capitan", "segundocapitan"].includes(r));
         if (!callerProfile || (!callerIsStaff && !callerIsCapitan)) {
             throw new HttpsError("permission-denied", "No tienes permiso para enviar comunicados.");
         }
@@ -1342,7 +1343,7 @@ exports.onActividadEquipoNotificar = onDocumentWritten("equipoActividad/{activid
         .filter(d => {
             const data = d.data();
             const roles = profileRoles(data);
-            return (roles.includes("jugador") || roles.includes("capitan")) && data.equipoJuego === after.juego;
+            return (roles.includes("jugador") || roles.includes("capitan") || roles.includes("segundocapitan")) && data.equipoJuego === after.juego;
         })
         .map(d => d.id);
     if (!destinatarios.length) return;

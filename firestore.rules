@@ -41,11 +41,11 @@ service cloud.firestore {
     }
 
     function isCapitanDe(juego) {
-      return hasRole("capitan") && userProfile().equipoJuego == juego;
+      return (hasRole("capitan") || hasRole("segundocapitan")) && userProfile().equipoJuego == juego;
     }
 
     function isEquipoMiembro(juego) {
-      return (hasRole("capitan") || hasRole("jugador")) && userProfile().equipoJuego == juego;
+      return (hasRole("capitan") || hasRole("segundocapitan") || hasRole("jugador")) && userProfile().equipoJuego == juego;
     }
 
     match /users/{userId} {

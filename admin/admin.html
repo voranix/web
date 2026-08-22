@@ -964,7 +964,8 @@ const TIPO_JUGADOR = [
     ["suplente", "Jugador Suplente"],
     ["coach", "Coach"],
     ["igl", "IGL"],
-    ["capitan", "Capitán"]
+    ["capitan", "Capitán"],
+    ["segundocapitan", "Second Caller"]
 ];
 
 const DBD_TIPO_JUGADOR = [
@@ -1374,7 +1375,7 @@ function profileRoles(data){
 
 // El valor guardado en Firestore sigue siendo "editor" (evita migrar cuentas
 // ya creadas); en toda la interfaz se muestra como "Staff".
-const ROLE_DISPLAY_LABELS = { editor: "Staff" };
+const ROLE_DISPLAY_LABELS = { editor: "Staff", segundocapitan: "Second Caller" };
 function roleLabel(role){
     return ROLE_DISPLAY_LABELS[role] || role;
 }
@@ -1384,11 +1385,11 @@ function rolesLabel(roles){
 
 function hasValidRole(profile){
     return profile && profile.active !== false &&
-        profileRoles(profile).some(role => ["admin", "editor", "capitan"].includes(role));
+        profileRoles(profile).some(role => ["admin", "editor", "capitan", "segundocapitan"].includes(role));
 }
 
 function isCapitan(){
-    return profileRoles(currentProfile).includes("capitan");
+    return profileRoles(currentProfile).some(role => ["capitan", "segundocapitan"].includes(role));
 }
 
 function isStaff(){
@@ -1944,7 +1945,7 @@ async function renderDashboardSection(){
 // capitán tiene su propia versión reducida, ver initComunicadosCapitan).
 const COMUNICADOS_GRUPOS_STAFF = [
     { label: "Todo el staff", match: (c) => c.type === "uid" && c.roles.some(r => ["admin", "editor"].includes(r)) },
-    { label: "Todos los capitanes", match: (c) => c.type === "uid" && c.roles.includes("capitan") },
+    { label: "Todos los capitanes y Second Callers", match: (c) => c.type === "uid" && c.roles.some(r => ["capitan", "segundocapitan"].includes(r)) },
     { label: "Todos los jugadores", match: (c) => c.type === "uid" && c.roles.includes("jugador") },
     { label: "Valorant Principal", match: (c) => c.type === "uid" && c.equipoJuego === "valorant" },
     { label: "Valorant Secundario", match: (c) => c.type === "uid" && c.equipoJuego === "valorantsecundario" },
@@ -2176,7 +2177,7 @@ function renderComunicadosSection(){
 <div class="section-head">
     <div>
         <h2>Comunicados</h2>
-        <p class="muted">Como capitán, podés escribirle a tu equipo o al staff.</p>
+        <p class="muted">Podés escribirle a tu equipo o al staff.</p>
     </div>
 </div>
 <div class="panel" style="padding:22px;">
@@ -4508,6 +4509,7 @@ async function renderUsers(){
             <option value="editor">Rol: Staff</option>
             <option value="creador">Rol: creador</option>
             <option value="capitan">Rol: capitan</option>
+            <option value="segundocapitan">Rol: Second Caller</option>
             <option value="jugador">Rol: jugador</option>
             <option value="viewer">Rol: viewer</option>
         </select>
@@ -4755,7 +4757,7 @@ function userFieldHtml(name, value, disabled = false){
         const selected = Array.isArray(value) ? value : [];
         const options = [
             ["admin", "admin"], ["editor", "staff"], ["creador", "creador"],
-            ["capitan", "capitan"], ["jugador", "jugador"], ["viewer", "viewer"]
+            ["capitan", "capitan"], ["segundocapitan", "Second Caller"], ["jugador", "jugador"], ["viewer", "viewer"]
         ];
         return `
 <div class="field full">
