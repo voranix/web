@@ -114,9 +114,24 @@
         .layout-chip button{ background:none; border:none; color:var(--gris); cursor:pointer; font-size:12px; padding:2px; }
         .layout-chip button:hover{ color:#fff; }
         .layout-editor-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+        .creadores-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px; border-bottom:1px solid var(--border); }
+        .creadores-tab{
+            background:none; border:none; border-bottom:2px solid transparent; color:var(--gris); cursor:pointer;
+            font-family:inherit; font-weight:700; font-size:13px; letter-spacing:.5px; padding:12px 4px; margin-bottom:-1px;
+            display:flex; align-items:center; gap:8px; transition:var(--ease);
+        }
+        .creadores-tab i{ font-size:12px; }
+        .creadores-tab:hover{ color:#fff; }
+        .creadores-tab.active{ color:#fff; border-bottom-color:var(--naranja); }
+        .creadores-tab-panel.hidden{ display:none; }
+        .tarjeta-preview{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+        .tarjeta-preview img{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:1px solid var(--border); flex-shrink:0; }
+
         @media (max-width:600px){
             .creadores-topbar{ flex-direction:column; }
             .creadores-user{ justify-content:flex-start; width:100%; }
+            .creadores-tabs{ gap:4px 16px; }
         }
     </style>
 </head>
@@ -213,54 +228,72 @@
 
     <div id="creadores-stats-strip" class="creadores-stats-strip hidden"></div>
 
-    <div class="overlay-links-block">
-        <h2 class="overlay-links-title"><i class="fab fa-twitch"></i> Tu cuenta de Twitch</h2>
-        <p class="muted overlay-links-sub">Se verifica directo contra tu cuenta real de Twitch (OAuth) y así queda tu overlay y tu bot de chat sin mezclarse con los de otros creadores.</p>
-        <div id="twitch-status-content"><p class="loading">Cargando...</p></div>
+    <div class="creadores-tabs" role="tablist">
+        <button type="button" class="creadores-tab active" data-tab="proyectos"><i class="fas fa-diagram-project"></i> Proyectos</button>
+        <button type="button" class="creadores-tab" data-tab="herramientas"><i class="fas fa-toolbox"></i> Herramientas</button>
+        <button type="button" class="creadores-tab" data-tab="tarjeta"><i class="fas fa-id-badge"></i> Mi Tarjeta</button>
     </div>
 
-    <div class="overlay-links-block">
-        <h2 class="overlay-links-title"><i class="fas fa-desktop"></i> Tu overlay para streams</h2>
-        <p class="muted overlay-links-sub" id="overlay-links-sub">Pegá estos links como Fuente de Navegador en OBS (Agregar → Fuente de navegador → URL).</p>
-        <div id="overlay-links-content"></div>
-    </div>
+    <div class="creadores-tab-panel" data-tab-panel="proyectos">
+        <div id="proyectos-block" class="overlay-links-block hidden">
+            <h2 class="overlay-links-title"><i class="fas fa-diagram-project"></i> Proyectos VORANIX</h2>
+            <p class="muted overlay-links-sub">Novedades, colaboraciones y próximos lanzamientos del estudio.</p>
+            <div id="proyectos-grid" class="creadores-grid"></div>
+        </div>
 
-    <div class="overlay-links-block">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-            <h2 class="overlay-links-title"><i class="fas fa-comment-dots"></i> Mis comandos de chat</h2>
-            <button class="btn secondary small hidden" type="button" id="comando-add-btn">+ Nuevo comando</button>
-        </div>
-        <p class="muted overlay-links-sub">Comandos exclusivos de tu canal — no afectan ni se mezclan con los de otros creadores ni con los generales de VORANIX.</p>
-        <div id="mis-comandos-list"></div>
-    </div>
-
-    <div id="overlay-editor-block" class="overlay-links-block hidden">
-        <h2 class="overlay-links-title"><i class="fas fa-object-ungroup"></i> Personalizá tu overlay</h2>
-        <p class="muted overlay-links-sub">Arrastrá el logo, el cartel de redes, el banner de comandos y el de raid a donde quieras — pensado para acomodar tu cámara o tu layout de stream. El resto (ticker, timer, sponsors, códigos) sigue en su lugar de siempre.</p>
-        <div class="layout-editor-tabs">
-            <button class="btn small" type="button" data-layout-tab="horizontal">Horizontal</button>
-            <button class="btn secondary small" type="button" data-layout-tab="vertical">Vertical</button>
-        </div>
-        <div class="layout-editor-canvas-wrap">
-            <div id="layout-canvas" class="layout-editor-canvas"></div>
-        </div>
-        <div class="layout-editor-actions">
-            <button class="btn" type="button" id="layout-save-btn">Guardar diseño</button>
-            <button class="btn secondary" type="button" id="layout-reset-btn">Restablecer</button>
-            <span id="layout-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+        <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fas fa-ticket"></i> Accesos exclusivos</h2>
+            <div id="accesos-grid" class="creadores-grid">
+                <p class="loading">Cargando accesos...</p>
+            </div>
         </div>
     </div>
 
-    <div id="proyectos-block" class="overlay-links-block hidden">
-        <h2 class="overlay-links-title"><i class="fas fa-diagram-project"></i> Proyectos VORANIX</h2>
-        <p class="muted overlay-links-sub">Novedades, colaboraciones y próximos lanzamientos del estudio.</p>
-        <div id="proyectos-grid" class="creadores-grid"></div>
+    <div class="creadores-tab-panel hidden" data-tab-panel="herramientas">
+        <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fab fa-twitch"></i> Tu cuenta de Twitch</h2>
+            <p class="muted overlay-links-sub">Se verifica directo contra tu cuenta real de Twitch (OAuth) y así queda tu overlay y tu bot de chat sin mezclarse con los de otros creadores.</p>
+            <div id="twitch-status-content"><p class="loading">Cargando...</p></div>
+        </div>
+
+        <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fas fa-desktop"></i> Tu overlay para streams</h2>
+            <p class="muted overlay-links-sub" id="overlay-links-sub">Pegá estos links como Fuente de Navegador en OBS (Agregar → Fuente de navegador → URL).</p>
+            <div id="overlay-links-content"></div>
+        </div>
+
+        <div class="overlay-links-block">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                <h2 class="overlay-links-title"><i class="fas fa-comment-dots"></i> Mis comandos de chat</h2>
+                <button class="btn secondary small hidden" type="button" id="comando-add-btn">+ Nuevo comando</button>
+            </div>
+            <p class="muted overlay-links-sub">Comandos exclusivos de tu canal — no afectan ni se mezclan con los de otros creadores ni con los generales de VORANIX.</p>
+            <div id="mis-comandos-list"></div>
+        </div>
+
+        <div id="overlay-editor-block" class="overlay-links-block hidden">
+            <h2 class="overlay-links-title"><i class="fas fa-object-ungroup"></i> Personalizá tu overlay</h2>
+            <p class="muted overlay-links-sub">Arrastrá el logo, el cartel de redes, el banner de comandos y el de raid a donde quieras — pensado para acomodar tu cámara o tu layout de stream. El resto (ticker, timer, sponsors, códigos) sigue en su lugar de siempre.</p>
+            <div class="layout-editor-tabs">
+                <button class="btn small" type="button" data-layout-tab="horizontal">Horizontal</button>
+                <button class="btn secondary small" type="button" data-layout-tab="vertical">Vertical</button>
+            </div>
+            <div class="layout-editor-canvas-wrap">
+                <div id="layout-canvas" class="layout-editor-canvas"></div>
+            </div>
+            <div class="layout-editor-actions">
+                <button class="btn" type="button" id="layout-save-btn">Guardar diseño</button>
+                <button class="btn secondary" type="button" id="layout-reset-btn">Restablecer</button>
+                <span id="layout-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+            </div>
+        </div>
     </div>
 
-    <div class="overlay-links-block">
-        <h2 class="overlay-links-title"><i class="fas fa-ticket"></i> Accesos exclusivos</h2>
-        <div id="accesos-grid" class="creadores-grid">
-            <p class="loading">Cargando accesos...</p>
+    <div class="creadores-tab-panel hidden" data-tab-panel="tarjeta">
+        <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fas fa-id-badge"></i> Mi Tarjeta de Streamer</h2>
+            <p class="muted overlay-links-sub">Así te ve la gente en la página pública de Streamers. La imagen y el resto de los datos los administra VORANIX; vos podés editar tu descripción y tus redes.</p>
+            <div id="tarjeta-content"><p class="loading">Cargando...</p></div>
         </div>
     </div>
 </section>
@@ -449,9 +482,12 @@
     let unsubAccesos = null;
     let unsubProyectos = null;
     let unsubProfile = null;
+    let unsubTarjeta = null;
     let accesosCount = 0;
     let proyectosCount = 0;
     let botConectado = null; // null = todavía sin consultar
+    let tarjetaId = null;
+    let tarjetaData = null;
 
     function stopListeners(){
         if(unsubAccesos) unsubAccesos();
@@ -460,10 +496,23 @@
         unsubProyectos = null;
         if(unsubProfile) unsubProfile();
         unsubProfile = null;
+        if(unsubTarjeta) unsubTarjeta();
+        unsubTarjeta = null;
         if(unsubComandos) unsubComandos();
         unsubComandos = null;
         notifBell.stop();
     }
+
+    document.querySelectorAll(".creadores-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+            const target = tab.dataset.tab;
+            document.querySelectorAll(".creadores-tab").forEach(t => t.classList.toggle("active", t === tab));
+            document.querySelectorAll(".creadores-tab-panel").forEach(panel => {
+                panel.classList.toggle("hidden", panel.dataset.tabPanel !== target);
+            });
+            history.replaceState(null, "", `#${target}`);
+        });
+    });
 
     function showLogin(){
         loginScreen.classList.remove("hidden");
@@ -486,6 +535,10 @@
         renderMisComandos(profile);
         renderOverlayEditor(profile);
         renderStatsStrip();
+
+        const hashTab = location.hash.replace("#", "");
+        const tabButton = document.querySelector(`.creadores-tab[data-tab="${hashTab}"]`);
+        if(tabButton) tabButton.click();
 
         if(localStorage.getItem(TUTORIAL_SEEN_KEY) !== "1") openTutorial();
 
@@ -1114,6 +1167,81 @@
         });
     }
 
+    // Solo descripcion/instagram/twitch/kick/tiktok son editables acá — es
+    // lo mismo que firestore.rules le permite tocar a la cuenta vinculada
+    // (isLinkedCreador). Nombre, imagen, horario, etc. los sigue manejando
+    // el staff desde el admin.
+    function renderTarjeta(){
+        const content = document.getElementById("tarjeta-content");
+        if(!tarjetaId){
+            content.innerHTML = `<p class="muted">Todavía no tenés una tarjeta de streamer vinculada a tu cuenta. Escribile al staff de VORANIX para que te la vinculen desde el panel de administración.</p>`;
+            return;
+        }
+        const d = tarjetaData || {};
+        content.innerHTML = `
+<div class="tarjeta-preview">
+    ${d.foto ? `<img src="${escapeHtml(assetUrl(d.foto))}" alt="${escapeHtml(d.nombre || "")}">` : ""}
+    <div>
+        <strong>${escapeHtml(d.nombre || "Sin nombre")}</strong>
+        <p class="muted" style="font-size:12px;margin-top:2px;">Nombre e imagen los administra VORANIX.</p>
+    </div>
+</div>
+<form id="tarjeta-form">
+    <div class="field">
+        <label>Descripción</label>
+        <textarea name="descripcion" placeholder="Contale a la gente de qué va tu canal...">${escapeHtml(d.descripcion || "")}</textarea>
+    </div>
+    <div class="form-grid">
+        <div class="field"><label>Instagram</label><input name="instagram" type="url" value="${escapeHtml(d.instagram || "")}" placeholder="https://instagram.com/..."></div>
+        <div class="field"><label>Twitch</label><input name="twitch" type="url" value="${escapeHtml(d.twitch || "")}" placeholder="https://twitch.tv/..."></div>
+        <div class="field"><label>Kick</label><input name="kick" type="url" value="${escapeHtml(d.kick || "")}" placeholder="https://kick.com/..."></div>
+        <div class="field"><label>TikTok</label><input name="tiktok" type="url" value="${escapeHtml(d.tiktok || "")}" placeholder="https://tiktok.com/@..."></div>
+    </div>
+    <div id="tarjeta-error" class="error"></div>
+    <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="btn" type="submit">Guardar cambios</button>
+        <span id="tarjeta-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+    </div>
+</form>`;
+
+        document.getElementById("tarjeta-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const msgEl = document.getElementById("tarjeta-msg");
+            const errorEl = document.getElementById("tarjeta-error");
+            errorEl.textContent = "";
+            msgEl.textContent = "Guardando...";
+            try{
+                await updateDoc(doc(db, "streamers", tarjetaId), {
+                    descripcion: String(formData.get("descripcion") || "").trim(),
+                    instagram: String(formData.get("instagram") || "").trim(),
+                    twitch: String(formData.get("twitch") || "").trim(),
+                    kick: String(formData.get("kick") || "").trim(),
+                    tiktok: String(formData.get("tiktok") || "").trim(),
+                    updatedAt: serverTimestamp()
+                });
+                msgEl.textContent = "¡Guardado!";
+                setTimeout(() => { if(msgEl) msgEl.textContent = ""; }, 2500);
+            }catch(error){
+                console.error(error);
+                msgEl.textContent = "";
+                errorEl.textContent = "No se pudo guardar. Intenta de nuevo.";
+            }
+        });
+    }
+
+    function loadMiTarjeta(){
+        unsubTarjeta = onSnapshot(query(collection(db, "streamers"), where("uid", "==", currentUser.uid)), (snapshot) => {
+            const docSnap = snapshot.docs[0];
+            tarjetaId = docSnap ? docSnap.id : null;
+            tarjetaData = docSnap ? docSnap.data() : null;
+            renderTarjeta();
+        }, (error) => {
+            console.error(error);
+            document.getElementById("tarjeta-content").innerHTML = `<p class="loading">No se pudo cargar tu tarjeta.</p>`;
+        });
+    }
+
     loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         loginError.textContent = "";
@@ -1163,6 +1291,7 @@
             showShell(user, profile);
             loadAccesos();
             loadProyectos();
+            loadMiTarjeta();
         }catch(error){
             console.error(error);
             loginError.textContent = "No se pudo verificar tu cuenta. Intenta de nuevo.";
