@@ -272,9 +272,11 @@ async function getTwitchToken(clientId, clientSecret) {
     return twitchTokenCache.token;
 }
 
-// Devuelve el set de user_logins (en minúscula) que están en vivo ahora mismo.
+// Devuelve un Map user_login (en minúscula) -> viewer_count de quienes están
+// en vivo ahora mismo. viewer_count ya viene en la misma respuesta de
+// /helix/streams, no hace falta una consulta ni un scope de OAuth aparte.
 async function chequearTwitchEnVivo(handles, clientId, clientSecret) {
-    const enVivo = new Set();
+    const enVivo = new Map();
     if (!handles.length) return enVivo;
     const token = await getTwitchToken(clientId, clientSecret);
     for (let i = 0; i < handles.length; i += 100) {
@@ -284,22 +286,23 @@ async function chequearTwitchEnVivo(handles, clientId, clientSecret) {
             headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
         });
         const data = await res.json();
-        (data.data || []).forEach(s => enVivo.add(String(s.user_login).toLowerCase()));
+        (data.data || []).forEach(s => enVivo.set(String(s.user_login).toLowerCase(), Number(s.viewer_count) || 0));
     }
     return enVivo;
 }
 
+// null = no está en vivo; si está en vivo, devuelve el viewer_count (puede ser 0).
 async function chequearKickEnVivo(handle) {
     try {
         const res = await fetch(`https://kick.com/api/v2/channels/${encodeURIComponent(handle)}`, {
             headers: { "User-Agent": "Mozilla/5.0" }
         });
-        if (!res.ok) return false;
+        if (!res.ok) return null;
         const data = await res.json();
-        return !!data.livestream;
+        return data.livestream ? (Number(data.livestream.viewer_count) || 0) : null;
     } catch (err) {
         logger.warn(`actualizarEnVivo: no se pudo chequear Kick de ${handle}`, err.message);
-        return false;
+        return null;
     }
 }
 
@@ -332,7 +335,7 @@ exports.actualizarEnVivo = onSchedule(
             const snapshot = await db.collection(coleccion).get();
             const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-            let twitchEnVivo = new Set();
+            let twitchEnVivo = new Map();
             const twitchHandles = docs.filter(d => d.twitch).map(d => handleFromUrl(d.twitch));
             if (clientId && clientSecret && twitchHandles.length) {
                 try {
@@ -348,17 +351,23 @@ exports.actualizarEnVivo = onSchedule(
                 let enVivo = false;
                 let plataforma = "";
                 let url = "";
+                let viewerActual = 0;
 
-                if (item.twitch && twitchEnVivo.has(handleFromUrl(item.twitch).toLowerCase())) {
+                const twitchHandle = item.twitch ? handleFromUrl(item.twitch).toLowerCase() : "";
+                if (twitchHandle && twitchEnVivo.has(twitchHandle)) {
                     enVivo = true; plataforma = "twitch"; url = item.twitch;
-                } else if (item.kick && await chequearKickEnVivo(handleFromUrl(item.kick))) {
-                    enVivo = true; plataforma = "kick"; url = item.kick;
-                } else if (item.tiktok && await chequearTiktokEnVivo(handleFromUrl(item.tiktok))) {
-                    enVivo = true; plataforma = "tiktok"; url = item.tiktok;
+                    viewerActual = twitchEnVivo.get(twitchHandle) || 0;
+                } else {
+                    const kickViewers = item.kick ? await chequearKickEnVivo(handleFromUrl(item.kick)) : null;
+                    if (kickViewers !== null) {
+                        enVivo = true; plataforma = "kick"; url = item.kick; viewerActual = kickViewers;
+                    } else if (item.tiktok && await chequearTiktokEnVivo(handleFromUrl(item.tiktok))) {
+                        enVivo = true; plataforma = "tiktok"; url = item.tiktok;
+                    }
                 }
 
-                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma) {
-                    batch.update(db.collection(coleccion).doc(item.id), { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url });
+                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual) {
+                    batch.update(db.collection(coleccion).doc(item.id), { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual });
                     cambios++;
                 }
             }

@@ -143,11 +143,20 @@ function flagAlt(pais) {
     return "Chile";
 }
 
+function formatViewers(n) {
+    const value = Number(n) || 0;
+    if (value >= 1000) return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+    return String(value);
+}
+
 function renderStreamer(streamer, i) {
     const redesUrl = (streamer.enVivo && streamer.enVivoUrl) || streamer.twitch || streamer.instagram || "#";
+    const liveLabel = streamer.enVivo && streamer.viewerActual
+        ? `En vivo · ${formatViewers(streamer.viewerActual)} viewers`
+        : "En vivo";
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.04}s">
-    ${streamer.enVivo ? `<span class="badge-live"><span></span>En vivo</span>` : ""}
+    ${streamer.enVivo ? `<span class="badge-live"><span></span>${liveLabel}</span>` : ""}
     <img src="${assetUrl(streamer.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(streamer.nombre) || 'Streamer'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
         <h3>${escapeHtml(streamer.nombre) || "Streamer"}</h3>

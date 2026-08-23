@@ -143,11 +143,20 @@ function flagAlt(pais) {
     return "Chile";
 }
 
+function formatViewers(n) {
+    const value = Number(n) || 0;
+    if (value >= 1000) return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+    return String(value);
+}
+
 function renderInfluencer(influencer, i) {
     const redesUrl = (influencer.enVivo && influencer.enVivoUrl) || influencer.instagram || influencer.tiktok || "#";
+    const liveLabel = influencer.enVivo && influencer.viewerActual
+        ? `En vivo · ${formatViewers(influencer.viewerActual)} viewers`
+        : "En vivo";
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.04}s">
-    ${influencer.enVivo ? `<span class="badge-live"><span></span>En vivo</span>` : ""}
+    ${influencer.enVivo ? `<span class="badge-live"><span></span>${liveLabel}</span>` : ""}
     <img src="${assetUrl(influencer.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(influencer.nombre) || 'Influencer'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
         <h3>${escapeHtml(influencer.nombre) || "Influencer"}</h3>
