@@ -176,6 +176,10 @@ td img{ width:52px; height:52px; object-fit:cover; border-radius:var(--radius-sm
 .pill-yes{ background:rgba(0,230,118,.12); color:#00e676; }
 .pill-no{ background:rgba(255,255,255,.04); color:var(--muted); }
 .pill-neutral{ background:rgba(123,44,255,.12); color:var(--morado-light); border:1px solid var(--border-strong); }
+.metricas-bars{ display:flex; align-items:flex-end; gap:10px; height:110px; padding-top:10px; }
+.metricas-bar-col{ display:flex; flex-direction:column; align-items:center; gap:8px; flex:1; }
+.metricas-bar{ width:100%; max-width:34px; border-radius:6px 6px 2px 2px; background:linear-gradient(180deg,var(--morado),var(--naranja)); transition:height var(--ease); }
+.metricas-bar-label{ font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--muted); }
 .empty{ padding:36px 24px; color:var(--muted); text-align:center; font-size:13px; }
 .bulk-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); background:rgba(123,44,255,.08); }
 .bulk-bar .count{ color:#fff; font-size:13px; font-weight:600; }
@@ -1254,13 +1258,16 @@ const sections = {
     },
     rivals: {
         label: "Voranix Rivals"
+    },
+    streamersMetricas: {
+        label: "Métricas Streamers"
     }
 };
 
 const NAV_GROUPS = [
     { label: "Inicio", keys: ["dashboard", "comunicados", "tablero"] },
     { label: "Esports", keys: ["rivals", "valorant", "valorantsecundario", "fifa", "dbd", "actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
-    { label: "Comunidad y Contenido", keys: ["streamers", "influencers", "staff", "proyectos", "patrocinadores"] },
+    { label: "Comunidad y Contenido", keys: ["streamers", "streamersMetricas", "influencers", "staff", "proyectos", "patrocinadores"] },
     { label: "Sistema", keys: ["mensajes", "overlay", "users"] }
 ];
 
@@ -1280,6 +1287,7 @@ const NAV_META = {
     actividadDbd: { icon: "📅", short: "Torneos DBD" },
     actividadFifa: { icon: "📅", short: "Torneos FIFA" },
     streamers: { icon: "📺", short: "Streamers" },
+    streamersMetricas: { icon: "📊", short: "Métricas" },
     influencers: { icon: "⭐", short: "Influencers" },
     staff: { icon: "🛡️", short: "Staff" },
     proyectos: { icon: "📁", short: "Proyectos" },
@@ -1513,6 +1521,7 @@ function selectSection(key){
     else if(key === "tablero") renderTableroSection("tareas");
     else if(key === "rivals") renderRivalsSection("alianzas");
     else if(key === "overlay") renderOverlaySection("general");
+    else if(key === "streamersMetricas") renderStreamersMetricas();
     else renderCrudSection(sections[key]);
 }
 
@@ -2210,6 +2219,121 @@ async function fetchStaffAccounts(){
     return snapshot.docs
         .map(d => ({ uid: d.id, ...d.data() }))
         .filter(u => u.active !== false && profileRoles(u).some(r => ["admin", "editor"].includes(r)));
+}
+
+// Historial de transmisiones (streamers/{id}/transmisiones) lo alimenta el
+// webhook de Twitch (stream.online/stream.offline) — ver funciones/index.js.
+// Acá solo se lee y se agrupa por semana/día, no hay nada que escribir.
+async function renderStreamersMetricas(){
+    if(unsubscribeList) unsubscribeList();
+    unsubscribeList = null;
+    sectionTitle.textContent = "Métricas Streamers";
+    sectionSubtitle.textContent = "Frecuencia de transmisiones de los últimos 7 días";
+    content.innerHTML = `<p class="loading">Cargando...</p>`;
+
+    try{
+        const snapshot = await getDocs(collection(db, "streamers"));
+        const streamersList = snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(item => item.activo !== false)
+            .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
+
+        const sieteDiasAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const resumenes = await Promise.all(streamersList.map(async (item) => {
+            const transSnap = await getDocs(query(collection(db, "streamers", item.id, "transmisiones"), where("inicio", ">=", sieteDiasAtras)));
+            const transmisiones = transSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (b.inicio?.toMillis?.() || 0) - (a.inicio?.toMillis?.() || 0));
+            const minutos = transmisiones.reduce((sum, t) => sum + (t.duracionMinutos || 0), 0);
+            return { ...item, transmisiones, minutos };
+        }));
+
+        content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Métricas Streamers</h2>
+        <p class="muted">Transmisiones detectadas automáticamente vía Twitch en los últimos 7 días — para chequear de un vistazo el mínimo semanal del contrato, sin tener que estar pendiente en vivo.</p>
+    </div>
+</div>
+<div class="panel">
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Nombre</th><th>Vinculada</th><th>Transmisiones (7d)</th><th>Horas (7d)</th><th>Acciones</th></tr></thead>
+            <tbody>
+                ${resumenes.length ? resumenes.map(r => `
+<tr>
+    <td data-label="Nombre">${escapeHtml(r.nombre || "Sin nombre")}</td>
+    <td data-label="Vinculada"><span class="pill ${r.uid ? "pill-yes" : "pill-no"}">${r.uid ? "Sí" : "No"}</span></td>
+    <td data-label="Transmisiones (7d)"><span class="pill ${r.transmisiones.length >= 3 ? "pill-yes" : "pill-no"}">${r.transmisiones.length}</span></td>
+    <td data-label="Horas (7d)">${(r.minutos / 60).toFixed(1)} h</td>
+    <td data-label="Acciones"><button class="btn secondary small" type="button" data-metricas-detalle="${r.id}">Ver detalle</button></td>
+</tr>`).join("") : `<tr><td colspan="5" class="empty">No hay streamers cargados.</td></tr>`}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="metricas-detalle"></div>`;
+
+        document.querySelectorAll("[data-metricas-detalle]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const item = resumenes.find(r => r.id === btn.dataset.metricasDetalle);
+                if(item) renderMetricasDetalle(item);
+            });
+        });
+    }catch(error){
+        console.error(error);
+        content.innerHTML = `<p class="loading">No se pudieron cargar las métricas.</p>`;
+    }
+}
+
+function renderMetricasDetalle(item){
+    const detalle = document.getElementById("metricas-detalle");
+    if(!detalle) return;
+
+    const dias = [];
+    for(let i = 6; i >= 0; i--){
+        const fecha = new Date();
+        fecha.setDate(fecha.getDate() - i);
+        dias.push({
+            fecha, minutos: 0,
+            label: fecha.toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "").toUpperCase()
+        });
+    }
+    item.transmisiones.forEach(t => {
+        const inicio = t.inicio?.toDate?.();
+        if(!inicio) return;
+        const dia = dias.find(d => d.fecha.toDateString() === inicio.toDateString());
+        if(dia) dia.minutos += (t.duracionMinutos || 0);
+    });
+    const maxMinutos = Math.max(...dias.map(d => d.minutos), 60);
+
+    detalle.innerHTML = `
+<div class="panel" style="padding:22px;margin-top:18px;">
+    <h3 style="margin-bottom:16px;">${escapeHtml(item.nombre || "")} — últimos 7 días</h3>
+    <div class="metricas-bars">
+        ${dias.map(d => `
+<div class="metricas-bar-col">
+    <div class="metricas-bar" style="height:${Math.max(4, Math.round((d.minutos / maxMinutos) * 90))}px;" title="${(d.minutos / 60).toFixed(1)} h"></div>
+    <span class="metricas-bar-label">${escapeHtml(d.label)}</span>
+</div>`).join("")}
+    </div>
+    ${item.transmisiones.length ? `
+    <div class="table-wrap" style="margin-top:22px;">
+        <table>
+            <thead><tr><th>Fecha</th><th>Inicio</th><th>Fin</th><th>Duración</th></tr></thead>
+            <tbody>
+                ${item.transmisiones.map(t => `
+<tr>
+    <td data-label="Fecha">${t.inicio?.toDate ? escapeHtml(t.inicio.toDate().toLocaleDateString("es-CL")) : "-"}</td>
+    <td data-label="Inicio">${t.inicio?.toDate ? escapeHtml(t.inicio.toDate().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })) : "-"}</td>
+    <td data-label="Fin">${t.fin?.toDate ? escapeHtml(t.fin.toDate().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })) : "En curso"}</td>
+    <td data-label="Duración">${t.duracionMinutos != null ? `${(t.duracionMinutos / 60).toFixed(1)} h` : "-"}</td>
+</tr>`).join("")}
+            </tbody>
+        </table>
+    </div>` : `<p class="muted" style="margin-top:14px;">Sin transmisiones detectadas en los últimos 7 días.</p>`}
+</div>`;
+    detalle.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function renderTableroSection(tableroTab){

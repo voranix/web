@@ -81,6 +81,17 @@ service cloud.firestore {
         (isLinkedCreador(resource.data) &&
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(["descripcion", "instagram", "twitch", "kick", "tiktok", "updatedAt"]));
+
+      // Historial de encendidos/apagados de stream (lo escribe solo el
+      // webhook de Twitch con el Admin SDK, que no pasa por estas reglas).
+      // Nadie puede escribirlo desde el cliente; solo staff y la propia
+      // cuenta vinculada pueden leerlo — es dato de cumplimiento de
+      // contrato, no algo público.
+      match /transmisiones/{sessionId} {
+        allow read: if isStaff() ||
+          (signedIn() && get(/databases/$(database)/documents/streamers/$(doc)).data.uid == request.auth.uid);
+        allow write: if false;
+      }
     }
 
     match /rosters/{doc} {

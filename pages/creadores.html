@@ -126,6 +126,15 @@
         .creadores-tab.active{ color:#fff; border-bottom-color:var(--naranja); }
         .creadores-tab-panel.hidden{ display:none; }
         .tarjeta-preview{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+        .tarjeta-semana{ margin-bottom:28px; padding-bottom:24px; border-bottom:1px solid var(--border); }
+        .tarjeta-semana h3{ font-size:1rem; margin-bottom:14px; }
+        .tarjeta-semana-stats{ display:flex; gap:28px; margin-bottom:18px; }
+        .tarjeta-semana-stats strong{ display:block; font-size:1.4rem; color:#fff; }
+        .tarjeta-semana-stats span{ font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:1px; }
+        .metricas-bars{ display:flex; align-items:flex-end; gap:10px; height:100px; }
+        .metricas-bar-col{ display:flex; flex-direction:column; align-items:center; gap:8px; flex:1; }
+        .metricas-bar{ width:100%; max-width:30px; border-radius:6px 6px 2px 2px; background:var(--grad); transition:height .2s; }
+        .metricas-bar-label{ font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--gris-dark); }
         .tarjeta-preview img{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:1px solid var(--border); flex-shrink:0; }
 
         @media (max-width:600px){
@@ -430,6 +439,7 @@
     import {
         doc,
         getDoc,
+        getDocs,
         setDoc,
         collection,
         onSnapshot,
@@ -488,6 +498,7 @@
     let botConectado = null; // null = todavía sin consultar
     let tarjetaId = null;
     let tarjetaData = null;
+    let tarjetaTransmisiones = [];
 
     function stopListeners(){
         if(unsubAccesos) unsubAccesos();
@@ -1178,7 +1189,38 @@
             return;
         }
         const d = tarjetaData || {};
+        const minutosSemana = tarjetaTransmisiones.reduce((sum, t) => sum + (t.duracionMinutos || 0), 0);
+        const dias = [];
+        for(let i = 6; i >= 0; i--){
+            const fecha = new Date();
+            fecha.setDate(fecha.getDate() - i);
+            dias.push({ fecha, minutos: 0, label: fecha.toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "").toUpperCase() });
+        }
+        tarjetaTransmisiones.forEach(t => {
+            const inicio = t.inicio?.toDate?.();
+            if(!inicio) return;
+            const dia = dias.find(dd => dd.fecha.toDateString() === inicio.toDateString());
+            if(dia) dia.minutos += (t.duracionMinutos || 0);
+        });
+        const maxMinutos = Math.max(...dias.map(dd => dd.minutos), 60);
+
         content.innerHTML = `
+<div class="tarjeta-semana">
+    <h3>Tus últimos 7 días</h3>
+    <div class="tarjeta-semana-stats">
+        <div><strong>${tarjetaTransmisiones.length}</strong><span>Transmisiones</span></div>
+        <div><strong>${(minutosSemana / 60).toFixed(1)}</strong><span>Horas al aire</span></div>
+    </div>
+    <div class="metricas-bars">
+        ${dias.map(dd => `
+<div class="metricas-bar-col">
+    <div class="metricas-bar" style="height:${Math.max(4, Math.round((dd.minutos / maxMinutos) * 80))}px;" title="${(dd.minutos / 60).toFixed(1)} h"></div>
+    <span class="metricas-bar-label">${escapeHtml(dd.label)}</span>
+</div>`).join("")}
+    </div>
+    <p class="muted" style="font-size:11px;margin-top:12px;">Se detecta automático vía tu Twitch conectado — puede tardar un rato en reflejarse apenas termina la transmisión.</p>
+</div>
+
 <div class="tarjeta-preview">
     ${d.foto ? `<img src="${escapeHtml(assetUrl(d.foto))}" alt="${escapeHtml(d.nombre || "")}">` : ""}
     <div>
@@ -1231,10 +1273,20 @@
     }
 
     function loadMiTarjeta(){
-        unsubTarjeta = onSnapshot(query(collection(db, "streamers"), where("uid", "==", currentUser.uid)), (snapshot) => {
+        unsubTarjeta = onSnapshot(query(collection(db, "streamers"), where("uid", "==", currentUser.uid)), async (snapshot) => {
             const docSnap = snapshot.docs[0];
             tarjetaId = docSnap ? docSnap.id : null;
             tarjetaData = docSnap ? docSnap.data() : null;
+            tarjetaTransmisiones = [];
+            if(tarjetaId){
+                try{
+                    const sieteDiasAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                    const transSnap = await getDocs(query(collection(db, "streamers", tarjetaId, "transmisiones"), where("inicio", ">=", sieteDiasAtras)));
+                    tarjetaTransmisiones = transSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                }catch(error){
+                    console.error(error);
+                }
+            }
             renderTarjeta();
         }, (error) => {
             console.error(error);
