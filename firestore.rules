@@ -67,9 +67,20 @@ service cloud.firestore {
       allow create, delete: if isAdmin();
     }
 
+    // El creador vinculado (streamers/{doc}.uid == su propio uid) puede
+    // editar solo descripcion y sus redes desde el Portal Creadores —
+    // imagen, nombre, horario, etc. siguen siendo exclusivos de staff.
+    function isLinkedCreador(streamerData) {
+      return hasRole("creador") && ("uid" in streamerData) && streamerData.uid == request.auth.uid;
+    }
+
     match /streamers/{doc} {
       allow read: if true;
-      allow write: if isStaff();
+      allow create, delete: if isStaff();
+      allow update: if isStaff() ||
+        (isLinkedCreador(resource.data) &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(["descripcion", "instagram", "twitch", "kick", "tiktok", "updatedAt"]));
     }
 
     match /rosters/{doc} {

@@ -1136,11 +1136,13 @@ const sections = {
         collection: "streamers",
         fields: [
             ["nombre", "Nombre", "text"],
+            ["uid", "Cuenta vinculada (creador)", "userlink"],
             ["juegos", "Juegos", "text"],
             ["horario", "Horario", "text"],
             ["pais", "País", "select", PAISES],
             ["email", "Email (para comunicados)", "text"],
             ["foto", "Imagen", "imageurl"],
+            ["descripcion", "Descripción", "textarea"],
             ["instagram", "Instagram", "url"],
             ["twitch", "Twitch", "url"],
             ["kick", "Kick", "url"],
@@ -1531,6 +1533,7 @@ function tableValue(value, type, options){
     if(type === "json") return Array.isArray(value) ? `${value.length} cupón(es)` : "-";
     if(type === "lineup") return Array.isArray(value) && value.length ? `${value.length} jugador(es)` : "-";
     if(type === "images") return Array.isArray(value) && value.length ? `${value.length} imagen(es)` : "-";
+    if(type === "userlink") return `<span class="pill ${value ? "pill-yes" : "pill-no"}">${value ? "Vinculada" : "Sin vincular"}</span>`;
     if(type === "select" && Array.isArray(options)){
         const match = options.find(option => Array.isArray(option) ? option[0] === value : option === value);
         if(match) return `<span class="pill pill-neutral">${escapeHtml(Array.isArray(match) ? match[1] : match)}</span>`;
@@ -4747,6 +4750,10 @@ function fieldHtml(field, value){
         return `<div class="field${full}" data-images-field="${name}"><label>${label}</label><div class="images-thumbs" id="${name}-thumbs"></div><input name="${name}_keep" type="hidden" value="[]"><input name="${name}File" type="file" accept="image/*" multiple><span class="help">Podés subir varias imágenes juntas. Tocá ✕ en una miniatura para sacarla.</span></div>`;
     }
 
+    if(type === "userlink"){
+        return `<div class="field" data-userlink-field="${name}"><label>${label}</label><select name="${name}" data-userlink-select disabled><option value="">Cargando cuentas...</option></select><span class="help">Solo cuentas con rol creador. Una vez vinculada, esa cuenta puede editar su descripción y redes desde el Portal Creadores.</span></div>`;
+    }
+
     return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${escapeHtml(safeValue)}"></div>`;
 }
 
@@ -4797,6 +4804,27 @@ function userFieldHtml(name, value, disabled = false){
     }
 
     return `<div class="field"><label>${name === "displayName" ? "Nombre" : name}</label><input name="${name}" type="text" value="${escapeHtml(safeValue)}" ${disabled ? "disabled" : ""}></div>`;
+}
+
+let creadoresLinkCache = null;
+async function fetchCreadoresParaVincular(){
+    if(creadoresLinkCache) return creadoresLinkCache;
+    const snapshot = await getDocs(collection(db, "users"));
+    creadoresLinkCache = snapshot.docs
+        .map(d => ({ uid: d.id, ...d.data() }))
+        .filter(u => profileRoles(u).includes("creador"))
+        .sort((a, b) => String(a.displayName || a.email || "").localeCompare(String(b.displayName || b.email || "")));
+    return creadoresLinkCache;
+}
+
+async function initUserlinkField(name, currentUid){
+    const select = document.querySelector(`[data-userlink-field="${name}"] select[data-userlink-select]`);
+    if(!select) return;
+    const creadores = await fetchCreadoresParaVincular();
+    const opciones = [`<option value="">— Sin vincular —</option>`]
+        .concat(creadores.map(u => `<option value="${u.uid}" ${u.uid === currentUid ? "selected" : ""}>${escapeHtml(u.displayName || u.email || u.uid)}</option>`));
+    select.innerHTML = opciones.join("");
+    select.disabled = false;
 }
 
 async function fetchValorantRosterNames(rosterJuego){
@@ -5046,6 +5074,7 @@ ${userFieldHtml("active", getUsersFieldValue(data, "active"))}
         const lineupField = section.fields.find(field => field[2] === "lineup");
         if(lineupField) initLineupField(lineupField[0], data[lineupField[0]], section.filterValue);
         section.fields.filter(field => field[2] === "images").forEach(field => initImagesField(field[0], data[field[0]]));
+        section.fields.filter(field => field[2] === "userlink").forEach(field => initUserlinkField(field[0], data[field[0]]));
     }
     modal.classList.remove("hidden");
 }
