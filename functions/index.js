@@ -300,9 +300,10 @@ async function getTwitchToken(clientId, clientSecret) {
     return twitchTokenCache.token;
 }
 
-// Devuelve un Map user_login (en minúscula) -> viewer_count de quienes están
-// en vivo ahora mismo. viewer_count ya viene en la misma respuesta de
-// /helix/streams, no hace falta una consulta ni un scope de OAuth aparte.
+// Devuelve un Map user_login (en minúscula) -> { viewerCount, gameName } de
+// quienes están en vivo ahora mismo. Ambos datos ya vienen en la misma
+// respuesta de /helix/streams, no hace falta una consulta ni un scope de
+// OAuth aparte (game_name es el juego que Twitch le atribuye al stream).
 async function chequearTwitchEnVivo(handles, clientId, clientSecret) {
     const enVivo = new Map();
     if (!handles.length) return enVivo;
@@ -314,7 +315,10 @@ async function chequearTwitchEnVivo(handles, clientId, clientSecret) {
             headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
         });
         const data = await res.json();
-        (data.data || []).forEach(s => enVivo.set(String(s.user_login).toLowerCase(), Number(s.viewer_count) || 0));
+        (data.data || []).forEach(s => enVivo.set(String(s.user_login).toLowerCase(), {
+            viewerCount: Number(s.viewer_count) || 0,
+            gameName: String(s.game_name || "").trim()
+        }));
     }
     return enVivo;
 }
@@ -380,11 +384,14 @@ exports.actualizarEnVivo = onSchedule(
                 let plataforma = "";
                 let url = "";
                 let viewerActual = 0;
+                let juegoActual = "";
 
                 const twitchHandle = item.twitch ? handleFromUrl(item.twitch).toLowerCase() : "";
-                if (twitchHandle && twitchEnVivo.has(twitchHandle)) {
+                const twitchInfo = twitchHandle ? twitchEnVivo.get(twitchHandle) : null;
+                if (twitchInfo) {
                     enVivo = true; plataforma = "twitch"; url = item.twitch;
-                    viewerActual = twitchEnVivo.get(twitchHandle) || 0;
+                    viewerActual = twitchInfo.viewerCount || 0;
+                    juegoActual = twitchInfo.gameName || "";
                 } else {
                     const kickViewers = item.kick ? await chequearKickEnVivo(handleFromUrl(item.kick)) : null;
                     if (kickViewers !== null) {
@@ -394,8 +401,24 @@ exports.actualizarEnVivo = onSchedule(
                     }
                 }
 
-                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual) {
-                    batch.update(db.collection(coleccion).doc(item.id), { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual });
+                // "juegos frecuentes" (solo streamers, no influencers): cada vez que
+                // este chequeo lo encuentra en vivo en Twitch jugando algo, le suma
+                // 5 minutos (el intervalo del scheduler) al juego correspondiente.
+                // Es una aproximación, no un cronómetro exacto, pero alcanza para
+                // mostrar "a qué juega más seguido" sin pedirle nada al streamer.
+                const debeActualizarJuegos = coleccion === "streamers" && plataforma === "twitch" && !!juegoActual;
+
+                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos) {
+                    const updateData = { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual };
+                    if (debeActualizarJuegos) {
+                        const juegosVistos = Array.isArray(item.juegosVistos) ? item.juegosVistos.map(j => ({ ...j })) : [];
+                        const idx = juegosVistos.findIndex(j => j.nombre === juegoActual);
+                        if (idx >= 0) juegosVistos[idx].minutos = (juegosVistos[idx].minutos || 0) + 5;
+                        else juegosVistos.push({ nombre: juegoActual, minutos: 5 });
+                        juegosVistos.sort((a, b) => (b.minutos || 0) - (a.minutos || 0));
+                        updateData.juegosVistos = juegosVistos.slice(0, 8);
+                    }
+                    batch.update(db.collection(coleccion).doc(item.id), updateData);
                     cambios++;
                 }
             }

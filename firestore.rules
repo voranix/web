@@ -92,6 +92,14 @@ service cloud.firestore {
           (signedIn() && get(/databases/$(database)/documents/streamers/$(doc)).data.uid == request.auth.uid);
         allow write: if false;
       }
+
+      // El email de contacto vive acá, no en el doc público (que tiene
+      // allow read: if true para las tarjetas). Solo staff lo puede ver o
+      // escribir, evitando que cualquiera lea emails vía una consulta
+      // directa a Firestore.
+      match /privado/{sub} {
+        allow read, write: if isStaff();
+      }
     }
 
     match /rosters/{doc} {
@@ -111,6 +119,10 @@ service cloud.firestore {
     match /influencers/{doc} {
       allow read: if true;
       allow write: if isStaff();
+
+      match /privado/{sub} {
+        allow read, write: if isStaff();
+      }
     }
 
     match /staff/{doc} {

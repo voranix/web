@@ -142,6 +142,29 @@ const REDES = [
     { key: "instagram", icon: "fab fa-instagram", label: "Instagram" }
 ];
 
+// "juegosVistos" lo va acumulando actualizarEnVivo cada 5 min mientras el
+// streamer está en vivo en Twitch (game_name que devuelve /helix/streams).
+// Es una aproximación de minutos, no un cronómetro exacto de la plataforma.
+function renderJuegosFrecuentes(item) {
+    const juegos = (Array.isArray(item.juegosVistos) ? item.juegosVistos : [])
+        .filter(j => j && j.nombre)
+        .slice(0, 6);
+    if (!juegos.length) return "";
+    const maxMin = Math.max(...juegos.map(j => Number(j.minutos) || 0), 1);
+    return `
+    <div class="proyecto-section">
+        <h2>Juegos frecuentes</h2>
+        <div class="juegos-frecuentes-list">
+            ${juegos.map(j => `
+            <div class="juego-bar-row">
+                <span class="juego-bar-label">${escapeHtml(j.nombre)}</span>
+                <div class="juego-bar-track"><div class="juego-bar-fill" style="width:${Math.max(6, Math.round((Number(j.minutos) || 0) / maxMin * 100))}%"></div></div>
+            </div>`).join("")}
+        </div>
+        <p class="juegos-frecuentes-note">Calculado automáticamente a partir del tiempo en vivo en Twitch.</p>
+    </div>`;
+}
+
 function showNotFound() {
     headerTitle.textContent = "Streamer no encontrado";
     content.innerHTML = `
@@ -174,6 +197,8 @@ function renderStreamer(item) {
         ${chips.map(c => `<span class="meta-chip">${escapeHtml(c)}</span>`).join("")}
     </div>
     ${item.descripcion ? `<p class="proyecto-desc">${escapeHtml(item.descripcion)}</p>` : ""}
+
+    ${renderJuegosFrecuentes(item)}
 
     ${redes.length ? `
     <div class="proyecto-section">

@@ -912,6 +912,7 @@ import {
     setDoc,
     updateDoc,
     deleteDoc,
+    deleteField,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -1144,7 +1145,7 @@ const sections = {
             ["juegos", "Juegos", "text"],
             ["horario", "Horario", "text"],
             ["pais", "País", "select", PAISES],
-            ["email", "Email (para comunicados)", "text"],
+            ["email", "Email (para comunicados)", "privateEmail"],
             ["foto", "Imagen", "imageurl"],
             ["descripcion", "Descripción", "textarea"],
             ["instagram", "Instagram", "url"],
@@ -1161,7 +1162,7 @@ const sections = {
             ["nombre", "Nombre", "text"],
             ["categoria", "Categoría", "text"],
             ["pais", "País", "select", PAISES],
-            ["email", "Email (para comunicados)", "text"],
+            ["email", "Email (para comunicados)", "privateEmail"],
             ["foto", "Imagen", "imageurl"],
             ["instagram", "Instagram", "url"],
             ["twitch", "Twitch", "url"],
@@ -1558,6 +1559,7 @@ function tableValue(value, type, options){
     if(type === "lineup") return Array.isArray(value) && value.length ? `${value.length} jugador(es)` : "-";
     if(type === "images") return Array.isArray(value) && value.length ? `${value.length} imagen(es)` : "-";
     if(type === "userlink") return `<span class="pill ${value ? "pill-yes" : "pill-no"}">${value ? "Vinculada" : "Sin vincular"}</span>`;
+    if(type === "privateEmail") return `<span class="pill pill-neutral">Privado</span>`;
     if(type === "select" && Array.isArray(options)){
         const match = options.find(option => Array.isArray(option) ? option[0] === value : option === value);
         if(match) return `<span class="pill pill-neutral">${escapeHtml(Array.isArray(match) ? match[1] : match)}</span>`;
@@ -1635,6 +1637,7 @@ function renderCrudSection(section){
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
         ${currentSection === "proyectos" ? '<button class="btn secondary" type="button" id="migrar-accesos-btn">Migrar Accesos antiguos → Proyectos</button>' : ""}
+        ${(currentSection === "streamers" || currentSection === "influencers") ? '<button class="btn secondary" type="button" id="migrar-emails-btn">Migrar emails sueltos → privado</button>' : ""}
         ${section.hideAdd ? "" : '<button class="btn" type="button" id="add-item">Agregar</button>'}
     </div>
 </div>
@@ -1656,6 +1659,8 @@ function renderCrudSection(section){
     if(addItemBtn) addItemBtn.addEventListener("click", () => openItemModal());
     const migrarBtn = document.getElementById("migrar-accesos-btn");
     if(migrarBtn) migrarBtn.addEventListener("click", migrarAccesosAProyectos);
+    const migrarEmailsBtn = document.getElementById("migrar-emails-btn");
+    if(migrarEmailsBtn) migrarEmailsBtn.addEventListener("click", migrarEmailsAPrivado);
     const body = document.getElementById("items-body");
     const searchInput = document.getElementById("item-search");
     const countLabel = document.getElementById("item-search-count");
@@ -4893,6 +4898,10 @@ function fieldHtml(field, value){
         return `<div class="field" data-userlink-field="${name}"><label>${label}</label><select name="${name}" data-userlink-select disabled><option value="">Cargando cuentas...</option></select><span class="help">Solo cuentas con rol creador. Una vez vinculada, esa cuenta puede editar su descripción y redes desde el Portal Creadores.</span></div>`;
     }
 
+    if(type === "privateEmail"){
+        return `<div class="field" data-private-email-field="${name}"><label>${label}</label><input name="${name}" type="email" value="" placeholder="Cargando..." disabled><span class="help">Se guarda aparte, en una subcolección visible solo para staff (no viaja en la tarjeta pública).</span></div>`;
+    }
+
     return `<div class="field"><label>${label}</label><input name="${name}" type="${type}" value="${escapeHtml(safeValue)}"></div>`;
 }
 
@@ -4964,6 +4973,27 @@ async function initUserlinkField(name, currentUid){
         .concat(creadores.map(u => `<option value="${u.uid}" ${u.uid === currentUid ? "selected" : ""}>${escapeHtml(u.displayName || u.email || u.uid)}</option>`));
     select.innerHTML = opciones.join("");
     select.disabled = false;
+}
+
+// El email vive en {collection}/{id}/privado/contacto, no en el doc público.
+// Si es un item nuevo (sin id todavía) el input arranca vacío y habilitado;
+// si es edición, se trae async desde la subcolección (solo staff puede leerla).
+async function initPrivateEmailField(name){
+    const input = document.querySelector(`[data-private-email-field="${name}"] input`);
+    if(!input) return;
+    if(!editingId){
+        input.disabled = false;
+        input.placeholder = "";
+        return;
+    }
+    try{
+        const snapshot = await getDoc(doc(db, sections[currentSection].collection, editingId, "privado", "contacto"));
+        input.value = snapshot.exists() ? (snapshot.data().email || "") : "";
+    }catch(error){
+        console.error(error);
+    }
+    input.disabled = false;
+    input.placeholder = "";
 }
 
 async function fetchValorantRosterNames(rosterJuego){
@@ -5214,6 +5244,7 @@ ${userFieldHtml("active", getUsersFieldValue(data, "active"))}
         if(lineupField) initLineupField(lineupField[0], data[lineupField[0]], section.filterValue);
         section.fields.filter(field => field[2] === "images").forEach(field => initImagesField(field[0], data[field[0]]));
         section.fields.filter(field => field[2] === "userlink").forEach(field => initUserlinkField(field[0], data[field[0]]));
+        section.fields.filter(field => field[2] === "privateEmail").forEach(field => initPrivateEmailField(field[0]));
     }
     modal.classList.remove("hidden");
 }
@@ -5270,6 +5301,31 @@ async function migrarAccesosAProyectos(){
     }
 }
 
+// Migración única (idempotente): a los streamers/influencers que ya tenían
+// un email suelto en el doc público (leíble por cualquiera vía Firestore) se
+// lo copia a la subcolección privada y se lo saca del doc público. Correrla
+// de nuevo no hace nada si ya no queda ningún email suelto.
+async function migrarEmailsAPrivado(){
+    if(!confirm("¿Mover los emails sueltos de Streamers e Influencers a la subcolección privada? Es seguro correrlo más de una vez.")) return;
+    try{
+        let migrados = 0;
+        for(const coleccion of ["streamers", "influencers"]){
+            const snapshot = await getDocs(collection(db, coleccion));
+            for(const docSnap of snapshot.docs){
+                const email = docSnap.data().email;
+                if(!email) continue;
+                await setDoc(doc(db, coleccion, docSnap.id, "privado", "contacto"), { email }, { merge: true });
+                await updateDoc(doc(db, coleccion, docSnap.id), { email: deleteField() });
+                migrados++;
+            }
+        }
+        alert(`Se migraron ${migrados} email(s) a la subcolección privada.`);
+    }catch(error){
+        console.error(error);
+        alert("No se pudo completar la migración.");
+    }
+}
+
 async function saveItem(event){
     event.preventDefault();
     const formData = new FormData(itemForm);
@@ -5302,13 +5358,16 @@ async function saveItem(event){
         }
 
         const section = sections[currentSection];
+        const privateEmailValues = {};
         for(const field of section.fields){
             const [name, , type] = field;
             const file = formData.get(`${name}File`);
             const urlValue = String(formData.get(name) ?? "").trim();
             const currentValue = editingData[name];
 
-            if((type === "image" || type === "imageurl") && file && file.size){
+            if(type === "privateEmail"){
+                privateEmailValues[name] = urlValue;
+            }else if((type === "image" || type === "imageurl") && file && file.size){
                 payload[name] = await uploadImage(file, section.collection, name);
             }else if(type === "image"){
                 if(urlValue){
@@ -5347,11 +5406,17 @@ async function saveItem(event){
 
         payload.updatedAt = serverTimestamp();
 
+        let savedId = editingId;
         if(editingId){
             await updateDoc(doc(db, section.collection, editingId), payload);
         }else{
             payload.createdAt = serverTimestamp();
-            await addDoc(collection(db, section.collection), payload);
+            const newDoc = await addDoc(collection(db, section.collection), payload);
+            savedId = newDoc.id;
+        }
+
+        if(Object.keys(privateEmailValues).length){
+            await setDoc(doc(db, section.collection, savedId, "privado", "contacto"), privateEmailValues, { merge: true });
         }
 
         closeModal();
