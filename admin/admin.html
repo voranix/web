@@ -1243,6 +1243,20 @@ const sections = {
             ["importante", "Importante", "boolean"]
         ]
     },
+    reportes: {
+        label: "Reportes",
+        collection: "reportes",
+        hideAdd: true,
+        note: "Los manda el botón 🐞 \"Reportar un problema\" desde cualquier página del sitio, logueado o no.",
+        fields: [
+            ["mensaje", "Mensaje", "textarea"],
+            ["estado", "Estado", "select", [["nuevo", "Nuevo"], ["revisado", "Revisado"], ["resuelto", "Resuelto"]]],
+            ["capturaUrl", "Captura", "imageurl"],
+            ["pagina", "Página", "text"],
+            ["email", "Email", "text"],
+            ["userAgent", "Navegador", "text"]
+        ]
+    },
     overlay: {
         label: "Overlay",
         singleton: true
@@ -1268,7 +1282,7 @@ const NAV_GROUPS = [
     { label: "Inicio", keys: ["dashboard", "comunicados", "tablero"] },
     { label: "Esports", keys: ["rivals", "valorant", "valorantsecundario", "fifa", "dbd", "actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
     { label: "Comunidad y Contenido", keys: ["streamers", "streamersMetricas", "influencers", "staff", "proyectos", "patrocinadores"] },
-    { label: "Sistema", keys: ["mensajes", "overlay", "users"] }
+    { label: "Sistema", keys: ["mensajes", "reportes", "overlay", "users"] }
 ];
 
 // Icono + nombre corto para el nav lateral (compacto). Si una key no está
@@ -1293,6 +1307,7 @@ const NAV_META = {
     proyectos: { icon: "📁", short: "Proyectos" },
     patrocinadores: { icon: "🤝", short: "Sponsors" },
     mensajes: { icon: "✉️", short: "Mensajes" },
+    reportes: { icon: "🐞", short: "Reportes" },
     overlay: { icon: "🖥️", short: "Overlay" },
     users: { icon: "👤", short: "Usuarios" }
 };
@@ -5527,5 +5542,6 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 </script>
+<script type="module" src="/assets/js/report-bug.js"></script>
 </body>
 </html>

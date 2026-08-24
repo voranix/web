@@ -176,6 +176,22 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // Reportes de bug/feedback: botón flotante en todas las páginas
+    // (público y logueado). Cualquiera puede crear uno; solo staff los lee.
+    match /reportes/{doc} {
+      function isValidReporte() {
+        let data = request.resource.data;
+        return data.keys().hasOnly([
+            "mensaje", "capturaUrl", "pagina", "email", "userAgent", "estado", "createdAt"
+          ])
+          && data.mensaje is string && data.mensaje.size() > 0 && data.mensaje.size() < 3000
+          && data.estado == "nuevo";
+      }
+
+      allow create: if isValidReporte();
+      allow read, update, delete: if isStaff();
+    }
+
     match /mensajes/{doc} {
       function isValidMensaje() {
         let data = request.resource.data;
