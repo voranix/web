@@ -682,13 +682,20 @@
         content.innerHTML = `<p class="muted">Consultando estado...</p>`;
         try{
             const snapshot = await getDoc(doc(db, "twitchBotAuth", twitchLogin));
-            const fecha = snapshot.exists() ? (snapshot.data().authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            const data = snapshot.exists() ? snapshot.data() : {};
+            const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
             botConectado = snapshot.exists();
+            const seguidoresActivos = data.seguidoresActivos === true;
             content.innerHTML = `
 <div class="bot-status-row" style="margin-bottom:14px;">
     <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
     <p style="margin:0;">Conectado como <b>@${escapeHtml(twitchLogin)}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Twitch.</p>
 </div>
+${!seguidoresActivos ? `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Te faltan tus seguidores en la tarjeta pública: reconectá (mismo botón de abajo) para dar el permiso nuevo que agregamos.</p>
+</div>` : ""}
 <button class="btn secondary" type="button" data-connect-twitch>Reconectar / cambiar de cuenta</button>`;
             content.querySelector("[data-connect-twitch]").addEventListener("click", (event) => conectarTwitch(event.currentTarget));
         }catch(error){

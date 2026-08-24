@@ -277,6 +277,14 @@ service cloud.firestore {
     match /twitchBotAuth/{doc} {
       allow read: if doc != "_bot";
       allow write: if false;
+
+      // Access/refresh token del propio streamer (moderator:read:followers),
+      // igual de sensible que el token del bot en "_bot": nadie lo lee ni lo
+      // escribe desde el cliente, ni siquiera su dueño ni un admin — solo el
+      // Admin SDK de las Cloud Functions, que bypasea estas reglas.
+      match /privado/{sub} {
+        allow read, write: if false;
+      }
     }
 
     // Centro de notificaciones (campanita en los 3 portales): un doc por

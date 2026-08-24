@@ -356,6 +356,49 @@ async function chequearTiktokEnVivo(handle) {
     }
 }
 
+// Seguidores de Twitch: a diferencia de viewers/en vivo, este endpoint exige
+// un token de usuario (del propio streamer, moderator:read:followers) — no
+// alcanza con el token de la app. Si el streamer todavía no reconectó con el
+// scope nuevo (no hay token guardado), devuelve null y actualizarEnVivo
+// simplemente no toca el campo de seguidores para ese streamer.
+async function obtenerSeguidoresTwitch(login, broadcasterId, clientId, clientSecret) {
+    const tokenRef = admin.firestore().doc(`twitchBotAuth/${login}/privado/tokens`);
+    const tokenSnap = await tokenRef.get();
+    if (!tokenSnap.exists) return null;
+    let { accessToken, refreshToken } = tokenSnap.data();
+    if (!accessToken) return null;
+
+    const pedir = (token) => fetch(
+        `https://api.twitch.tv/helix/channels/followers?broadcaster_id=${encodeURIComponent(broadcasterId)}&first=1`,
+        { headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` } }
+    );
+
+    try {
+        let res = await pedir(accessToken);
+        if (res.status === 401 && refreshToken) {
+            const params = new URLSearchParams({
+                client_id: clientId, client_secret: clientSecret,
+                grant_type: "refresh_token", refresh_token: refreshToken
+            });
+            const refreshRes = await fetch(`https://id.twitch.tv/oauth2/token?${params}`, { method: "POST" });
+            const refreshData = await refreshRes.json();
+            if (!refreshData.access_token) return null;
+            accessToken = refreshData.access_token;
+            refreshToken = refreshData.refresh_token || refreshToken;
+            await tokenRef.set({
+                accessToken, refreshToken, updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            res = await pedir(accessToken);
+        }
+        if (!res.ok) return null;
+        const data = await res.json();
+        return Number.isFinite(data.total) ? data.total : null;
+    } catch (err) {
+        logger.warn(`obtenerSeguidoresTwitch: fallo para ${login}`, err.message);
+        return null;
+    }
+}
+
 exports.actualizarEnVivo = onSchedule(
     { schedule: "every 5 minutes", secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET] },
     async () => {
@@ -408,7 +451,24 @@ exports.actualizarEnVivo = onSchedule(
                 // mostrar "a qué juega más seguido" sin pedirle nada al streamer.
                 const debeActualizarJuegos = coleccion === "streamers" && plataforma === "twitch" && !!juegoActual;
 
-                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos) {
+                // Seguidores de Twitch (solo streamers): independiente de si está en
+                // vivo ahora mismo. Solo lo intenta si el creador ya reconectó con el
+                // scope moderator:read:followers (seguidoresActivos en su doc de
+                // twitchBotAuth) — si no, sigue null y no se toca nada.
+                let seguidoresTwitch = null;
+                if (coleccion === "streamers" && twitchHandle && clientId && clientSecret) {
+                    try {
+                        const authSnap = await db.collection("twitchBotAuth").doc(twitchHandle).get();
+                        if (authSnap.exists && authSnap.data().seguidoresActivos) {
+                            seguidoresTwitch = await obtenerSeguidoresTwitch(twitchHandle, authSnap.data().broadcasterId, clientId, clientSecret);
+                        }
+                    } catch (err) {
+                        logger.warn(`actualizarEnVivo: fallo consultando seguidores de ${twitchHandle}`, err.message);
+                    }
+                }
+                const debeActualizarSeguidores = seguidoresTwitch !== null && seguidoresTwitch !== (item.seguidoresTwitch ?? null);
+
+                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores) {
                     const updateData = { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual };
                     if (debeActualizarJuegos) {
                         const juegosVistos = Array.isArray(item.juegosVistos) ? item.juegosVistos.map(j => ({ ...j })) : [];
@@ -417,6 +477,9 @@ exports.actualizarEnVivo = onSchedule(
                         else juegosVistos.push({ nombre: juegoActual, minutos: 5 });
                         juegosVistos.sort((a, b) => (b.minutos || 0) - (a.minutos || 0));
                         updateData.juegosVistos = juegosVistos.slice(0, 8);
+                    }
+                    if (debeActualizarSeguidores) {
+                        updateData.seguidoresTwitch = seguidoresTwitch;
                     }
                     batch.update(db.collection(coleccion).doc(item.id), updateData);
                     cambios++;
@@ -734,7 +797,11 @@ exports.twitchBotAuthStart = onRequest(
     { secrets: [TWITCH_CLIENT_ID] },
     (req, res) => {
         const tipo = req.query.tipo === "bot" ? "bot" : "canal";
-        const scope = tipo === "bot" ? "user:bot user:read:chat user:write:chat" : "channel:bot";
+        // moderator:read:followers habilita mostrar el conteo de seguidores en
+        // la tarjeta pública. Se agregó después de channel:bot, así que todo
+        // streamer que ya se había conectado antes tiene que reconectar una
+        // vez (el token viejo no tiene este permiso, Twitch no lo amplía solo).
+        const scope = tipo === "bot" ? "user:bot user:read:chat user:write:chat" : "channel:bot moderator:read:followers";
         let state = tipo;
 
         if (tipo === "canal") {
@@ -816,7 +883,17 @@ exports.twitchBotAuthCallback = onRequest(
 
                 await admin.firestore().doc(`twitchBotAuth/${loginVerificado}`).set({
                     broadcasterId: usuario.id, broadcasterLogin: loginVerificado,
-                    authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+                    authorizedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    seguidoresActivos: true
+                });
+                // El access/refresh token del propio streamer (a diferencia del resto
+                // de este doc, que es público) sólo sirve para leer sus seguidores vía
+                // moderator:read:followers — se guarda aparte, en una subcolección que
+                // firestore.rules bloquea por completo (ni el propio dueño la puede
+                // leer desde el cliente, solo el Admin SDK de estas Cloud Functions).
+                await admin.firestore().doc(`twitchBotAuth/${loginVerificado}/privado/tokens`).set({
+                    accessToken: tokenData.access_token, refreshToken: tokenData.refresh_token,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
                 });
                 // twitchLogin queda seteado acá, por el SDK de Admin (no por el
                 // cliente): así queda verificado contra la cuenta real de Twitch,
@@ -824,7 +901,7 @@ exports.twitchBotAuthCallback = onRequest(
                 await admin.firestore().doc(`users/${uid}`).set({
                     twitchLogin: loginVerificado
                 }, { merge: true });
-                res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${usuario.login}</b> al bot de VORANIX. Los comandos van a funcionar en tu chat a partir de mañana (la sincronización corre una vez por día). Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
+                res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${usuario.login}</b> al bot de VORANIX. Los comandos van a funcionar en tu chat a partir de mañana (la sincronización corre una vez por día) y tus seguidores van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
             }
         } catch (err) {
             logger.error("twitchBotAuthCallback: fallo", err);

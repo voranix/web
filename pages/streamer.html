@@ -184,6 +184,12 @@ function renderStreamer(item) {
         : "En vivo";
 
     const chips = [item.juegos || "", item.horario || ""].filter(Boolean);
+    // seguidoresTwitch solo existe si el streamer ya reconectó su cuenta con
+    // el permiso de seguidores (moderator:read:followers) — hasta entonces
+    // simplemente no se muestra el chip, sin error ni placeholder raro.
+    const seguidoresChip = Number.isFinite(item.seguidoresTwitch)
+        ? `<span class="meta-chip"><i class="fab fa-twitch"></i> ${formatViewers(item.seguidoresTwitch)} seguidores</span>`
+        : "";
 
     const redes = REDES
         .map(r => ({ ...r, url: item[r.key] }))
@@ -194,6 +200,7 @@ function renderStreamer(item) {
     <h1 class="proyecto-title">${escapeHtml(item.nombre) || "Sin nombre"}</h1>
     <div class="proyecto-meta-row">
         ${item.enVivo ? `<span class="badge-live" style="position:static;"><span></span>${escapeHtml(liveLabel)}</span>` : ""}
+        ${seguidoresChip}
         ${chips.map(c => `<span class="meta-chip">${escapeHtml(c)}</span>`).join("")}
     </div>
     ${item.descripcion ? `<p class="proyecto-desc">${escapeHtml(item.descripcion)}</p>` : ""}
