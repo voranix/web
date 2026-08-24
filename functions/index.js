@@ -232,6 +232,34 @@ exports.limpiarMensajesAntiguos = onSchedule(
     }
 );
 
+// limpiarReportesAntiguos: mismo criterio que limpiarMensajesAntiguos, para
+// no acumular indefinidamente reportes de bug (mensaje + a veces una
+// captura) — minimización de datos.
+exports.limpiarReportesAntiguos = onSchedule(
+    { schedule: "every day 03:00", timeZone: "America/Santiago" },
+    async () => {
+        const limite = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const snapshot = await admin.firestore()
+            .collection("reportes")
+            .where("createdAt", "<=", limite)
+            .get();
+
+        if (snapshot.empty) {
+            logger.info("limpiarReportesAntiguos: nada que borrar");
+            return;
+        }
+
+        const db = admin.firestore();
+        const docs = snapshot.docs;
+        for (let i = 0; i < docs.length; i += 400) {
+            const batch = db.batch();
+            docs.slice(i, i + 400).forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+        }
+        logger.info(`limpiarReportesAntiguos: se borraron ${docs.length} reporte(s)`);
+    }
+);
+
 // ---------------------------------------------------------------------
 // actualizarEnVivo: corre cada 5 minutos y marca en streamers/influencers
 // quién está transmitiendo ahora mismo (Twitch/Kick/TikTok). Escribe directo

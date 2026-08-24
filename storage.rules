@@ -23,6 +23,12 @@ service firebase.storage {
 
     // Capturas del botón de "Reportar un problema": cualquiera puede subir
     // una (público, sin login), acotado a imágenes chicas para evitar abuso.
+    // La lectura queda pública (mismo criterio que el resto de las imágenes
+    // del sitio): restringirla a staff rompería el <img> del admin, que
+    // muestra la captura con una URL simple, no vía el SDK autenticado.
+    // La URL en sí no es adivinable (trae un token largo de Firebase), así
+    // que en la práctica solo la ve quien la sube o quien la abre desde el
+    // panel de admin.
     match /reportes/{fileName} {
       allow read: if true;
       allow write: if request.resource.size < 5 * 1024 * 1024
