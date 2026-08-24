@@ -413,6 +413,7 @@ button { cursor: pointer; }
     border:1px solid var(--border); transition:var(--ease); position:relative;
 }
 .card:hover { transform:translateY(-8px); border-color:var(--morado); box-shadow:0 12px 40px var(--morado-glow); }
+.card-link { display:block; text-decoration:none; color:inherit; }
 .card > img:first-child { width:100%; aspect-ratio:1/1; height:auto; object-fit:cover; display:block; transition:var(--ease); }
 .card:hover > img:first-child { filter:brightness(0.75); transform:scale(1.04); }
 .card-body { padding:18px 16px 20px; }

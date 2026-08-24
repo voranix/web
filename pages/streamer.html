@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streamers | VORANIX</title>
-    <meta name="description" content="Streamers activos en Twitch, Kick y TikTok que forman parte de la familia VORANIX.">
-    <link rel="canonical" href="https://voranix.web.app/pages/streamers.html">
+    <title>Streamer | VORANIX</title>
+    <meta name="robots" content="noindex">
     <link rel="icon" type="image/png" href="/imagenes/logopng.png">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
@@ -21,11 +20,11 @@
 <script src="/assets/js/page-loader.js"></script>
 
 
-<header class="header header-sub header-streamers">
+<header class="header header-sub">
     <div class="menu">
-        <div class="menu-content">
+        <div class="menu-content container">
             <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
-            <a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="VORANIX"></a>
+            <a href="/index.html"><img class="logo" src="/imagenes/logopng.png" alt="logo"></a>
             <nav class="navbar">
                 <ul>
                     <li><a href="/index.html">Inicio</a></li>
@@ -57,21 +56,14 @@
         </div>
     </div>
     <div class="header-content container">
-        <div class="hero-eyebrow"><span></span>VORANIX CREATORS</div>
-        <h1>Streamers</h1>
-        <p>CREADORES QUE REPRESENTAN A VORANIX</p>
+        <h1 id="header-title">Streamer</h1>
+        <p>Comunidad y estudio de eventos gamer VORANIX</p>
     </div>
 </header>
 
-<section class="streamers-page container">
-    <div class="section-title">
-        <div class="section-label">Nuestra red</div>
-        <h2>Creadores de Contenido</h2>
-        <span class="accent-line"></span>
-        <p>Streamers activos en Twitch, Kick y TikTok que forman parte de la familia VORANIX</p>
-    </div>
-    <div class="roster-grid" id="streamers-grid">
-        <p class="loading"><i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--morado);"></i>Cargando streamers...</p>
+<section class="container">
+    <div id="streamer-content" class="proyecto-detail">
+        <p class="loading"><i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--morado);"></i>Cargando...</p>
     </div>
 </section>
 
@@ -120,27 +112,19 @@
 <script src="/assets/js/nav.js"></script>
 
 <script type="module">
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { db, escapeHtml } from "/assets/js/firebase-config.js";
 
-const grid = document.getElementById("streamers-grid");
+const content = document.getElementById("streamer-content");
+const headerTitle = document.getElementById("header-title");
+
 function assetUrl(path) {
     if (!path) return "";
     return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
 }
 
-function flagPath(pais) {
-    const key = String(pais || "").toLowerCase();
-    if (key === "mexico") return "/imagenes/flags/mexico.png";
-    if (key === "argentina") return "/imagenes/flags/argentina.png";
-    return "/imagenes/flags/chile.png";
-}
-
-function flagAlt(pais) {
-    const key = String(pais || "").toLowerCase();
-    if (key === "mexico") return "México";
-    if (key === "argentina") return "Argentina";
-    return "Chile";
+function esUrlValida(value) {
+    return /^https?:\/\//.test(String(value || "").trim());
 }
 
 function formatViewers(n) {
@@ -149,45 +133,72 @@ function formatViewers(n) {
     return String(value);
 }
 
-function renderStreamer(streamer, i) {
-    const liveLabel = streamer.enVivo && streamer.viewerActual
-        ? `En vivo · ${formatViewers(streamer.viewerActual)} viewers`
-        : "En vivo";
-    return `
-<a class="card card-link fade-up" href="/pages/streamer.html?id=${encodeURIComponent(streamer.id)}" style="animation-delay:${i * 0.04}s">
-    ${streamer.enVivo ? `<span class="badge-live"><span></span>${liveLabel}</span>` : ""}
-    <img src="${assetUrl(streamer.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(streamer.nombre) || 'Streamer'}" onerror="this.src='/imagenes/logo.jpg'">
-    <div class="card-body">
-        <h3>${escapeHtml(streamer.nombre) || "Streamer"}</h3>
-        <p class="games"><i class="fas fa-gamepad" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(streamer.juegos) || "Variety"}</p>
-        <p class="schedule"><i class="fas fa-clock" style="margin-right:6px;"></i>${escapeHtml(streamer.horario) || "Consultar redes"}</p>
-        <img class="flag" src="${flagPath(streamer.pais)}" alt="${flagAlt(streamer.pais)}">
-        <span class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
-            <i class="fas fa-circle-info"></i> Ver perfil
-        </span>
-    </div>
-</a>`;
+const REDES = [
+    { key: "twitch", icon: "fab fa-twitch", label: "Twitch" },
+    { key: "kick", icon: "fas fa-bolt", label: "Kick" },
+    { key: "tiktok", icon: "fab fa-tiktok", label: "TikTok" },
+    { key: "instagram", icon: "fab fa-instagram", label: "Instagram" }
+];
+
+function showNotFound() {
+    headerTitle.textContent = "Streamer no encontrado";
+    content.innerHTML = `
+<div class="proyecto-not-found">
+    <h2>No encontramos este streamer</h2>
+    <p class="muted">Puede que ya no esté activo o que el link esté mal.</p>
+    <a class="reg-back-to-index" href="/pages/streamers.html" style="margin-top:18px;"><i class="fas fa-arrow-left"></i> Volver a Streamers</a>
+</div>`;
 }
 
-async function loadStreamers() {
+function renderStreamer(item) {
+    document.title = `${item.nombre || "Streamer"} | VORANIX`;
+    headerTitle.textContent = item.nombre || "Streamer";
+
+    const liveLabel = item.enVivo && item.viewerActual
+        ? `En vivo · ${formatViewers(item.viewerActual)} viewers`
+        : "En vivo";
+
+    const chips = [item.juegos || "", item.horario || ""].filter(Boolean);
+
+    const redes = REDES
+        .map(r => ({ ...r, url: item[r.key] }))
+        .filter(r => esUrlValida(r.url));
+
+    content.innerHTML = `
+    ${item.foto ? `<img class="proyecto-hero" src="${escapeHtml(assetUrl(item.foto))}" alt="${escapeHtml(item.nombre) || "Streamer"}" onerror="this.remove()">` : ""}
+    <h1 class="proyecto-title">${escapeHtml(item.nombre) || "Sin nombre"}</h1>
+    <div class="proyecto-meta-row">
+        ${item.enVivo ? `<span class="badge-live" style="position:static;"><span></span>${escapeHtml(liveLabel)}</span>` : ""}
+        ${chips.map(c => `<span class="meta-chip">${escapeHtml(c)}</span>`).join("")}
+    </div>
+    ${item.descripcion ? `<p class="proyecto-desc">${escapeHtml(item.descripcion)}</p>` : ""}
+
+    ${redes.length ? `
+    <div class="proyecto-section">
+        <h2>Redes</h2>
+        <div class="proyecto-redes-list">
+            ${redes.map(r => `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener"><i class="${r.icon}"></i>${escapeHtml(r.label)}</a>`).join("")}
+        </div>
+    </div>` : ""}
+
+    <div class="proyecto-section" style="border-top:none;padding-top:0;">
+        <a class="reg-back-to-index" href="/pages/streamers.html"><i class="fas fa-arrow-left"></i> Volver a Streamers</a>
+    </div>`;
+}
+
+async function load() {
+    const id = new URLSearchParams(location.search).get("id");
+    if (!id) { showNotFound(); return; }
     try {
-        const snapshot = await getDocs(collection(db, "streamers"));
-        const list = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(item => item.activo !== false)
-            .sort((a, b) => {
-                if (!!b.enVivo !== !!a.enVivo) return b.enVivo ? 1 : -1;
-                return String(a.nombre || "").localeCompare(String(b.nombre || ""));
-            });
-        grid.innerHTML = list.length
-            ? list.map(renderStreamer).join("")
-            : `<p class="loading">No hay streamers publicados.</p>`;
+        const snapshot = await getDoc(doc(db, "streamers", id));
+        if (!snapshot.exists() || snapshot.data().activo === false) { showNotFound(); return; }
+        renderStreamer({ id: snapshot.id, ...snapshot.data() });
     } catch (e) {
         console.error(e);
-        grid.innerHTML = `<p class="loading">No se pudieron cargar los streamers.</p>`;
+        showNotFound();
     }
 }
-loadStreamers();
+load();
 </script>
 <script type="module" src="/assets/js/report-bug.js"></script>
 </body>
