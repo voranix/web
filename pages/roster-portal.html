@@ -284,6 +284,7 @@
     let currentPlayers = [];
     let currentStats = {};
     let currentItems = [];
+    let currentProfile = null;
 
     function stopListeners(){
         if(unsubActividad) unsubActividad();
@@ -297,6 +298,7 @@
     }
 
     function showShell(user, profile){
+        currentProfile = profile;
         loginScreen.classList.add("hidden");
         portalShell.classList.remove("hidden");
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
@@ -403,13 +405,16 @@
         statsStrip.classList.remove("hidden");
 
         const partidasConLineup = currentItems.filter(item => Array.isArray(item.lineup) && item.lineup.length).length;
-        const mvpsTotal = Object.values(currentStats).reduce((sum, s) => sum + (s.mvpCount || 0), 0);
+        // Antes sumaba los MVP de todo el equipo; ahora muestra los del
+        // jugador logueado (se lo matchea por nombre contra el lineup,
+        // mismo criterio que ya usa renderEquipoGrid/renderPlayerCard).
+        const misMvps = currentStats[normalizeName(currentProfile?.displayName)]?.mvpCount || 0;
         const proximo = getProximoEvento(currentItems);
 
         const tiles = [
             { icon: "fa-users", value: currentPlayers.length, label: "Jugadores" },
             { icon: "fa-gamepad", value: partidasConLineup, label: "Partidas registradas" },
-            { icon: "fa-crown", value: mvpsTotal, label: "MVPs del equipo" },
+            { icon: "fa-crown", value: misMvps, label: "Tus MVP" },
             {
                 icon: "fa-calendar-day",
                 value: proximo ? escapeHtml(proximo.titulo || "Evento") : "Sin agendar",
