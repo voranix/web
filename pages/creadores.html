@@ -305,6 +305,12 @@
             <div id="mis-comandos-list"></div>
         </div>
 
+        <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fas fa-globe"></i> Comandos generales de VORANIX</h2>
+            <p class="muted overlay-links-sub">Cargados por el staff, ya activos en tu chat junto con los tuyos — no se pueden editar desde acá.</p>
+            <div id="comandos-generales-list"></div>
+        </div>
+
         <div id="overlay-editor-block" class="overlay-links-block hidden">
             <h2 class="overlay-links-title"><i class="fas fa-object-ungroup"></i> Personalizá tu overlay</h2>
             <p class="muted overlay-links-sub">Arrastrá el logo, el cartel de redes, el banner de comandos y el de raid a donde quieras — pensado para acomodar tu cámara o tu layout de stream. El resto (ticker, timer, sponsors, códigos) sigue en su lugar de siempre.</p>
@@ -542,6 +548,8 @@
         unsubTarjeta = null;
         if(unsubComandos) unsubComandos();
         unsubComandos = null;
+        if(unsubComandosGenerales) unsubComandosGenerales();
+        unsubComandosGenerales = null;
         notifBell.stop();
     }
 
@@ -587,6 +595,7 @@
         renderKickStatus(profile);
         renderTiktokStatus(profile);
         renderMisComandos(profile);
+        renderComandosGenerales();
         renderOverlayEditor(profile);
         renderStatsStrip();
 
@@ -995,6 +1004,33 @@ ${!contenidoActivo ? `
         }, (error) => {
             console.error(error);
             listEl.innerHTML = `<p class="muted">No se pudieron cargar tus comandos.</p>`;
+        });
+    }
+
+    // Independiente de si el creador ya conectó Twitch o no: estos comandos
+    // los carga el staff desde Admin (sin campo "canal") y quedan activos en
+    // TODOS los canales afiliados, así que conviene que se vean acá aunque
+    // el creador todavía no tenga nada propio cargado. Son de solo lectura
+    // — firestore.rules ya le niega al creador editar un comando sin canal.
+    let unsubComandosGenerales = null;
+    function renderComandosGenerales(){
+        const listEl = document.getElementById("comandos-generales-list");
+        if(unsubComandosGenerales){ unsubComandosGenerales(); unsubComandosGenerales = null; }
+        listEl.innerHTML = `<p class="loading">Cargando comandos...</p>`;
+        unsubComandosGenerales = onSnapshot(collection(db, "overlayComandos"), (snapshot) => {
+            const generales = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(cmd => !cmd.canal);
+            listEl.innerHTML = generales.length ? generales.map(cmd => `
+<div class="bot-status-row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+    <div>
+        <strong style="color:#fff;">${escapeHtml(cmd.trigger) || "Sin comando"}</strong>
+        <span class="muted" style="font-size:12px;margin-left:8px;">${COMANDO_TIPO_LABELS[cmd.tipo] || cmd.tipo || ""} · cooldown ${cmd.cooldownSegundos ?? 0}s · ${cmd.activo === false ? "Inactivo" : "Activo"}</span>
+    </div>
+</div>`).join("") : `<p class="muted">El staff todavía no cargó comandos generales.</p>`;
+        }, (error) => {
+            console.error(error);
+            listEl.innerHTML = `<p class="muted">No se pudieron cargar los comandos generales.</p>`;
         });
     }
 
