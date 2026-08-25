@@ -350,6 +350,53 @@ async function cargarContenido(item) {
     }
 }
 
+function formatPct(n) {
+    return (n === null || n === undefined) ? "—" : `${Math.round(n * 100)}%`;
+}
+
+function renderSelloBadge(sello) {
+    const n = sello.numeros || {};
+    const ev = n.evidencia || {};
+    return `
+    <div class="perfil-sello-badge">
+        <div class="perfil-sello-head">
+            <i class="fas fa-shield-heart"></i>
+            <div>
+                <h2>Sello de Audiencia Real</h2>
+                <p class="muted">Verificado con datos de chat de Twitch, sin guardar el contenido de ningún mensaje.</p>
+            </div>
+        </div>
+        <div class="perfil-sello-stats">
+            <div class="perfil-sello-stat"><span class="perfil-sello-num">${formatPct(n.retorno)}</span><span>vuelve a ver</span></div>
+            <div class="perfil-sello-stat"><span class="perfil-sello-num">${formatPct(n.cuentasNuevas)}</span><span>cuentas nuevas</span></div>
+            <div class="perfil-sello-stat"><span class="perfil-sello-num">${formatPct(n.otrosCanales)}</span><span>también en otros canales</span></div>
+        </div>
+        <p class="perfil-sello-evidencia">Medido en ${ev.transmisiones || 0} transmisiones · ${ev.horas || 0}h en vivo · ${ev.personas || 0} personas distintas.</p>
+        <a class="perfil-sello-link" href="/pages/sello-audiencia.html">¿Cómo funciona el sello? <i class="fas fa-arrow-right"></i></a>
+    </div>`;
+}
+
+// El sello es opcional: si el streamer no lo tiene (todavía, o nunca) la
+// tarjeta ni siquiera aparece — no hay mensaje de "no tiene sello" en el
+// perfil, eso se explica solo en la página de metodología.
+async function cargarSello(item) {
+    const card = document.getElementById("perfil-sello-card");
+    if (!card) return;
+    try {
+        const snapshot = await getDoc(doc(db, "sellos", item.id));
+        if (!snapshot.exists()) { card.remove(); return; }
+        const sello = snapshot.data();
+        const expiraMs = sello.expiraEl?.toMillis?.() || 0;
+        if (!expiraMs || expiraMs < Date.now()) { card.remove(); return; }
+        card.innerHTML = renderSelloBadge(sello);
+        card.style.display = "";
+        card.classList.add("is-visible");
+    } catch (e) {
+        console.error(e);
+        card.remove();
+    }
+}
+
 function showNotFound() {
     document.title = "Streamer no encontrado | VORANIX";
     content.innerHTML = `
@@ -385,6 +432,8 @@ function renderStreamer(item) {
         ${item.enVivo ? `<span class="perfil-live-label perfil-in perfil-stagger-3"><span></span>En vivo</span>` : ""}
         ${statCards(item)}
     </div>
+
+    <div class="perfil-card perfil-reveal" id="perfil-sello-card" style="display:none;"></div>
 
     ${item.descripcion ? `
     <div class="perfil-card perfil-reveal">
@@ -438,6 +487,7 @@ async function load() {
         const item = { id: snapshot.id, ...snapshot.data() };
         renderStreamer(item);
         cargarContenido(item);
+        cargarSello(item);
     } catch (e) {
         console.error(e);
         showNotFound();
