@@ -466,12 +466,25 @@ async function obtenerSuscriptoresYoutube(channelId, clientId, clientSecret) {
 }
 
 // Seguidores de Kick, con el token del propio dueño del canal.
+//
+// DIAGNÓSTICO TEMPORAL: no tenía forma de probar esto contra la API real de
+// Kick desde el entorno de desarrollo, así que hasta ahora los casos donde
+// Kick responde algo inesperado (no un error de red, sino un 4xx/200-vacío/
+// campo con otro nombre) volvían null en silencio, sin dejar rastro en los
+// logs. Se agrega logger.warn en cada uno de esos casos para poder ver
+// exactamente qué está devolviendo la API real y ajustar el parseo.
 async function obtenerSeguidoresKick(slug, clientId, clientSecret) {
     const tokenRef = admin.firestore().doc(`kickAuth/${slug}/privado/tokens`);
     const tokenSnap = await tokenRef.get();
-    if (!tokenSnap.exists) return null;
+    if (!tokenSnap.exists) {
+        logger.warn(`obtenerSeguidoresKick[${slug}]: no hay token guardado en kickAuth/${slug}/privado/tokens`);
+        return null;
+    }
     let { accessToken, refreshToken } = tokenSnap.data();
-    if (!accessToken) return null;
+    if (!accessToken) {
+        logger.warn(`obtenerSeguidoresKick[${slug}]: el doc de tokens existe pero no tiene accessToken`);
+        return null;
+    }
 
     const pedir = (token) => fetch("https://api.kick.com/public/v1/channels", {
         headers: { "Authorization": `Bearer ${token}` }
@@ -489,7 +502,10 @@ async function obtenerSeguidoresKick(slug, clientId, clientSecret) {
                 })
             });
             const refreshData = await refreshRes.json();
-            if (!refreshData.access_token) return null;
+            if (!refreshData.access_token) {
+                logger.warn(`obtenerSeguidoresKick[${slug}]: no se pudo refrescar el token`, JSON.stringify(refreshData));
+                return null;
+            }
             accessToken = refreshData.access_token;
             refreshToken = refreshData.refresh_token || refreshToken;
             await tokenRef.set({
@@ -497,12 +513,20 @@ async function obtenerSeguidoresKick(slug, clientId, clientSecret) {
             }, { merge: true });
             res = await pedir(accessToken);
         }
-        if (!res.ok) return null;
-        const data = await res.json();
+        const bodyText = await res.text();
+        if (!res.ok) {
+            logger.warn(`obtenerSeguidoresKick[${slug}]: la API respondió ${res.status}`, bodyText.slice(0, 500));
+            return null;
+        }
+        const data = JSON.parse(bodyText);
         const count = Number(data.data?.[0]?.followers_count);
-        return Number.isFinite(count) ? count : null;
+        if (!Number.isFinite(count)) {
+            logger.warn(`obtenerSeguidoresKick[${slug}]: respuesta 200 pero sin followers_count utilizable`, bodyText.slice(0, 500));
+            return null;
+        }
+        return count;
     } catch (err) {
-        logger.warn(`obtenerSeguidoresKick: fallo para ${slug}`, err.message);
+        logger.warn(`obtenerSeguidoresKick[${slug}]: fallo`, err.message);
         return null;
     }
 }
