@@ -880,11 +880,17 @@ ${!seguidoresActivos ? `
             const snapshot = await getDoc(doc(db, "tiktokAuth", openId));
             const data = snapshot.exists() ? snapshot.data() : {};
             const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            const contenidoActivo = data.contenidoActivo === true;
             content.innerHTML = `
 <div class="bot-status-row" style="margin-bottom:14px;">
     <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
     <p style="margin:0;">Conectado como <b>${escapeHtml(data.displayName || "cuenta de TikTok")}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por TikTok.</p>
 </div>
+${!contenidoActivo ? `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Te faltan tus videos en la tarjeta pública: reconectá (mismo botón de abajo) para dar el permiso nuevo que agregamos.</p>
+</div>` : ""}
 <div style="display:flex;gap:10px;flex-wrap:wrap;">
     <button class="btn secondary" type="button" data-connect-tiktok>Reconectar / cambiar de cuenta</button>
     <button class="btn danger small" type="button" data-disconnect="tiktok">Desconectar</button>

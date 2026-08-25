@@ -762,6 +762,76 @@ async function obtenerSeguidoresTiktok(openId, clientId, clientSecret) {
     }
 }
 
+// Últimos videos de TikTok (video.list, scope agregado después de que ya
+// había gente conectada con solo user.info.basic/stats — por eso el gate
+// por contenidoActivo antes de llamar a esto, ver obtenerContenidoCreador).
+//
+// No hay forma de probar esto contra la API real desde este entorno, así
+// que igual que se hizo con Kick: si la forma de la respuesta no es la
+// documentada, se loguean las claves en vez de asumir un campo que podría
+// no existir y fallar en silencio.
+async function obtenerVideosTiktok(openId, clientId, clientSecret) {
+    const tokenRef = admin.firestore().doc(`tiktokAuth/${openId}/privado/tokens`);
+    const tokenSnap = await tokenRef.get();
+    if (!tokenSnap.exists) return [];
+    let { accessToken, refreshToken } = tokenSnap.data();
+    if (!accessToken) return [];
+
+    const campos = "id,cover_image_url,share_url,video_description,title,create_time,view_count";
+    const pedir = (token) => fetch(`https://open.tiktokapis.com/v2/video/list/?fields=${campos}`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ max_count: 8 })
+    });
+
+    try {
+        let res = await pedir(accessToken);
+        if (res.status === 401 && refreshToken) {
+            const refreshRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_key: clientId, client_secret: clientSecret,
+                    grant_type: "refresh_token", refresh_token: refreshToken
+                })
+            });
+            const refreshData = await refreshRes.json();
+            if (!refreshData.access_token) {
+                logger.warn(`obtenerVideosTiktok[${openId}]: no se pudo refrescar el token`, JSON.stringify(refreshData));
+                return [];
+            }
+            accessToken = refreshData.access_token;
+            refreshToken = refreshData.refresh_token || refreshToken;
+            await tokenRef.set({
+                accessToken, refreshToken, updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            res = await pedir(accessToken);
+        }
+        const bodyText = await res.text();
+        if (!res.ok) {
+            logger.warn(`obtenerVideosTiktok[${openId}]: la API respondió ${res.status}`, bodyText.slice(0, 2000));
+            return [];
+        }
+        const data = JSON.parse(bodyText);
+        const videos = data.data?.videos;
+        if (!Array.isArray(videos)) {
+            logger.warn(`obtenerVideosTiktok[${openId}]: forma de respuesta inesperada. Claves de nivel superior: ${JSON.stringify(Object.keys(data || {}))}`);
+            return [];
+        }
+        return videos.map(v => ({
+            id: v.id,
+            titulo: v.title || v.video_description || "",
+            url: v.share_url || "",
+            miniatura: v.cover_image_url || "",
+            fecha: v.create_time ? new Date(Number(v.create_time) * 1000).toISOString() : "",
+            vistas: Number.isFinite(Number(v.view_count)) ? Number(v.view_count) : null
+        })).filter(v => v.id && v.url);
+    } catch (err) {
+        logger.warn(`obtenerVideosTiktok[${openId}]: fallo`, err.message);
+        return [];
+    }
+}
+
 exports.actualizarEnVivo = onSchedule(
     {
         schedule: "every 5 minutes",
@@ -1242,10 +1312,17 @@ exports.generarEstadoTiktokCanal = onCall(
 // que el streamer tenga conectada. Se resuelve al momento en vez de guardarse
 // en el doc del streamer porque no necesita estar al día cada 5 minutos como
 // los contadores de seguidores, y así se evita otra ronda de escrituras en
-// actualizarEnVivo. TikTok queda afuera: el scope que pedimos (user.info.basic
-// + user.info.stats) no incluye video.list.
+// actualizarEnVivo. TikTok se pide solo para quienes ya reconectaron con el
+// scope video.list (tiktokAuth/{openId}.contenidoActivo) — cuentas
+// conectadas antes de agregar ese scope no lo tienen y se saltean, en vez
+// de gastar una llamada a la API que sabemos que va a fallar por permisos.
 exports.obtenerContenidoCreador = onCall(
-    { secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET] },
+    {
+        secrets: [
+            TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET,
+            TIKTOK_CLIENT_ID, TIKTOK_CLIENT_SECRET
+        ]
+    },
     async (request) => {
         const streamerId = String(request.data?.streamerId || "");
         if (!streamerId) throw new HttpsError("invalid-argument", "Falta streamerId.");
@@ -1257,11 +1334,17 @@ exports.obtenerContenidoCreador = onCall(
 
         let youtubeChannelId = null;
         let kickSlug = null;
+        let tiktokOpenId = null;
         if (streamer.uid) {
             const userSnap = await db.doc(`users/${streamer.uid}`).get();
             const userData = userSnap.exists ? userSnap.data() : null;
             youtubeChannelId = userData?.youtubeChannelId || null;
             kickSlug = userData?.kickSlug || null;
+            tiktokOpenId = userData?.tiktokOpenId || null;
+        }
+        if (tiktokOpenId) {
+            const tiktokAuthSnap = await db.doc(`tiktokAuth/${tiktokOpenId}`).get();
+            if (!tiktokAuthSnap.exists || !tiktokAuthSnap.data().contenidoActivo) tiktokOpenId = null;
         }
 
         const twitchHandle = streamer.twitch ? handleFromUrl(streamer.twitch).toLowerCase() : "";
@@ -1271,13 +1354,14 @@ exports.obtenerContenidoCreador = onCall(
             broadcasterId = authSnap.exists ? (authSnap.data().broadcasterId || null) : null;
         }
 
-        const [twitch, youtube, kick] = await Promise.all([
+        const [twitch, youtube, kick, tiktok] = await Promise.all([
             broadcasterId ? obtenerVideosTwitch(broadcasterId, TWITCH_CLIENT_ID.value(), TWITCH_CLIENT_SECRET.value()) : [],
             youtubeChannelId ? obtenerVideosYoutube(youtubeChannelId, YOUTUBE_CLIENT_ID.value(), YOUTUBE_CLIENT_SECRET.value()) : [],
-            kickSlug ? obtenerVideosKick(kickSlug) : []
+            kickSlug ? obtenerVideosKick(kickSlug) : [],
+            tiktokOpenId ? obtenerVideosTiktok(tiktokOpenId, TIKTOK_CLIENT_ID.value(), TIKTOK_CLIENT_SECRET.value()) : []
         ]);
 
-        return { twitch, youtube, kick };
+        return { twitch, youtube, kick, tiktok };
     }
 );
 
@@ -1657,7 +1741,7 @@ exports.tiktokAuthStart = onRequest(
             client_key: TIKTOK_CLIENT_ID.value(),
             redirect_uri: TIKTOK_REDIRECT_URI,
             response_type: "code",
-            scope: "user.info.basic,user.info.stats",
+            scope: "user.info.basic,user.info.stats,video.list",
             state,
             code_challenge: challenge,
             code_challenge_method: "S256"
@@ -1721,7 +1805,8 @@ exports.tiktokAuthCallback = onRequest(
 
             await admin.firestore().doc(`tiktokAuth/${openId}`).set({
                 openId, displayName,
-                authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+                authorizedAt: admin.firestore.FieldValue.serverTimestamp(),
+                contenidoActivo: true
             });
             await admin.firestore().doc(`tiktokAuth/${openId}/privado/tokens`).set({
                 accessToken: tokenData.access_token, refreshToken: tokenData.refresh_token,
@@ -1731,7 +1816,7 @@ exports.tiktokAuthCallback = onRequest(
                 tiktokOpenId: openId
             }, { merge: true });
 
-            res.send(`<h2>¡Listo!</h2><p>Conectaste tu cuenta <b>${escapeHtml(displayName) || "de TikTok"}</b>. Tus seguidores van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
+            res.send(`<h2>¡Listo!</h2><p>Conectaste tu cuenta <b>${escapeHtml(displayName) || "de TikTok"}</b>. Tus seguidores y tus últimos videos van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
         } catch (err) {
             logger.error("tiktokAuthCallback: fallo", err);
             res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");

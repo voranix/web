@@ -240,7 +240,8 @@ function renderAvatar(item) {
 const VIDEO_PLATAFORMA = {
     twitch: { css: "pf-tw", icon: "fab fa-twitch" },
     youtube: { css: "pf-yt", icon: "fab fa-youtube" },
-    kick: { css: "pf-kk", icon: "fas fa-bolt" }
+    kick: { css: "pf-kk", icon: "fas fa-bolt" },
+    tiktok: { css: "pf-tt", icon: "fab fa-tiktok" }
 };
 
 function formatFechaVideo(iso) {
@@ -281,7 +282,8 @@ async function cargarContenido(item) {
         const videos = [
             ...(data.twitch || []).map(v => ({ ...v, plataforma: "twitch" })),
             ...(data.youtube || []).map(v => ({ ...v, plataforma: "youtube" })),
-            ...(data.kick || []).map(v => ({ ...v, plataforma: "kick" }))
+            ...(data.kick || []).map(v => ({ ...v, plataforma: "kick" })),
+            ...(data.tiktok || []).map(v => ({ ...v, plataforma: "tiktok" }))
         ].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
 
         if (!videos.length) {
