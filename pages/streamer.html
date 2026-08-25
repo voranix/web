@@ -115,7 +115,8 @@
 
 <script type="module">
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db, escapeHtml } from "/assets/js/firebase-config.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
+import { db, functionsInstance, escapeHtml } from "/assets/js/firebase-config.js";
 
 const content = document.getElementById("streamer-content");
 const headerTitle = document.getElementById("header-title");
@@ -236,6 +237,62 @@ function renderAvatar(item) {
     <img class="perfil-avatar-fg" src="${escapeHtml(foto)}" alt="${alt}" onerror="window.avatarError(this)">`;
 }
 
+const VIDEO_PLATAFORMA = {
+    twitch: { css: "pf-tw", icon: "fab fa-twitch" },
+    youtube: { css: "pf-yt", icon: "fab fa-youtube" },
+    kick: { css: "pf-kk", icon: "fas fa-bolt" }
+};
+
+function formatFechaVideo(iso) {
+    if (!iso) return "";
+    const fecha = new Date(iso);
+    if (isNaN(fecha.getTime())) return "";
+    return fecha.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function renderVideoCard(v, plataforma) {
+    const pf = VIDEO_PLATAFORMA[plataforma];
+    const fecha = formatFechaVideo(v.fecha);
+    return `
+    <a class="perfil-video-card" href="${escapeHtml(v.url)}" target="_blank" rel="noopener">
+        <div class="perfil-video-thumb">
+            ${v.miniatura ? `<img src="${escapeHtml(v.miniatura)}" alt="" loading="lazy" onerror="this.remove()">` : ""}
+            <div class="perfil-video-platform ${pf.css}"><i class="${pf.icon}"></i></div>
+        </div>
+        <div class="perfil-video-info">
+            <div class="perfil-video-title">${escapeHtml(v.titulo || "Sin título")}</div>
+            ${fecha ? `<div class="perfil-video-date">${fecha}</div>` : ""}
+        </div>
+    </a>`;
+}
+
+// Se pide aparte de renderStreamer (no bloquea el resto de la tarjeta
+// mientras Twitch/YouTube/Kick responden) y solo si el streamer tiene algo
+// conectado que pueda tener contenido — si no, ni se muestra la tarjeta.
+async function cargarContenido(item) {
+    const el = document.getElementById("perfil-contenido");
+    if (!el) return;
+    try {
+        const obtenerContenido = httpsCallable(functionsInstance, "obtenerContenidoCreador");
+        const { data } = await obtenerContenido({ streamerId: item.id });
+        const videos = [
+            ...(data.twitch || []).map(v => ({ ...v, plataforma: "twitch" })),
+            ...(data.youtube || []).map(v => ({ ...v, plataforma: "youtube" })),
+            ...(data.kick || []).map(v => ({ ...v, plataforma: "kick" }))
+        ].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0)).slice(0, 9);
+
+        if (!videos.length) {
+            el.closest(".perfil-card").remove();
+            return;
+        }
+        el.innerHTML = `<div class="perfil-videos-grid">${videos.map(v => renderVideoCard(v, v.plataforma)).join("")}</div>`;
+    } catch (e) {
+        console.error(e);
+        const card = el.closest(".perfil-card");
+        if (card) card.remove();
+    }
+}
+
 function showNotFound() {
     headerTitle.textContent = "Streamer no encontrado";
     content.innerHTML = `
@@ -279,6 +336,11 @@ function renderStreamer(item) {
 
     ${renderJuegosFrecuentes(item)}
 
+    <div class="perfil-card">
+        <h2><i class="fas fa-photo-film"></i>Contenido</h2>
+        <div id="perfil-contenido"><p class="perfil-videos-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</p></div>
+    </div>
+
     ${redes.length ? `
     <div class="perfil-card">
         <h2><i class="fas fa-share-nodes"></i>Redes</h2>
@@ -298,7 +360,9 @@ async function load() {
     try {
         const snapshot = await getDoc(doc(db, "streamers", id));
         if (!snapshot.exists() || snapshot.data().activo === false) { showNotFound(); return; }
-        renderStreamer({ id: snapshot.id, ...snapshot.data() });
+        const item = { id: snapshot.id, ...snapshot.data() };
+        renderStreamer(item);
+        cargarContenido(item);
     } catch (e) {
         console.error(e);
         showNotFound();

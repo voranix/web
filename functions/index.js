@@ -341,6 +341,32 @@ async function chequearTwitchEnVivo(handles, clientId, clientSecret) {
     return enVivo;
 }
 
+// Últimos VODs de Twitch, con el token de app (dato público, no hace falta
+// que el streamer haya conectado nada aparte del canal en sí).
+async function obtenerVideosTwitch(broadcasterId, clientId, clientSecret) {
+    if (!broadcasterId) return [];
+    try {
+        const token = await getTwitchToken(clientId, clientSecret);
+        const res = await fetch(
+            `https://api.twitch.tv/helix/videos?user_id=${encodeURIComponent(broadcasterId)}&type=archive&first=6`,
+            { headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` } }
+        );
+        if (!res.ok) {
+            logger.warn(`obtenerVideosTwitch[${broadcasterId}]: la API respondió ${res.status}`);
+            return [];
+        }
+        const data = await res.json();
+        return (data.data || []).map(v => ({
+            id: v.id, titulo: v.title, url: v.url,
+            miniatura: String(v.thumbnail_url || "").replace("%{width}", "320").replace("%{height}", "180"),
+            fecha: v.created_at
+        }));
+    } catch (err) {
+        logger.warn(`obtenerVideosTwitch[${broadcasterId}]: fallo`, err.message);
+        return [];
+    }
+}
+
 // null = no está en vivo; si está en vivo, devuelve el viewer_count (puede ser 0).
 async function chequearKickEnVivo(handle) {
     try {
@@ -353,6 +379,45 @@ async function chequearKickEnVivo(handle) {
     } catch (err) {
         logger.warn(`actualizarEnVivo: no se pudo chequear Kick de ${handle}`, err.message);
         return null;
+    }
+}
+
+// Últimos VODs de Kick. No hay endpoint oficial para esto (la API pública
+// solo cubre canal/en vivo/moderación) — se usa el mismo endpoint no oficial
+// que ya acompaña a chequearKickEnVivo y al respaldo de seguidores. Parseo
+// defensivo: si Kick cambia la forma de la respuesta, se loguean las claves
+// disponibles y se devuelve lista vacía en vez de romper el resto de la
+// página (misma política que el resto de las integraciones no oficiales).
+async function obtenerVideosKick(slug) {
+    if (!slug) return [];
+    try {
+        const res = await fetch(`https://kick.com/api/v2/channels/${encodeURIComponent(slug)}/videos`, {
+            headers: { "User-Agent": "Mozilla/5.0" }
+        });
+        if (!res.ok) {
+            logger.warn(`obtenerVideosKick[${slug}]: la API respondió ${res.status}`);
+            return [];
+        }
+        const data = await res.json();
+        const lista = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : null);
+        if (!lista) {
+            logger.warn(`obtenerVideosKick[${slug}]: forma de respuesta inesperada. Claves de nivel superior: ${JSON.stringify(Object.keys(data || {}))}`);
+            return [];
+        }
+        return lista.slice(0, 6).map(v => {
+            const video = v.video || v;
+            const uuid = video.uuid || video.uuid_video || v.uuid;
+            return {
+                id: uuid,
+                titulo: v.session_title || video.session_title || video.livestream?.session_title || "",
+                url: uuid ? `https://kick.com/${encodeURIComponent(slug)}/videos/${encodeURIComponent(uuid)}` : "",
+                miniatura: video.thumbnail?.src || video.thumbnail?.srcset || v.thumbnail?.src || "",
+                fecha: v.created_at || video.created_at || ""
+            };
+        }).filter(v => v.id && v.url);
+    } catch (err) {
+        logger.warn(`obtenerVideosKick[${slug}]: fallo`, err.message);
+        return [];
     }
 }
 
@@ -483,6 +548,69 @@ async function obtenerSuscriptoresYoutube(channelId, clientId, clientSecret) {
     } catch (err) {
         logger.warn(`obtenerSuscriptoresYoutube: fallo para ${channelId}`, err.message);
         return null;
+    }
+}
+
+// Últimos videos subidos al canal de YouTube, con el token del propio dueño
+// (mismo doc de tokens que obtenerSuscriptoresYoutube). Primero hay que
+// resolver la playlist de "subidos" del canal (contentDetails), y recién ahí
+// se puede listar sus videos.
+async function obtenerVideosYoutube(channelId, clientId, clientSecret) {
+    const tokenRef = admin.firestore().doc(`youtubeAuth/${channelId}/privado/tokens`);
+    const tokenSnap = await tokenRef.get();
+    if (!tokenSnap.exists) return [];
+    let { accessToken, refreshToken } = tokenSnap.data();
+    if (!accessToken) return [];
+
+    const pedir = (url, token) => fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
+    const refrescar = async () => {
+        const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: clientId, client_secret: clientSecret,
+                grant_type: "refresh_token", refresh_token: refreshToken
+            })
+        });
+        const refreshData = await refreshRes.json();
+        if (!refreshData.access_token) return null;
+        accessToken = refreshData.access_token;
+        await tokenRef.set({ accessToken, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        return accessToken;
+    };
+
+    try {
+        let res = await pedir(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${encodeURIComponent(channelId)}`, accessToken);
+        if (res.status === 401 && refreshToken) {
+            if (!(await refrescar())) return [];
+            res = await pedir(`https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${encodeURIComponent(channelId)}`, accessToken);
+        }
+        if (!res.ok) {
+            logger.warn(`obtenerVideosYoutube[${channelId}]: fallo consultando el canal (${res.status})`);
+            return [];
+        }
+        const canalData = await res.json();
+        const uploadsId = canalData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+        if (!uploadsId) return [];
+
+        const playlistRes = await pedir(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=6&playlistId=${encodeURIComponent(uploadsId)}`, accessToken);
+        if (!playlistRes.ok) {
+            logger.warn(`obtenerVideosYoutube[${channelId}]: fallo listando la playlist de subidos (${playlistRes.status})`);
+            return [];
+        }
+        const playlistData = await playlistRes.json();
+        return (playlistData.items || [])
+            .map(v => ({
+                id: v.snippet?.resourceId?.videoId,
+                titulo: v.snippet?.title || "",
+                url: v.snippet?.resourceId?.videoId ? `https://www.youtube.com/watch?v=${v.snippet.resourceId.videoId}` : "",
+                miniatura: v.snippet?.thumbnails?.medium?.url || v.snippet?.thumbnails?.default?.url || "",
+                fecha: v.snippet?.publishedAt || ""
+            }))
+            .filter(v => v.id);
+    } catch (err) {
+        logger.warn(`obtenerVideosYoutube[${channelId}]: fallo`, err.message);
+        return [];
     }
 }
 
@@ -1084,6 +1212,50 @@ exports.generarEstadoTiktokCanal = onCall(
         }
         const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
         return { state: `tiktok:${request.auth.uid}:${firma}` };
+    }
+);
+
+// Llamada pública (sin auth: la ve cualquier visitante de la tarjeta del
+// streamer) que arma la sección "Contenido" con lo último de cada plataforma
+// que el streamer tenga conectada. Se resuelve al momento en vez de guardarse
+// en el doc del streamer porque no necesita estar al día cada 5 minutos como
+// los contadores de seguidores, y así se evita otra ronda de escrituras en
+// actualizarEnVivo. TikTok queda afuera: el scope que pedimos (user.info.basic
+// + user.info.stats) no incluye video.list.
+exports.obtenerContenidoCreador = onCall(
+    { secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET] },
+    async (request) => {
+        const streamerId = String(request.data?.streamerId || "");
+        if (!streamerId) throw new HttpsError("invalid-argument", "Falta streamerId.");
+
+        const db = admin.firestore();
+        const streamerSnap = await db.doc(`streamers/${streamerId}`).get();
+        if (!streamerSnap.exists) throw new HttpsError("not-found", "Streamer no encontrado.");
+        const streamer = streamerSnap.data();
+
+        let youtubeChannelId = null;
+        let kickSlug = null;
+        if (streamer.uid) {
+            const userSnap = await db.doc(`users/${streamer.uid}`).get();
+            const userData = userSnap.exists ? userSnap.data() : null;
+            youtubeChannelId = userData?.youtubeChannelId || null;
+            kickSlug = userData?.kickSlug || null;
+        }
+
+        const twitchHandle = streamer.twitch ? handleFromUrl(streamer.twitch).toLowerCase() : "";
+        let broadcasterId = null;
+        if (twitchHandle) {
+            const authSnap = await db.doc(`twitchBotAuth/${twitchHandle}`).get();
+            broadcasterId = authSnap.exists ? (authSnap.data().broadcasterId || null) : null;
+        }
+
+        const [twitch, youtube, kick] = await Promise.all([
+            broadcasterId ? obtenerVideosTwitch(broadcasterId, TWITCH_CLIENT_ID.value(), TWITCH_CLIENT_SECRET.value()) : [],
+            youtubeChannelId ? obtenerVideosYoutube(youtubeChannelId, YOUTUBE_CLIENT_ID.value(), YOUTUBE_CLIENT_SECRET.value()) : [],
+            kickSlug ? obtenerVideosKick(kickSlug) : []
+        ]);
+
+        return { twitch, youtube, kick };
     }
 );
 
