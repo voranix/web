@@ -777,8 +777,12 @@ ${!seguidoresActivos ? `
     <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
     <p style="margin:0;">Conectado como <b>${escapeHtml(data.title || channelId)}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Google.</p>
 </div>
-<button class="btn secondary" type="button" data-connect-youtube>Reconectar / cambiar de cuenta</button>`;
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn secondary" type="button" data-connect-youtube>Reconectar / cambiar de cuenta</button>
+    <button class="btn danger small" type="button" data-disconnect="youtube">Desconectar</button>
+</div>`;
             content.querySelector("[data-connect-youtube]").addEventListener("click", (event) => conectarYoutube(event.currentTarget));
+            content.querySelector("[data-disconnect]").addEventListener("click", (event) => desconectarCuenta("youtube", event.currentTarget));
         }catch(error){
             console.error(error);
             content.innerHTML = `<p class="muted">No se pudo consultar el estado de YouTube.</p>`;
@@ -827,8 +831,12 @@ ${!seguidoresActivos ? `
     <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
     <p style="margin:0;">Conectado como <b>@${escapeHtml(kickSlug)}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Kick.</p>
 </div>
-<button class="btn secondary" type="button" data-connect-kick>Reconectar / cambiar de cuenta</button>`;
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn secondary" type="button" data-connect-kick>Reconectar / cambiar de cuenta</button>
+    <button class="btn danger small" type="button" data-disconnect="kick">Desconectar</button>
+</div>`;
             content.querySelector("[data-connect-kick]").addEventListener("click", (event) => conectarKick(event.currentTarget));
+            content.querySelector("[data-disconnect]").addEventListener("click", (event) => desconectarCuenta("kick", event.currentTarget));
         }catch(error){
             console.error(error);
             content.innerHTML = `<p class="muted">No se pudo consultar el estado de Kick.</p>`;
@@ -877,11 +885,39 @@ ${!seguidoresActivos ? `
     <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
     <p style="margin:0;">Conectado como <b>${escapeHtml(data.displayName || "cuenta de TikTok")}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por TikTok.</p>
 </div>
-<button class="btn secondary" type="button" data-connect-tiktok>Reconectar / cambiar de cuenta</button>`;
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn secondary" type="button" data-connect-tiktok>Reconectar / cambiar de cuenta</button>
+    <button class="btn danger small" type="button" data-disconnect="tiktok">Desconectar</button>
+</div>`;
             content.querySelector("[data-connect-tiktok]").addEventListener("click", (event) => conectarTiktok(event.currentTarget));
+            content.querySelector("[data-disconnect]").addEventListener("click", (event) => desconectarCuenta("tiktok", event.currentTarget));
         }catch(error){
             console.error(error);
             content.innerHTML = `<p class="muted">No se pudo consultar el estado de TikTok.</p>`;
+        }
+    }
+
+    // Desconectar YouTube/Kick/TikTok: útil si te equivocaste de cuenta o
+    // solo querés sacar la vinculación. No incluye Twitch a propósito (ver
+    // el comentario de desconectarCuenta del lado de las Cloud Functions).
+    const RENDER_STATUS_FN = { youtube: renderYoutubeStatus, kick: renderKickStatus, tiktok: renderTiktokStatus };
+
+    async function desconectarCuenta(plataforma, button){
+        if(!confirm("¿Desconectar esta cuenta? Vas a tener que volver a autorizarla si querés reconectarla.")) return;
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Desconectando...";
+        try{
+            const desconectar = httpsCallable(functionsInstance, "desconectarCuenta");
+            await desconectar({ plataforma });
+            const snapshot = await getDoc(doc(db, "users", currentUser.uid));
+            currentProfile = snapshot.data();
+            RENDER_STATUS_FN[plataforma](currentProfile);
+        }catch(error){
+            console.error(error);
+            alert("No se pudo desconectar. Intentá de nuevo.");
+            button.disabled = false;
+            button.textContent = original;
         }
     }
 

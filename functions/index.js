@@ -1482,6 +1482,45 @@ exports.tiktokAuthCallback = onRequest(
     }
 );
 
+// Desconectar YouTube/Kick/TikTok: le saca al propio uid el campo de cuenta
+// vinculada y borra el doc de autorización + sus tokens guardados (no revoca
+// el token en la plataforma en sí, pero deja de leerlo y de guardar una
+// copia acá). Deliberadamente NO incluye Twitch: twitchLogin alimenta mucho
+// más (bot de chat, overlay, comandos), desconectarlo tiene un radio de
+// impacto que no se pensó todavía — se puede agregar más adelante si hace
+// falta, con más cuidado.
+const CUENTAS_DESCONECTABLES = {
+    youtube: { campo: "youtubeChannelId", coleccion: "youtubeAuth" },
+    kick: { campo: "kickSlug", coleccion: "kickAuth" },
+    tiktok: { campo: "tiktokOpenId", coleccion: "tiktokAuth" }
+};
+
+exports.desconectarCuenta = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores para desconectar una cuenta.");
+    }
+    const config = CUENTAS_DESCONECTABLES[String(request.data?.plataforma || "")];
+    if (!config) {
+        throw new HttpsError("invalid-argument", "Plataforma no reconocida.");
+    }
+
+    const uid = request.auth.uid;
+    const db = admin.firestore();
+    const userSnap = await db.doc(`users/${uid}`).get();
+    const valor = userSnap.exists ? userSnap.data()[config.campo] : null;
+
+    await db.doc(`users/${uid}`).update({
+        [config.campo]: admin.firestore.FieldValue.delete()
+    });
+
+    if (valor) {
+        await db.doc(`${config.coleccion}/${valor}/privado/tokens`).delete().catch(() => {});
+        await db.doc(`${config.coleccion}/${valor}`).delete().catch(() => {});
+    }
+
+    return { ok: true };
+});
+
 async function enviarMensajeChat(broadcasterId, botUserId, botToken, clientId, mensaje) {
     return fetch("https://api.twitch.tv/helix/chat/messages", {
         method: "POST",
