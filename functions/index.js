@@ -1372,6 +1372,12 @@ exports.kickAuthCallback = onRequest(
 // Conexión de cuenta de TikTok (Login Kit): mismo patrón OAuth 2.1 + PKCE
 // que Kick de acá arriba. TikTok usa "client_key" en vez de "client_id" en
 // sus parámetros — no es un typo, es como lo pide su API.
+//
+// Mientras la app de Producción sigue pendiente de aprobación de TikTok,
+// TIKTOK_CLIENT_ID/TIKTOK_CLIENT_SECRET apuntan a las credenciales del
+// Sandbox (probar el flujo real requiere eso). Cuando aprueben la app,
+// hay que volver a guardar esos mismos secretos con los valores de
+// Producción — el código no cambia, solo el valor del secreto.
 // ---------------------------------------------------------------------
 
 const TIKTOK_AUTH_BASE = "https://www.tiktok.com/v2/auth/authorize/";
