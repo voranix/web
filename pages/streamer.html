@@ -110,13 +110,15 @@
 <script src="/assets/js/nav.js"></script>
 
 <script type="module">
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
-import { db, functionsInstance, escapeHtml } from "/assets/js/firebase-config.js";
+import { db, auth, functionsInstance, escapeHtml } from "/assets/js/firebase-config.js";
 import { initParticles } from "/assets/js/particles.js";
 
 const content = document.getElementById("streamer-content");
 let particulasIniciadas = false;
+let currentItem = null;
 
 function assetUrl(path) {
     if (!path) return "";
@@ -426,6 +428,86 @@ function badgeCuenta(item) {
     return "";
 }
 
+// Solo aparece si el propio streamer activó "Recibir mensajes en mi
+// perfil" desde Mi Tarjeta — nunca se pide ni se muestra su email, el
+// mensaje llega a su Bandeja en el Portal Creadores.
+function renderContactoCard(item) {
+    if (!item.mensajesActivo) return "";
+    return `
+    <div class="perfil-card perfil-reveal">
+        <h2><i class="fas fa-paper-plane"></i>Escribile a ${escapeHtml(item.nombre) || "este streamer"}</h2>
+        <p class="muted" style="font-size:12.5px;margin-bottom:14px;">Tu mensaje llega a su bandeja del Portal Creadores. No pedimos ni mostramos su correo acá.</p>
+        <form id="perfil-contacto-form">
+            <div class="field"><label>Tu nombre</label><input name="nombre" type="text" maxlength="100" required></div>
+            <div class="field"><label>Mensaje</label><textarea name="mensaje" maxlength="3000" required></textarea></div>
+            <div id="perfil-contacto-error" class="error"></div>
+            <div class="modal-actions" style="justify-content:flex-start;">
+                <button class="btn" type="submit"><i class="fas fa-paper-plane"></i> Enviar</button>
+                <span id="perfil-contacto-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+            </div>
+        </form>
+    </div>`;
+}
+
+function wireContactoForm(item) {
+    document.getElementById("perfil-contacto-form")?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const formData = new FormData(event.target);
+        const errorEl = document.getElementById("perfil-contacto-error");
+        const msgEl = document.getElementById("perfil-contacto-msg");
+        errorEl.textContent = "";
+        const nombre = String(formData.get("nombre") || "").trim();
+        const mensaje = String(formData.get("mensaje") || "").trim();
+        if (!nombre || !mensaje) { errorEl.textContent = "Completá tu nombre y el mensaje."; return; }
+        msgEl.textContent = "Enviando...";
+        try {
+            await addDoc(collection(db, "mensajesPerfil"), {
+                streamerId: item.id,
+                nombreRemitente: nombre.slice(0, 100),
+                mensaje: mensaje.slice(0, 3000),
+                leido: false,
+                createdAt: serverTimestamp()
+            });
+            msgEl.textContent = "";
+            event.target.innerHTML = `<p style="color:#4ade80;font-size:13px;"><i class="fas fa-check"></i> ¡Enviado! Gracias por escribir.</p>`;
+        } catch (e) {
+            console.error(e);
+            msgEl.textContent = "";
+            errorEl.textContent = "No se pudo enviar. Intenta de nuevo.";
+        }
+    });
+}
+
+// Un visitante por navegador por día, sin IPs ni nada identificable — y
+// nunca se cuenta al propio streamer viendo su perfil logueado. auth.currentUser
+// no es confiable todavía acá (Firebase recién lo resuelve de forma
+// asíncrona) — por eso load() espera a authListo antes de decidir, en vez
+// de mirar auth.currentUser directamente y arriesgarse a contar a alguien
+// como "anónimo" una fracción de segundo antes de que su sesión cargue.
+function yaVisitadoHoy(streamerId) {
+    try {
+        return localStorage.getItem(`voranixVisita_${streamerId}`) === new Date().toISOString().slice(0, 10);
+    } catch (e) { return true; }
+}
+function marcarVisitadoHoy(streamerId) {
+    try { localStorage.setItem(`voranixVisita_${streamerId}`, new Date().toISOString().slice(0, 10)); } catch (e) {}
+}
+function registrarVisitaSiCorresponde(item, esPropio) {
+    if (esPropio || !item || yaVisitadoHoy(item.id)) return;
+    marcarVisitadoHoy(item.id);
+    const registrarVisita = httpsCallable(functionsInstance, "registrarVisitaPerfil");
+    registrarVisita({ streamerId: item.id }).catch(() => {});
+}
+let authActual = null;
+const authListo = new Promise((resolve) => {
+    let resuelto = false;
+    onAuthStateChanged(auth, (user) => {
+        authActual = user;
+        if (!resuelto) { resuelto = true; resolve(); }
+        else if (currentItem) registrarVisitaSiCorresponde(currentItem, !!(user && currentItem.uid && user.uid === currentItem.uid));
+    });
+});
+
 function showNotFound() {
     document.title = "Streamer no encontrado | VORANIX";
     content.innerHTML = `
@@ -486,12 +568,15 @@ function renderStreamer(item) {
         </div>
     </div>` : ""}
 
+    ${renderContactoCard(item)}
+
     <div style="margin-top:30px;text-align:center;">
         <a class="reg-back-to-index" href="/pages/streamers.html"><i class="fas fa-arrow-left"></i> Volver a Streamers</a>
     </div>`;
 
     animarContadores();
     activarScrollReveal();
+    wireContactoForm(item);
 
     const heroEl = content.querySelector(".perfil-hero");
     if (heroEl) {
@@ -523,9 +608,12 @@ async function load() {
         const snapshot = await getDoc(doc(db, "streamers", id));
         if (!snapshot.exists() || snapshot.data().activo === false) { showNotFound(); return; }
         const item = { id: snapshot.id, ...snapshot.data() };
+        currentItem = item;
         renderStreamer(item);
         cargarContenido(item);
         cargarSello(item);
+        await authListo;
+        registrarVisitaSiCorresponde(item, !!(authActual && item.uid && authActual.uid === item.uid));
     } catch (e) {
         console.error(e);
         showNotFound();

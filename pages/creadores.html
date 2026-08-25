@@ -1800,7 +1800,7 @@ ${!contenidoActivo ? `
         return `
 <div class="overlay-links-block" id="dash-bandeja-block">
     <h2 class="overlay-links-title"><i class="fas fa-inbox"></i> Tu bandeja</h2>
-    <p class="muted overlay-links-sub">Mensajes desde tu perfil público. Tu correo no se muestra ahí — quien te escribe necesita cuenta en VORANIX y los mensajes solo llegan acá.</p>
+    <p class="muted overlay-links-sub">Mensajes desde el formulario de tu perfil público. Tu correo no se muestra ahí ni se envía nada a tu casilla — los mensajes solo llegan acá.</p>
     ${bandejaMensajes.length ? bandejaMensajes.map(m => `
 <div class="inbox-item${m.leido ? "" : " no-leido"}" data-msg-id="${escapeHtml(m.id)}">
     <div class="inbox-item-head">
