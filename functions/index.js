@@ -382,9 +382,19 @@ async function chequearTiktokEnVivo(handle) {
 async function obtenerSeguidoresTwitch(login, broadcasterId, clientId, clientSecret) {
     const tokenRef = admin.firestore().doc(`twitchBotAuth/${login}/privado/tokens`);
     const tokenSnap = await tokenRef.get();
-    if (!tokenSnap.exists) return null;
+    if (!tokenSnap.exists) {
+        logger.warn(`obtenerSeguidoresTwitch[${login}]: no hay token guardado en twitchBotAuth/${login}/privado/tokens`);
+        return null;
+    }
     let { accessToken, refreshToken } = tokenSnap.data();
-    if (!accessToken) return null;
+    if (!accessToken) {
+        logger.warn(`obtenerSeguidoresTwitch[${login}]: el doc de tokens existe pero no tiene accessToken`);
+        return null;
+    }
+    if (!broadcasterId) {
+        logger.warn(`obtenerSeguidoresTwitch[${login}]: falta broadcasterId en twitchBotAuth/${login}`);
+        return null;
+    }
 
     const pedir = (token) => fetch(
         `https://api.twitch.tv/helix/channels/followers?broadcaster_id=${encodeURIComponent(broadcasterId)}&first=1`,
@@ -400,7 +410,10 @@ async function obtenerSeguidoresTwitch(login, broadcasterId, clientId, clientSec
             });
             const refreshRes = await fetch(`https://id.twitch.tv/oauth2/token?${params}`, { method: "POST" });
             const refreshData = await refreshRes.json();
-            if (!refreshData.access_token) return null;
+            if (!refreshData.access_token) {
+                logger.warn(`obtenerSeguidoresTwitch[${login}]: no se pudo refrescar el token`, JSON.stringify(refreshData));
+                return null;
+            }
             accessToken = refreshData.access_token;
             refreshToken = refreshData.refresh_token || refreshToken;
             await tokenRef.set({
@@ -408,11 +421,19 @@ async function obtenerSeguidoresTwitch(login, broadcasterId, clientId, clientSec
             }, { merge: true });
             res = await pedir(accessToken);
         }
-        if (!res.ok) return null;
-        const data = await res.json();
-        return Number.isFinite(data.total) ? data.total : null;
+        const bodyText = await res.text();
+        if (!res.ok) {
+            logger.warn(`obtenerSeguidoresTwitch[${login}]: la API respondió ${res.status}`, bodyText.slice(0, 2000));
+            return null;
+        }
+        const data = JSON.parse(bodyText);
+        if (!Number.isFinite(data.total)) {
+            logger.warn(`obtenerSeguidoresTwitch[${login}]: respuesta 200 pero sin "total" utilizable. Claves: ${JSON.stringify(Object.keys(data))}`);
+            return null;
+        }
+        return data.total;
     } catch (err) {
-        logger.warn(`obtenerSeguidoresTwitch: fallo para ${login}`, err.message);
+        logger.warn(`obtenerSeguidoresTwitch[${login}]: fallo`, err.message);
         return null;
     }
 }
@@ -521,15 +542,28 @@ async function obtenerSeguidoresKick(slug, clientId, clientSecret) {
         const data = JSON.parse(bodyText);
         const canal = data.data?.[0] || {};
         const count = Number(canal.followers_count);
-        if (!Number.isFinite(count)) {
-            // followers_count no está donde lo esperaba — se loguean las claves
-            // disponibles (no el objeto completo, para no repetir texto largo
-            // como la descripción del canal en cada corrida) para encontrar el
-            // nombre real del campo sin adivinar más.
-            logger.warn(`obtenerSeguidoresKick[${slug}]: respuesta 200 pero sin followers_count utilizable. Claves de nivel superior: ${JSON.stringify(Object.keys(canal))}. Claves de "stream": ${JSON.stringify(Object.keys(canal.stream || {}))}. Objeto completo: ${JSON.stringify(canal)}`);
+        if (Number.isFinite(count)) return count;
+
+        // La API pública oficial de Kick (/public/v1/channels) confirmado que
+        // no trae followers_count. Se usa como respaldo el mismo endpoint no
+        // oficial que ya usa chequearKickEnVivo para el estado en vivo
+        // (kick.com/api/v2/channels/{slug}), que sí expone el conteo de
+        // seguidores. Igual que el chequeo en vivo: si Kick cambia esto, deja
+        // de traer el dato en vez de romper el resto del sistema.
+        const fallbackRes = await fetch(`https://kick.com/api/v2/channels/${encodeURIComponent(slug)}`, {
+            headers: { "User-Agent": "Mozilla/5.0" }
+        });
+        if (!fallbackRes.ok) {
+            logger.warn(`obtenerSeguidoresKick[${slug}]: sin followers_count en la API oficial, y el respaldo no oficial respondió ${fallbackRes.status}`);
             return null;
         }
-        return count;
+        const fallbackData = await fallbackRes.json();
+        const fallbackCount = Number(fallbackData.followersCount ?? fallbackData.followers_count);
+        if (!Number.isFinite(fallbackCount)) {
+            logger.warn(`obtenerSeguidoresKick[${slug}]: sin followers_count en ninguna de las dos APIs. Claves de nivel superior del respaldo: ${JSON.stringify(Object.keys(fallbackData))}`);
+            return null;
+        }
+        return fallbackCount;
     } catch (err) {
         logger.warn(`obtenerSeguidoresKick[${slug}]: fallo`, err.message);
         return null;
