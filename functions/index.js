@@ -505,6 +505,58 @@ async function obtenerSeguidoresTwitch(login, broadcasterId, clientId, clientSec
     }
 }
 
+// Foto de perfil + banner + tipo de cuenta desde Twitch, con el token de la
+// app (dato público, no hace falta que el streamer haya conectado nada).
+// Twitch no tiene un "banner de perfil" separado como Kick/YouTube — usa
+// offline_image_url (la imagen que se muestra cuando el canal no está en
+// vivo) como el campo más parecido, así que es lo que se usa acá.
+async function obtenerPerfilTwitch(login, clientId, clientSecret) {
+    try {
+        const token = await getTwitchToken(clientId, clientSecret);
+        const res = await fetch(`https://api.twitch.tv/helix/users?login=${encodeURIComponent(login)}`, {
+            headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const user = data.data?.[0];
+        if (!user) return null;
+        return {
+            avatar: user.profile_image_url || null,
+            banner: user.offline_image_url || null,
+            broadcasterType: user.broadcaster_type || ""
+        };
+    } catch (err) {
+        logger.warn(`obtenerPerfilTwitch[${login}]: fallo`, err.message);
+        return null;
+    }
+}
+
+// Mismo endpoint no oficial que ya se usa para el respaldo de seguidores y
+// el chequeo en vivo de Kick. La forma exacta de dónde vienen el avatar y el
+// banner no está confirmada (documentación no oficial), así que se prueban
+// las variantes más probables y se loguean las claves si ninguna calza, en
+// vez de asumir un campo que podría no existir.
+async function obtenerPerfilKick(slug) {
+    try {
+        const res = await fetch(`https://kick.com/api/v2/channels/${encodeURIComponent(slug)}`, {
+            headers: { "User-Agent": "Mozilla/5.0" }
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const avatar = data.user?.profile_pic || data.profile_pic || data.user?.profilepic || null;
+        const bannerRaw = data.banner_picture;
+        const banner = (bannerRaw && typeof bannerRaw === "object" ? bannerRaw.url : bannerRaw) || null;
+        if (!avatar && !banner) {
+            logger.warn(`obtenerPerfilKick[${slug}]: sin avatar/banner reconocibles. Claves: ${JSON.stringify(Object.keys(data))}, claves de user: ${JSON.stringify(Object.keys(data.user || {}))}`);
+            return null;
+        }
+        return { avatar, banner };
+    } catch (err) {
+        logger.warn(`obtenerPerfilKick[${slug}]: fallo`, err.message);
+        return null;
+    }
+}
+
 // Suscriptores de YouTube, con el token del propio dueño del canal. Si el
 // canal tiene el conteo oculto (hiddenSubscriberCount), la API igual
 // responde 200 pero con el número en 0 — en ese caso se devuelve null a
@@ -913,6 +965,31 @@ exports.actualizarEnVivo = onSchedule(
                 }
                 const debeActualizarSeguidores = seguidoresTwitch !== null && seguidoresTwitch !== (item.seguidoresTwitch ?? null);
 
+                // Foto/banner/tipo de cuenta auto-detectados (solo streamers): Twitch
+                // primero (dato público, no requiere que el streamer haya conectado
+                // nada), Kick como respaldo si no tiene Twitch. Es independiente de
+                // avatarOverride/bannerOverride, que el propio streamer puede cargar
+                // desde Mi Tarjeta para reemplazar lo auto-detectado — la página
+                // pública decide la prioridad entre ambos, esto solo mantiene el dato
+                // auto-detectado al día.
+                let perfilAuto = null;
+                if (coleccion === "streamers") {
+                    try {
+                        if (twitchHandle && clientId && clientSecret) {
+                            perfilAuto = await obtenerPerfilTwitch(twitchHandle, clientId, clientSecret);
+                        } else if (item.kick) {
+                            perfilAuto = await obtenerPerfilKick(handleFromUrl(item.kick));
+                        }
+                    } catch (err) {
+                        logger.warn(`actualizarEnVivo: fallo consultando perfil auto de ${item.id}`, err.message);
+                    }
+                }
+                const debeActualizarPerfilAuto = perfilAuto && (
+                    perfilAuto.avatar !== (item.avatarAuto ?? null) ||
+                    perfilAuto.banner !== (item.bannerAuto ?? null) ||
+                    (perfilAuto.broadcasterType ?? "") !== (item.twitchBroadcasterType ?? "")
+                );
+
                 // Suscriptores de YouTube y seguidores de Kick (solo streamers): a
                 // diferencia de Twitch, acá no hay forma confiable de derivar el
                 // canal desde una URL tipeada a mano, así que se resuelve por la
@@ -942,7 +1019,7 @@ exports.actualizarEnVivo = onSchedule(
                 const debeActualizarKick = seguidoresKick !== null && seguidoresKick !== (item.seguidoresKick ?? null);
                 const debeActualizarTiktok = seguidoresTiktok !== null && seguidoresTiktok !== (item.seguidoresTiktok ?? null);
 
-                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarYoutube || debeActualizarKick || debeActualizarTiktok) {
+                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarPerfilAuto || debeActualizarYoutube || debeActualizarKick || debeActualizarTiktok) {
                     const updateData = { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual };
                     if (debeActualizarJuegos) {
                         const juegosVistos = Array.isArray(item.juegosVistos) ? item.juegosVistos.map(j => ({ ...j })) : [];
@@ -954,6 +1031,11 @@ exports.actualizarEnVivo = onSchedule(
                     }
                     if (debeActualizarSeguidores) {
                         updateData.seguidoresTwitch = seguidoresTwitch;
+                    }
+                    if (debeActualizarPerfilAuto) {
+                        updateData.avatarAuto = perfilAuto.avatar ?? null;
+                        updateData.bannerAuto = perfilAuto.banner ?? null;
+                        updateData.twitchBroadcasterType = perfilAuto.broadcasterType ?? "";
                     }
                     if (debeActualizarYoutube) {
                         updateData.suscriptoresYoutube = suscriptoresYoutube;

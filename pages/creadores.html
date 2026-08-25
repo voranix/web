@@ -1486,6 +1486,18 @@ ${!contenidoActivo ? `
         <span class="help">Separados por coma. Se muestran en tu tarjeta pública junto con lo que detectamos automático de tu Twitch.</span>
     </div>
     <div class="form-grid">
+        <div class="field">
+            <label>Foto de perfil personalizada</label>
+            <input name="avatarOverride" type="url" value="${escapeHtml(d.avatarOverride || "")}" placeholder="https://...">
+            <span class="help">Opcional. Si no la cargás, tu perfil público usa la foto de tu Twitch (o Kick) automáticamente.</span>
+        </div>
+        <div class="field">
+            <label>Banner personalizado</label>
+            <input name="bannerOverride" type="url" value="${escapeHtml(d.bannerOverride || "")}" placeholder="https://...">
+            <span class="help">Opcional. Si no lo cargás, tu perfil público usa el banner de tu Twitch (o Kick) automáticamente.</span>
+        </div>
+    </div>
+    <div class="form-grid">
         <div class="field"><label>Instagram</label><input name="instagram" type="url" value="${escapeHtml(d.instagram || "")}" placeholder="https://instagram.com/..."></div>
         <div class="field"><label>Twitch</label><input name="twitch" type="url" value="${escapeHtml(d.twitch || "")}" placeholder="https://twitch.tv/..."></div>
         <div class="field"><label>Kick</label><input name="kick" type="url" value="${escapeHtml(d.kick || "")}" placeholder="https://kick.com/..."></div>
@@ -1513,6 +1525,8 @@ ${!contenidoActivo ? `
                     twitch: String(formData.get("twitch") || "").trim(),
                     kick: String(formData.get("kick") || "").trim(),
                     tiktok: String(formData.get("tiktok") || "").trim(),
+                    avatarOverride: String(formData.get("avatarOverride") || "").trim(),
+                    bannerOverride: String(formData.get("bannerOverride") || "").trim(),
                     updatedAt: serverTimestamp()
                 });
                 msgEl.textContent = "¡Guardado!";

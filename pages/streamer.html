@@ -275,8 +275,19 @@ window.avatarError = function (imgEl) {
     if (frame) frame.innerHTML = `<div class="perfil-avatar-fallback"><i class="fas fa-user"></i></div>`;
 };
 
+// Prioridad: lo que el streamer haya cargado a mano desde Mi Tarjeta gana
+// siempre; si no cargó nada, se usa lo auto-detectado de Twitch (o Kick si
+// no tiene Twitch); si tampoco hay eso, la foto que cargó el staff en su
+// momento sigue siendo la última red de respaldo.
+function resolverFoto(item) {
+    return item.avatarOverride || item.avatarAuto || item.foto || "";
+}
+function resolverBanner(item) {
+    return item.bannerOverride || item.bannerAuto || "";
+}
+
 function renderAvatar(item) {
-    const foto = assetUrl(item.foto);
+    const foto = assetUrl(resolverFoto(item));
     if (!foto) {
         return `<div class="perfil-avatar-fallback"><i class="fas fa-user"></i></div>`;
     }
@@ -397,6 +408,13 @@ async function cargarSello(item) {
     }
 }
 
+function badgeCuenta(item) {
+    const tipo = String(item.twitchBroadcasterType || "").toLowerCase();
+    if (tipo === "partner") return `<span class="perfil-badge-cuenta pf-partner" title="Partner de Twitch"><i class="fas fa-certificate"></i>Partner</span>`;
+    if (tipo === "affiliate") return `<span class="perfil-badge-cuenta pf-affiliate" title="Afiliado de Twitch"><i class="fas fa-check-circle"></i>Afiliado</span>`;
+    return "";
+}
+
 function showNotFound() {
     document.title = "Streamer no encontrado | VORANIX";
     content.innerHTML = `
@@ -427,6 +445,7 @@ function renderStreamer(item) {
         <div class="perfil-nombre-row perfil-in perfil-stagger-2">
             <h1>${escapeHtml(item.nombre) || "Sin nombre"}</h1>
             <img class="perfil-flag" src="${flagPath(item.pais)}" alt="${flagAlt(item.pais)}" title="${flagAlt(item.pais)}">
+            ${badgeCuenta(item)}
         </div>
         ${totalSeguidores > 0 ? `<div class="perfil-total-seguidores perfil-in perfil-stagger-3"><i class="fas fa-users"></i>${formatViewers(totalSeguidores)} seguidores en total</div>` : ""}
         ${item.enVivo ? `<span class="perfil-live-label perfil-in perfil-stagger-3"><span></span>En vivo</span>` : ""}
@@ -470,6 +489,11 @@ function renderStreamer(item) {
     // ya se reescribió arriba, así que recién ahora existe el elemento.
     const heroEl = content.querySelector(".perfil-hero");
     if (heroEl) {
+        const banner = assetUrl(resolverBanner(item));
+        if (banner) {
+            heroEl.classList.add("has-banner");
+            heroEl.style.setProperty("--perfil-banner", `url("${banner.replace(/"/g, "%22")}")`);
+        }
         initParticles(heroEl, {
             colors: ["#ff6a00", "#ff3b1f", "#ffcf4d"],
             count: 50, minSize: 2, maxSize: 6.5, speed: 0.6,
