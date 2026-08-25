@@ -1463,6 +1463,11 @@ ${!contenidoActivo ? `
         <label>Descripción</label>
         <textarea name="descripcion" placeholder="Contale a la gente de qué va tu canal...">${escapeHtml(d.descripcion || "")}</textarea>
     </div>
+    <div class="field">
+        <label>Juegos</label>
+        <input name="juegos" type="text" value="${escapeHtml(d.juegos || "")}" placeholder="Ej: Valorant, Minecraft, Fortnite">
+        <span class="help">Separados por coma. Se muestran en tu tarjeta pública junto con lo que detectamos automático de tu Twitch.</span>
+    </div>
     <div class="form-grid">
         <div class="field"><label>Instagram</label><input name="instagram" type="url" value="${escapeHtml(d.instagram || "")}" placeholder="https://instagram.com/..."></div>
         <div class="field"><label>Twitch</label><input name="twitch" type="url" value="${escapeHtml(d.twitch || "")}" placeholder="https://twitch.tv/..."></div>
@@ -1486,6 +1491,7 @@ ${!contenidoActivo ? `
             try{
                 await updateDoc(doc(db, "streamers", tarjetaId), {
                     descripcion: String(formData.get("descripcion") || "").trim(),
+                    juegos: String(formData.get("juegos") || "").trim(),
                     instagram: String(formData.get("instagram") || "").trim(),
                     twitch: String(formData.get("twitch") || "").trim(),
                     kick: String(formData.get("kick") || "").trim(),

@@ -68,7 +68,7 @@ service cloud.firestore {
     }
 
     // El creador vinculado (streamers/{doc}.uid == su propio uid) puede
-    // editar solo descripcion y sus redes desde el Portal Creadores —
+    // editar descripcion, sus redes y sus juegos desde el Portal Creadores —
     // imagen, nombre, horario, etc. siguen siendo exclusivos de staff.
     function isLinkedCreador(streamerData) {
       return hasRole("creador") && ("uid" in streamerData) && streamerData.uid == request.auth.uid;
@@ -80,7 +80,7 @@ service cloud.firestore {
       allow update: if isStaff() ||
         (isLinkedCreador(resource.data) &&
          request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(["descripcion", "instagram", "twitch", "kick", "tiktok", "updatedAt"]));
+           .hasOnly(["descripcion", "instagram", "twitch", "kick", "tiktok", "juegos", "updatedAt"]));
 
       // Historial de encendidos/apagados de stream (lo escribe solo el
       // webhook de Twitch con el Admin SDK, que no pasa por estas reglas).
