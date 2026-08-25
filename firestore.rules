@@ -62,7 +62,7 @@ service cloud.firestore {
       // autogestiona cada cuenta, sin poder tocar ningún otro campo.
       allow update: if isAdmin() || (
         signedIn() && request.auth.uid == userId &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["fcmTokens"])
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["fcmTokens", "notifPrefs"])
       );
       allow create, delete: if isAdmin();
     }
@@ -80,7 +80,11 @@ service cloud.firestore {
       allow update: if isStaff() ||
         (isLinkedCreador(resource.data) &&
          request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(["descripcion", "instagram", "twitch", "kick", "tiktok", "discord", "juegos", "avatarOverride", "bannerOverride", "updatedAt"]));
+           .hasOnly([
+             "descripcion", "instagram", "twitch", "kick", "tiktok", "discord", "juegos",
+             "avatarOverride", "bannerOverride", "fraseCorta", "colorAcento",
+             "canalesSecundarios", "mensajesActivo", "updatedAt"
+           ]));
 
       // Historial de encendidos/apagados de stream (lo escribe solo el
       // webhook de Twitch con el Admin SDK, que no pasa por estas reglas).
@@ -109,6 +113,15 @@ service cloud.firestore {
       // directa a Firestore.
       match /privado/{sub} {
         allow read, write: if isStaff();
+      }
+
+      // Visitas al perfil público, un doc por día (registrarVisitaPerfil,
+      // Admin SDK). Nunca IPs ni nada identificable del visitante — solo un
+      // conteo. Mismo criterio de lectura que transmisiones/chatters.
+      match /visitas/{fecha} {
+        allow read: if isStaff() ||
+          (signedIn() && get(/databases/$(database)/documents/streamers/$(doc)).data.uid == request.auth.uid);
+        allow write: if false;
       }
     }
 
@@ -230,6 +243,31 @@ service cloud.firestore {
 
       allow create: if isValidMensaje();
       allow read, update, delete: if isStaff();
+    }
+
+    // Mensajes que le escriben a un streamer desde su perfil público (no
+    // desde el formulario de contacto general de arriba) — el emisor no
+    // necesita cuenta, el destinatario sí necesita tener mensajesActivo
+    // para que su perfil muestre el formulario (ver streamer.html). Nunca
+    // se expone el email del streamer en este flujo.
+    match /mensajesPerfil/{doc} {
+      function isValidMensajePerfil() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(["streamerId", "nombreRemitente", "emailRemitente", "mensaje", "leido", "createdAt"])
+          && data.streamerId is string && data.streamerId.size() > 0
+          && data.nombreRemitente is string && data.nombreRemitente.size() > 0 && data.nombreRemitente.size() < 100
+          && data.mensaje is string && data.mensaje.size() > 0 && data.mensaje.size() < 3000
+          && data.leido == false;
+      }
+
+      allow create: if isValidMensajePerfil();
+      allow read: if isStaff() ||
+        (signedIn() && get(/databases/$(database)/documents/streamers/$(resource.data.streamerId)).data.uid == request.auth.uid);
+      allow update: if isStaff() ||
+        (signedIn() && get(/databases/$(database)/documents/streamers/$(resource.data.streamerId)).data.uid == request.auth.uid &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["leido"]));
+      allow delete: if isStaff() ||
+        (signedIn() && get(/databases/$(database)/documents/streamers/$(resource.data.streamerId)).data.uid == request.auth.uid);
     }
 
     // "accesos" son los permisos/torneos exclusivos de creadores: queda

@@ -35,6 +35,27 @@ service firebase.storage {
         && request.resource.contentType.matches("image/.*");
     }
 
+    // Avatar/banner que el propio streamer sube desde Mi Tarjeta (Portal
+    // Creadores). Acotado a su propio streamerId (verificado contra su uid
+    // real en Firestore, no algo que el cliente pueda falsear) y a los
+    // límites de tamaño que ya se muestran en la UI.
+    function esCreadorDe(streamerId) {
+      return signedIn() &&
+        firestore.get(/databases/(default)/documents/streamers/$(streamerId)).data.uid == request.auth.uid;
+    }
+    match /streamerAvatares/{streamerId}/{fileName} {
+      allow read: if true;
+      allow write: if esCreadorDe(streamerId) &&
+        request.resource.size < 2 * 1024 * 1024 &&
+        request.resource.contentType.matches("image/.*");
+    }
+    match /streamerBanners/{streamerId}/{fileName} {
+      allow read: if true;
+      allow write: if esCreadorDe(streamerId) &&
+        request.resource.size < 4 * 1024 * 1024 &&
+        request.resource.contentType.matches("image/.*");
+    }
+
     match /{allPaths=**} {
       allow read: if true;
       allow write: if hasValidRole();

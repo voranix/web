@@ -1019,6 +1019,29 @@ exports.actualizarEnVivo = onSchedule(
                 const debeActualizarKick = seguidoresKick !== null && seguidoresKick !== (item.seguidoresKick ?? null);
                 const debeActualizarTiktok = seguidoresTiktok !== null && seguidoresTiktok !== (item.seguidoresTiktok ?? null);
 
+                // Peak/promedio de viewers por sesión (solo streamers, mientras
+                // está en vivo): se acumula en el doc de transmisión abierto en
+                // cada chequeo — registrarFinTransmision calcula el promedio
+                // final con sumaViewers/muestras cuando la sesión cierra.
+                if (coleccion === "streamers" && enVivo) {
+                    try {
+                        const transmisionesRef = db.collection(coleccion).doc(item.id).collection("transmisiones");
+                        const abiertaSnap = await transmisionesRef.where("fin", "==", null).limit(1).get();
+                        if (!abiertaSnap.empty) {
+                            const abierta = abiertaSnap.docs[0];
+                            const peakActual = abierta.data().peakViewers || 0;
+                            batch.update(abierta.ref, {
+                                peakViewers: Math.max(peakActual, viewerActual),
+                                sumaViewers: admin.firestore.FieldValue.increment(viewerActual),
+                                muestras: admin.firestore.FieldValue.increment(1)
+                            });
+                            cambios++;
+                        }
+                    } catch (err) {
+                        logger.warn(`actualizarEnVivo: fallo actualizando peak/promedio de viewers de ${item.id}`, err.message);
+                    }
+                }
+
                 if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarPerfilAuto || debeActualizarYoutube || debeActualizarKick || debeActualizarTiktok) {
                     const updateData = { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual };
                     if (debeActualizarJuegos) {
@@ -1126,6 +1149,13 @@ exports.twitchEventSubWebhook = onRequest(
                             if (!abiertaSnap.empty) {
                                 await abiertaSnap.docs[0].ref.update({ ultimoRaidEn: admin.firestore.FieldValue.serverTimestamp() });
                             }
+                            // Para el logro "La comunidad llega" (raids recibidos) en
+                            // el Portal Creadores — un conteo total, no algo que se
+                            // pueda inflar desde el cliente (solo lo escribe este
+                            // webhook con el Admin SDK).
+                            await admin.firestore().collection(encontradoRaid.coleccion).doc(encontradoRaid.id).update({
+                                raidsRecibidos: admin.firestore.FieldValue.increment(1)
+                            });
                         }
                         logger.info(`twitchEventSubWebhook: raid registrado para ${canal}`);
                     }
@@ -1220,10 +1250,12 @@ async function registrarFinTransmision(event) {
     // memoria — nunca son más de un puñado de documentos "abiertos".
     const docs = abiertaSnap.docs.sort((a, b) => (b.data().inicio?.toMillis() || 0) - (a.data().inicio?.toMillis() || 0));
     const masReciente = docs[0];
-    const inicio = masReciente.data().inicio;
+    const data = masReciente.data();
+    const inicio = data.inicio;
     const fin = admin.firestore.Timestamp.now();
     const duracionMinutos = inicio ? Math.round((fin.toMillis() - inicio.toMillis()) / 60000) : null;
-    await masReciente.ref.update({ fin, duracionMinutos });
+    const promedioViewers = data.muestras ? Math.round((data.sumaViewers || 0) / data.muestras) : null;
+    await masReciente.ref.update({ fin, duracionMinutos, promedioViewers });
     logger.info(`registrarFinTransmision: transmision cerrada para ${event.broadcaster_user_login}`);
 }
 
@@ -1540,6 +1572,27 @@ exports.obtenerContenidoCreador = onCall(
         return { twitch, youtube, kick, tiktok };
     }
 );
+
+// Visitas al perfil público: un conteo por día, sin nada identificable del
+// visitante (nunca IP, nunca user-agent, nada). El cliente decide una sola
+// vez por navegador por día si corresponde llamar esto (localStorage, ver
+// streamer.html), así que el número es "navegadores distintos que pasaron
+// hoy" — no un contador de clicks ni de recargas de página.
+exports.registrarVisitaPerfil = onCall(async (request) => {
+    const streamerId = String(request.data?.streamerId || "");
+    if (!streamerId) throw new HttpsError("invalid-argument", "Falta streamerId.");
+
+    const db = admin.firestore();
+    const streamerSnap = await db.doc(`streamers/${streamerId}`).get();
+    if (!streamerSnap.exists) throw new HttpsError("not-found", "Streamer no encontrado.");
+
+    const hoy = new Date().toISOString().slice(0, 10);
+    await db.doc(`streamers/${streamerId}/visitas/${hoy}`).set({
+        total: admin.firestore.FieldValue.increment(1)
+    }, { merge: true });
+
+    return { ok: true };
+});
 
 // Paso 1 de la autorización: redirige a Twitch. ?tipo=bot es exclusivo de la
 // cuenta oficial (se valida en el callback); ?tipo=canal es el link que se
