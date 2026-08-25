@@ -261,7 +261,10 @@ function renderVideoCard(v, plataforma) {
         </div>
         <div class="perfil-video-info">
             <div class="perfil-video-title">${escapeHtml(v.titulo || "Sin título")}</div>
-            ${fecha ? `<div class="perfil-video-date">${fecha}</div>` : ""}
+            <div class="perfil-video-meta">
+                ${fecha ? `<span>${fecha}</span>` : ""}
+                ${Number.isFinite(v.vistas) ? `<span><i class="fas fa-eye"></i> ${formatViewers(v.vistas)}</span>` : ""}
+            </div>
         </div>
     </a>`;
 }

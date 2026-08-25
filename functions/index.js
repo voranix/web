@@ -359,7 +359,8 @@ async function obtenerVideosTwitch(broadcasterId, clientId, clientSecret) {
         return (data.data || []).map(v => ({
             id: v.id, titulo: v.title, url: v.url,
             miniatura: String(v.thumbnail_url || "").replace("%{width}", "320").replace("%{height}", "180"),
-            fecha: v.created_at
+            fecha: v.created_at,
+            vistas: Number.isFinite(Number(v.view_count)) ? Number(v.view_count) : null
         }));
     } catch (err) {
         logger.warn(`obtenerVideosTwitch[${broadcasterId}]: fallo`, err.message);
@@ -412,7 +413,8 @@ async function obtenerVideosKick(slug) {
                 titulo: v.session_title || video.session_title || video.livestream?.session_title || "",
                 url: uuid ? `https://kick.com/${encodeURIComponent(slug)}/videos/${encodeURIComponent(uuid)}` : "",
                 miniatura: video.thumbnail?.src || video.thumbnail?.srcset || v.thumbnail?.src || "",
-                fecha: v.created_at || video.created_at || ""
+                fecha: v.created_at || video.created_at || "",
+                vistas: Number.isFinite(Number(video.views ?? v.views)) ? Number(video.views ?? v.views) : null
             };
         }).filter(v => v.id && v.url);
     } catch (err) {
@@ -599,15 +601,35 @@ async function obtenerVideosYoutube(channelId, clientId, clientSecret) {
             return [];
         }
         const playlistData = await playlistRes.json();
-        return (playlistData.items || [])
+        const videos = (playlistData.items || [])
             .map(v => ({
                 id: v.snippet?.resourceId?.videoId,
                 titulo: v.snippet?.title || "",
                 url: v.snippet?.resourceId?.videoId ? `https://www.youtube.com/watch?v=${v.snippet.resourceId.videoId}` : "",
                 miniatura: v.snippet?.thumbnails?.medium?.url || v.snippet?.thumbnails?.default?.url || "",
-                fecha: v.snippet?.publishedAt || ""
+                fecha: v.snippet?.publishedAt || "",
+                vistas: null
             }))
             .filter(v => v.id);
+        if (!videos.length) return videos;
+
+        // part=snippet no trae vistas — hace falta una consulta aparte a
+        // videos.list?part=statistics. Si falla, no es grave: los videos ya
+        // se resolvieron, solo quedan sin el dato de vistas.
+        try {
+            const statsRes = await pedir(`https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videos.map(v => v.id).join(",")}`, accessToken);
+            if (statsRes.ok) {
+                const statsData = await statsRes.json();
+                const vistasPorId = new Map((statsData.items || []).map(i => [i.id, Number(i.statistics?.viewCount)]));
+                videos.forEach(v => {
+                    const n = vistasPorId.get(v.id);
+                    if (Number.isFinite(n)) v.vistas = n;
+                });
+            }
+        } catch (err) {
+            logger.warn(`obtenerVideosYoutube[${channelId}]: fallo consultando vistas`, err.message);
+        }
+        return videos;
     } catch (err) {
         logger.warn(`obtenerVideosYoutube[${channelId}]: fallo`, err.message);
         return [];
