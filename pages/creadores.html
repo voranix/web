@@ -74,6 +74,11 @@
         .meta-line{ font-size:11px; color:var(--gris-dark); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
         .acceso-card .btn{ margin-top:auto; align-self:flex-start; }
         .overlay-links-block{ margin-bottom:36px; }
+        .creadores-redes-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); gap:22px; }
+        .creadores-redes-grid .overlay-links-block{
+            margin-bottom:0; background:var(--card); border:1px solid var(--border); border-top:3px solid var(--morado);
+            border-radius:var(--r-lg); padding:22px;
+        }
         .overlay-links-title{
             display:flex; align-items:center; gap:10px; font-size:1.05rem; letter-spacing:1px;
             margin-bottom:14px; padding-left:14px; border-left:3px solid var(--morado);
@@ -239,6 +244,7 @@
 
     <div class="creadores-tabs" role="tablist">
         <button type="button" class="creadores-tab active" data-tab="proyectos"><i class="fas fa-diagram-project"></i> Proyectos</button>
+        <button type="button" class="creadores-tab" data-tab="redes"><i class="fas fa-link"></i> Redes</button>
         <button type="button" class="creadores-tab" data-tab="herramientas"><i class="fas fa-toolbox"></i> Herramientas</button>
         <button type="button" class="creadores-tab" data-tab="tarjeta"><i class="fas fa-id-badge"></i> Mi Tarjeta</button>
     </div>
@@ -258,31 +264,32 @@
         </div>
     </div>
 
+    <div class="creadores-tab-panel hidden" data-tab-panel="redes">
+        <p class="muted overlay-links-sub">Conectá tus cuentas reales (OAuth, verificado por cada plataforma) para que tu tarjeta pública muestre seguidores/suscriptores al día y tu overlay y bot de chat no se mezclen con los de otro creador.</p>
+        <div class="creadores-redes-grid">
+            <div class="overlay-links-block">
+                <h2 class="overlay-links-title"><i class="fab fa-twitch"></i> Tu cuenta de Twitch</h2>
+                <div id="twitch-status-content"><p class="loading">Cargando...</p></div>
+            </div>
+
+            <div class="overlay-links-block">
+                <h2 class="overlay-links-title"><i class="fab fa-youtube"></i> Tu cuenta de YouTube</h2>
+                <div id="youtube-status-content"><p class="loading">Cargando...</p></div>
+            </div>
+
+            <div class="overlay-links-block">
+                <h2 class="overlay-links-title"><i class="fas fa-bolt"></i> Tu cuenta de Kick</h2>
+                <div id="kick-status-content"><p class="loading">Cargando...</p></div>
+            </div>
+
+            <div class="overlay-links-block">
+                <h2 class="overlay-links-title"><i class="fab fa-tiktok"></i> Tu cuenta de TikTok</h2>
+                <div id="tiktok-status-content"><p class="loading">Cargando...</p></div>
+            </div>
+        </div>
+    </div>
+
     <div class="creadores-tab-panel hidden" data-tab-panel="herramientas">
-        <div class="overlay-links-block">
-            <h2 class="overlay-links-title"><i class="fab fa-twitch"></i> Tu cuenta de Twitch</h2>
-            <p class="muted overlay-links-sub">Se verifica directo contra tu cuenta real de Twitch (OAuth) y así queda tu overlay y tu bot de chat sin mezclarse con los de otros creadores.</p>
-            <div id="twitch-status-content"><p class="loading">Cargando...</p></div>
-        </div>
-
-        <div class="overlay-links-block">
-            <h2 class="overlay-links-title"><i class="fab fa-youtube"></i> Tu cuenta de YouTube</h2>
-            <p class="muted overlay-links-sub">Conectala (OAuth, verificado por Google) para mostrar tu conteo de suscriptores en tu tarjeta pública.</p>
-            <div id="youtube-status-content"><p class="loading">Cargando...</p></div>
-        </div>
-
-        <div class="overlay-links-block">
-            <h2 class="overlay-links-title"><i class="fas fa-bolt"></i> Tu cuenta de Kick</h2>
-            <p class="muted overlay-links-sub">Conectala (OAuth, verificado por Kick) para mostrar tu conteo de seguidores en tu tarjeta pública.</p>
-            <div id="kick-status-content"><p class="loading">Cargando...</p></div>
-        </div>
-
-        <div class="overlay-links-block">
-            <h2 class="overlay-links-title"><i class="fab fa-tiktok"></i> Tu cuenta de TikTok</h2>
-            <p class="muted overlay-links-sub">Conectala (OAuth, verificado por TikTok) para mostrar tu conteo de seguidores en tu tarjeta pública.</p>
-            <div id="tiktok-status-content"><p class="loading">Cargando...</p></div>
-        </div>
-
         <div class="overlay-links-block">
             <h2 class="overlay-links-title"><i class="fas fa-desktop"></i> Tu overlay para streams</h2>
             <p class="muted overlay-links-sub" id="overlay-links-sub">Pegá estos links como Fuente de Navegador en OBS (Agregar → Fuente de navegador → URL).</p>
@@ -631,7 +638,7 @@
         const twitchLogin = profile.twitchLogin || "";
 
         if(!twitchLogin){
-            content.innerHTML = `<p class="muted">Conectá tu cuenta de Twitch arriba para generar tus links personalizados de overlay.</p>`;
+            content.innerHTML = `<p class="muted">Conectá tu cuenta de Twitch en la pestaña "Redes" para generar tus links personalizados de overlay.</p>`;
             return;
         }
 
@@ -955,7 +962,7 @@ ${!contenidoActivo ? `
 
         if(!twitchLogin){
             addBtn.classList.add("hidden");
-            listEl.innerHTML = `<p class="muted">Conectá tu cuenta de Twitch arriba para poder cargar tus propios comandos.</p>`;
+            listEl.innerHTML = `<p class="muted">Conectá tu cuenta de Twitch en la pestaña "Redes" para poder cargar tus propios comandos.</p>`;
             return;
         }
 
@@ -1248,8 +1255,8 @@ ${!contenidoActivo ? `
             texto: "Acá administrás todo lo que tiene que ver con tu canal dentro de VORANIX: tu cuenta de Twitch, tu overlay para stream, tus comandos de chat y tus accesos exclusivos. Este tutorial te muestra los pasos — después lo volvés a abrir cuando quieras con el botón \"Tutorial\"."
         },
         {
-            titulo: "1. Conectá tu cuenta de Twitch",
-            texto: "Tocá \"Conectar mi cuenta de Twitch\" e iniciá sesión con tu cuenta real de Twitch. Queda verificada automáticamente — así tu overlay y tus comandos nunca se mezclan con los de otro creador."
+            titulo: "1. Conectá tus cuentas",
+            texto: "En la pestaña \"Redes\" tocá \"Conectar mi cuenta de Twitch\" (y las que quieras de YouTube, Kick o TikTok) e iniciá sesión con tu cuenta real. Quedan verificadas automáticamente — así tu overlay, tus comandos y tus seguidores nunca se mezclan con los de otro creador."
         },
         {
             titulo: "2. Copiá tus links de overlay",
