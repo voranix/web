@@ -268,6 +268,7 @@
     import { auth, db, escapeHtml } from "/assets/js/firebase-config.js";
     import { renderActividadList, getProximoEvento, formatRango, TIPO_LABELS } from "/assets/js/roster-activity.js";
     import { initNotificationBell } from "/assets/js/notificaciones.js";
+    import { initParticles } from "/assets/js/particles.js";
 
     // Habilita "Agregar a pantalla de inicio" (PWA) y deja el service
     // worker listo para recibir notificaciones push en segundo plano.
@@ -302,6 +303,7 @@
     let currentItems = [];
     let currentFiltroTipo = "todos";
     let currentProfile = null;
+    let particlesIniciadas = false;
 
     // Botones "Todos" + uno por cada tipo que realmente aparece en la
     // actividad del equipo (no tiene sentido mostrar un filtro de "Liga" si
@@ -346,6 +348,10 @@
         currentProfile = profile;
         loginScreen.classList.add("hidden");
         portalShell.classList.remove("hidden");
+        if (!particlesIniciadas) {
+            particlesIniciadas = true;
+            initParticles(portalShell, { colors: ["#7b2cff", "#9d5bff", "#ff6a00"], count: 32, speed: 0.32, minSize: 1, maxSize: 3, opacityRange: [0.15, 0.45] });
+        }
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
         roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
         equipoSubtitle.textContent = `Equipo: ${JUEGO_LABELS[profile.equipoJuego] || "Sin asignar"}`;

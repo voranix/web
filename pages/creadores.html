@@ -481,6 +481,7 @@
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
     import { auth, db, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
     import { initNotificationBell } from "/assets/js/notificaciones.js";
+    import { initParticles } from "/assets/js/particles.js";
 
     // Habilita "Agregar a pantalla de inicio" (PWA) y deja el service
     // worker listo para recibir notificaciones push en segundo plano.
@@ -562,12 +563,21 @@
 
     let currentUser = null;
     let currentProfile = null;
+    let particlesIniciadas = false;
 
     function showShell(user, profile){
         currentUser = user;
         currentProfile = profile;
         loginScreen.classList.add("hidden");
         creadoresShell.classList.remove("hidden");
+        // Recién ahora el shell deja de tener display:none (clase "hidden"),
+        // así que el canvas de partículas puede medir un contenedor con
+        // tamaño real. initParticles ya trae su propio guard de
+        // prefers-reduced-motion.
+        if (!particlesIniciadas) {
+            particlesIniciadas = true;
+            initParticles(creadoresShell, { colors: ["#7b2cff", "#9d5bff", "#ff6a00"], count: 28, speed: 0.18, opacityRange: [0.12, 0.4] });
+        }
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
         roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
         notifBell.start(user.uid);

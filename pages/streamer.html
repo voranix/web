@@ -113,6 +113,7 @@
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
 import { db, functionsInstance, escapeHtml } from "/assets/js/firebase-config.js";
+import { initParticles } from "/assets/js/particles.js";
 
 const content = document.getElementById("streamer-content");
 
@@ -412,6 +413,20 @@ function renderStreamer(item) {
 
     animarContadores();
     activarScrollReveal();
+
+    // De fuego, sí o sí: brasas cálidas subiendo dentro del hero. Se ancla
+    // a .perfil-hero (ya tiene overflow:hidden + position:relative) para que
+    // quede contenido en la tarjeta principal, bien visible, en vez de
+    // depender de que se note en los huecos entre tarjetas. content.innerHTML
+    // ya se reescribió arriba, así que recién ahora existe el elemento.
+    const heroEl = content.querySelector(".perfil-hero");
+    if (heroEl) {
+        initParticles(heroEl, {
+            colors: ["#ff6a00", "#ff3b1f", "#ffcf4d"],
+            count: 50, minSize: 2, maxSize: 6.5, speed: 0.6,
+            opacityRange: [0.4, 0.85], flicker: true
+        });
+    }
 }
 
 async function load() {
