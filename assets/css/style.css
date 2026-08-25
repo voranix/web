@@ -901,7 +901,11 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 }
 .perfil-live-label span{ width:6px; height:6px; background:#ff2d55; border-radius:50%; animation:pulse 1.4s infinite; }
 
-.perfil-hero-chips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.perfil-total-seguidores{
+    display:inline-flex; align-items:center; gap:7px; color:var(--gris); font-size:12.5px;
+    margin-bottom:14px;
+}
+.perfil-total-seguidores i{ color:var(--morado-light); }
 
 .perfil-stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(126px,1fr)); gap:12px; margin-top:24px; }
 .perfil-stat-card{

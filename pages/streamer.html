@@ -312,11 +312,13 @@ function renderStreamer(item) {
     document.title = `${item.nombre || "Streamer"} | VORANIX`;
     headerTitle.textContent = item.nombre || "Streamer";
 
-    const chips = [item.juegos || "", item.horario || ""].filter(Boolean);
-
     const redes = REDES
         .map(r => ({ ...r, url: item[r.key] }))
         .filter(r => esUrlValida(r.url));
+
+    const totalSeguidores = [item.seguidoresTwitch, item.suscriptoresYoutube, item.seguidoresKick, item.seguidoresTiktok]
+        .filter(n => Number.isFinite(n))
+        .reduce((sum, n) => sum + n, 0);
 
     content.innerHTML = `
     <div class="perfil-hero">
@@ -328,8 +330,8 @@ function renderStreamer(item) {
             <h1>${escapeHtml(item.nombre) || "Sin nombre"}</h1>
             <img class="perfil-flag" src="${flagPath(item.pais)}" alt="${flagAlt(item.pais)}" title="${flagAlt(item.pais)}">
         </div>
+        ${totalSeguidores > 0 ? `<div class="perfil-total-seguidores"><i class="fas fa-users"></i>${formatViewers(totalSeguidores)} seguidores en total</div>` : ""}
         ${item.enVivo ? `<span class="perfil-live-label"><span></span>En vivo</span>` : ""}
-        ${chips.length ? `<div class="perfil-hero-chips">${chips.map(c => `<span class="meta-chip">${escapeHtml(c)}</span>`).join("")}</div>` : ""}
         ${statCards(item)}
     </div>
 
