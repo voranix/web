@@ -282,7 +282,7 @@ async function cargarContenido(item) {
             ...(data.twitch || []).map(v => ({ ...v, plataforma: "twitch" })),
             ...(data.youtube || []).map(v => ({ ...v, plataforma: "youtube" })),
             ...(data.kick || []).map(v => ({ ...v, plataforma: "kick" }))
-        ].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0)).slice(0, 9);
+        ].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
 
         if (!videos.length) {
             el.closest(".perfil-card").remove();

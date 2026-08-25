@@ -348,7 +348,7 @@ async function obtenerVideosTwitch(broadcasterId, clientId, clientSecret) {
     try {
         const token = await getTwitchToken(clientId, clientSecret);
         const res = await fetch(
-            `https://api.twitch.tv/helix/videos?user_id=${encodeURIComponent(broadcasterId)}&type=archive&first=6`,
+            `https://api.twitch.tv/helix/videos?user_id=${encodeURIComponent(broadcasterId)}&type=archive&first=8`,
             { headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` } }
         );
         if (!res.ok) {
@@ -405,7 +405,7 @@ async function obtenerVideosKick(slug) {
             logger.warn(`obtenerVideosKick[${slug}]: forma de respuesta inesperada. Claves de nivel superior: ${JSON.stringify(Object.keys(data || {}))}`);
             return [];
         }
-        return lista.slice(0, 6).map(v => {
+        return lista.slice(0, 8).map(v => {
             const video = v.video || v;
             const uuid = video.uuid || video.uuid_video || v.uuid;
             return {
@@ -595,7 +595,7 @@ async function obtenerVideosYoutube(channelId, clientId, clientSecret) {
         const uploadsId = canalData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
         if (!uploadsId) return [];
 
-        const playlistRes = await pedir(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=6&playlistId=${encodeURIComponent(uploadsId)}`, accessToken);
+        const playlistRes = await pedir(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=8&playlistId=${encodeURIComponent(uploadsId)}`, accessToken);
         if (!playlistRes.ok) {
             logger.warn(`obtenerVideosYoutube[${channelId}]: fallo listando la playlist de subidos (${playlistRes.status})`);
             return [];
