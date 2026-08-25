@@ -266,6 +266,18 @@
         </div>
 
         <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fab fa-youtube"></i> Tu cuenta de YouTube</h2>
+            <p class="muted overlay-links-sub">Conectala (OAuth, verificado por Google) para mostrar tu conteo de suscriptores en tu tarjeta pública.</p>
+            <div id="youtube-status-content"><p class="loading">Cargando...</p></div>
+        </div>
+
+        <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fas fa-bolt"></i> Tu cuenta de Kick</h2>
+            <p class="muted overlay-links-sub">Conectala (OAuth, verificado por Kick) para mostrar tu conteo de seguidores en tu tarjeta pública.</p>
+            <div id="kick-status-content"><p class="loading">Cargando...</p></div>
+        </div>
+
+        <div class="overlay-links-block">
             <h2 class="overlay-links-title"><i class="fas fa-desktop"></i> Tu overlay para streams</h2>
             <p class="muted overlay-links-sub" id="overlay-links-sub">Pegá estos links como Fuente de Navegador en OBS (Agregar → Fuente de navegador → URL).</p>
             <div id="overlay-links-content"></div>
@@ -464,6 +476,8 @@
     }
 
     const TWITCH_BOT_AUTH_CANAL_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/twitchBotAuthStart?tipo=canal";
+    const YOUTUBE_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/youtubeAuthStart";
+    const KICK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthStart";
 
     const CATEGORIAS = {
         torneo: "Torneo",
@@ -545,6 +559,8 @@
         notifBell.start(user.uid);
         renderOverlayLinks(profile);
         renderTwitchStatus(profile);
+        renderYoutubeStatus(profile);
+        renderKickStatus(profile);
         renderMisComandos(profile);
         renderOverlayEditor(profile);
         renderStatsStrip();
@@ -564,6 +580,8 @@
             currentProfile = snapshot.data();
             renderOverlayLinks(currentProfile);
             renderTwitchStatus(currentProfile);
+            renderYoutubeStatus(currentProfile);
+            renderKickStatus(currentProfile);
             if(twitchLoginCambio){ renderMisComandos(currentProfile); renderOverlayEditor(currentProfile); }
             renderStatsStrip();
         });
@@ -704,6 +722,108 @@ ${!seguidoresActivos ? `
             content.innerHTML = `<p class="muted">No se pudo consultar el estado del bot.</p>`;
         }
         renderStatsStrip();
+    }
+
+    // Mismo mecanismo que conectarTwitch, con el state firmado por
+    // generarEstadoYoutubeCanal / generarEstadoKickCanal.
+    async function conectarYoutube(button){
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Abriendo Google...";
+        try{
+            const generarEstado = httpsCallable(functionsInstance, "generarEstadoYoutubeCanal");
+            const result = await generarEstado();
+            const url = `${YOUTUBE_AUTH_URL}?state=${encodeURIComponent(result.data.state)}`;
+            window.open(url, "_blank", "noopener");
+        }catch(error){
+            console.error(error);
+            alert("No se pudo iniciar la conexión con YouTube. Intentá de nuevo.");
+        }
+        button.disabled = false;
+        button.textContent = original;
+    }
+
+    async function renderYoutubeStatus(profile){
+        const content = document.getElementById("youtube-status-content");
+        const channelId = profile.youtubeChannelId || "";
+
+        if(!channelId){
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste tu cuenta de YouTube.</p>
+</div>
+<button class="btn" type="button" data-connect-youtube>Conectar mi cuenta de YouTube</button>`;
+            content.querySelector("[data-connect-youtube]").addEventListener("click", (event) => conectarYoutube(event.currentTarget));
+            return;
+        }
+
+        content.innerHTML = `<p class="muted">Consultando estado...</p>`;
+        try{
+            const snapshot = await getDoc(doc(db, "youtubeAuth", channelId));
+            const data = snapshot.exists() ? snapshot.data() : {};
+            const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">Conectado como <b>${escapeHtml(data.title || channelId)}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Google.</p>
+</div>
+<button class="btn secondary" type="button" data-connect-youtube>Reconectar / cambiar de cuenta</button>`;
+            content.querySelector("[data-connect-youtube]").addEventListener("click", (event) => conectarYoutube(event.currentTarget));
+        }catch(error){
+            console.error(error);
+            content.innerHTML = `<p class="muted">No se pudo consultar el estado de YouTube.</p>`;
+        }
+    }
+
+    async function conectarKick(button){
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Abriendo Kick...";
+        try{
+            const generarEstado = httpsCallable(functionsInstance, "generarEstadoKickCanal");
+            const result = await generarEstado();
+            const url = `${KICK_AUTH_URL}?state=${encodeURIComponent(result.data.state)}`;
+            window.open(url, "_blank", "noopener");
+        }catch(error){
+            console.error(error);
+            alert("No se pudo iniciar la conexión con Kick. Intentá de nuevo.");
+        }
+        button.disabled = false;
+        button.textContent = original;
+    }
+
+    async function renderKickStatus(profile){
+        const content = document.getElementById("kick-status-content");
+        const kickSlug = profile.kickSlug || "";
+
+        if(!kickSlug){
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste tu cuenta de Kick.</p>
+</div>
+<button class="btn" type="button" data-connect-kick>Conectar mi cuenta de Kick</button>`;
+            content.querySelector("[data-connect-kick]").addEventListener("click", (event) => conectarKick(event.currentTarget));
+            return;
+        }
+
+        content.innerHTML = `<p class="muted">Consultando estado...</p>`;
+        try{
+            const snapshot = await getDoc(doc(db, "kickAuth", kickSlug));
+            const data = snapshot.exists() ? snapshot.data() : {};
+            const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">Conectado como <b>@${escapeHtml(kickSlug)}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Kick.</p>
+</div>
+<button class="btn secondary" type="button" data-connect-kick>Reconectar / cambiar de cuenta</button>`;
+            content.querySelector("[data-connect-kick]").addEventListener("click", (event) => conectarKick(event.currentTarget));
+        }catch(error){
+            console.error(error);
+            content.innerHTML = `<p class="muted">No se pudo consultar el estado de Kick.</p>`;
+        }
     }
 
     // Comandos de chat propios de cada creador: exclusivos de su canal

@@ -399,12 +399,109 @@ async function obtenerSeguidoresTwitch(login, broadcasterId, clientId, clientSec
     }
 }
 
+// Suscriptores de YouTube, con el token del propio dueño del canal. Si el
+// canal tiene el conteo oculto (hiddenSubscriberCount), la API igual
+// responde 200 pero con el número en 0 — en ese caso se devuelve null a
+// propósito, para no mostrar un "0 suscriptores" que sería falso y además
+// el creador explícitamente eligió ocultarlo.
+async function obtenerSuscriptoresYoutube(channelId, clientId, clientSecret) {
+    const tokenRef = admin.firestore().doc(`youtubeAuth/${channelId}/privado/tokens`);
+    const tokenSnap = await tokenRef.get();
+    if (!tokenSnap.exists) return null;
+    let { accessToken, refreshToken } = tokenSnap.data();
+    if (!accessToken) return null;
+
+    const pedir = (token) => fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${encodeURIComponent(channelId)}`,
+        { headers: { "Authorization": `Bearer ${token}` } }
+    );
+
+    try {
+        let res = await pedir(accessToken);
+        if (res.status === 401 && refreshToken) {
+            const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_id: clientId, client_secret: clientSecret,
+                    grant_type: "refresh_token", refresh_token: refreshToken
+                })
+            });
+            const refreshData = await refreshRes.json();
+            if (!refreshData.access_token) return null;
+            accessToken = refreshData.access_token;
+            await tokenRef.set({
+                accessToken, updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            res = await pedir(accessToken);
+        }
+        if (!res.ok) return null;
+        const data = await res.json();
+        const stats = data.items?.[0]?.statistics;
+        if (!stats || stats.hiddenSubscriberCount) return null;
+        const count = Number(stats.subscriberCount);
+        return Number.isFinite(count) ? count : null;
+    } catch (err) {
+        logger.warn(`obtenerSuscriptoresYoutube: fallo para ${channelId}`, err.message);
+        return null;
+    }
+}
+
+// Seguidores de Kick, con el token del propio dueño del canal.
+async function obtenerSeguidoresKick(slug, clientId, clientSecret) {
+    const tokenRef = admin.firestore().doc(`kickAuth/${slug}/privado/tokens`);
+    const tokenSnap = await tokenRef.get();
+    if (!tokenSnap.exists) return null;
+    let { accessToken, refreshToken } = tokenSnap.data();
+    if (!accessToken) return null;
+
+    const pedir = (token) => fetch("https://api.kick.com/public/v1/channels", {
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    try {
+        let res = await pedir(accessToken);
+        if (res.status === 401 && refreshToken) {
+            const refreshRes = await fetch(`${KICK_AUTH_BASE}/token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_id: clientId, client_secret: clientSecret,
+                    grant_type: "refresh_token", refresh_token: refreshToken
+                })
+            });
+            const refreshData = await refreshRes.json();
+            if (!refreshData.access_token) return null;
+            accessToken = refreshData.access_token;
+            refreshToken = refreshData.refresh_token || refreshToken;
+            await tokenRef.set({
+                accessToken, refreshToken, updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            res = await pedir(accessToken);
+        }
+        if (!res.ok) return null;
+        const data = await res.json();
+        const count = Number(data.data?.[0]?.followers_count);
+        return Number.isFinite(count) ? count : null;
+    } catch (err) {
+        logger.warn(`obtenerSeguidoresKick: fallo para ${slug}`, err.message);
+        return null;
+    }
+}
+
 exports.actualizarEnVivo = onSchedule(
-    { schedule: "every 5 minutes", secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET] },
+    {
+        schedule: "every 5 minutes",
+        secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, KICK_CLIENT_ID, KICK_CLIENT_SECRET]
+    },
     async () => {
         const db = admin.firestore();
         const clientId = TWITCH_CLIENT_ID.value();
         const clientSecret = TWITCH_CLIENT_SECRET.value();
+        const youtubeClientId = YOUTUBE_CLIENT_ID.value();
+        const youtubeClientSecret = YOUTUBE_CLIENT_SECRET.value();
+        const kickClientId = KICK_CLIENT_ID.value();
+        const kickClientSecret = KICK_CLIENT_SECRET.value();
 
         for (const coleccion of ["streamers", "influencers"]) {
             const snapshot = await db.collection(coleccion).get();
@@ -468,7 +565,31 @@ exports.actualizarEnVivo = onSchedule(
                 }
                 const debeActualizarSeguidores = seguidoresTwitch !== null && seguidoresTwitch !== (item.seguidoresTwitch ?? null);
 
-                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores) {
+                // Suscriptores de YouTube y seguidores de Kick (solo streamers): a
+                // diferencia de Twitch, acá no hay forma confiable de derivar el
+                // canal desde una URL tipeada a mano, así que se resuelve por la
+                // cuenta VORANIX vinculada (item.uid -> users/{uid}.youtubeChannelId
+                // / kickSlug), que es donde queda el dato verificado por OAuth.
+                let suscriptoresYoutube = null;
+                let seguidoresKick = null;
+                if (coleccion === "streamers" && item.uid) {
+                    try {
+                        const userSnap = await db.collection("users").doc(item.uid).get();
+                        const userData = userSnap.exists ? userSnap.data() : null;
+                        if (userData?.youtubeChannelId && youtubeClientId && youtubeClientSecret) {
+                            suscriptoresYoutube = await obtenerSuscriptoresYoutube(userData.youtubeChannelId, youtubeClientId, youtubeClientSecret);
+                        }
+                        if (userData?.kickSlug && kickClientId && kickClientSecret) {
+                            seguidoresKick = await obtenerSeguidoresKick(userData.kickSlug, kickClientId, kickClientSecret);
+                        }
+                    } catch (err) {
+                        logger.warn(`actualizarEnVivo: fallo consultando suscriptores/seguidores de ${item.uid}`, err.message);
+                    }
+                }
+                const debeActualizarYoutube = suscriptoresYoutube !== null && suscriptoresYoutube !== (item.suscriptoresYoutube ?? null);
+                const debeActualizarKick = seguidoresKick !== null && seguidoresKick !== (item.seguidoresKick ?? null);
+
+                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarYoutube || debeActualizarKick) {
                     const updateData = { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual };
                     if (debeActualizarJuegos) {
                         const juegosVistos = Array.isArray(item.juegosVistos) ? item.juegosVistos.map(j => ({ ...j })) : [];
@@ -480,6 +601,12 @@ exports.actualizarEnVivo = onSchedule(
                     }
                     if (debeActualizarSeguidores) {
                         updateData.seguidoresTwitch = seguidoresTwitch;
+                    }
+                    if (debeActualizarYoutube) {
+                        updateData.suscriptoresYoutube = suscriptoresYoutube;
+                    }
+                    if (debeActualizarKick) {
+                        updateData.seguidoresKick = seguidoresKick;
                     }
                     batch.update(db.collection(coleccion).doc(item.id), updateData);
                     cambios++;
@@ -733,6 +860,18 @@ const TWITCH_BOT_LOGIN_OFICIAL = "voranixstudio";
 const TWITCH_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/twitchBotAuthCallback";
 const TWITCH_CHAT_CALLBACK = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/twitchChatWebhook";
 
+// YouTube y Kick: mismo patrón que el "canal" de Twitch de acá arriba (el
+// creador conecta su propia cuenta desde el Portal Creadores, queda
+// verificada, y de ahí se lee su conteo de seguidores/suscriptores). No
+// tienen bot de chat como Twitch, así que no hay tipo=bot para estos dos.
+const YOUTUBE_CLIENT_ID = defineSecret("YOUTUBE_CLIENT_ID");
+const YOUTUBE_CLIENT_SECRET = defineSecret("YOUTUBE_CLIENT_SECRET");
+const YOUTUBE_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/youtubeAuthCallback";
+
+const KICK_CLIENT_ID = defineSecret("KICK_CLIENT_ID");
+const KICK_CLIENT_SECRET = defineSecret("KICK_CLIENT_SECRET");
+const KICK_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthCallback";
+
 async function intercambiarCodigoTwitch(code, clientId, clientSecret) {
     const params = new URLSearchParams({
         client_id: clientId, client_secret: clientSecret, code,
@@ -784,6 +923,32 @@ exports.generarEstadoTwitchCanal = onCall(
         }
         const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
         return { state: `canal:${request.auth.uid}:${firma}` };
+    }
+);
+
+// Mismo mecanismo que generarEstadoTwitchCanal de acá arriba, reutilizando la
+// misma clave de firma (TWITCH_CLIENT_SECRET): es solo una clave HMAC, no
+// tiene nada de "Twitch" en sí, y ya está desplegada — no hace falta un
+// secreto nuevo solo para firmar un uid.
+exports.generarEstadoYoutubeCanal = onCall(
+    { secrets: [TWITCH_CLIENT_SECRET] },
+    (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores para conectar tu canal de YouTube.");
+        }
+        const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
+        return { state: `youtube:${request.auth.uid}:${firma}` };
+    }
+);
+
+exports.generarEstadoKickCanal = onCall(
+    { secrets: [TWITCH_CLIENT_SECRET] },
+    (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores para conectar tu canal de Kick.");
+        }
+        const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
+        return { state: `kick:${request.auth.uid}:${firma}` };
     }
 );
 
@@ -905,6 +1070,227 @@ exports.twitchBotAuthCallback = onRequest(
             }
         } catch (err) {
             logger.error("twitchBotAuthCallback: fallo", err);
+            res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");
+        }
+    }
+);
+
+// ---------------------------------------------------------------------
+// Conexión de cuenta de YouTube (solo lectura, sin bot de chat): mismo
+// patrón que el "canal" de Twitch — el creador se autentica una vez con
+// Google, queda verificado su canal, y de ahí se lee el conteo de
+// suscriptores cada 5 minutos. El token queda guardado en Firestore
+// (youtubeAuth/{channelId}/privado/tokens) bloqueado a cualquier cliente.
+// ---------------------------------------------------------------------
+
+exports.youtubeAuthStart = onRequest(
+    { secrets: [YOUTUBE_CLIENT_ID] },
+    (req, res) => {
+        const state = String(req.query.state || "").trim();
+        if (!state.startsWith("youtube:")) {
+            res.status(400).send("Este link para conectar tu canal es inválido o venció. Volvé al Portal Creadores y generalo de nuevo.");
+            return;
+        }
+        const params = new URLSearchParams({
+            client_id: YOUTUBE_CLIENT_ID.value(),
+            redirect_uri: YOUTUBE_REDIRECT_URI,
+            response_type: "code",
+            access_type: "offline",
+            prompt: "consent",
+            scope: "https://www.googleapis.com/auth/youtube.readonly",
+            state
+        });
+        res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+    }
+);
+
+exports.youtubeAuthCallback = onRequest(
+    { secrets: [YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const { code, state, error, error_description: errorDescription } = req.query;
+        if (error) {
+            res.status(400).send(`No se pudo autorizar: ${errorDescription || error}`);
+            return;
+        }
+        try {
+            const clientId = YOUTUBE_CLIENT_ID.value();
+            const clientSecret = YOUTUBE_CLIENT_SECRET.value();
+
+            const partes = String(state || "").split(":");
+            if (partes.length !== 3 || partes[0] !== "youtube" || firmarEstadoCanal(partes[1], TWITCH_CLIENT_SECRET.value()) !== partes[2]) {
+                res.status(400).send("El link para conectar tu canal venció o no es válido. Volvé al Portal Creadores y generalo de nuevo.");
+                return;
+            }
+            const uid = partes[1];
+
+            const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_id: clientId, client_secret: clientSecret, code,
+                    grant_type: "authorization_code", redirect_uri: YOUTUBE_REDIRECT_URI
+                })
+            });
+            const tokenData = await tokenRes.json();
+            if (!tokenData.access_token) throw new Error(JSON.stringify(tokenData));
+
+            const channelRes = await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true", {
+                headers: { "Authorization": `Bearer ${tokenData.access_token}` }
+            });
+            const channelData = await channelRes.json();
+            const canal = channelData.items?.[0];
+            if (!canal) throw new Error("No se pudo identificar el canal de YouTube (¿la cuenta tiene un canal creado?)");
+
+            // Evita que dos cuentas VORANIX terminen apuntando al mismo canal.
+            const duplicados = await admin.firestore().collection("users")
+                .where("youtubeChannelId", "==", canal.id).get();
+            const deOtraCuenta = duplicados.docs.find(docSnap => docSnap.id !== uid);
+            if (deOtraCuenta) {
+                res.status(409).send(`El canal de YouTube <b>${canal.snippet?.title || canal.id}</b> ya está conectado a otra cuenta de VORANIX. Si esto es un error, avisale al equipo.`);
+                return;
+            }
+
+            await admin.firestore().doc(`youtubeAuth/${canal.id}`).set({
+                channelId: canal.id, title: canal.snippet?.title || "",
+                authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`youtubeAuth/${canal.id}/privado/tokens`).set({
+                accessToken: tokenData.access_token, refreshToken: tokenData.refresh_token,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`users/${uid}`).set({
+                youtubeChannelId: canal.id
+            }, { merge: true });
+
+            res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${canal.snippet?.title || canal.id}</b>. Tus suscriptores van a empezar a aparecer en tu tarjeta pública en un rato (si no los tenés ocultos en la configuración de YouTube). Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
+        } catch (err) {
+            logger.error("youtubeAuthCallback: fallo", err);
+            res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");
+        }
+    }
+);
+
+// ---------------------------------------------------------------------
+// Conexión de cuenta de Kick: mismo patrón. Scopes pedidos en la app de
+// Kick: solo lectura de usuario y de canal (lo mínimo necesario acá).
+// ---------------------------------------------------------------------
+
+const KICK_AUTH_BASE = "https://id.kick.com/oauth";
+
+// Kick usa OAuth 2.1 con PKCE obligatorio (a diferencia de Twitch/Google):
+// el code_verifier tiene que sobrevivir entre el paso 1 (redirect) y el 2
+// (callback), así que se guarda temporalmente atado al propio state firmado
+// -nadie más puede leerlo sin la firma, así que no hace falta un secreto
+// aparte para protegerlo-.
+function generarPkce() {
+    const verifier = crypto.randomBytes(32).toString("base64url");
+    const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
+    return { verifier, challenge };
+}
+
+exports.kickAuthStart = onRequest(
+    { secrets: [KICK_CLIENT_ID, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const state = String(req.query.state || "").trim();
+        if (!state.startsWith("kick:")) {
+            res.status(400).send("Este link para conectar tu canal es inválido o venció. Volvé al Portal Creadores y generalo de nuevo.");
+            return;
+        }
+        const { verifier, challenge } = generarPkce();
+        await admin.firestore().doc(`kickPkce/${state}`).set({
+            verifier, createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        const params = new URLSearchParams({
+            client_id: KICK_CLIENT_ID.value(),
+            redirect_uri: KICK_REDIRECT_URI,
+            response_type: "code",
+            scope: "user:read channel:read",
+            state,
+            code_challenge: challenge,
+            code_challenge_method: "S256"
+        });
+        res.redirect(`${KICK_AUTH_BASE}/authorize?${params}`);
+    }
+);
+
+exports.kickAuthCallback = onRequest(
+    { secrets: [KICK_CLIENT_ID, KICK_CLIENT_SECRET, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const { code, state, error, error_description: errorDescription } = req.query;
+        if (error) {
+            res.status(400).send(`No se pudo autorizar: ${errorDescription || error}`);
+            return;
+        }
+        try {
+            const clientId = KICK_CLIENT_ID.value();
+            const clientSecret = KICK_CLIENT_SECRET.value();
+
+            const partes = String(state || "").split(":");
+            if (partes.length !== 3 || partes[0] !== "kick" || firmarEstadoCanal(partes[1], TWITCH_CLIENT_SECRET.value()) !== partes[2]) {
+                res.status(400).send("El link para conectar tu canal venció o no es válido. Volvé al Portal Creadores y generalo de nuevo.");
+                return;
+            }
+            const uid = partes[1];
+
+            const pkceRef = admin.firestore().doc(`kickPkce/${state}`);
+            const pkceSnap = await pkceRef.get();
+            if (!pkceSnap.exists) throw new Error("Venció el intento de conexión (PKCE), volvé a intentar.");
+            const { verifier } = pkceSnap.data();
+            await pkceRef.delete();
+
+            const tokenRes = await fetch(`${KICK_AUTH_BASE}/token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_id: clientId, client_secret: clientSecret, code,
+                    grant_type: "authorization_code", redirect_uri: KICK_REDIRECT_URI,
+                    code_verifier: verifier
+                })
+            });
+            const tokenData = await tokenRes.json();
+            if (!tokenData.access_token) throw new Error(JSON.stringify(tokenData));
+
+            const userRes = await fetch("https://api.kick.com/public/v1/users", {
+                headers: { "Authorization": `Bearer ${tokenData.access_token}` }
+            });
+            const userData = await userRes.json();
+            const usuario = userData.data?.[0];
+            if (!usuario) throw new Error("No se pudo identificar la cuenta de Kick");
+
+            const channelRes = await fetch("https://api.kick.com/public/v1/channels", {
+                headers: { "Authorization": `Bearer ${tokenData.access_token}` }
+            });
+            const channelData = await channelRes.json();
+            const canal = channelData.data?.[0];
+            if (!canal) throw new Error("No se pudo identificar el canal de Kick");
+
+            const slug = String(canal.slug || usuario.name || "").toLowerCase();
+            if (!slug) throw new Error("Kick no devolvió el slug del canal");
+
+            const duplicados = await admin.firestore().collection("users")
+                .where("kickSlug", "==", slug).get();
+            const deOtraCuenta = duplicados.docs.find(docSnap => docSnap.id !== uid);
+            if (deOtraCuenta) {
+                res.status(409).send(`El canal de Kick <b>${slug}</b> ya está conectado a otra cuenta de VORANIX. Si esto es un error, avisale al equipo.`);
+                return;
+            }
+
+            await admin.firestore().doc(`kickAuth/${slug}`).set({
+                slug, broadcasterUserId: usuario.user_id || canal.broadcaster_user_id || null,
+                authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`kickAuth/${slug}/privado/tokens`).set({
+                accessToken: tokenData.access_token, refreshToken: tokenData.refresh_token,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`users/${uid}`).set({
+                kickSlug: slug
+            }, { merge: true });
+
+            res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${slug}</b> de Kick. Tus seguidores van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
+        } catch (err) {
+            logger.error("kickAuthCallback: fallo", err);
             res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");
         }
     }
