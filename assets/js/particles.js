@@ -1,13 +1,17 @@
-// Fondo de partículas ambiente (canvas 2D, sin librerías). Pensado para
-// vivir detrás del contenido de un contenedor con position:relative — el
-// canvas se ancla absolute+inset:0 dentro de ese contenedor, así que solo
-// se ve en los espacios donde el contenido de arriba no lo tapa (igual que
-// cualquier fondo). Se apaga solo si el visitante tiene activado "reducir
-// movimiento" en su sistema.
+// Fondo de partículas ambiente (canvas 2D, sin librerías). Dos modos:
+// - Anclado a un contenedor (target = elemento o selector): el canvas se
+//   ancla absolute+inset:0 DENTRO de ese contenedor, así que solo cubre su
+//   caja (útil para un efecto acotado a una tarjeta puntual).
+// - Fijo a la página (options.fixed = true, target se ignora): el canvas
+//   cubre todo el viewport con position:fixed, así que se ve como fondo real
+//   de la página completa (detrás del header, las tarjetas y el footer, no
+//   encerrado en un contenedor), y no se mueve con el scroll.
+// Se apaga solo si el visitante tiene activado "reducir movimiento".
 export function initParticles(target, options = {}) {
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
 
-    const container = typeof target === "string" ? document.querySelector(target) : target;
+    const fixed = !!options.fixed;
+    const container = fixed ? document.body : (typeof target === "string" ? document.querySelector(target) : target);
     if (!container) return null;
 
     const {
@@ -25,20 +29,39 @@ export function initParticles(target, options = {}) {
     const canvas = document.createElement("canvas");
     canvas.className = "voranix-particles-canvas";
     canvas.setAttribute("aria-hidden", "true");
-    Object.assign(canvas.style, {
-        position: "absolute", inset: "0", width: "100%", height: "100%",
-        zIndex: "-1", pointerEvents: "none", display: "block"
-    });
-    // El canvas usa z-index:-1 para quedar detrás del resto del contenido
-    // del contenedor. Eso solo funciona si el contenedor mismo arma su
-    // propio "stacking context" — position:relative solo no alcanza (con
-    // z-index:auto no lo arma), y sin eso el z-index:-1 se escapa hacia
-    // arriba en el árbol y termina detrás de TODO el contenedor (incluido
-    // su propio fondo opaco), no solo detrás de sus hijos.
-    const computed = getComputedStyle(container);
-    if (computed.position === "static") container.style.position = "relative";
-    if (computed.zIndex === "auto") container.style.zIndex = "0";
-    container.insertBefore(canvas, container.firstChild);
+
+    if (fixed) {
+        Object.assign(canvas.style, {
+            position: "fixed", inset: "0", width: "100vw", height: "100vh",
+            zIndex: "-1", pointerEvents: "none", display: "block"
+        });
+        // Mismo motivo que el fix de abajo para el modo contenedor: el
+        // canvas necesita que <body> arme su propio "stacking context" para
+        // que z-index:-1 quede detrás de sus hijos (header, tarjetas,
+        // footer) pero delante del fondo opaco de <body> — si no, el
+        // z-index negativo se escapa y el canvas queda invisible detrás de
+        // todo. Se fuerza acá (no solo en CSS) para no depender de que cada
+        // página que use este modo se acuerde de declararlo.
+        const computedBody = getComputedStyle(document.body);
+        if (computedBody.position === "static") document.body.style.position = "relative";
+        if (computedBody.zIndex === "auto") document.body.style.zIndex = "0";
+        document.body.insertBefore(canvas, document.body.firstChild);
+    } else {
+        Object.assign(canvas.style, {
+            position: "absolute", inset: "0", width: "100%", height: "100%",
+            zIndex: "-1", pointerEvents: "none", display: "block"
+        });
+        // El canvas usa z-index:-1 para quedar detrás del resto del contenido
+        // del contenedor. Eso solo funciona si el contenedor mismo arma su
+        // propio "stacking context" — position:relative solo no alcanza (con
+        // z-index:auto no lo arma), y sin eso el z-index:-1 se escapa hacia
+        // arriba en el árbol y termina detrás de TODO el contenedor (incluido
+        // su propio fondo opaco), no solo detrás de sus hijos.
+        const computed = getComputedStyle(container);
+        if (computed.position === "static") container.style.position = "relative";
+        if (computed.zIndex === "auto") container.style.zIndex = "0";
+        container.insertBefore(canvas, container.firstChild);
+    }
 
     const ctx = canvas.getContext("2d");
     let width = 0, height = 0, particles = [], raf = null, ro = null;
@@ -57,9 +80,13 @@ export function initParticles(target, options = {}) {
         };
     }
 
+    // En modo fijo, el tamaño real de <body> es el de TODA la página con
+    // scroll (puede ser mucho más alto que la pantalla), no el del
+    // viewport — el canvas necesita el tamaño de pantalla, que es lo que
+    // realmente ocupa un position:fixed.
     function resize() {
-        width = canvas.width = container.clientWidth;
-        height = canvas.height = container.clientHeight;
+        width = canvas.width = fixed ? window.innerWidth : container.clientWidth;
+        height = canvas.height = fixed ? window.innerHeight : container.clientHeight;
     }
 
     function init() {
@@ -95,7 +122,12 @@ export function initParticles(target, options = {}) {
     init();
     raf = requestAnimationFrame(step);
 
-    if (window.ResizeObserver) {
+    // Modo fijo: reacciona solo a resize real de ventana, nunca a que
+    // <body> cambie de alto por contenido cargando (ResizeObserver en body
+    // dispararía constantemente sin que la pantalla haya cambiado de tamaño).
+    if (fixed) {
+        window.addEventListener("resize", resize);
+    } else if (window.ResizeObserver) {
         ro = new ResizeObserver(() => resize());
         ro.observe(container);
     } else {

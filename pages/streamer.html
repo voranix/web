@@ -116,6 +116,7 @@ import { db, functionsInstance, escapeHtml } from "/assets/js/firebase-config.js
 import { initParticles } from "/assets/js/particles.js";
 
 const content = document.getElementById("streamer-content");
+let particulasIniciadas = false;
 
 function assetUrl(path) {
     if (!path) return "";
@@ -492,11 +493,6 @@ function renderStreamer(item) {
     animarContadores();
     activarScrollReveal();
 
-    // De fuego, sí o sí: brasas cálidas subiendo dentro del hero. Se ancla
-    // a .perfil-hero (ya tiene overflow:hidden + position:relative) para que
-    // quede contenido en la tarjeta principal, bien visible, en vez de
-    // depender de que se note en los huecos entre tarjetas. content.innerHTML
-    // ya se reescribió arriba, así que recién ahora existe el elemento.
     const heroEl = content.querySelector(".perfil-hero");
     if (heroEl) {
         const banner = assetUrl(resolverBanner(item));
@@ -504,10 +500,18 @@ function renderStreamer(item) {
             heroEl.classList.add("has-banner");
             heroEl.style.setProperty("--perfil-banner", `url("${banner.replace(/"/g, "%22")}")`);
         }
-        initParticles(heroEl, {
+    }
+
+    // De fuego, sí o sí: brasas cálidas de fondo en TODA la página (fixed al
+    // viewport), no encerradas en la tarjeta del hero — se ven detrás del
+    // header, las tarjetas y el footer, no solo arriba.
+    if (!particulasIniciadas) {
+        particulasIniciadas = true;
+        initParticles(null, {
+            fixed: true,
             colors: ["#ff6a00", "#ff3b1f", "#ffcf4d"],
-            count: 50, minSize: 2, maxSize: 6.5, speed: 0.6,
-            opacityRange: [0.4, 0.85], flicker: true
+            count: 60, minSize: 2, maxSize: 6.5, speed: 0.5,
+            opacityRange: [0.3, 0.75], flicker: true
         });
     }
 }

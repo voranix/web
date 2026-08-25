@@ -348,9 +348,11 @@
         currentProfile = profile;
         loginScreen.classList.add("hidden");
         portalShell.classList.remove("hidden");
+        // Fondo de la página completa (fixed al viewport), no encerrado en
+        // el contenedor del shell.
         if (!particlesIniciadas) {
             particlesIniciadas = true;
-            initParticles(portalShell, { colors: ["#7b2cff", "#9d5bff", "#ff6a00"], count: 32, speed: 0.32, minSize: 1, maxSize: 3, opacityRange: [0.15, 0.45] });
+            initParticles(null, { fixed: true, colors: ["#7b2cff", "#9d5bff", "#ff6a00"], count: 45, speed: 0.32, minSize: 1, maxSize: 3, opacityRange: [0.15, 0.45] });
         }
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
         roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
