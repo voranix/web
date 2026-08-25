@@ -977,6 +977,41 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .perfil-not-found{ text-align:center; padding:100px 0; }
 .perfil-not-found h2{ margin-bottom:16px; }
 
+/* ---- Animaciones del perfil: entrada del hero, glow del avatar en vivo,
+   scroll-reveal de las tarjetas y shine al pasar el mouse. Todo respeta
+   prefers-reduced-motion (media query al final del bloque). ---- */
+.perfil-in{ opacity:0; transform:translateY(18px); animation:perfilIn .7s cubic-bezier(0.16,1,0.3,1) forwards; }
+@keyframes perfilIn{ to{ opacity:1; transform:translateY(0); } }
+.perfil-stagger-1{ animation-delay:.05s; }
+.perfil-stagger-2{ animation-delay:.14s; }
+.perfil-stagger-3{ animation-delay:.22s; }
+.perfil-stagger-4{ animation-delay:.30s; }
+.perfil-stagger-5{ animation-delay:.38s; }
+
+.perfil-avatar-frame.is-live{ animation:avatarLiveGlow 2.4s ease-in-out infinite; }
+@keyframes avatarLiveGlow{
+    0%,100%{ box-shadow:0 0 0 6px rgba(255,45,85,0.22), 0 14px 32px rgba(0,0,0,0.45); }
+    50%{ box-shadow:0 0 0 10px rgba(255,45,85,0.4), 0 14px 40px rgba(255,45,85,0.25); }
+}
+
+.perfil-reveal{ opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s cubic-bezier(0.16,1,0.3,1); }
+.perfil-reveal.is-visible{ opacity:1; transform:translateY(0); }
+
+.perfil-red-btn, .perfil-video-card{ position:relative; overflow:hidden; }
+.perfil-red-btn::after, .perfil-video-card::after{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.16) 50%, transparent 60%);
+    background-size:220% 100%; background-position:150% 0; transition:background-position .6s ease;
+}
+.perfil-red-btn:hover::after, .perfil-video-card:hover::after{ background-position:-50% 0; }
+
+@media (prefers-reduced-motion: reduce){
+    .perfil-in{ animation:none; opacity:1; transform:none; }
+    .perfil-avatar-frame.is-live{ animation:none; }
+    .perfil-reveal{ opacity:1; transform:none; transition:none; }
+    .perfil-red-btn::after, .perfil-video-card::after{ display:none; }
+}
+
 @media(max-width:520px){
     .perfil-hero{ padding:40px 18px 24px; }
     .perfil-card{ padding:20px 18px; }

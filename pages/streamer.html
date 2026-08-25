@@ -174,14 +174,53 @@ function statCards(item) {
     }
     if (!cards.length) return "";
     return `
-    <div class="perfil-stats-grid">
+    <div class="perfil-stats-grid perfil-in perfil-stagger-5">
         ${cards.map(c => `
         <div class="perfil-stat-card ${c.css}">
             <i class="${c.icon}"></i>
-            <div class="perfil-stat-num">${formatViewers(c.n)}</div>
+            <div class="perfil-stat-num" data-count="${c.n}">0</div>
             <div class="perfil-stat-label">${escapeHtml(c.label)}</div>
         </div>`).join("")}
     </div>`;
+}
+
+// Cuenta de 0 al valor real en ~900ms (respeta prefers-reduced-motion, ahí
+// va directo al número final). Es puro adorno visual, así que si algo
+// falla simplemente deja el número tal cual quedó.
+function animarContadores() {
+    const reducido = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.querySelectorAll(".perfil-stat-num[data-count]").forEach(el => {
+        const destino = Number(el.dataset.count) || 0;
+        if (reducido) { el.textContent = formatViewers(destino); return; }
+        const inicio = performance.now();
+        const duracion = 900;
+        function frame(ahora) {
+            const t = Math.min(1, (ahora - inicio) / duracion);
+            const suavizado = 1 - Math.pow(1 - t, 3);
+            el.textContent = formatViewers(Math.round(destino * suavizado));
+            if (t < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+    });
+}
+
+// Cada .perfil-card entra al hacerse visible al hacer scroll (una sola vez).
+function activarScrollReveal() {
+    const elementos = document.querySelectorAll(".perfil-reveal");
+    if (!elementos.length) return;
+    if (!("IntersectionObserver" in window) || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) {
+        elementos.forEach(el => el.classList.add("is-visible"));
+        return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+    elementos.forEach(el => observer.observe(el));
 }
 
 // Dos fuentes para "Juegos frecuentes", que pueden convivir:
@@ -206,7 +245,7 @@ function renderJuegosFrecuentes(item) {
     const maxMin = autoJuegos.length ? Math.max(...autoJuegos.map(j => Number(j.minutos) || 0), 1) : 1;
 
     return `
-    <div class="perfil-card">
+    <div class="perfil-card perfil-reveal">
         <h2><i class="fas fa-gamepad"></i>Juegos frecuentes</h2>
         ${manualJuegos.length ? `
         <div class="perfil-manual-juegos">
@@ -333,34 +372,34 @@ function renderStreamer(item) {
 
     content.innerHTML = `
     <div class="perfil-hero">
-        <div class="perfil-avatar-frame">
+        <div class="perfil-avatar-frame perfil-in perfil-stagger-1${item.enVivo ? " is-live" : ""}">
             ${renderAvatar(item)}
             ${item.enVivo ? `<div class="perfil-live-dot"><span></span></div>` : ""}
         </div>
-        <div class="perfil-nombre-row">
+        <div class="perfil-nombre-row perfil-in perfil-stagger-2">
             <h1>${escapeHtml(item.nombre) || "Sin nombre"}</h1>
             <img class="perfil-flag" src="${flagPath(item.pais)}" alt="${flagAlt(item.pais)}" title="${flagAlt(item.pais)}">
         </div>
-        ${totalSeguidores > 0 ? `<div class="perfil-total-seguidores"><i class="fas fa-users"></i>${formatViewers(totalSeguidores)} seguidores en total</div>` : ""}
-        ${item.enVivo ? `<span class="perfil-live-label"><span></span>En vivo</span>` : ""}
+        ${totalSeguidores > 0 ? `<div class="perfil-total-seguidores perfil-in perfil-stagger-3"><i class="fas fa-users"></i>${formatViewers(totalSeguidores)} seguidores en total</div>` : ""}
+        ${item.enVivo ? `<span class="perfil-live-label perfil-in perfil-stagger-3"><span></span>En vivo</span>` : ""}
         ${statCards(item)}
     </div>
 
     ${item.descripcion ? `
-    <div class="perfil-card">
+    <div class="perfil-card perfil-reveal">
         <h2><i class="fas fa-user"></i>Sobre ${escapeHtml(item.nombre) || "el streamer"}</h2>
         <p class="perfil-bio">${escapeHtml(item.descripcion)}</p>
     </div>` : ""}
 
     ${renderJuegosFrecuentes(item)}
 
-    <div class="perfil-card">
+    <div class="perfil-card perfil-reveal">
         <h2><i class="fas fa-photo-film"></i>Contenido</h2>
         <div id="perfil-contenido"><p class="perfil-videos-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</p></div>
     </div>
 
     ${redes.length ? `
-    <div class="perfil-card">
+    <div class="perfil-card perfil-reveal">
         <h2><i class="fas fa-share-nodes"></i>Redes</h2>
         <div class="perfil-redes-grid">
             ${redes.map(r => `<a class="perfil-red-btn ${r.css}" href="${escapeHtml(r.url)}" target="_blank" rel="noopener"><i class="${r.icon}"></i>${escapeHtml(r.label)}</a>`).join("")}
@@ -370,6 +409,9 @@ function renderStreamer(item) {
     <div style="margin-top:30px;text-align:center;">
         <a class="reg-back-to-index" href="/pages/streamers.html"><i class="fas fa-arrow-left"></i> Volver a Streamers</a>
     </div>`;
+
+    animarContadores();
+    activarScrollReveal();
 }
 
 async function load() {
