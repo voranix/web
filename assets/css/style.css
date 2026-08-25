@@ -901,6 +901,10 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 }
 .perfil-live-label span{ width:6px; height:6px; background:#ff2d55; border-radius:50%; animation:pulse 1.4s infinite; }
 
+/* Sin banner de título (pages/streamer.html): la tarjeta de abajo ya
+   muestra el nombre, así que el header queda solo con la barra de nav. */
+.header-compact{ min-height: 0; }
+
 .perfil-total-seguidores{
     display:inline-flex; align-items:center; gap:7px; color:var(--gris); font-size:12.5px;
     margin-bottom:14px;

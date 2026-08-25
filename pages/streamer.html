@@ -20,7 +20,7 @@
 <script src="/assets/js/page-loader.js"></script>
 
 
-<header class="header header-sub">
+<header class="header header-sub header-compact">
     <div class="menu">
         <div class="menu-content container">
             <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
@@ -54,10 +54,6 @@
                 </ul>
             </nav>
         </div>
-    </div>
-    <div class="header-content container">
-        <h1 id="header-title">Streamer</h1>
-        <p>Comunidad y estudio de eventos gamer VORANIX</p>
     </div>
 </header>
 
@@ -119,7 +115,6 @@ import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import { db, functionsInstance, escapeHtml } from "/assets/js/firebase-config.js";
 
 const content = document.getElementById("streamer-content");
-const headerTitle = document.getElementById("header-title");
 
 function assetUrl(path) {
     if (!path) return "";
@@ -299,7 +294,7 @@ async function cargarContenido(item) {
 }
 
 function showNotFound() {
-    headerTitle.textContent = "Streamer no encontrado";
+    document.title = "Streamer no encontrado | VORANIX";
     content.innerHTML = `
 <div class="perfil-not-found">
     <h2>No encontramos este streamer</h2>
@@ -310,7 +305,6 @@ function showNotFound() {
 
 function renderStreamer(item) {
     document.title = `${item.nombre || "Streamer"} | VORANIX`;
-    headerTitle.textContent = item.nombre || "Streamer";
 
     const redes = REDES
         .map(r => ({ ...r, url: item[r.key] }))
