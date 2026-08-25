@@ -902,8 +902,12 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .perfil-live-label span{ width:6px; height:6px; background:#ff2d55; border-radius:50%; animation:pulse 1.4s infinite; }
 
 /* Sin banner de título (pages/streamer.html): la tarjeta de abajo ya
-   muestra el nombre, así que el header queda solo con la barra de nav. */
-.header-compact{ min-height: 0; }
+   muestra el nombre, así que el header queda solo con la barra de nav.
+   overflow:visible porque .header trae overflow:hidden (para contener los
+   orbes/gradientes decorativos del banner que acá ya no existen) — con la
+   altura chica de este header, ese overflow:hidden recortaba el menú
+   desplegable de "Acceso", que se posiciona por fuera de la caja del nav. */
+.header-compact{ min-height: 0; overflow: visible; }
 
 .perfil-total-seguidores{
     display:inline-flex; align-items:center; gap:7px; color:var(--gris); font-size:12.5px;
@@ -959,6 +963,8 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .perfil-video-meta{ display:flex; align-items:center; gap:10px; font-size:10.5px; color:var(--gris); margin-top:6px; }
 .perfil-video-meta i{ font-size:9px; margin-right:3px; }
 .perfil-videos-loading, .perfil-videos-empty{ font-size:13px; color:var(--gris); }
+
+.perfil-manual-juegos{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
 
 .juegos-frecuentes-list{ display:flex; flex-direction:column; gap:14px; margin-top:2px; }
 .juego-bar-row{ display:flex; flex-direction:column; gap:6px; }

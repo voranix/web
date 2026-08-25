@@ -184,20 +184,37 @@ function statCards(item) {
     </div>`;
 }
 
-// "juegosVistos" lo va acumulando actualizarEnVivo cada 5 min mientras el
-// streamer está en vivo en Twitch (game_name que devuelve /helix/streams).
-// Es una aproximación de minutos, no un cronómetro exacto de la plataforma.
+// Dos fuentes para "Juegos frecuentes", que pueden convivir:
+// - item.juegos: lista manual separada por comas (la carga el staff en
+//   admin), útil desde el día uno aunque el streamer nunca haya estado en
+//   vivo todavía.
+// - item.juegosVistos: lo va acumulando actualizarEnVivo cada 5 min mientras
+//   el streamer está en vivo en Twitch (game_name de /helix/streams). Es una
+//   aproximación de minutos, no un cronómetro exacto de la plataforma.
 function renderJuegosFrecuentes(item) {
-    const juegos = (Array.isArray(item.juegosVistos) ? item.juegosVistos : [])
+    const autoJuegos = (Array.isArray(item.juegosVistos) ? item.juegosVistos : [])
         .filter(j => j && j.nombre)
         .slice(0, 6);
-    if (!juegos.length) return "";
-    const maxMin = Math.max(...juegos.map(j => Number(j.minutos) || 0), 1);
+    const nombresAuto = new Set(autoJuegos.map(j => j.nombre.toLowerCase()));
+    const manualJuegos = String(item.juegos || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(s => s && !nombresAuto.has(s.toLowerCase()));
+
+    if (!autoJuegos.length && !manualJuegos.length) return "";
+
+    const maxMin = autoJuegos.length ? Math.max(...autoJuegos.map(j => Number(j.minutos) || 0), 1) : 1;
+
     return `
     <div class="perfil-card">
         <h2><i class="fas fa-gamepad"></i>Juegos frecuentes</h2>
+        ${manualJuegos.length ? `
+        <div class="perfil-manual-juegos">
+            ${manualJuegos.map(nombre => `<span class="meta-chip"><i class="fas fa-gamepad"></i>${escapeHtml(nombre)}</span>`).join("")}
+        </div>` : ""}
+        ${autoJuegos.length ? `
         <div class="juegos-frecuentes-list">
-            ${juegos.map(j => {
+            ${autoJuegos.map(j => {
                 const minutos = Number(j.minutos) || 0;
                 const horas = minutos >= 60 ? `${(minutos / 60).toFixed(1).replace(/\.0$/, "")}h` : `${minutos}min`;
                 return `
@@ -207,7 +224,7 @@ function renderJuegosFrecuentes(item) {
             </div>`;
             }).join("")}
         </div>
-        <p class="juegos-frecuentes-note">Calculado automáticamente a partir del tiempo en vivo en Twitch.</p>
+        <p class="juegos-frecuentes-note">Calculado automáticamente a partir del tiempo en vivo en Twitch.</p>` : ""}
     </div>`;
 }
 
