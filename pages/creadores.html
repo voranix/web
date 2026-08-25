@@ -268,9 +268,20 @@
         .upload-box-title{ font-size:12.5px; font-weight:700; color:#fff; margin-bottom:3px; }
         .upload-box-sub{ font-size:11px; color:var(--gris); margin-bottom:10px; line-height:1.5; }
 
-        .color-swatch-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-        .color-swatch{ width:28px; height:28px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
-        .color-swatch.selected{ border-color:#fff; }
+        .paleta-preset-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; margin-top:12px; }
+        .paleta-preset-grid.hidden{ display:none; }
+        .paleta-preset-card{
+            display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 8px;
+            background:rgba(255,255,255,.03); border:2px solid var(--border); border-radius:var(--r-md);
+            cursor:pointer; color:#fff; font-size:11.5px;
+        }
+        .paleta-preset-card.selected{ border-color:#fff; background:rgba(255,255,255,.06); }
+        .paleta-preset-dots{ display:flex; gap:4px; }
+        .paleta-preset-dots i{ width:18px; height:18px; border-radius:50%; display:block; }
+        .paleta-custom-row{ display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; }
+        .paleta-custom-row.hidden{ display:none; }
+        .paleta-custom-row label{ display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:.5px; }
+        .paleta-custom-row input[type="color"]{ width:44px; height:36px; border:1px solid var(--border); border-radius:8px; padding:2px; background:transparent; cursor:pointer; }
 
         .checkbox-row{ display:flex; align-items:flex-start; gap:10px; padding:12px 14px; background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:var(--r-md); }
         .checkbox-row input[type="checkbox"]{ margin-top:3px; flex-shrink:0; width:16px; height:16px; }
@@ -1729,6 +1740,19 @@ ${!contenidoActivo ? `
         discord: { prefijo: "discord.gg/", icon: "fab fa-discord", label: "Discord", build: h => `https://discord.gg/${h}` }
     };
 
+    // Paleta de colores del perfil público: predefinida (3 colores curados)
+    // o personalizada (el streamer elige los 3 a mano). Se guarda siempre
+    // como los 3 colores ya resueltos (paletaColores) — la página pública no
+    // necesita saber si vino de un preset o no, solo pinta con esos 3.
+    const PALETAS_PRESET = [
+        { key: "voranix", nombre: "VORANIX", colores: ["#7b2cff", "#ff6a00", "#ff2d78"] },
+        { key: "oceano", nombre: "Océano", colores: ["#00c8ff", "#7b2cff", "#00ffa3"] },
+        { key: "fuego", nombre: "Fuego", colores: ["#ff6a00", "#ff2d55", "#ffd700"] },
+        { key: "bosque", nombre: "Bosque", colores: ["#22c55e", "#00c8ff", "#facc15"] },
+        { key: "neon", nombre: "Neón", colores: ["#ff2d78", "#a855f7", "#38bdf8"] },
+        { key: "hielo", nombre: "Hielo", colores: ["#38bdf8", "#a5f3fc", "#7b2cff"] }
+    ];
+
     function renderGreeting(d){
         const enVivo = !!d.enVivo;
         const noLeidos = bandejaMensajes.filter(m => !m.leido).length;
@@ -1922,8 +1946,10 @@ ${!contenidoActivo ? `
     }
 
     function renderIdentidad(d){
-        const colores = ["#ff2d78", "#00c8ff", "#7b2cff", "#8cff6b", "#ff6a00"];
-        const colorActual = /^#[0-9a-f]{6}$/i.test(d.colorAcento || "") ? d.colorAcento : colores[2];
+        const guardados = Array.isArray(d.paletaColores) ? d.paletaColores.filter(c => /^#[0-9a-f]{6}$/i.test(c || "")) : [];
+        const colorActual = guardados.length === 3 ? guardados : PALETAS_PRESET[0].colores;
+        const presetActivo = PALETAS_PRESET.find(p => p.colores.every((c, i) => c.toLowerCase() === colorActual[i].toLowerCase()));
+        const modoPersonalizado = !presetActivo;
         return `
 <div class="overlay-links-block">
     <h2 class="overlay-links-title"><i class="fas fa-user-pen"></i> Identidad</h2>
@@ -1938,12 +1964,26 @@ ${!contenidoActivo ? `
             <textarea name="descripcion" maxlength="600" placeholder="Contale a la gente de qué va tu canal...">${escapeHtml(d.descripcion || "")}</textarea>
         </div>
         <div class="field">
-            <label>Color de acento</label>
-            <div class="color-swatch-row">
-                ${colores.map(c => `<button type="button" class="color-swatch${c === colorActual ? " selected" : ""}" style="background:${c};" data-color="${c}" aria-label="${c}"></button>`).join("")}
-                <input type="color" id="identidad-color-custom" value="${colorActual}" title="Elegir otro color">
-                <input type="hidden" name="colorAcento" id="identidad-color-hidden" value="${escapeHtml(colorActual)}">
+            <label>Paleta de colores <span style="text-transform:none;">— se ve en tu perfil público (hero, avatar, íconos)</span></label>
+            <div class="dash-toggle" id="paleta-modo-toggle">
+                <button type="button" data-modo="preset" class="${!modoPersonalizado ? "active" : ""}">Predefinida</button>
+                <button type="button" data-modo="custom" class="${modoPersonalizado ? "active" : ""}">Personalizada</button>
             </div>
+            <div id="paleta-preset-grid" class="paleta-preset-grid${modoPersonalizado ? " hidden" : ""}">
+                ${PALETAS_PRESET.map(p => `
+<button type="button" class="paleta-preset-card${presetActivo?.key === p.key ? " selected" : ""}" data-preset="${p.key}">
+    <span class="paleta-preset-dots">${p.colores.map(c => `<i style="background:${c};"></i>`).join("")}</span>
+    <span>${escapeHtml(p.nombre)}</span>
+</button>`).join("")}
+            </div>
+            <div id="paleta-custom-row" class="paleta-custom-row${modoPersonalizado ? "" : " hidden"}">
+                <label>Primario <input type="color" id="paleta-custom-1" value="${colorActual[0]}"></label>
+                <label>Secundario <input type="color" id="paleta-custom-2" value="${colorActual[1]}"></label>
+                <label>Terciario <input type="color" id="paleta-custom-3" value="${colorActual[2]}"></label>
+            </div>
+            <input type="hidden" name="paletaColor1" id="paleta-hidden-1" value="${colorActual[0]}">
+            <input type="hidden" name="paletaColor2" id="paleta-hidden-2" value="${colorActual[1]}">
+            <input type="hidden" name="paletaColor3" id="paleta-hidden-3" value="${colorActual[2]}">
         </div>
         <div id="identidad-error" class="error"></div>
         <div class="modal-actions" style="justify-content:flex-start;">
@@ -2137,20 +2177,24 @@ ${!contenidoActivo ? `
             const errorEl = document.getElementById("identidad-error");
             errorEl.textContent = ""; msgEl.textContent = "Guardando...";
             try{
+                const paletaColores = ["paletaColor1", "paletaColor2", "paletaColor3"]
+                    .map(k => String(formData.get(k) || "").trim())
+                    .filter(c => /^#[0-9a-f]{6}$/i.test(c));
                 await updateDoc(doc(db, "streamers", tarjetaId), {
                     fraseCorta: String(formData.get("fraseCorta") || "").trim().slice(0, 80),
                     descripcion: String(formData.get("descripcion") || "").trim().slice(0, 600),
-                    colorAcento: String(formData.get("colorAcento") || "").trim(),
+                    paletaColores: paletaColores.length === 3 ? paletaColores : PALETAS_PRESET[0].colores,
                     updatedAt: serverTimestamp()
                 });
                 msgEl.textContent = "¡Guardado!";
                 setTimeout(() => { if(msgEl) msgEl.textContent = ""; }, 2500);
             }catch(error){ console.error(error); msgEl.textContent = ""; errorEl.textContent = "No se pudo guardar. Intenta de nuevo."; }
         });
-        document.getElementById("identidad-color-custom")?.addEventListener("input", (event) => {
-            document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
-            const hidden = document.getElementById("identidad-color-hidden");
-            if(hidden) hidden.value = event.target.value;
+        [1, 2, 3].forEach(n => {
+            document.getElementById(`paleta-custom-${n}`)?.addEventListener("input", (event) => {
+                const hidden = document.getElementById(`paleta-hidden-${n}`);
+                if(hidden) hidden.value = event.target.value;
+            });
         });
 
         const categoriaInput = document.getElementById("categoria-buscar-input");
@@ -2261,12 +2305,27 @@ ${!contenidoActivo ? `
         const rangoBtn = event.target.closest("[data-rango]");
         if(rangoBtn){ actividadRango = Number(rangoBtn.dataset.rango); renderTarjeta(); return; }
 
-        const colorSwatch = event.target.closest(".color-swatch[data-color]");
-        if(colorSwatch){
-            document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
-            colorSwatch.classList.add("selected");
-            const hidden = document.getElementById("identidad-color-hidden");
-            if(hidden) hidden.value = colorSwatch.dataset.color;
+        const paletaModoBtn = event.target.closest("#paleta-modo-toggle [data-modo]");
+        if(paletaModoBtn){
+            const esCustom = paletaModoBtn.dataset.modo === "custom";
+            document.querySelectorAll("#paleta-modo-toggle button").forEach(b => b.classList.toggle("active", b === paletaModoBtn));
+            document.getElementById("paleta-preset-grid")?.classList.toggle("hidden", esCustom);
+            document.getElementById("paleta-custom-row")?.classList.toggle("hidden", !esCustom);
+            return;
+        }
+
+        const presetBtn = event.target.closest(".paleta-preset-card[data-preset]");
+        if(presetBtn){
+            const preset = PALETAS_PRESET.find(p => p.key === presetBtn.dataset.preset);
+            if(preset){
+                document.querySelectorAll(".paleta-preset-card").forEach(c => c.classList.toggle("selected", c === presetBtn));
+                preset.colores.forEach((c, i) => {
+                    const hidden = document.getElementById(`paleta-hidden-${i + 1}`);
+                    const custom = document.getElementById(`paleta-custom-${i + 1}`);
+                    if(hidden) hidden.value = c;
+                    if(custom) custom.value = c;
+                });
+            }
             return;
         }
 

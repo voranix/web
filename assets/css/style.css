@@ -864,8 +864,8 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .perfil-hero{
     position:relative; border-radius:var(--r-xl); overflow:hidden;
     background:
-        radial-gradient(circle at 22% 15%, rgba(123,44,255,0.4), transparent 55%),
-        radial-gradient(circle at 82% 85%, rgba(255,106,0,0.32), transparent 55%),
+        radial-gradient(circle at 22% 15%, color-mix(in srgb, var(--pf-acento, var(--morado)) 40%, transparent), transparent 55%),
+        radial-gradient(circle at 82% 85%, color-mix(in srgb, var(--pf-acento2, var(--naranja)) 32%, transparent), transparent 55%),
         #0d0d1e;
     border:1px solid var(--border-accent);
     padding:52px 24px 30px;
@@ -875,14 +875,14 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .perfil-avatar-frame{
     position:relative; width:132px; height:132px; margin:0 auto 20px;
     border-radius:50%; overflow:hidden; border:3px solid rgba(255,255,255,0.85);
-    box-shadow:0 0 0 6px rgba(123,44,255,0.22), 0 14px 32px rgba(0,0,0,0.45);
+    box-shadow:0 0 0 6px color-mix(in srgb, var(--pf-acento, var(--morado)) 22%, transparent), 0 14px 32px rgba(0,0,0,0.45);
     background:#0d0d1e;
 }
 .perfil-avatar-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(18px) brightness(0.6); transform:scale(1.35); }
 .perfil-avatar-fg{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
 .perfil-avatar-fallback{
     width:100%; height:100%; display:flex; align-items:center; justify-content:center;
-    font-size:44px; color:var(--morado-light); background:rgba(123,44,255,0.14);
+    font-size:44px; color:var(--pf-acento2, var(--morado-light)); background:color-mix(in srgb, var(--pf-acento, var(--morado)) 14%, transparent);
 }
 .perfil-live-dot{
     position:absolute; bottom:3px; right:3px; width:22px; height:22px; border-radius:50%;
@@ -933,7 +933,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     display:inline-flex; align-items:center; gap:7px; color:var(--gris); font-size:12.5px;
     margin-bottom:14px;
 }
-.perfil-total-seguidores i{ color:var(--morado-light); }
+.perfil-total-seguidores i{ color:var(--pf-acento2, var(--morado-light)); }
 
 .perfil-stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(126px,1fr)); gap:12px; margin-top:24px; }
 .perfil-stat-card{
@@ -941,7 +941,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     padding:16px 12px; text-align:center; transition:var(--ease);
 }
 .perfil-stat-card:hover{ border-color:var(--border-accent); transform:translateY(-3px); }
-.perfil-stat-card i{ font-size:19px; margin-bottom:8px; display:block; color:var(--morado-light); }
+.perfil-stat-card i{ font-size:19px; margin-bottom:8px; display:block; color:var(--pf-acento2, var(--morado-light)); }
 .perfil-stat-num{ font-family:var(--font); font-size:1.25rem; font-weight:800; color:#fff; }
 .perfil-stat-label{ font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--gris); margin-top:2px; }
 .perfil-stat-card.pf-viewers i{ color:#ff2d55; }
@@ -952,7 +952,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 
 .perfil-card{ background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:var(--r-lg); padding:26px 24px; margin-top:22px; }
 .perfil-card h2{ font-size:1.02rem; color:#fff; margin-bottom:16px; display:flex; align-items:center; gap:9px; }
-.perfil-card h2 i{ color:var(--morado-light); font-size:15px; }
+.perfil-card h2 i{ color:var(--pf-acento2, var(--morado-light)); font-size:15px; }
 .perfil-bio{ font-size:14.5px; line-height:1.8; }
 
 .perfil-redes-grid{ display:flex; flex-wrap:wrap; gap:10px; }
@@ -961,7 +961,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     border:1px solid var(--border); color:#fff; text-decoration:none; font-size:13px;
     background:rgba(255,255,255,0.03); transition:var(--ease);
 }
-.perfil-red-btn:hover{ transform:translateY(-2px); border-color:var(--border-accent); box-shadow:0 6px 18px var(--morado-glow); }
+.perfil-red-btn:hover{ transform:translateY(-2px); border-color:var(--border-accent); box-shadow:0 6px 18px color-mix(in srgb, var(--pf-acento, var(--morado)) 35%, transparent); }
 .perfil-red-btn i{ font-size:15px; }
 .perfil-red-btn.pf-tw i{ color:#a970ff; }
 .perfil-red-btn.pf-kk i{ color:#53fc18; }

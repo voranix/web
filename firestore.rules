@@ -82,7 +82,7 @@ service cloud.firestore {
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly([
              "descripcion", "instagram", "twitch", "kick", "tiktok", "discord", "juegosManual",
-             "avatarOverride", "bannerOverride", "fraseCorta", "colorAcento",
+             "avatarOverride", "bannerOverride", "fraseCorta", "paletaColores",
              "canalesSecundarios", "mensajesActivo", "updatedAt"
            ]));
 

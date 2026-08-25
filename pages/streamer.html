@@ -575,6 +575,19 @@ function renderStreamer(item) {
         }
     }
 
+    // Paleta de colores elegida por el streamer desde Mi Tarjeta (predefinida
+    // o 3 colores a mano) — se aplica como variables CSS en la raíz de la
+    // página, así que cae en cascada sobre el hero, el anillo del avatar y
+    // los íconos genéricos. Si no eligió ninguna, cada regla de style.css ya
+    // tiene el morado/naranja de VORANIX como fallback (var(--pf-acento,
+    // var(--morado))), así que no hace falta setear nada acá.
+    const paleta = Array.isArray(item.paletaColores) ? item.paletaColores.filter(c => /^#[0-9a-f]{6}$/i.test(c || "")) : [];
+    if (paleta.length === 3) {
+        content.style.setProperty("--pf-acento", paleta[0]);
+        content.style.setProperty("--pf-acento2", paleta[1]);
+        content.style.setProperty("--pf-acento3", paleta[2]);
+    }
+
     // De fuego, sí o sí: brasas cálidas de fondo en TODA la página (fixed al
     // viewport), no encerradas en la tarjeta del hero — se ven detrás del
     // header, las tarjetas y el footer, no solo arriba.
