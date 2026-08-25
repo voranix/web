@@ -967,6 +967,7 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .perfil-red-btn.pf-kk i{ color:#53fc18; }
 .perfil-red-btn.pf-tt i{ color:#ff2d78; }
 .perfil-red-btn.pf-ig i{ color:#e1306c; }
+.perfil-red-btn.pf-dc i{ color:#5865f2; }
 
 .perfil-videos-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
 .perfil-video-card{ display:block; text-decoration:none; color:#fff; border-radius:var(--r-md); overflow:hidden; border:1px solid var(--border); background:rgba(255,255,255,0.02); transition:var(--ease); }

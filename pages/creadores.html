@@ -1502,6 +1502,7 @@ ${!contenidoActivo ? `
         <div class="field"><label>Twitch</label><input name="twitch" type="url" value="${escapeHtml(d.twitch || "")}" placeholder="https://twitch.tv/..."></div>
         <div class="field"><label>Kick</label><input name="kick" type="url" value="${escapeHtml(d.kick || "")}" placeholder="https://kick.com/..."></div>
         <div class="field"><label>TikTok</label><input name="tiktok" type="url" value="${escapeHtml(d.tiktok || "")}" placeholder="https://tiktok.com/@..."></div>
+        <div class="field"><label>Discord</label><input name="discord" type="url" value="${escapeHtml(d.discord || "")}" placeholder="https://discord.gg/..."></div>
     </div>
     <div id="tarjeta-error" class="error"></div>
     <div class="modal-actions" style="justify-content:flex-start;">
@@ -1525,6 +1526,7 @@ ${!contenidoActivo ? `
                     twitch: String(formData.get("twitch") || "").trim(),
                     kick: String(formData.get("kick") || "").trim(),
                     tiktok: String(formData.get("tiktok") || "").trim(),
+                    discord: String(formData.get("discord") || "").trim(),
                     avatarOverride: String(formData.get("avatarOverride") || "").trim(),
                     bannerOverride: String(formData.get("bannerOverride") || "").trim(),
                     updatedAt: serverTimestamp()
