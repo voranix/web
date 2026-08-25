@@ -101,6 +101,27 @@
     <div class="hero-scroll">Scroll</div>
 </header>
 
+<!-- ================= EN VIVO AHORA ================= -->
+<!-- Oculta por defecto: si nadie está en vivo la sección ni se muestra,
+     nada de placeholder falso (mismo criterio que el resto del sitio). -->
+<section class="home-live-section container" id="home-live-section" style="display:none;">
+    <h2><i class="fas fa-satellite-dish" style="margin-right:10px;color:#ff2d55;"></i>En Vivo Ahora</h2>
+    <div class="home-live-wrap">
+        <div class="home-live-player">
+            <div class="home-live-player-frame" id="home-live-player-frame"></div>
+            <div class="home-live-player-info">
+                <div class="home-live-player-avatar" id="home-live-player-avatar"></div>
+                <div class="home-live-player-text">
+                    <h3 id="home-live-player-name"></h3>
+                    <p id="home-live-player-viewers"><i class="fas fa-eye"></i> <span></span></p>
+                </div>
+                <a class="btn btn-sm" id="home-live-player-link" href="#"><i class="fas fa-circle-info"></i> Ver perfil</a>
+            </div>
+        </div>
+        <div class="home-live-thumbs" id="home-live-thumbs"></div>
+    </div>
+</section>
+
 <!-- ================= SOBRE NOSOTROS ================= -->
 <section class="about-home">
     <div class="container">
@@ -317,6 +338,120 @@ async function loadBrands() {
     }
 }
 loadBrands();
+</script>
+
+<script type="module">
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { db, escapeHtml } from "/assets/js/firebase-config.js";
+
+// Mismo criterio que streamer.html: item.twitch/item.kick guardan la URL
+// completa (https://twitch.tv/nombre), no el login solo — hay que sacarlo
+// del final del path para armar la URL del reproductor embebido.
+function handleFromUrl(url) {
+    if (!url) return "";
+    const clean = String(url).trim().replace(/\/+$/, "");
+    const last = clean.split("/").pop() || "";
+    return last.replace(/^@/, "");
+}
+
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
+
+function formatViewers(n) {
+    const value = Number(n) || 0;
+    if (value >= 1000) return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+    return String(value);
+}
+
+// Twitch primero, Kick como respaldo si no tiene Twitch conectado — mismo
+// orden de prioridad que ya se usa en el resto del sitio (seguidores,
+// contenido, etc). Ninguno de los dos requiere credenciales del lado del
+// cliente, el parent solo tiene que matchear el dominio real de la página.
+function liveEmbedSrc(item) {
+    const twitchLogin = handleFromUrl(item.twitch);
+    if (twitchLogin) {
+        return `https://player.twitch.tv/?channel=${encodeURIComponent(twitchLogin)}&parent=${encodeURIComponent(location.hostname)}&muted=true&autoplay=true`;
+    }
+    const kickSlug = handleFromUrl(item.kick);
+    if (kickSlug) {
+        return `https://player.kick.com/${encodeURIComponent(kickSlug)}?muted=true&autoplay=true`;
+    }
+    return "";
+}
+
+const section = document.getElementById("home-live-section");
+const playerFrame = document.getElementById("home-live-player-frame");
+const playerAvatar = document.getElementById("home-live-player-avatar");
+const playerName = document.getElementById("home-live-player-name");
+const playerViewers = document.getElementById("home-live-player-viewers").querySelector("span");
+const playerLink = document.getElementById("home-live-player-link");
+const thumbsEl = document.getElementById("home-live-thumbs");
+
+let liveList = [];
+let activeId = null;
+
+function renderFeatured() {
+    const item = liveList.find(it => it.id === activeId);
+    if (!item) return;
+
+    const src = liveEmbedSrc(item);
+    playerFrame.innerHTML = src
+        ? `<iframe src="${src}" allowfullscreen allow="autoplay; fullscreen" frameborder="0" scrolling="no"></iframe>`
+        : `<div class="home-live-player-fallback"><i class="fas fa-video-slash"></i><p>Sin reproductor disponible</p></div>`;
+
+    const foto = assetUrl(item.foto);
+    playerAvatar.innerHTML = foto
+        ? `<img src="${escapeHtml(foto)}" alt="" onerror="this.remove()">`
+        : `<i class="fas fa-user"></i>`;
+    playerName.textContent = item.nombre || "Streamer";
+    playerViewers.textContent = formatViewers(item.viewerActual);
+    playerLink.href = `/pages/streamer.html?id=${encodeURIComponent(item.id)}`;
+}
+
+function renderThumbs() {
+    thumbsEl.innerHTML = liveList.map(item => {
+        const foto = assetUrl(item.foto);
+        return `
+    <button type="button" class="home-live-thumb${item.id === activeId ? " active" : ""}" data-id="${escapeHtml(item.id)}">
+        <span class="home-live-thumb-avatar">${foto ? `<img src="${escapeHtml(foto)}" alt="" onerror="this.remove()">` : `<i class="fas fa-user"></i>`}</span>
+        <span class="home-live-thumb-info">
+            <span class="home-live-thumb-name">${escapeHtml(item.nombre) || "Streamer"}</span>
+            <span class="home-live-thumb-viewers"><i class="fas fa-eye"></i> ${formatViewers(item.viewerActual)}</span>
+        </span>
+    </button>`;
+    }).join("");
+
+    thumbsEl.querySelectorAll(".home-live-thumb").forEach(btn => {
+        btn.addEventListener("click", () => {
+            if (btn.dataset.id === activeId) return;
+            activeId = btn.dataset.id;
+            renderFeatured();
+            renderThumbs();
+        });
+    });
+}
+
+async function loadLive() {
+    try {
+        const snapshot = await getDocs(collection(db, "streamers"));
+        liveList = snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(it => it.activo !== false && it.enVivo)
+            .sort((a, b) => (b.viewerActual || 0) - (a.viewerActual || 0));
+
+        if (!liveList.length) return;
+
+        activeId = liveList[0].id;
+        section.style.display = "";
+        renderFeatured();
+        renderThumbs();
+    } catch (e) {
+        console.error(e);
+    }
+}
+loadLive();
 </script>
 <script type="module" src="/assets/js/report-bug.js"></script>
 </body>
