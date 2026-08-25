@@ -277,6 +277,20 @@ exports.limpiarReportesAntiguos = onSchedule(
 const TWITCH_CLIENT_ID = defineSecret("TWITCH_CLIENT_ID");
 const TWITCH_CLIENT_SECRET = defineSecret("TWITCH_CLIENT_SECRET");
 
+// YouTube y Kick: mismo patrón que el "canal" de Twitch (más abajo) — el
+// creador conecta su propia cuenta desde el Portal Creadores, queda
+// verificada, y de ahí se lee su conteo de seguidores/suscriptores. Van
+// declarados acá arriba (no junto a sus funciones de conexión, más abajo en
+// el archivo) porque actualizarEnVivo los necesita y los `const` de nivel de
+// módulo no se pueden usar antes de su declaración en el archivo.
+const YOUTUBE_CLIENT_ID = defineSecret("YOUTUBE_CLIENT_ID");
+const YOUTUBE_CLIENT_SECRET = defineSecret("YOUTUBE_CLIENT_SECRET");
+const YOUTUBE_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/youtubeAuthCallback";
+
+const KICK_CLIENT_ID = defineSecret("KICK_CLIENT_ID");
+const KICK_CLIENT_SECRET = defineSecret("KICK_CLIENT_SECRET");
+const KICK_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthCallback";
+
 // Cache en memoria del token de Twitch entre invocaciones (dura ~60 días,
 // no hace falta pedirlo cada 5 minutos).
 let twitchTokenCache = { token: null, expiresAt: 0 };
@@ -859,18 +873,6 @@ exports.sincronizarRaidWebhooks = onSchedule(
 const TWITCH_BOT_LOGIN_OFICIAL = "voranixstudio";
 const TWITCH_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/twitchBotAuthCallback";
 const TWITCH_CHAT_CALLBACK = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/twitchChatWebhook";
-
-// YouTube y Kick: mismo patrón que el "canal" de Twitch de acá arriba (el
-// creador conecta su propia cuenta desde el Portal Creadores, queda
-// verificada, y de ahí se lee su conteo de seguidores/suscriptores). No
-// tienen bot de chat como Twitch, así que no hay tipo=bot para estos dos.
-const YOUTUBE_CLIENT_ID = defineSecret("YOUTUBE_CLIENT_ID");
-const YOUTUBE_CLIENT_SECRET = defineSecret("YOUTUBE_CLIENT_SECRET");
-const YOUTUBE_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/youtubeAuthCallback";
-
-const KICK_CLIENT_ID = defineSecret("KICK_CLIENT_ID");
-const KICK_CLIENT_SECRET = defineSecret("KICK_CLIENT_SECRET");
-const KICK_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthCallback";
 
 async function intercambiarCodigoTwitch(code, clientId, clientSecret) {
     const params = new URLSearchParams({
