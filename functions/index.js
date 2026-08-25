@@ -368,6 +368,30 @@ async function obtenerVideosTwitch(broadcasterId, clientId, clientSecret) {
     }
 }
 
+// Box art de una categoría de Twitch por nombre exacto (el que ya viene en
+// game_name de /helix/streams). Se usa solo la primera vez que una categoría
+// nueva aparece en juegosVistos, para no pedirle esto a Twitch cada 5 min.
+async function obtenerJuegoTwitch(nombre, clientId, clientSecret) {
+    if (!nombre) return null;
+    try {
+        const token = await getTwitchToken(clientId, clientSecret);
+        const res = await fetch(`https://api.twitch.tv/helix/games?name=${encodeURIComponent(nombre)}`, {
+            headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const juego = (data.data || [])[0];
+        if (!juego) return null;
+        return {
+            id: juego.id,
+            boxArtUrl: String(juego.box_art_url || "").replace("{width}", "188").replace("{height}", "250")
+        };
+    } catch (err) {
+        logger.warn(`obtenerJuegoTwitch[${nombre}]: fallo`, err.message);
+        return null;
+    }
+}
+
 // null = no está en vivo; si está en vivo, devuelve el viewer_count (puede ser 0).
 async function chequearKickEnVivo(handle) {
     try {
@@ -1047,8 +1071,15 @@ exports.actualizarEnVivo = onSchedule(
                     if (debeActualizarJuegos) {
                         const juegosVistos = Array.isArray(item.juegosVistos) ? item.juegosVistos.map(j => ({ ...j })) : [];
                         const idx = juegosVistos.findIndex(j => j.nombre === juegoActual);
-                        if (idx >= 0) juegosVistos[idx].minutos = (juegosVistos[idx].minutos || 0) + 5;
-                        else juegosVistos.push({ nombre: juegoActual, minutos: 5 });
+                        if (idx >= 0) {
+                            juegosVistos[idx].minutos = (juegosVistos[idx].minutos || 0) + 5;
+                        } else {
+                            const juegoInfo = await obtenerJuegoTwitch(juegoActual, clientId, clientSecret);
+                            juegosVistos.push({
+                                nombre: juegoActual, minutos: 5,
+                                twitchId: juegoInfo?.id || null, boxArtUrl: juegoInfo?.boxArtUrl || null
+                            });
+                        }
                         juegosVistos.sort((a, b) => (b.minutos || 0) - (a.minutos || 0));
                         updateData.juegosVistos = juegosVistos.slice(0, 8);
                     }
@@ -1570,6 +1601,34 @@ exports.obtenerContenidoCreador = onCall(
         ]);
 
         return { twitch, youtube, kick, tiktok };
+    }
+);
+
+// Búsqueda de categorías de Twitch para que el creador elija "a qué juega"
+// desde una lista real (con su box art) en vez de escribir texto libre.
+// Requiere sesión (no hace falta que sea del propio streamer: es solo un
+// proxy de búsqueda pública de Twitch, protegido con auth para no dejarlo
+// abierto a cualquiera que quiera pegarle a la API desde afuera).
+exports.buscarCategoriasTwitch = onCall(
+    { secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET] },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "Iniciá sesión para buscar categorías.");
+        const query = String(request.data?.query || "").trim();
+        if (!query) return { categorias: [] };
+
+        const clientId = TWITCH_CLIENT_ID.value();
+        const clientSecret = TWITCH_CLIENT_SECRET.value();
+        const token = await getTwitchToken(clientId, clientSecret);
+        const res = await fetch(`https://api.twitch.tv/helix/search/categories?query=${encodeURIComponent(query)}&first=10`, {
+            headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) throw new HttpsError("unavailable", "Twitch no respondió la búsqueda. Probá de nuevo.");
+        const data = await res.json();
+        const categorias = (data.data || []).map(c => ({
+            id: c.id, nombre: c.name,
+            boxArtUrl: String(c.box_art_url || "").replace("{width}", "188").replace("{height}", "250")
+        }));
+        return { categorias };
     }
 );
 

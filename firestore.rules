@@ -81,7 +81,7 @@ service cloud.firestore {
         (isLinkedCreador(resource.data) &&
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly([
-             "descripcion", "instagram", "twitch", "kick", "tiktok", "discord", "juegos",
+             "descripcion", "instagram", "twitch", "kick", "tiktok", "discord", "juegosManual",
              "avatarOverride", "bannerOverride", "fraseCorta", "colorAcento",
              "canalesSecundarios", "mensajesActivo", "updatedAt"
            ]));

@@ -219,6 +219,36 @@
         .logro-card-foot{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--gris); margin-top:8px; }
         .logro-card-foot strong{ color:#fff; }
 
+        .categoria-buscador{ position:relative; margin-bottom:16px; max-width:420px; }
+        .categoria-resultados{
+            position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:5; max-height:320px; overflow-y:auto;
+            background:#101024; border:1px solid var(--border-accent); border-radius:var(--r-md);
+            box-shadow:0 12px 28px rgba(0,0,0,.5);
+        }
+        .categoria-resultados.hidden{ display:none; }
+        .categoria-resultado-item{
+            display:flex; align-items:center; gap:10px; padding:8px 10px; cursor:pointer; font-size:13px; color:#fff;
+        }
+        .categoria-resultado-item:hover{ background:rgba(255,255,255,.06); }
+        .categoria-resultado-item img{ width:32px; height:43px; object-fit:cover; border-radius:4px; flex-shrink:0; background:var(--bg-2); }
+        .categoria-resultado-vacio{ padding:10px; font-size:12px; color:var(--gris); }
+        .categoria-tiles{ display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:12px; }
+        .categoria-tile{ position:relative; }
+        .categoria-tile img, .categoria-tile-sin-arte{
+            width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:8px; display:block; background:var(--bg-2);
+        }
+        .categoria-tile-sin-arte{ display:flex; align-items:center; justify-content:center; color:var(--gris); font-size:22px; }
+        .categoria-tile span{
+            display:block; margin-top:6px; font-size:11.5px; color:#fff; text-align:center;
+            overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .categoria-tile-quitar{
+            position:absolute; top:5px; right:5px; width:20px; height:20px; border-radius:50%; border:none;
+            background:rgba(0,0,0,.65); color:#fff; font-size:10px; display:flex; align-items:center; justify-content:center;
+            cursor:pointer; opacity:0; transition:opacity .15s;
+        }
+        .categoria-tile:hover .categoria-tile-quitar{ opacity:1; }
+
         .canal-input-prefix{ display:flex; align-items:stretch; }
         .canal-input-prefix span{
             display:flex; align-items:center; padding:0 10px; background:rgba(255,255,255,.04); border:1px solid var(--border);
@@ -1949,6 +1979,27 @@ ${!contenidoActivo ? `
 </div>`;
     }
 
+    function renderCategorias(d){
+        const juegosManual = Array.isArray(d.juegosManual) ? d.juegosManual : [];
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-gamepad"></i> Categorías</h2>
+    <p class="muted overlay-links-sub">A qué jugás, igual que en Twitch — se buscan directo del catálogo oficial. Se suman a lo que ya detectamos solo mientras estás en vivo.</p>
+    <div class="categoria-buscador">
+        <input type="text" id="categoria-buscar-input" placeholder="Buscar categoría en Twitch..." autocomplete="off">
+        <div id="categoria-buscar-resultados" class="categoria-resultados hidden"></div>
+    </div>
+    <div class="categoria-tiles" id="categoria-tiles">
+        ${juegosManual.length ? juegosManual.map((j, i) => `
+<div class="categoria-tile">
+    ${j.boxArtUrl ? `<img src="${escapeHtml(j.boxArtUrl)}" alt="${escapeHtml(j.nombre)}" loading="lazy">` : `<div class="categoria-tile-sin-arte"><i class="fas fa-gamepad"></i></div>`}
+    <span>${escapeHtml(j.nombre)}</span>
+    <button type="button" class="categoria-tile-quitar" data-quitar-categoria="${i}" aria-label="Quitar categoría"><i class="fas fa-xmark"></i></button>
+</div>`).join("") : `<p class="muted" style="grid-column:1/-1;">Todavía no agregaste categorías a mano.</p>`}
+    </div>
+</div>`;
+    }
+
     function renderCanalesSecundarios(d){
         const secundarios = Array.isArray(d.canalesSecundarios) ? d.canalesSecundarios : [];
         const iconos = { twitch: "fab fa-twitch", kick: "fas fa-bolt", youtube: "fab fa-youtube" };
@@ -2102,6 +2153,40 @@ ${!contenidoActivo ? `
             if(hidden) hidden.value = event.target.value;
         });
 
+        const categoriaInput = document.getElementById("categoria-buscar-input");
+        const categoriaResultados = document.getElementById("categoria-buscar-resultados");
+        let categoriaBuscarTimer = null;
+        categoriaInput?.addEventListener("input", () => {
+            const query = categoriaInput.value.trim();
+            clearTimeout(categoriaBuscarTimer);
+            if(!query){ categoriaResultados.classList.add("hidden"); categoriaResultados.innerHTML = ""; return; }
+            categoriaBuscarTimer = setTimeout(async () => {
+                categoriaResultados.classList.remove("hidden");
+                categoriaResultados.innerHTML = `<p class="categoria-resultado-vacio">Buscando...</p>`;
+                try{
+                    const buscar = httpsCallable(functionsInstance, "buscarCategoriasTwitch");
+                    const res = await buscar({ query });
+                    const categorias = res.data?.categorias || [];
+                    categoriaResultados.innerHTML = categorias.length
+                        ? categorias.map(c => `
+<div class="categoria-resultado-item" data-agregar-categoria data-id="${escapeHtml(c.id)}" data-nombre="${escapeHtml(c.nombre)}" data-box-art="${escapeHtml(c.boxArtUrl)}">
+    ${c.boxArtUrl ? `<img src="${escapeHtml(c.boxArtUrl)}" alt="">` : ""}
+    <span>${escapeHtml(c.nombre)}</span>
+</div>`).join("")
+                        : `<p class="categoria-resultado-vacio">Sin resultados en Twitch.</p>`;
+                }catch(error){
+                    console.error(error);
+                    categoriaResultados.innerHTML = `<p class="categoria-resultado-vacio">No se pudo buscar. Intenta de nuevo.</p>`;
+                }
+            }, 350);
+        });
+        categoriaInput?.addEventListener("blur", () => {
+            // Delay para que el click en un resultado (data-agregar-categoria,
+            // manejado por el listener delegado de #tarjeta-content) alcance a
+            // dispararse antes de que el blur esconda la lista.
+            setTimeout(() => categoriaResultados?.classList.add("hidden"), 200);
+        });
+
         document.getElementById("canales-form")?.addEventListener("submit", async (event) => {
             event.preventDefault();
             const formData = new FormData(event.target);
@@ -2190,6 +2275,33 @@ ${!contenidoActivo ? `
             return;
         }
 
+        const agregarCategoria = event.target.closest("[data-agregar-categoria]");
+        if(agregarCategoria){
+            const id = agregarCategoria.dataset.id;
+            const actuales = Array.isArray(tarjetaData?.juegosManual) ? [...tarjetaData.juegosManual] : [];
+            if(!actuales.some(j => j.twitchId === id) && actuales.length < 8){
+                actuales.push({ nombre: agregarCategoria.dataset.nombre, twitchId: id, boxArtUrl: agregarCategoria.dataset.boxArt || null });
+                try{
+                    await updateDoc(doc(db, "streamers", tarjetaId), { juegosManual: actuales, updatedAt: serverTimestamp() });
+                }catch(error){ console.error(error); alert("No se pudo agregar la categoría."); }
+            }
+            const input = document.getElementById("categoria-buscar-input");
+            if(input){ input.value = ""; }
+            document.getElementById("categoria-buscar-resultados")?.classList.add("hidden");
+            return;
+        }
+
+        const quitarCategoria = event.target.closest("[data-quitar-categoria]");
+        if(quitarCategoria){
+            const idx = Number(quitarCategoria.dataset.quitarCategoria);
+            const actuales = Array.isArray(tarjetaData?.juegosManual) ? [...tarjetaData.juegosManual] : [];
+            actuales.splice(idx, 1);
+            try{
+                await updateDoc(doc(db, "streamers", tarjetaId), { juegosManual: actuales, updatedAt: serverTimestamp() });
+            }catch(error){ console.error(error); alert("No se pudo quitar la categoría."); }
+            return;
+        }
+
         const quitarBtn = event.target.closest("[data-quitar-secundario]");
         if(quitarBtn){
             const idx = Number(quitarBtn.dataset.quitarSecundario);
@@ -2241,6 +2353,7 @@ ${renderAlcance()}
 </div>
 ${renderIdentidad(d)}
 ${renderCanales(d)}
+${renderCategorias(d)}
 ${renderCanalesSecundarios(d)}
 ${renderAvatarBanner(d)}
 ${renderCambiarPassword()}`;

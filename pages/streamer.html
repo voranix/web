@@ -228,47 +228,35 @@ function activarScrollReveal() {
     elementos.forEach(el => observer.observe(el));
 }
 
-// Dos fuentes para "Juegos frecuentes", que pueden convivir:
-// - item.juegos: lista manual separada por comas (la carga el staff en
-//   admin), útil desde el día uno aunque el streamer nunca haya estado en
-//   vivo todavía.
+// Dos fuentes para "Categorías", que pueden convivir, mostradas como una
+// sola grilla de box art estilo Twitch:
+// - item.juegosManual: las que el propio streamer eligió a mano desde Mi
+//   Tarjeta, buscando en el catálogo real de Twitch (con su id y box art).
 // - item.juegosVistos: lo va acumulando actualizarEnVivo cada 5 min mientras
-//   el streamer está en vivo en Twitch (game_name de /helix/streams). Es una
-//   aproximación de minutos, no un cronómetro exacto de la plataforma.
+//   el streamer está en vivo en Twitch (game_name de /helix/streams), con
+//   box art resuelto la primera vez que aparece cada categoría nueva.
+// Las manuales van primero; las auto-detectadas que ya estén en la lista
+// manual no se repiten.
 function renderJuegosFrecuentes(item) {
-    const autoJuegos = (Array.isArray(item.juegosVistos) ? item.juegosVistos : [])
-        .filter(j => j && j.nombre)
-        .slice(0, 6);
-    const nombresAuto = new Set(autoJuegos.map(j => j.nombre.toLowerCase()));
-    const manualJuegos = String(item.juegos || "")
-        .split(",")
-        .map(s => s.trim())
-        .filter(s => s && !nombresAuto.has(s.toLowerCase()));
+    const manual = (Array.isArray(item.juegosManual) ? item.juegosManual : []).filter(j => j && j.nombre);
+    const nombresManual = new Set(manual.map(j => j.nombre.toLowerCase()));
+    const auto = (Array.isArray(item.juegosVistos) ? item.juegosVistos : [])
+        .filter(j => j && j.nombre && !nombresManual.has(j.nombre.toLowerCase()))
+        .slice(0, 8);
+    const todos = [...manual, ...auto].slice(0, 10);
 
-    if (!autoJuegos.length && !manualJuegos.length) return "";
-
-    const maxMin = autoJuegos.length ? Math.max(...autoJuegos.map(j => Number(j.minutos) || 0), 1) : 1;
+    if (!todos.length) return "";
 
     return `
     <div class="perfil-card perfil-reveal">
-        <h2><i class="fas fa-gamepad"></i>Juegos frecuentes</h2>
-        ${manualJuegos.length ? `
-        <div class="perfil-manual-juegos">
-            ${manualJuegos.map(nombre => `<span class="meta-chip"><i class="fas fa-gamepad"></i>${escapeHtml(nombre)}</span>`).join("")}
-        </div>` : ""}
-        ${autoJuegos.length ? `
-        <div class="juegos-frecuentes-list">
-            ${autoJuegos.map(j => {
-                const minutos = Number(j.minutos) || 0;
-                const horas = minutos >= 60 ? `${(minutos / 60).toFixed(1).replace(/\.0$/, "")}h` : `${minutos}min`;
-                return `
-            <div class="juego-bar-row">
-                <div class="juego-bar-label"><span>${escapeHtml(j.nombre)}</span><span>${horas}</span></div>
-                <div class="juego-bar-track"><div class="juego-bar-fill" style="width:${Math.max(6, Math.round(minutos / maxMin * 100))}%"></div></div>
-            </div>`;
-            }).join("")}
+        <h2><i class="fas fa-gamepad"></i>Categorías emitidas recientemente</h2>
+        <div class="perfil-juegos-grid">
+            ${todos.map(j => `
+            <div class="perfil-juego-tile">
+                ${j.boxArtUrl ? `<img src="${escapeHtml(j.boxArtUrl)}" alt="${escapeHtml(j.nombre)}" loading="lazy">` : `<div class="perfil-juego-sin-arte"><i class="fas fa-gamepad"></i></div>`}
+                <span>${escapeHtml(j.nombre)}</span>
+            </div>`).join("")}
         </div>
-        <p class="juegos-frecuentes-note">Calculado automáticamente a partir del tiempo en vivo en Twitch.</p>` : ""}
     </div>`;
 }
 
