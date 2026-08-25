@@ -62,7 +62,7 @@
 </header>
 
 <section class="container">
-    <div id="streamer-content" class="proyecto-detail">
+    <div id="streamer-content" class="perfil-streamer">
         <p class="loading"><i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--morado);"></i>Cargando...</p>
     </div>
 </section>
@@ -135,12 +135,58 @@ function formatViewers(n) {
     return String(value);
 }
 
+// Mismo criterio que pages/streamers.html — un país de acá arriba o Chile
+// por defecto (no todos los streamers tienen el campo cargado).
+function flagPath(pais) {
+    const key = String(pais || "").toLowerCase();
+    if (key === "mexico") return "/imagenes/flags/mexico.png";
+    if (key === "argentina") return "/imagenes/flags/argentina.png";
+    return "/imagenes/flags/chile.png";
+}
+function flagAlt(pais) {
+    const key = String(pais || "").toLowerCase();
+    if (key === "mexico") return "México";
+    if (key === "argentina") return "Argentina";
+    return "Chile";
+}
+
 const REDES = [
-    { key: "twitch", icon: "fab fa-twitch", label: "Twitch" },
-    { key: "kick", icon: "fas fa-bolt", label: "Kick" },
-    { key: "tiktok", icon: "fab fa-tiktok", label: "TikTok" },
-    { key: "instagram", icon: "fab fa-instagram", label: "Instagram" }
+    { key: "twitch", icon: "fab fa-twitch", label: "Twitch", css: "pf-tw" },
+    { key: "kick", icon: "fas fa-bolt", label: "Kick", css: "pf-kk" },
+    { key: "tiktok", icon: "fab fa-tiktok", label: "TikTok", css: "pf-tt" },
+    { key: "instagram", icon: "fab fa-instagram", label: "Instagram", css: "pf-ig" }
 ];
+
+// Cada uno de estos campos solo existe si el streamer conectó esa red (OAuth
+// verificado) — hasta entonces, sin tarjeta, sin error ni placeholder falso.
+function statCards(item) {
+    const cards = [];
+    if (item.enVivo && item.viewerActual) {
+        cards.push({ css: "pf-viewers", icon: "fas fa-eye", n: item.viewerActual, label: "Viendo ahora" });
+    }
+    if (Number.isFinite(item.seguidoresTwitch)) {
+        cards.push({ css: "pf-tw", icon: "fab fa-twitch", n: item.seguidoresTwitch, label: "Twitch" });
+    }
+    if (Number.isFinite(item.suscriptoresYoutube)) {
+        cards.push({ css: "pf-yt", icon: "fab fa-youtube", n: item.suscriptoresYoutube, label: "YouTube" });
+    }
+    if (Number.isFinite(item.seguidoresKick)) {
+        cards.push({ css: "pf-kk", icon: "fas fa-bolt", n: item.seguidoresKick, label: "Kick" });
+    }
+    if (Number.isFinite(item.seguidoresTiktok)) {
+        cards.push({ css: "pf-tt", icon: "fab fa-tiktok", n: item.seguidoresTiktok, label: "TikTok" });
+    }
+    if (!cards.length) return "";
+    return `
+    <div class="perfil-stats-grid">
+        ${cards.map(c => `
+        <div class="perfil-stat-card ${c.css}">
+            <i class="${c.icon}"></i>
+            <div class="perfil-stat-num">${formatViewers(c.n)}</div>
+            <div class="perfil-stat-label">${escapeHtml(c.label)}</div>
+        </div>`).join("")}
+    </div>`;
+}
 
 // "juegosVistos" lo va acumulando actualizarEnVivo cada 5 min mientras el
 // streamer está en vivo en Twitch (game_name que devuelve /helix/streams).
@@ -152,23 +198,48 @@ function renderJuegosFrecuentes(item) {
     if (!juegos.length) return "";
     const maxMin = Math.max(...juegos.map(j => Number(j.minutos) || 0), 1);
     return `
-    <div class="proyecto-section">
-        <h2>Juegos frecuentes</h2>
+    <div class="perfil-card">
+        <h2><i class="fas fa-gamepad"></i>Juegos frecuentes</h2>
         <div class="juegos-frecuentes-list">
-            ${juegos.map(j => `
+            ${juegos.map(j => {
+                const minutos = Number(j.minutos) || 0;
+                const horas = minutos >= 60 ? `${(minutos / 60).toFixed(1).replace(/\.0$/, "")}h` : `${minutos}min`;
+                return `
             <div class="juego-bar-row">
-                <span class="juego-bar-label">${escapeHtml(j.nombre)}</span>
-                <div class="juego-bar-track"><div class="juego-bar-fill" style="width:${Math.max(6, Math.round((Number(j.minutos) || 0) / maxMin * 100))}%"></div></div>
-            </div>`).join("")}
+                <div class="juego-bar-label"><span>${escapeHtml(j.nombre)}</span><span>${horas}</span></div>
+                <div class="juego-bar-track"><div class="juego-bar-fill" style="width:${Math.max(6, Math.round(minutos / maxMin * 100))}%"></div></div>
+            </div>`;
+            }).join("")}
         </div>
         <p class="juegos-frecuentes-note">Calculado automáticamente a partir del tiempo en vivo en Twitch.</p>
     </div>`;
 }
 
+// Si la imagen principal falla, reemplaza todo el marco por el ícono de
+// respaldo (no deja un cuadro roto ni un fondo desenfocado sin la foto real).
+window.avatarError = function (imgEl) {
+    const frame = imgEl.closest(".perfil-avatar-frame");
+    if (frame) frame.innerHTML = `<div class="perfil-avatar-fallback"><i class="fas fa-user"></i></div>`;
+};
+
+function renderAvatar(item) {
+    const foto = assetUrl(item.foto);
+    if (!foto) {
+        return `<div class="perfil-avatar-fallback"><i class="fas fa-user"></i></div>`;
+    }
+    // Fondo desenfocado de la misma imagen (relleno decorativo, puede
+    // recortarse sin problema) + la foto completa encima con object-fit:
+    // contain, así nunca se corta ni una parte de la cara ni del encuadre.
+    const alt = escapeHtml(item.nombre) || "Streamer";
+    return `
+    <img class="perfil-avatar-bg" src="${escapeHtml(foto)}" alt="" aria-hidden="true" onerror="this.remove()">
+    <img class="perfil-avatar-fg" src="${escapeHtml(foto)}" alt="${alt}" onerror="window.avatarError(this)">`;
+}
+
 function showNotFound() {
     headerTitle.textContent = "Streamer no encontrado";
     content.innerHTML = `
-<div class="proyecto-not-found">
+<div class="perfil-not-found">
     <h2>No encontramos este streamer</h2>
     <p class="muted">Puede que ya no esté activo o que el link esté mal.</p>
     <a class="reg-back-to-index" href="/pages/streamers.html" style="margin-top:18px;"><i class="fas fa-arrow-left"></i> Volver a Streamers</a>
@@ -179,45 +250,44 @@ function renderStreamer(item) {
     document.title = `${item.nombre || "Streamer"} | VORANIX`;
     headerTitle.textContent = item.nombre || "Streamer";
 
-    const liveLabel = item.enVivo && item.viewerActual
-        ? `En vivo · ${formatViewers(item.viewerActual)} viewers`
-        : "En vivo";
-
     const chips = [item.juegos || "", item.horario || ""].filter(Boolean);
-    // Cada uno de estos campos solo existe si el streamer conectó esa red
-    // (OAuth verificado) — hasta entonces, sin chip, sin error ni placeholder.
-    const seguidoresChips = [
-        Number.isFinite(item.seguidoresTwitch) ? { icon: "fab fa-twitch", n: item.seguidoresTwitch } : null,
-        Number.isFinite(item.suscriptoresYoutube) ? { icon: "fab fa-youtube", n: item.suscriptoresYoutube } : null,
-        Number.isFinite(item.seguidoresKick) ? { icon: "fas fa-bolt", n: item.seguidoresKick } : null,
-        Number.isFinite(item.seguidoresTiktok) ? { icon: "fab fa-tiktok", n: item.seguidoresTiktok } : null
-    ].filter(Boolean).map(s => `<span class="meta-chip"><i class="${s.icon}"></i> ${formatViewers(s.n)} seguidores</span>`).join("");
 
     const redes = REDES
         .map(r => ({ ...r, url: item[r.key] }))
         .filter(r => esUrlValida(r.url));
 
     content.innerHTML = `
-    ${item.foto ? `<img class="proyecto-hero" src="${escapeHtml(assetUrl(item.foto))}" alt="${escapeHtml(item.nombre) || "Streamer"}" onerror="this.remove()">` : ""}
-    <h1 class="proyecto-title">${escapeHtml(item.nombre) || "Sin nombre"}</h1>
-    <div class="proyecto-meta-row">
-        ${item.enVivo ? `<span class="badge-live" style="position:static;"><span></span>${escapeHtml(liveLabel)}</span>` : ""}
-        ${seguidoresChips}
-        ${chips.map(c => `<span class="meta-chip">${escapeHtml(c)}</span>`).join("")}
+    <div class="perfil-hero">
+        <div class="perfil-avatar-frame">
+            ${renderAvatar(item)}
+            ${item.enVivo ? `<div class="perfil-live-dot"><span></span></div>` : ""}
+        </div>
+        <div class="perfil-nombre-row">
+            <h1>${escapeHtml(item.nombre) || "Sin nombre"}</h1>
+            <img class="perfil-flag" src="${flagPath(item.pais)}" alt="${flagAlt(item.pais)}" title="${flagAlt(item.pais)}">
+        </div>
+        ${item.enVivo ? `<span class="perfil-live-label"><span></span>En vivo</span>` : ""}
+        ${chips.length ? `<div class="perfil-hero-chips">${chips.map(c => `<span class="meta-chip">${escapeHtml(c)}</span>`).join("")}</div>` : ""}
+        ${statCards(item)}
     </div>
-    ${item.descripcion ? `<p class="proyecto-desc">${escapeHtml(item.descripcion)}</p>` : ""}
+
+    ${item.descripcion ? `
+    <div class="perfil-card">
+        <h2><i class="fas fa-user"></i>Sobre ${escapeHtml(item.nombre) || "el streamer"}</h2>
+        <p class="perfil-bio">${escapeHtml(item.descripcion)}</p>
+    </div>` : ""}
 
     ${renderJuegosFrecuentes(item)}
 
     ${redes.length ? `
-    <div class="proyecto-section">
-        <h2>Redes</h2>
-        <div class="proyecto-redes-list">
-            ${redes.map(r => `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener"><i class="${r.icon}"></i>${escapeHtml(r.label)}</a>`).join("")}
+    <div class="perfil-card">
+        <h2><i class="fas fa-share-nodes"></i>Redes</h2>
+        <div class="perfil-redes-grid">
+            ${redes.map(r => `<a class="perfil-red-btn ${r.css}" href="${escapeHtml(r.url)}" target="_blank" rel="noopener"><i class="${r.icon}"></i>${escapeHtml(r.label)}</a>`).join("")}
         </div>
     </div>` : ""}
 
-    <div class="proyecto-section" style="border-top:none;padding-top:0;">
+    <div style="margin-top:30px;text-align:center;">
         <a class="reg-back-to-index" href="/pages/streamers.html"><i class="fas fa-arrow-left"></i> Volver a Streamers</a>
     </div>`;
 }

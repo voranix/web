@@ -858,13 +858,99 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .proyecto-not-found{ text-align:center; padding:100px 0; }
 .proyecto-not-found h2{ margin-bottom:16px; }
 
-/* ================= JUEGOS FRECUENTES (barras, detalle de streamer) ================= */
-.juegos-frecuentes-list{ display:flex; flex-direction:column; gap:14px; margin-top:6px; }
+/* ================= PERFIL DE STREAMER (detalle público) ================= */
+.perfil-streamer{ max-width:900px; margin:0 auto; padding:50px 0 100px; }
+
+.perfil-hero{
+    position:relative; border-radius:var(--r-xl); overflow:hidden;
+    background:
+        radial-gradient(circle at 22% 15%, rgba(123,44,255,0.4), transparent 55%),
+        radial-gradient(circle at 82% 85%, rgba(255,106,0,0.32), transparent 55%),
+        #0d0d1e;
+    border:1px solid var(--border-accent);
+    padding:52px 24px 30px;
+    text-align:center;
+}
+
+.perfil-avatar-frame{
+    position:relative; width:132px; height:132px; margin:0 auto 20px;
+    border-radius:50%; overflow:hidden; border:3px solid rgba(255,255,255,0.85);
+    box-shadow:0 0 0 6px rgba(123,44,255,0.22), 0 14px 32px rgba(0,0,0,0.45);
+    background:#0d0d1e;
+}
+.perfil-avatar-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(18px) brightness(0.6); transform:scale(1.35); }
+.perfil-avatar-fg{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+.perfil-avatar-fallback{
+    width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+    font-size:44px; color:var(--morado-light); background:rgba(123,44,255,0.14);
+}
+.perfil-live-dot{
+    position:absolute; bottom:3px; right:3px; width:22px; height:22px; border-radius:50%;
+    background:#ff2d55; border:3px solid #0d0d1e;
+}
+.perfil-live-dot span{ position:absolute; inset:0; border-radius:50%; background:#ff2d55; animation:pulse 1.4s infinite; }
+
+.perfil-nombre-row{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.perfil-nombre-row h1{ margin:0; font-size:clamp(1.5rem,4vw,2.2rem); }
+.perfil-nombre-row img.perfil-flag{ width:26px; border-radius:3px; }
+
+.perfil-live-label{
+    display:inline-flex; align-items:center; gap:6px; background:rgba(255,45,85,0.15);
+    border:1px solid rgba(255,45,85,0.5); color:#ff2d55; font-size:11px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; border-radius:20px; padding:5px 12px; margin-bottom:16px;
+}
+.perfil-live-label span{ width:6px; height:6px; background:#ff2d55; border-radius:50%; animation:pulse 1.4s infinite; }
+
+.perfil-hero-chips{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+
+.perfil-stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(126px,1fr)); gap:12px; margin-top:24px; }
+.perfil-stat-card{
+    background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--r-md);
+    padding:16px 12px; text-align:center; transition:var(--ease);
+}
+.perfil-stat-card:hover{ border-color:var(--border-accent); transform:translateY(-3px); }
+.perfil-stat-card i{ font-size:19px; margin-bottom:8px; display:block; color:var(--morado-light); }
+.perfil-stat-num{ font-family:var(--font); font-size:1.25rem; font-weight:800; color:#fff; }
+.perfil-stat-label{ font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--gris); margin-top:2px; }
+.perfil-stat-card.pf-viewers i{ color:#ff2d55; }
+.perfil-stat-card.pf-tw i{ color:#a970ff; }
+.perfil-stat-card.pf-yt i{ color:#ff4d4d; }
+.perfil-stat-card.pf-kk i{ color:#53fc18; }
+.perfil-stat-card.pf-tt i{ color:#ff2d78; }
+
+.perfil-card{ background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:var(--r-lg); padding:26px 24px; margin-top:22px; }
+.perfil-card h2{ font-size:1.02rem; color:#fff; margin-bottom:16px; display:flex; align-items:center; gap:9px; }
+.perfil-card h2 i{ color:var(--morado-light); font-size:15px; }
+.perfil-bio{ font-size:14.5px; line-height:1.8; }
+
+.perfil-redes-grid{ display:flex; flex-wrap:wrap; gap:10px; }
+.perfil-red-btn{
+    display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:30px;
+    border:1px solid var(--border); color:#fff; text-decoration:none; font-size:13px;
+    background:rgba(255,255,255,0.03); transition:var(--ease);
+}
+.perfil-red-btn:hover{ transform:translateY(-2px); border-color:var(--border-accent); box-shadow:0 6px 18px var(--morado-glow); }
+.perfil-red-btn i{ font-size:15px; }
+.perfil-red-btn.pf-tw i{ color:#a970ff; }
+.perfil-red-btn.pf-kk i{ color:#53fc18; }
+.perfil-red-btn.pf-tt i{ color:#ff2d78; }
+.perfil-red-btn.pf-ig i{ color:#e1306c; }
+
+.juegos-frecuentes-list{ display:flex; flex-direction:column; gap:14px; margin-top:2px; }
 .juego-bar-row{ display:flex; flex-direction:column; gap:6px; }
-.juego-bar-label{ font-size:13px; color:#fff; }
+.juego-bar-label{ display:flex; justify-content:space-between; font-size:13px; color:#fff; }
+.juego-bar-label span:last-child{ color:var(--gris); font-size:11px; }
 .juego-bar-track{ width:100%; height:8px; border-radius:8px; background:rgba(255,255,255,0.06); border:1px solid var(--border); overflow:hidden; }
-.juego-bar-fill{ height:100%; border-radius:8px; background:linear-gradient(90deg,var(--morado),var(--naranja)); }
-.juegos-frecuentes-note{ font-size:11px; color:var(--gris); margin-top:12px; }
+.juego-bar-fill{ height:100%; border-radius:8px; background:var(--grad); }
+.juegos-frecuentes-note{ font-size:11px; color:var(--gris); margin-top:14px; }
+
+.perfil-not-found{ text-align:center; padding:100px 0; }
+.perfil-not-found h2{ margin-bottom:16px; }
+
+@media(max-width:520px){
+    .perfil-hero{ padding:40px 18px 24px; }
+    .perfil-card{ padding:20px 18px; }
+}
 
 @media (max-width: 1024px) {
     .container { width: min(100%, calc(100% - 32px)); }
