@@ -969,20 +969,46 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .perfil-red-btn.pf-ig i{ color:#e1306c; }
 .perfil-red-btn.pf-dc i{ color:#5865f2; }
 
-.perfil-videos-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
-.perfil-video-card{ display:block; text-decoration:none; color:#fff; border-radius:var(--r-md); overflow:hidden; border:1px solid var(--border); background:rgba(255,255,255,0.02); transition:var(--ease); }
-.perfil-video-card:hover{ transform:translateY(-3px); border-color:var(--border-accent); box-shadow:0 10px 24px rgba(0,0,0,0.35); }
-.perfil-video-thumb{ position:relative; width:100%; aspect-ratio:16/9; background:#0d0d1e; overflow:hidden; }
-.perfil-video-thumb img{ width:100%; height:100%; object-fit:cover; }
-.perfil-video-platform{ position:absolute; top:8px; left:8px; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; background:rgba(13,13,30,0.85); border:1px solid rgba(255,255,255,0.15); }
-.perfil-video-platform.pf-tw{ color:#a970ff; }
-.perfil-video-platform.pf-kk{ color:#53fc18; }
-.perfil-video-platform.pf-yt{ color:#ff4d4d; }
-.perfil-video-platform.pf-tt{ color:#ff2d78; }
-.perfil-video-info{ padding:11px 13px; }
-.perfil-video-title{ font-size:12.5px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-.perfil-video-meta{ display:flex; align-items:center; gap:10px; font-size:10.5px; color:var(--gris); margin-top:6px; }
-.perfil-video-meta i{ font-size:9px; margin-right:3px; }
+/* Contenido: una sección por red (con su propio encabezado) en vez de un
+   único listado cronológico mezclado, cada una con una cuadrícula densa
+   estilo TikTok/Instagram — miniaturas cuadradas pegadas, sin texto fijo
+   debajo; el título aparece recién al pasar el mouse y las vistas quedan
+   siempre visibles en la esquina, como un contador de posición fija. */
+.perfil-videos-section{ margin-bottom:26px; }
+.perfil-videos-section:last-child{ margin-bottom:0; }
+.perfil-videos-section-head{
+    display:flex; align-items:center; gap:8px; font-size:11.5px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase; color:var(--gris); margin-bottom:12px;
+}
+.perfil-videos-section-head i{ font-size:13px; }
+.perfil-videos-section-head.pf-tw i{ color:#a970ff; }
+.perfil-videos-section-head.pf-kk i{ color:#53fc18; }
+.perfil-videos-section-head.pf-yt i{ color:#ff4d4d; }
+.perfil-videos-section-head.pf-tt i{ color:#ff2d78; }
+.perfil-videos-section-count{
+    background:rgba(255,255,255,0.06); border-radius:20px; padding:1px 8px;
+    font-size:10px; color:#fff; letter-spacing:0;
+}
+
+.perfil-videos-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:4px; }
+.perfil-video-card{
+    position:relative; display:block; aspect-ratio:1/1; border-radius:6px; overflow:hidden;
+    background:#0d0d1e; text-decoration:none; color:#fff;
+}
+.perfil-video-card img{ width:100%; height:100%; object-fit:cover; transition:transform .35s ease; display:block; }
+.perfil-video-card:hover img{ transform:scale(1.06); }
+.perfil-video-card-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--gris); font-size:20px; }
+.perfil-video-card-views{
+    position:absolute; bottom:6px; left:7px; display:flex; align-items:center; gap:4px;
+    font-size:10px; font-weight:600; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.85); z-index:1;
+}
+.perfil-video-card-overlay{
+    position:absolute; inset:0; display:flex; align-items:flex-end; padding:8px;
+    background:linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.88) 100%);
+    opacity:0; transition:opacity .25s ease;
+}
+.perfil-video-card:hover .perfil-video-card-overlay{ opacity:1; }
+.perfil-video-card-title{ font-size:10.5px; line-height:1.35; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .perfil-videos-loading, .perfil-videos-empty{ font-size:13px; color:var(--gris); }
 
 .perfil-manual-juegos{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }

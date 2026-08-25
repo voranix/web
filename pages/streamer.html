@@ -302,10 +302,10 @@ function renderAvatar(item) {
 }
 
 const VIDEO_PLATAFORMA = {
-    twitch: { css: "pf-tw", icon: "fab fa-twitch" },
-    youtube: { css: "pf-yt", icon: "fab fa-youtube" },
-    kick: { css: "pf-kk", icon: "fas fa-bolt" },
-    tiktok: { css: "pf-tt", icon: "fab fa-tiktok" }
+    twitch: { css: "pf-tw", icon: "fab fa-twitch", label: "Twitch" },
+    youtube: { css: "pf-yt", icon: "fab fa-youtube", label: "YouTube" },
+    kick: { css: "pf-kk", icon: "fas fa-bolt", label: "Kick" },
+    tiktok: { css: "pf-tt", icon: "fab fa-tiktok", label: "TikTok" }
 };
 
 function formatFechaVideo(iso) {
@@ -315,23 +315,35 @@ function formatFechaVideo(iso) {
     return fecha.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function renderVideoCard(v, plataforma) {
-    const pf = VIDEO_PLATAFORMA[plataforma];
+// Cuadrícula densa (miniaturas cuadradas pegadas, estilo grilla de TikTok)
+// en vez de tarjetas con texto siempre visible: el título queda en el
+// overlay que aparece al pasar el mouse (y en el title nativo, para quien
+// navegue sin mouse), las vistas quedan fijas en la esquina.
+function renderVideoCard(v) {
     const fecha = formatFechaVideo(v.fecha);
+    const tooltip = [v.titulo || "Sin título", fecha].filter(Boolean).join(" · ");
     return `
-    <a class="perfil-video-card" href="${escapeHtml(v.url)}" target="_blank" rel="noopener">
-        <div class="perfil-video-thumb">
-            ${v.miniatura ? `<img src="${escapeHtml(v.miniatura)}" alt="" loading="lazy" onerror="this.remove()">` : ""}
-            <div class="perfil-video-platform ${pf.css}"><i class="${pf.icon}"></i></div>
-        </div>
-        <div class="perfil-video-info">
-            <div class="perfil-video-title">${escapeHtml(v.titulo || "Sin título")}</div>
-            <div class="perfil-video-meta">
-                ${fecha ? `<span>${fecha}</span>` : ""}
-                ${Number.isFinite(v.vistas) ? `<span><i class="fas fa-eye"></i> ${formatViewers(v.vistas)}</span>` : ""}
-            </div>
-        </div>
+    <a class="perfil-video-card" href="${escapeHtml(v.url)}" target="_blank" rel="noopener" title="${escapeHtml(tooltip)}">
+        ${v.miniatura ? `<img src="${escapeHtml(v.miniatura)}" alt="" loading="lazy" onerror="this.remove()">` : `<div class="perfil-video-card-empty"><i class="fas fa-play"></i></div>`}
+        ${Number.isFinite(v.vistas) ? `<span class="perfil-video-card-views"><i class="fas fa-eye"></i>${formatViewers(v.vistas)}</span>` : ""}
+        <div class="perfil-video-card-overlay"><span class="perfil-video-card-title">${escapeHtml(v.titulo || "Sin título")}</span></div>
     </a>`;
+}
+
+// Una sección por red conectada (con su propio encabezado), no un listado
+// cronológico mezclado — así se ve de dónde viene cada video sin depender
+// del ícono de plataforma en cada miniatura.
+function renderVideosSection(plataformaKey, videos) {
+    if (!videos.length) return "";
+    const pf = VIDEO_PLATAFORMA[plataformaKey];
+    const ordenados = [...videos].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+    return `
+    <div class="perfil-videos-section">
+        <div class="perfil-videos-section-head ${pf.css}">
+            <i class="${pf.icon}"></i>${pf.label}<span class="perfil-videos-section-count">${ordenados.length}</span>
+        </div>
+        <div class="perfil-videos-grid">${ordenados.map(renderVideoCard).join("")}</div>
+    </div>`;
 }
 
 // Se pide aparte de renderStreamer (no bloquea el resto de la tarjeta
@@ -343,18 +355,15 @@ async function cargarContenido(item) {
     try {
         const obtenerContenido = httpsCallable(functionsInstance, "obtenerContenidoCreador");
         const { data } = await obtenerContenido({ streamerId: item.id });
-        const videos = [
-            ...(data.twitch || []).map(v => ({ ...v, plataforma: "twitch" })),
-            ...(data.youtube || []).map(v => ({ ...v, plataforma: "youtube" })),
-            ...(data.kick || []).map(v => ({ ...v, plataforma: "kick" })),
-            ...(data.tiktok || []).map(v => ({ ...v, plataforma: "tiktok" }))
-        ].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+        const secciones = ["twitch", "youtube", "kick", "tiktok"]
+            .map(key => renderVideosSection(key, data[key] || []))
+            .join("");
 
-        if (!videos.length) {
+        if (!secciones.trim()) {
             el.closest(".perfil-card").remove();
             return;
         }
-        el.innerHTML = `<div class="perfil-videos-grid">${videos.map(v => renderVideoCard(v, v.plataforma)).join("")}</div>`;
+        el.innerHTML = secciones;
     } catch (e) {
         console.error(e);
         const card = el.closest(".perfil-card");
