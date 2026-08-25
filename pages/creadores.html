@@ -142,6 +142,111 @@
         .metricas-bar-label{ font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--gris-dark); }
         .tarjeta-preview img{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:1px solid var(--border); flex-shrink:0; }
 
+        /* Dashboard de Mi Tarjeta */
+        .dash-greeting{
+            display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap;
+            background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px 22px; margin-bottom:22px;
+        }
+        .dash-greeting-user{ display:flex; align-items:center; gap:14px; }
+        .dash-greeting-avatar{
+            width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid var(--border-accent); flex-shrink:0;
+            background:rgba(255,255,255,.04);
+        }
+        .dash-greeting-eyebrow{ font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--gris); }
+        .dash-greeting-name{ font-size:1.3rem; margin:2px 0 6px; }
+        .dash-estado-pill{
+            display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; letter-spacing:1px;
+            text-transform:uppercase; border-radius:20px; padding:3px 10px;
+            background:rgba(255,255,255,.06); border:1px solid var(--border); color:var(--gris);
+        }
+        .dash-estado-pill.en-vivo{ background:rgba(255,45,85,.15); border-color:rgba(255,45,85,.5); color:#ff2d55; }
+        .dash-estado-pill span{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+        .dash-estado-pill.en-vivo span{ animation:pulse 1.4s infinite; }
+        .dash-greeting-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+        .dash-bandeja-btn{ position:relative; }
+        .dash-bandeja-dot{
+            position:absolute; top:-4px; right:-4px; width:16px; height:16px; border-radius:50%;
+            background:var(--naranja); color:#fff; font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center;
+        }
+
+        .dash-stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:18px; margin-bottom:22px; }
+        .dash-stat-card{
+            background:var(--card); border:1px solid var(--border); border-radius:var(--r-lg); padding:18px 20px;
+        }
+        .dash-stat-eyebrow{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gris); margin-bottom:8px; }
+        .dash-stat-value{ font-size:1.7rem; font-weight:800; color:#fff; line-height:1.1; }
+        .dash-stat-value small{ font-size:.6em; color:var(--gris); font-weight:600; }
+        .dash-stat-sub{ font-size:11.5px; color:var(--gris); margin-top:6px; line-height:1.5; }
+        .xp-bar-track{ width:100%; height:8px; border-radius:8px; background:rgba(255,255,255,.06); border:1px solid var(--border); overflow:hidden; margin-top:10px; }
+        .xp-bar-fill{ height:100%; border-radius:8px; background:var(--grad); transition:width .4s ease; }
+
+        .dash-session-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(110px,100%),1fr)); gap:14px; margin:16px 0; }
+        .dash-session-tile{ text-align:center; }
+        .dash-session-tile strong{ display:block; font-size:1.15rem; color:#fff; }
+        .dash-session-tile span{ font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--gris); }
+
+        .dash-toggle{ display:inline-flex; gap:4px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:20px; padding:3px; }
+        .dash-toggle button{
+            background:none; border:none; border-radius:16px; padding:5px 14px; font-size:11px; font-weight:700;
+            color:var(--gris); cursor:pointer; font-family:inherit;
+        }
+        .dash-toggle button.active{ background:var(--morado); color:#fff; }
+
+        .inbox-item{ padding:14px 0; border-bottom:1px solid var(--border); }
+        .inbox-item:last-child{ border-bottom:none; }
+        .inbox-item-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+        .inbox-item-nombre{ font-weight:700; color:#fff; font-size:13px; }
+        .inbox-item-fecha{ font-size:10.5px; color:var(--gris); }
+        .inbox-item-msg{ font-size:12.5px; line-height:1.6; color:#ddd; }
+        .inbox-item.no-leido{ position:relative; padding-left:14px; }
+        .inbox-item.no-leido::before{ content:""; position:absolute; left:0; top:20px; width:6px; height:6px; border-radius:50%; background:var(--naranja); }
+
+        .logros-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:16px; }
+        .logro-card{ background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:var(--r-md); padding:16px 18px; }
+        .logro-card-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+        .logro-card-nombre{ font-size:13px; font-weight:700; color:#fff; }
+        .logro-tier{ font-size:9.5px; font-weight:800; letter-spacing:1px; text-transform:uppercase; padding:2px 9px; border-radius:12px; }
+        .logro-tier.sin-rango{ background:rgba(255,255,255,.05); color:var(--gris); }
+        .logro-tier.bronce{ background:rgba(205,127,50,.18); color:#cd7f32; }
+        .logro-tier.plata{ background:rgba(192,192,192,.18); color:#c0c0c0; }
+        .logro-tier.oro{ background:rgba(255,215,0,.18); color:#ffd700; }
+        .logro-tier.platino{ background:rgba(160,220,255,.18); color:#a0dcff; }
+        .logro-tier.diamante{ background:rgba(140,255,230,.18); color:#8cffe6; }
+        .logro-tier.challenger{ background:rgba(255,106,0,.2); color:var(--naranja); }
+        .logro-card-desc{ font-size:11px; color:var(--gris); margin-bottom:10px; line-height:1.5; }
+        .logro-bar-track{ width:100%; height:6px; border-radius:6px; background:rgba(255,255,255,.06); overflow:hidden; }
+        .logro-bar-fill{ height:100%; border-radius:6px; background:var(--grad); }
+        .logro-card-foot{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--gris); margin-top:8px; }
+        .logro-card-foot strong{ color:#fff; }
+
+        .canal-input-prefix{ display:flex; align-items:stretch; }
+        .canal-input-prefix span{
+            display:flex; align-items:center; padding:0 10px; background:rgba(255,255,255,.04); border:1px solid var(--border);
+            border-right:none; border-radius:8px 0 0 8px; font-size:11.5px; color:var(--gris); white-space:nowrap;
+        }
+        .canal-input-prefix input{ border-radius:0 8px 8px 0 !important; }
+
+        .canal-secundario-row{
+            display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);
+        }
+        .canal-secundario-row:last-child{ border-bottom:none; }
+        .canal-secundario-icon{ width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.05); flex-shrink:0; }
+
+        .upload-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:18px; }
+        .upload-box{ background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:var(--r-md); padding:16px; display:flex; gap:14px; align-items:flex-start; }
+        .upload-box img{ width:64px; height:64px; border-radius:8px; object-fit:cover; background:#0d0d1e; flex-shrink:0; }
+        .upload-box-title{ font-size:12.5px; font-weight:700; color:#fff; margin-bottom:3px; }
+        .upload-box-sub{ font-size:11px; color:var(--gris); margin-bottom:10px; line-height:1.5; }
+
+        .color-swatch-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .color-swatch{ width:28px; height:28px; border-radius:50%; border:2px solid transparent; cursor:pointer; padding:0; }
+        .color-swatch.selected{ border-color:#fff; }
+
+        .checkbox-row{ display:flex; align-items:flex-start; gap:10px; padding:12px 14px; background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:var(--r-md); }
+        .checkbox-row input[type="checkbox"]{ margin-top:3px; flex-shrink:0; width:16px; height:16px; }
+        .checkbox-row-title{ font-size:12.5px; font-weight:700; color:#fff; }
+        .checkbox-row-sub{ font-size:11px; color:var(--gris); margin-top:2px; line-height:1.5; }
+
         @media (max-width:600px){
             .creadores-topbar{ flex-direction:column; }
             .creadores-user{ justify-content:flex-start; width:100%; }
@@ -330,11 +435,7 @@
     </div>
 
     <div class="creadores-tab-panel hidden" data-tab-panel="tarjeta">
-        <div class="overlay-links-block">
-            <h2 class="overlay-links-title"><i class="fas fa-id-badge"></i> Mi Tarjeta de Streamer</h2>
-            <p class="muted overlay-links-sub">Así te ve la gente en la página pública de Streamers. La imagen y el resto de los datos los administra VORANIX; vos podés editar tu descripción y tus redes.</p>
-            <div id="tarjeta-content"><p class="loading">Cargando...</p></div>
-        </div>
+        <div id="tarjeta-content"><p class="loading">Cargando...</p></div>
     </div>
 </section>
 
@@ -467,7 +568,10 @@
         signInWithEmailAndPassword,
         onAuthStateChanged,
         signOut,
-        sendPasswordResetEmail
+        sendPasswordResetEmail,
+        EmailAuthProvider,
+        reauthenticateWithCredential,
+        updatePassword
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
     import {
         doc,
@@ -482,10 +586,15 @@
         deleteField,
         query,
         where,
-        serverTimestamp
+        orderBy,
+        limit,
+        serverTimestamp,
+        arrayUnion,
+        arrayRemove
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
-    import { auth, db, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
+    import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+    import { auth, db, storage, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
     import { initNotificationBell } from "/assets/js/notificaciones.js";
     import { initParticles } from "/assets/js/particles.js";
 
@@ -530,12 +639,17 @@
     let unsubProyectos = null;
     let unsubProfile = null;
     let unsubTarjeta = null;
+    let unsubBandeja = null;
     let accesosCount = 0;
     let proyectosCount = 0;
     let botConectado = null; // null = todavía sin consultar
     let tarjetaId = null;
     let tarjetaData = null;
-    let tarjetaTransmisiones = [];
+    let tarjetaTransmisiones = []; // historial completo (todo el tiempo), no solo 7 días
+    let tarjetaVisitas = []; // últimos 30 días, [{fecha, total}]
+    let bandejaMensajes = [];
+    let actividadRango = 7; // días: 7 o 30, toggle de la sección Actividad
+    let ultimaSesionChat = null; // {sesion, personas, mensajes} de la última transmisión cerrada
 
     function stopListeners(){
         if(unsubAccesos) unsubAccesos();
@@ -550,6 +664,8 @@
         unsubComandos = null;
         if(unsubComandosGenerales) unsubComandosGenerales();
         unsubComandosGenerales = null;
+        if(unsubBandeja) unsubBandeja();
+        unsubBandeja = null;
         notifBell.stop();
     }
 
@@ -618,6 +734,7 @@
             renderTiktokStatus(currentProfile);
             if(twitchLoginCambio){ renderMisComandos(currentProfile); renderOverlayEditor(currentProfile); }
             renderStatsStrip();
+            renderTarjeta();
         });
     }
 
@@ -1460,137 +1577,726 @@ ${!contenidoActivo ? `
         });
     }
 
-    // Solo descripcion/instagram/twitch/kick/tiktok son editables acá — es
-    // lo mismo que firestore.rules le permite tocar a la cuenta vinculada
-    // (isLinkedCreador). Nombre, imagen, horario, etc. los sigue manejando
-    // el staff desde el admin.
-    function renderTarjeta(){
-        const content = document.getElementById("tarjeta-content");
-        if(!tarjetaId){
-            content.innerHTML = `<p class="muted">Todavía no tenés una tarjeta de streamer vinculada a tu cuenta. Escribile al staff de VORANIX para que te la vinculen desde el panel de administración.</p>`;
-            return;
+    // ======================================================================
+    // Mi Tarjeta — dashboard del creador. Todo lo que se muestra sale de
+    // datos reales (transmisiones, chatters del Sello de Audiencia Real,
+    // raids, visitas) — nada de números inventados. Nombre/foto/horario
+    // siguen siendo exclusivos de staff; lo demás lo administra el propio
+    // creador desde acá.
+    // ======================================================================
+
+    const XP_POR_HORA = 10, XP_POR_STREAM = 15, XP_POR_SEGUIDOR = 1, XP_POR_RAID = 5;
+
+    function calcularXP(horasTotales, streamsCompletados, seguidoresTotal, raidsRecibidos){
+        return Math.round(horasTotales * XP_POR_HORA + streamsCompletados * XP_POR_STREAM + seguidoresTotal * XP_POR_SEGUIDOR + raidsRecibidos * XP_POR_RAID);
+    }
+    // Nivel N necesita 50*N² de XP acumulada para pasar a N+1 — curva suave,
+    // alcanzable desde el primer stream, cada vez más exigente.
+    function umbralNivel(n){ return 50 * n * n; }
+    function calcularNivel(xpTotal){
+        let nivel = 1;
+        while(umbralNivel(nivel) <= xpTotal) nivel++;
+        const xpDesde = nivel === 1 ? 0 : umbralNivel(nivel - 1);
+        const xpHasta = umbralNivel(nivel);
+        const pct = Math.min(100, Math.round(((xpTotal - xpDesde) / (xpHasta - xpDesde)) * 100));
+        return { nivel, pct };
+    }
+    function tituloNivel(nivel){
+        if(nivel < 3) return "Novato";
+        if(nivel < 6) return "Iniciado";
+        if(nivel < 11) return "Activo";
+        if(nivel < 21) return "Consolidado";
+        return "Referente";
+    }
+
+    // Mejor racha histórica de días distintos con al menos una transmisión
+    // cerrada — "tu mejor marca", no la racha activa ahora mismo.
+    function calcularRacha(transmisiones){
+        const fechas = [...new Set(
+            transmisiones.filter(t => t.fin && t.inicio?.toDate).map(t => {
+                const f = t.inicio.toDate();
+                return `${f.getFullYear()}-${f.getMonth()}-${f.getDate()}`;
+            })
+        )].map(s => { const [y,m,dd] = s.split("-").map(Number); return new Date(y,m,dd).getTime(); }).sort((a,b) => a - b);
+        if(!fechas.length) return 0;
+        let mejor = 1, actual = 1;
+        for(let i = 1; i < fechas.length; i++){
+            const diffDias = Math.round((fechas[i] - fechas[i-1]) / 86400000);
+            if(diffDias === 1) actual++;
+            else if(diffDias > 1) actual = 1;
+            mejor = Math.max(mejor, actual);
         }
-        const d = tarjetaData || {};
-        const minutosSemana = tarjetaTransmisiones.reduce((sum, t) => sum + (t.duracionMinutos || 0), 0);
+        return mejor;
+    }
+
+    const LOGRO_TIERS = [
+        { key: "sin-rango", label: "Sin rango" },
+        { key: "bronce", label: "Bronce" }, { key: "plata", label: "Plata" }, { key: "oro", label: "Oro" },
+        { key: "platino", label: "Platino" }, { key: "diamante", label: "Diamante" }, { key: "challenger", label: "Challenger" }
+    ];
+    function calcularLogro(valor, umbrales){
+        let tierIdx = 0;
+        for(let i = 0; i < umbrales.length; i++){ if(valor >= umbrales[i]) tierIdx = i + 1; }
+        const tier = LOGRO_TIERS[tierIdx];
+        const siguienteUmbral = umbrales[tierIdx];
+        const anteriorUmbral = tierIdx > 0 ? umbrales[tierIdx - 1] : 0;
+        const pct = siguienteUmbral
+            ? Math.min(100, Math.round(((valor - anteriorUmbral) / (siguienteUmbral - anteriorUmbral)) * 100))
+            : 100;
+        return { tier, siguienteTier: LOGRO_TIERS[tierIdx + 1], siguienteUmbral, pct };
+    }
+
+    const LOGROS_DEF = [
+        { id: "horas", nombre: "Tiempo al aire", desc: "Horas totales transmitidas en sesiones válidas.", icono: "fa-tower-broadcast", unidad: "h", umbrales: [3, 10, 25, 50, 100, 200], valor: ctx => ctx.horasTotales },
+        { id: "streams", nombre: "Transmisiones", desc: "Directos completados de al menos 10 minutos.", icono: "fa-calendar-check", unidad: "streams", umbrales: [1, 5, 15, 30, 60, 120], valor: ctx => ctx.streamsCompletados },
+        { id: "comunidad", nombre: "La comunidad llega", desc: "Raids que otros canales te enviaron.", icono: "fa-people-group", unidad: "raids", umbrales: [1, 5, 15, 30, 60, 120], valor: ctx => ctx.raidsRecibidos },
+        { id: "constancia", nombre: "Constancia", desc: "Tu mejor racha de días consecutivos transmitiendo.", icono: "fa-fire", unidad: "días", umbrales: [2, 3, 5, 10, 20, 30], valor: ctx => ctx.racha },
+        { id: "trayectoria", nombre: "Trayectoria", desc: "Nivel alcanzado con actividad de transmisión.", icono: "fa-ranking-star", unidad: "nivel", umbrales: [2, 5, 10, 20, 35, 50], valor: ctx => ctx.nivel }
+    ];
+
+    function renderLogros(ctx){
+        return LOGROS_DEF.map(def => {
+            const valor = def.valor(ctx);
+            const { tier, siguienteTier, siguienteUmbral, pct } = calcularLogro(valor, def.umbrales);
+            return `
+<div class="logro-card">
+    <div class="logro-card-head">
+        <span class="logro-card-nombre"><i class="fas ${def.icono}" style="margin-right:7px;color:var(--morado-light);"></i>${escapeHtml(def.nombre)}</span>
+        <span class="logro-tier ${tier.key}">${escapeHtml(tier.label)}</span>
+    </div>
+    <p class="logro-card-desc">${escapeHtml(def.desc)}</p>
+    <div class="logro-bar-track"><div class="logro-bar-fill" style="width:${pct}%"></div></div>
+    <div class="logro-card-foot">
+        <span><strong>${valor}</strong> ${escapeHtml(def.unidad)}</span>
+        <span>${siguienteUmbral ? `Siguiente: ${escapeHtml(siguienteTier.label)} · ${siguienteUmbral} ${escapeHtml(def.unidad)}` : "Tope alcanzado"}</span>
+    </div>
+</div>`;
+        }).join("");
+    }
+
+    function formatHaceTiempo(fecha){
+        const horas = Math.floor((Date.now() - fecha.getTime()) / 3600000);
+        if(horas < 1) return "menos de 1 h";
+        if(horas < 24) return `${horas} h`;
+        return `${Math.floor(horas / 24)} días`;
+    }
+    function maskEmail(email){
+        if(!email) return "";
+        const [user, domain] = email.split("@");
+        if(!domain) return email;
+        return `${user.slice(0, 2)}${"•".repeat(Math.max(1, user.length - 2))}@${domain}`;
+    }
+    function ultimoSegmento(url){
+        if(!url) return "";
+        return String(url).trim().replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
+    }
+
+    const CANAL_PREFIJOS = {
+        twitch: { prefijo: "twitch.tv/", icon: "fab fa-twitch", label: "Twitch", build: h => `https://twitch.tv/${h}` },
+        kick: { prefijo: "kick.com/", icon: "fas fa-bolt", label: "Kick", build: h => `https://kick.com/${h}` },
+        tiktok: { prefijo: "tiktok.com/@", icon: "fab fa-tiktok", label: "TikTok", build: h => `https://tiktok.com/@${h.replace(/^@/, "")}` },
+        instagram: { prefijo: "instagram.com/", icon: "fab fa-instagram", label: "Instagram", build: h => `https://instagram.com/${h}` },
+        discord: { prefijo: "discord.gg/", icon: "fab fa-discord", label: "Discord", build: h => `https://discord.gg/${h}` }
+    };
+
+    function renderGreeting(d){
+        const enVivo = !!d.enVivo;
+        const noLeidos = bandejaMensajes.filter(m => !m.leido).length;
+        const avatarSrc = assetUrl(d.avatarOverride || d.avatarAuto || d.foto || "");
+        return `
+<div class="dash-greeting">
+    <div class="dash-greeting-user">
+        <img class="dash-greeting-avatar" src="${avatarSrc || "/imagenes/logo.jpg"}" alt="" onerror="this.src='/imagenes/logo.jpg'">
+        <div>
+            <div class="dash-greeting-eyebrow">Tu panel</div>
+            <h2 class="dash-greeting-name">Hola, ${escapeHtml(d.nombre || "creador")} 👋</h2>
+            <span class="dash-estado-pill${enVivo ? " en-vivo" : ""}"><span></span>${enVivo ? "En vivo" : "Offline"}</span>
+        </div>
+    </div>
+    <div class="dash-greeting-actions">
+        <button class="btn secondary small dash-bandeja-btn" type="button" id="dash-bandeja-scroll">
+            <i class="fas fa-envelope"></i> Bandeja${noLeidos ? `<span class="dash-bandeja-dot">${noLeidos}</span>` : ""}
+        </button>
+        <a class="btn secondary small" href="/pages/streamer.html?id=${encodeURIComponent(tarjetaId)}" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Ver mi perfil</a>
+    </div>
+</div>`;
+    }
+
+    function renderCorreoCard(){
+        const email = currentUser?.email || "";
+        const prefs = currentProfile?.notifPrefs || {};
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-shield-halved"></i> Correo de tu cuenta</h2>
+    <div class="bot-status-row" style="margin-bottom:16px;">
+        <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+        <div>
+            <strong style="color:#fff;display:block;">Correo verificado</strong>
+            <span class="muted" style="font-size:12px;">${escapeHtml(maskEmail(email))} · sirve para recuperar tu acceso y recibir avisos que vos elijas.</span>
+        </div>
+    </div>
+    <form id="notif-prefs-form">
+        <div class="form-grid">
+            <label class="checkbox-row">
+                <input type="checkbox" name="avisos" ${prefs.avisos !== false ? "checked" : ""}>
+                <div><div class="checkbox-row-title">Avisos importantes</div><div class="checkbox-row-sub">Mensajes recibidos, seguridad y cambios de tu cuenta.</div></div>
+            </label>
+            <label class="checkbox-row">
+                <input type="checkbox" name="novedades" ${prefs.novedades ? "checked" : ""}>
+                <div><div class="checkbox-row-title">Novedades de VORANIX</div><div class="checkbox-row-sub">Funciones nuevas y cambios importantes del portal.</div></div>
+            </label>
+        </div>
+        <div class="modal-actions" style="justify-content:flex-start;">
+            <button class="btn secondary small" type="submit"><i class="fas fa-check"></i> Guardar preferencias</button>
+            <span id="notif-prefs-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+        </div>
+    </form>
+</div>`;
+    }
+
+    function renderStatsCards(nivelInfo, seguidoresTotal){
+        return `
+<div class="dash-stats-grid">
+    <div class="dash-stat-card">
+        <div class="dash-stat-eyebrow">Nivel</div>
+        <div class="dash-stat-value">${nivelInfo.nivel} <small>${escapeHtml(tituloNivel(nivelInfo.nivel))}</small></div>
+    </div>
+    <div class="dash-stat-card">
+        <div class="dash-stat-eyebrow">XP al siguiente nivel</div>
+        <div class="dash-stat-value">${nivelInfo.pct}<small>%</small></div>
+        <div class="xp-bar-track"><div class="xp-bar-fill" style="width:${nivelInfo.pct}%"></div></div>
+        <div class="dash-stat-sub">Ganás XP con actividad real: +${XP_POR_HORA} por hora en vivo, +${XP_POR_STREAM} por transmisión, +${XP_POR_RAID} por cada raid que te llega, +${XP_POR_SEGUIDOR} por seguidor.</div>
+    </div>
+    <div class="dash-stat-card">
+        <div class="dash-stat-eyebrow">Seguidores</div>
+        <div class="dash-stat-value">${seguidoresTotal}</div>
+        <div class="dash-stat-sub">Tu comunidad sumada entre todas las redes conectadas.</div>
+    </div>
+</div>`;
+    }
+
+    function renderUltimaSesion(){
+        if(!ultimaSesionChat) return "";
+        const { sesion, personas, mensajes } = ultimaSesionChat;
+        const duracion = sesion.duracionMinutos || 0;
+        const msgPorMin = duracion ? (mensajes / duracion).toFixed(1) : "0";
+        const fin = sesion.fin?.toDate?.();
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-clock-rotate-left"></i> Tu última transmisión</h2>
+    <p class="muted overlay-links-sub">${(duracion / 60).toFixed(1)} h${fin ? ` · terminó hace ${formatHaceTiempo(fin)}` : ""}</p>
+    <div class="dash-session-grid">
+        <div class="dash-session-tile"><strong>${sesion.peakViewers || 0}</strong><span>Peak</span></div>
+        <div class="dash-session-tile"><strong>${sesion.promedioViewers ?? "—"}</strong><span>Viendo (prom.)</span></div>
+        <div class="dash-session-tile"><strong>${personas}</strong><span>Escribieron</span></div>
+        <div class="dash-session-tile"><strong>${msgPorMin}</strong><span>Msg/min</span></div>
+        <div class="dash-session-tile"><strong>${mensajes}</strong><span>Mensajes</span></div>
+    </div>
+    <p class="muted" style="font-size:11px;">${duracion} min medidos vía el bot de chat en tu Twitch conectado.</p>
+</div>`;
+    }
+
+    function renderBandeja(){
+        return `
+<div class="overlay-links-block" id="dash-bandeja-block">
+    <h2 class="overlay-links-title"><i class="fas fa-inbox"></i> Tu bandeja</h2>
+    <p class="muted overlay-links-sub">Mensajes desde tu perfil público. Tu correo no se muestra ahí — quien te escribe necesita cuenta en VORANIX y los mensajes solo llegan acá.</p>
+    ${bandejaMensajes.length ? bandejaMensajes.map(m => `
+<div class="inbox-item${m.leido ? "" : " no-leido"}" data-msg-id="${escapeHtml(m.id)}">
+    <div class="inbox-item-head">
+        <span class="inbox-item-nombre">${escapeHtml(m.nombreRemitente || "Alguien")}</span>
+        <span class="inbox-item-fecha">${m.createdAt?.toDate ? m.createdAt.toDate().toLocaleDateString("es-CL") : ""}</span>
+    </div>
+    <p class="inbox-item-msg">${escapeHtml(m.mensaje || "")}</p>
+</div>`).join("") : `
+<div style="text-align:center;padding:24px 0;">
+    <strong style="color:#fff;display:block;margin-bottom:6px;">Tu bandeja está lista.</strong>
+    <p class="muted" style="font-size:12.5px;">Todavía no te han escrito desde tu perfil. Cuando llegue un mensaje va a aparecer acá.</p>
+</div>`}
+</div>`;
+    }
+
+    function renderActividad(){
+        const desde = new Date(Date.now() - actividadRango * 24 * 60 * 60 * 1000);
+        const cerradasEnRango = tarjetaTransmisiones.filter(t => t.fin && t.inicio?.toDate?.() >= desde);
+        const minutosTotal = cerradasEnRango.reduce((s, t) => s + (t.duracionMinutos || 0), 0);
+        const peakMedido = Math.max(0, ...cerradasEnRango.map(t => t.peakViewers || 0));
+        const visitasEnRango = tarjetaVisitas.filter(v => new Date(v.fecha) >= desde).reduce((s, v) => s + v.total, 0);
+
         const dias = [];
-        for(let i = 6; i >= 0; i--){
-            const fecha = new Date();
-            fecha.setDate(fecha.getDate() - i);
-            dias.push({ fecha, minutos: 0, label: fecha.toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "").toUpperCase() });
+        for(let i = actividadRango - 1; i >= 0; i--){
+            const fecha = new Date(); fecha.setDate(fecha.getDate() - i);
+            dias.push({ fecha, minutos: 0, label: actividadRango === 7 ? fecha.toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "").toUpperCase() : String(fecha.getDate()) });
         }
-        tarjetaTransmisiones.forEach(t => {
+        cerradasEnRango.forEach(t => {
             const inicio = t.inicio?.toDate?.();
             if(!inicio) return;
             const dia = dias.find(dd => dd.fecha.toDateString() === inicio.toDateString());
             if(dia) dia.minutos += (t.duracionMinutos || 0);
         });
-        const maxMinutos = Math.max(...dias.map(dd => dd.minutos), 60);
+        const maxMinutos = Math.max(...dias.map(d => d.minutos), 60);
 
-        content.innerHTML = `
-<div class="tarjeta-semana">
-    <h3>Tus últimos 7 días</h3>
-    <div class="tarjeta-semana-stats">
-        <div><strong>${tarjetaTransmisiones.length}</strong><span>Transmisiones</span></div>
-        <div><strong>${(minutosSemana / 60).toFixed(1)}</strong><span>Horas al aire</span></div>
+        return `
+<div class="overlay-links-block">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+        <h2 class="overlay-links-title" style="margin-bottom:0;"><i class="fas fa-chart-simple"></i> Tu actividad</h2>
+        <div class="dash-toggle">
+            <button type="button" data-rango="7" class="${actividadRango === 7 ? "active" : ""}">7 días</button>
+            <button type="button" data-rango="30" class="${actividadRango === 30 ? "active" : ""}">30 días</button>
+        </div>
     </div>
-    <div class="metricas-bars">
+    <div class="dash-session-grid">
+        <div class="dash-session-tile"><strong>${(minutosTotal / 60).toFixed(1)}</strong><span>Horas en vivo</span></div>
+        <div class="dash-session-tile"><strong>${cerradasEnRango.length}</strong><span>Transmisiones</span></div>
+        <div class="dash-session-tile"><strong>${peakMedido}</strong><span>Peak medido</span></div>
+        <div class="dash-session-tile"><strong>${visitasEnRango}</strong><span>Visitas al perfil</span></div>
+    </div>
+    <div class="metricas-bars" style="margin-top:18px;">
         ${dias.map(dd => `
 <div class="metricas-bar-col">
     <div class="metricas-bar" style="height:${Math.max(4, Math.round((dd.minutos / maxMinutos) * 80))}px;" title="${(dd.minutos / 60).toFixed(1)} h"></div>
-    <span class="metricas-bar-label">${escapeHtml(dd.label)}</span>
+    <span class="metricas-bar-label">${escapeHtml(String(dd.label))}</span>
 </div>`).join("")}
     </div>
-    <p class="muted" style="font-size:11px;margin-top:12px;">Se detecta automático vía tu Twitch conectado — puede tardar un rato en reflejarse apenas termina la transmisión.</p>
-</div>
+    <p class="muted" style="font-size:11px;margin-top:12px;">Las horas salen de tus transmisiones cerradas y el peak de lo que medimos en tu chat, así que cuentan desde que te detectamos en vivo, no desde el segundo cero.</p>
+</div>`;
+    }
 
-<div class="tarjeta-preview">
-    ${d.foto ? `<img src="${escapeHtml(assetUrl(d.foto))}" alt="${escapeHtml(d.nombre || "")}">` : ""}
-    <div>
-        <strong>${escapeHtml(d.nombre || "Sin nombre")}</strong>
-        <p class="muted" style="font-size:12px;margin-top:2px;">Nombre e imagen los administra VORANIX.</p>
+    function renderAlcance(){
+        const dias = [];
+        for(let i = 29; i >= 0; i--){
+            const fecha = new Date(); fecha.setDate(fecha.getDate() - i);
+            const key = fecha.toISOString().slice(0, 10);
+            const found = tarjetaVisitas.find(v => v.fecha === key);
+            dias.push({ total: found ? found.total : 0 });
+        }
+        const totalVisitas = dias.reduce((s, d) => s + d.total, 0);
+        const diasConVisitas = dias.filter(d => d.total > 0).length;
+        const hoy = dias[dias.length - 1]?.total || 0;
+        const maxTotal = Math.max(...dias.map(d => d.total), 4);
+
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-chart-line"></i> Alcance de tu perfil</h2>
+    <p class="muted overlay-links-sub">Visitas de los últimos 30 días.</p>
+    <div class="dash-session-grid">
+        <div class="dash-session-tile"><strong>${totalVisitas}</strong><span>Visitas</span></div>
+        <div class="dash-session-tile"><strong>${diasConVisitas}</strong><span>Días con visitas</span></div>
+        <div class="dash-session-tile"><strong>${hoy}</strong><span>Hoy</span></div>
     </div>
-</div>
-<form id="tarjeta-form">
-    <div class="field">
-        <label>Descripción</label>
-        <textarea name="descripcion" placeholder="Contale a la gente de qué va tu canal...">${escapeHtml(d.descripcion || "")}</textarea>
+    <div class="metricas-bars" style="height:60px;margin-top:16px;">
+        ${dias.map(d => `<div class="metricas-bar-col"><div class="metricas-bar" style="height:${Math.max(2, Math.round((d.total / maxTotal) * 50))}px;" title="${d.total} visitas"></div></div>`).join("")}
     </div>
-    <div class="field">
-        <label>Juegos</label>
-        <input name="juegos" type="text" value="${escapeHtml(d.juegos || "")}" placeholder="Ej: Valorant, Minecraft, Fortnite">
-        <span class="help">Separados por coma. Se muestran en tu tarjeta pública junto con lo que detectamos automático de tu Twitch.</span>
-    </div>
-    <div class="form-grid">
+    <p class="muted" style="font-size:11px;margin-top:12px;">Contamos un visitante real por navegador por día — nunca vos mismo viendo tu perfil logueado, nunca IPs.</p>
+</div>`;
+    }
+
+    function renderIdentidad(d){
+        const colores = ["#ff2d78", "#00c8ff", "#7b2cff", "#8cff6b", "#ff6a00"];
+        const colorActual = /^#[0-9a-f]{6}$/i.test(d.colorAcento || "") ? d.colorAcento : colores[2];
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-user-pen"></i> Identidad</h2>
+    <p class="muted overlay-links-sub">Cómo te ve la comunidad VORANIX.</p>
+    <form id="identidad-form">
         <div class="field">
-            <label>Foto de perfil personalizada</label>
-            <input name="avatarOverride" type="url" value="${escapeHtml(d.avatarOverride || "")}" placeholder="https://...">
-            <span class="help">Opcional. Si no la cargás, tu perfil público usa la foto de tu Twitch (o Kick) automáticamente.</span>
+            <label>Frase corta <span style="text-transform:none;">(máx. 80)</span></label>
+            <input name="fraseCorta" type="text" maxlength="80" value="${escapeHtml(d.fraseCorta || "")}" placeholder="Ej: Todos los días con la comunidad">
         </div>
         <div class="field">
-            <label>Banner personalizado</label>
-            <input name="bannerOverride" type="url" value="${escapeHtml(d.bannerOverride || "")}" placeholder="https://...">
-            <span class="help">Opcional. Si no lo cargás, tu perfil público usa el banner de tu Twitch (o Kick) automáticamente.</span>
+            <label>Bio <span style="text-transform:none;">(máx. 600)</span></label>
+            <textarea name="descripcion" maxlength="600" placeholder="Contale a la gente de qué va tu canal...">${escapeHtml(d.descripcion || "")}</textarea>
+        </div>
+        <div class="field">
+            <label>Color de acento</label>
+            <div class="color-swatch-row">
+                ${colores.map(c => `<button type="button" class="color-swatch${c === colorActual ? " selected" : ""}" style="background:${c};" data-color="${c}" aria-label="${c}"></button>`).join("")}
+                <input type="color" id="identidad-color-custom" value="${colorActual}" title="Elegir otro color">
+                <input type="hidden" name="colorAcento" id="identidad-color-hidden" value="${escapeHtml(colorActual)}">
+            </div>
+        </div>
+        <div id="identidad-error" class="error"></div>
+        <div class="modal-actions" style="justify-content:flex-start;">
+            <button class="btn" type="submit">Guardar identidad</button>
+            <span id="identidad-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+        </div>
+    </form>
+</div>`;
+    }
+
+    function renderCanales(d){
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-link"></i> Canales</h2>
+    <p class="muted overlay-links-sub">Conectá tus plataformas. Solo el usuario, sin la URL completa.</p>
+    <form id="canales-form">
+        <div class="form-grid">
+            ${Object.entries(CANAL_PREFIJOS).map(([key, c]) => `
+<div class="field">
+    <label><i class="${c.icon}" style="margin-right:6px;"></i>${escapeHtml(c.label)}</label>
+    <div class="canal-input-prefix">
+        <span>${escapeHtml(c.prefijo)}</span>
+        <input name="${key}" type="text" value="${escapeHtml(ultimoSegmento(d[key]))}" placeholder="tu_usuario">
+    </div>
+</div>`).join("")}
+        </div>
+        <div id="canales-error" class="error"></div>
+        <div class="modal-actions" style="justify-content:flex-start;">
+            <button class="btn" type="submit">Guardar canales</button>
+            <span id="canales-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+        </div>
+    </form>
+</div>`;
+    }
+
+    function renderCanalesSecundarios(d){
+        const secundarios = Array.isArray(d.canalesSecundarios) ? d.canalesSecundarios : [];
+        const iconos = { twitch: "fab fa-twitch", kick: "fas fa-bolt", youtube: "fab fa-youtube" };
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-diagram-project"></i> Otro canal, el mismo creador</h2>
+    <p class="muted overlay-links-sub">Podés mostrar hasta 5 canales secundarios de Twitch, Kick o YouTube en tu perfil. No alteran tus viewers, ranking ni mediciones — es solo para que te encuentren ahí también.</p>
+    <form id="canal-secundario-form" class="form-grid" style="align-items:end;">
+        <div class="field">
+            <label>Plataforma</label>
+            <select name="plataforma">
+                <option value="twitch">Twitch</option>
+                <option value="kick">Kick</option>
+                <option value="youtube">YouTube</option>
+            </select>
+        </div>
+        <div class="field">
+            <label>Usuario o URL del canal</label>
+            <input name="valor" type="text" placeholder="usuario">
+        </div>
+        <div class="field">
+            <button class="btn" type="submit"${secundarios.length >= 5 ? " disabled" : ""}><i class="fas fa-plus"></i> Vincular</button>
+        </div>
+    </form>
+    <div id="canal-secundario-error" class="error"></div>
+    <p class="muted" style="font-size:11px;margin:12px 0 6px;text-transform:uppercase;letter-spacing:1px;">Canales vinculados · ${secundarios.length}/5</p>
+    ${secundarios.length ? secundarios.map((c, i) => `
+<div class="canal-secundario-row">
+    <div class="canal-secundario-icon"><i class="${iconos[c.plataforma] || "fas fa-link"}"></i></div>
+    <div style="flex:1;"><strong style="color:#fff;font-size:12.5px;">${escapeHtml(ultimoSegmento(c.valor))}</strong> <span class="muted" style="font-size:11px;">· ${escapeHtml(c.plataforma)}</span></div>
+    <button class="btn danger small" type="button" data-quitar-secundario="${i}">Quitar</button>
+</div>`).join("") : `<p class="muted" style="text-align:center;padding:14px 0;">Todavía no vinculaste un canal secundario.</p>`}
+</div>`;
+    }
+
+    function renderAvatarBanner(d){
+        const avatarSrc = assetUrl(d.avatarOverride || d.avatarAuto || d.foto || "");
+        const bannerSrc = assetUrl(d.bannerOverride || d.bannerAuto || "");
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-image"></i> Avatar y banner</h2>
+    <p class="muted overlay-links-sub">PNG, JPG o WebP. Avatar máx 2MB, banner máx 4MB. Si no subís nada, se usa lo que detectamos de tu Twitch (o Kick).</p>
+    <div class="upload-grid">
+        <div class="upload-box">
+            <img src="${avatarSrc || "/imagenes/logo.jpg"}" alt="" onerror="this.src='/imagenes/logo.jpg'">
+            <div style="flex:1;">
+                <div class="upload-box-title">Avatar</div>
+                <div class="upload-box-sub">Cuadrada queda mejor. Se ve en tu perfil.</div>
+                <input type="file" accept="image/png,image/jpeg,image/webp" id="upload-avatar-input">
+                <div class="modal-actions" style="justify-content:flex-start;margin-top:8px;">
+                    <button class="btn secondary small" type="button" id="upload-avatar-btn"><i class="fas fa-check"></i> Subir</button>
+                    <span id="upload-avatar-msg" class="muted" style="font-size:11px;align-self:center;"></span>
+                </div>
+            </div>
+        </div>
+        <div class="upload-box">
+            <img src="${bannerSrc || "/imagenes/logo.jpg"}" alt="" onerror="this.src='/imagenes/logo.jpg'" style="width:96px;height:54px;">
+            <div style="flex:1;">
+                <div class="upload-box-title">Banner</div>
+                <div class="upload-box-sub">Horizontal (ej. 1500x500). Portada de tu perfil público.</div>
+                <input type="file" accept="image/png,image/jpeg,image/webp" id="upload-banner-input">
+                <div class="modal-actions" style="justify-content:flex-start;margin-top:8px;">
+                    <button class="btn secondary small" type="button" id="upload-banner-btn"><i class="fas fa-check"></i> Subir</button>
+                    <span id="upload-banner-msg" class="muted" style="font-size:11px;align-self:center;"></span>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="form-grid">
-        <div class="field"><label>Instagram</label><input name="instagram" type="url" value="${escapeHtml(d.instagram || "")}" placeholder="https://instagram.com/..."></div>
-        <div class="field"><label>Twitch</label><input name="twitch" type="url" value="${escapeHtml(d.twitch || "")}" placeholder="https://twitch.tv/..."></div>
-        <div class="field"><label>Kick</label><input name="kick" type="url" value="${escapeHtml(d.kick || "")}" placeholder="https://kick.com/..."></div>
-        <div class="field"><label>TikTok</label><input name="tiktok" type="url" value="${escapeHtml(d.tiktok || "")}" placeholder="https://tiktok.com/@..."></div>
-        <div class="field"><label>Discord</label><input name="discord" type="url" value="${escapeHtml(d.discord || "")}" placeholder="https://discord.gg/..."></div>
-    </div>
-    <div id="tarjeta-error" class="error"></div>
-    <div class="modal-actions" style="justify-content:flex-start;">
-        <button class="btn" type="submit">Guardar cambios</button>
-        <span id="tarjeta-msg" class="muted" style="font-size:12px;align-self:center;"></span>
-    </div>
-</form>`;
+</div>`;
+    }
 
-        document.getElementById("tarjeta-form").addEventListener("submit", async (event) => {
+    function renderCambiarPassword(){
+        return `
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-key"></i> Cambiar contraseña</h2>
+    <p class="muted overlay-links-sub">Usá una contraseña única de al menos 8 caracteres.</p>
+    <form id="password-form">
+        <div class="form-grid">
+            <div class="field"><label>Actual</label><input name="actual" type="password" autocomplete="current-password"></div>
+            <div class="field"><label>Nueva</label><input name="nueva" type="password" autocomplete="new-password" minlength="8"></div>
+            <div class="field"><label>Confirmar nueva</label><input name="confirmar" type="password" autocomplete="new-password" minlength="8"></div>
+        </div>
+        <div id="password-error" class="error"></div>
+        <div class="modal-actions" style="justify-content:flex-start;">
+            <button class="btn" type="submit"><i class="fas fa-check"></i> Guardar contraseña</button>
+            <span id="password-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+        </div>
+    </form>
+</div>`;
+    }
+
+    async function subirImagenPerfil(tipo){
+        const input = document.getElementById(`upload-${tipo}-input`);
+        const msgEl = document.getElementById(`upload-${tipo}-msg`);
+        const file = input?.files?.[0];
+        const limite = tipo === "avatar" ? 2 * 1024 * 1024 : 4 * 1024 * 1024;
+        if(!file){ msgEl.textContent = "Elegí un archivo primero."; return; }
+        if(file.size > limite){ msgEl.textContent = `Máximo ${tipo === "avatar" ? "2MB" : "4MB"}.`; return; }
+        msgEl.textContent = "Subiendo...";
+        try{
+            const carpeta = tipo === "avatar" ? "streamerAvatares" : "streamerBanners";
+            const storageRef = ref(storage, `${carpeta}/${tarjetaId}/${Date.now()}-${file.name}`.replace(/\s+/g, "_"));
+            const snapshot = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+            await updateDoc(doc(db, "streamers", tarjetaId), {
+                [tipo === "avatar" ? "avatarOverride" : "bannerOverride"]: url,
+                updatedAt: serverTimestamp()
+            });
+            msgEl.textContent = "¡Listo!";
+        }catch(error){
+            console.error(error);
+            msgEl.textContent = "No se pudo subir.";
+        }
+    }
+
+    function wireTarjetaForms(){
+        document.getElementById("notif-prefs-form")?.addEventListener("submit", async (event) => {
             event.preventDefault();
             const formData = new FormData(event.target);
-            const msgEl = document.getElementById("tarjeta-msg");
-            const errorEl = document.getElementById("tarjeta-error");
-            errorEl.textContent = "";
+            const msgEl = document.getElementById("notif-prefs-msg");
             msgEl.textContent = "Guardando...";
             try{
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    notifPrefs: { avisos: formData.get("avisos") === "on", novedades: formData.get("novedades") === "on" }
+                });
+                msgEl.textContent = "¡Guardado!";
+                setTimeout(() => { if(msgEl) msgEl.textContent = ""; }, 2500);
+            }catch(error){ console.error(error); msgEl.textContent = "No se pudo guardar."; }
+        });
+
+        document.getElementById("identidad-form")?.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const msgEl = document.getElementById("identidad-msg");
+            const errorEl = document.getElementById("identidad-error");
+            errorEl.textContent = ""; msgEl.textContent = "Guardando...";
+            try{
                 await updateDoc(doc(db, "streamers", tarjetaId), {
-                    descripcion: String(formData.get("descripcion") || "").trim(),
-                    juegos: String(formData.get("juegos") || "").trim(),
-                    instagram: String(formData.get("instagram") || "").trim(),
-                    twitch: String(formData.get("twitch") || "").trim(),
-                    kick: String(formData.get("kick") || "").trim(),
-                    tiktok: String(formData.get("tiktok") || "").trim(),
-                    discord: String(formData.get("discord") || "").trim(),
-                    avatarOverride: String(formData.get("avatarOverride") || "").trim(),
-                    bannerOverride: String(formData.get("bannerOverride") || "").trim(),
+                    fraseCorta: String(formData.get("fraseCorta") || "").trim().slice(0, 80),
+                    descripcion: String(formData.get("descripcion") || "").trim().slice(0, 600),
+                    colorAcento: String(formData.get("colorAcento") || "").trim(),
                     updatedAt: serverTimestamp()
                 });
                 msgEl.textContent = "¡Guardado!";
                 setTimeout(() => { if(msgEl) msgEl.textContent = ""; }, 2500);
+            }catch(error){ console.error(error); msgEl.textContent = ""; errorEl.textContent = "No se pudo guardar. Intenta de nuevo."; }
+        });
+        document.getElementById("identidad-color-custom")?.addEventListener("input", (event) => {
+            document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
+            const hidden = document.getElementById("identidad-color-hidden");
+            if(hidden) hidden.value = event.target.value;
+        });
+
+        document.getElementById("canales-form")?.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const msgEl = document.getElementById("canales-msg");
+            const errorEl = document.getElementById("canales-error");
+            errorEl.textContent = ""; msgEl.textContent = "Guardando...";
+            try{
+                const payload = { updatedAt: serverTimestamp() };
+                for(const [key, cfg] of Object.entries(CANAL_PREFIJOS)){
+                    const handle = String(formData.get(key) || "").trim();
+                    payload[key] = handle ? cfg.build(handle) : "";
+                }
+                await updateDoc(doc(db, "streamers", tarjetaId), payload);
+                msgEl.textContent = "¡Guardado!";
+                setTimeout(() => { if(msgEl) msgEl.textContent = ""; }, 2500);
+            }catch(error){ console.error(error); msgEl.textContent = ""; errorEl.textContent = "No se pudo guardar. Intenta de nuevo."; }
+        });
+
+        document.getElementById("canal-secundario-form")?.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const errorEl = document.getElementById("canal-secundario-error");
+            errorEl.textContent = "";
+            const plataforma = String(formData.get("plataforma") || "twitch");
+            const valorRaw = String(formData.get("valor") || "").trim();
+            if(!valorRaw){ errorEl.textContent = "Escribí un usuario o URL."; return; }
+            const actuales = Array.isArray(tarjetaData?.canalesSecundarios) ? tarjetaData.canalesSecundarios : [];
+            if(actuales.length >= 5){ errorEl.textContent = "Ya tenés 5 canales secundarios vinculados."; return; }
+            try{
+                await updateDoc(doc(db, "streamers", tarjetaId), {
+                    canalesSecundarios: [...actuales, { plataforma, valor: valorRaw }],
+                    updatedAt: serverTimestamp()
+                });
+            }catch(error){ console.error(error); errorEl.textContent = "No se pudo vincular. Intenta de nuevo."; }
+        });
+
+        document.getElementById("upload-avatar-btn")?.addEventListener("click", () => subirImagenPerfil("avatar"));
+        document.getElementById("upload-banner-btn")?.addEventListener("click", () => subirImagenPerfil("banner"));
+
+        document.getElementById("password-form")?.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const errorEl = document.getElementById("password-error");
+            const msgEl = document.getElementById("password-msg");
+            errorEl.textContent = ""; msgEl.textContent = "";
+            const actual = String(formData.get("actual") || "");
+            const nueva = String(formData.get("nueva") || "");
+            const confirmar = String(formData.get("confirmar") || "");
+            if(nueva.length < 8){ errorEl.textContent = "La nueva contraseña necesita al menos 8 caracteres."; return; }
+            if(nueva !== confirmar){ errorEl.textContent = "Las contraseñas nuevas no coinciden."; return; }
+            msgEl.textContent = "Guardando...";
+            try{
+                const credential = EmailAuthProvider.credential(currentUser.email, actual);
+                await reauthenticateWithCredential(currentUser, credential);
+                await updatePassword(currentUser, nueva);
+                msgEl.textContent = "¡Contraseña actualizada!";
+                event.target.reset();
             }catch(error){
                 console.error(error);
                 msgEl.textContent = "";
-                errorEl.textContent = "No se pudo guardar. Intenta de nuevo.";
+                errorEl.textContent = (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential")
+                    ? "La contraseña actual no es correcta."
+                    : "No se pudo cambiar la contraseña. Intenta de nuevo.";
             }
         });
+    }
+
+    // Delegado UNA sola vez sobre el contenedor estable (no se re-crea entre
+    // renders, solo su innerHTML) — evita ir reatando listeners repetidos
+    // por cada botón dinámico.
+    document.getElementById("tarjeta-content").addEventListener("click", async (event) => {
+        const rangoBtn = event.target.closest("[data-rango]");
+        if(rangoBtn){ actividadRango = Number(rangoBtn.dataset.rango); renderTarjeta(); return; }
+
+        const colorSwatch = event.target.closest(".color-swatch[data-color]");
+        if(colorSwatch){
+            document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
+            colorSwatch.classList.add("selected");
+            const hidden = document.getElementById("identidad-color-hidden");
+            if(hidden) hidden.value = colorSwatch.dataset.color;
+            return;
+        }
+
+        if(event.target.closest("#dash-bandeja-scroll")){
+            document.getElementById("dash-bandeja-block")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            return;
+        }
+
+        const quitarBtn = event.target.closest("[data-quitar-secundario]");
+        if(quitarBtn){
+            const idx = Number(quitarBtn.dataset.quitarSecundario);
+            const actuales = Array.isArray(tarjetaData?.canalesSecundarios) ? [...tarjetaData.canalesSecundarios] : [];
+            actuales.splice(idx, 1);
+            try{
+                await updateDoc(doc(db, "streamers", tarjetaId), { canalesSecundarios: actuales, updatedAt: serverTimestamp() });
+            }catch(error){ console.error(error); alert("No se pudo quitar el canal."); }
+            return;
+        }
+
+        const inboxItem = event.target.closest(".inbox-item.no-leido[data-msg-id]");
+        if(inboxItem){
+            try{ await updateDoc(doc(db, "mensajesPerfil", inboxItem.dataset.msgId), { leido: true }); }
+            catch(error){ console.error(error); }
+        }
+    });
+
+    function renderTarjeta(){
+        const content = document.getElementById("tarjeta-content");
+        if(!tarjetaId){
+            content.innerHTML = `<div class="overlay-links-block"><p class="muted">Todavía no tenés una tarjeta de streamer vinculada a tu cuenta. Escribile al staff de VORANIX para que te la vinculen desde el panel de administración.</p></div>`;
+            return;
+        }
+        const d = tarjetaData || {};
+        const cerradas = tarjetaTransmisiones.filter(t => t.fin);
+        const horasTotales = Math.round((cerradas.reduce((s, t) => s + (t.duracionMinutos || 0), 0) / 60) * 10) / 10;
+        const streamsCompletados = cerradas.filter(t => (t.duracionMinutos || 0) >= 10).length;
+        const seguidoresTotal = [d.seguidoresTwitch, d.suscriptoresYoutube, d.seguidoresKick, d.seguidoresTiktok].filter(n => Number.isFinite(n)).reduce((s, n) => s + n, 0);
+        const raidsRecibidos = d.raidsRecibidos || 0;
+        const racha = calcularRacha(tarjetaTransmisiones);
+
+        const xpTotal = calcularXP(horasTotales, streamsCompletados, seguidoresTotal, raidsRecibidos);
+        const nivelInfo = calcularNivel(xpTotal);
+        const ctx = { horasTotales, streamsCompletados, raidsRecibidos, racha, nivel: nivelInfo.nivel };
+
+        content.innerHTML = `
+${renderGreeting(d)}
+${renderCorreoCard()}
+${renderStatsCards(nivelInfo, seguidoresTotal)}
+${renderUltimaSesion()}
+${renderBandeja()}
+${renderActividad()}
+${renderAlcance()}
+<div class="overlay-links-block">
+    <h2 class="overlay-links-title"><i class="fas fa-trophy"></i> Tus rangos de trayectoria</h2>
+    <p class="muted overlay-links-sub">Cada rango avanza desde Bronce hasta Challenger con actividad real, nada de puntajes inventados.</p>
+    <div class="logros-grid">${renderLogros(ctx)}</div>
+</div>
+${renderIdentidad(d)}
+${renderCanales(d)}
+${renderCanalesSecundarios(d)}
+${renderAvatarBanner(d)}
+${renderCambiarPassword()}`;
+
+        wireTarjetaForms();
+    }
+
+    function cargarBandeja(){
+        if(unsubBandeja){ unsubBandeja(); unsubBandeja = null; }
+        bandejaMensajes = [];
+        if(!tarjetaId) return;
+        unsubBandeja = onSnapshot(query(collection(db, "mensajesPerfil"), where("streamerId", "==", tarjetaId)), (snapshot) => {
+            bandejaMensajes = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+                .slice(0, 30);
+            renderTarjeta();
+        }, (error) => console.error(error));
     }
 
     function loadMiTarjeta(){
         unsubTarjeta = onSnapshot(query(collection(db, "streamers"), where("uid", "==", currentUser.uid)), async (snapshot) => {
             const docSnap = snapshot.docs[0];
+            const tarjetaIdCambio = tarjetaId !== (docSnap ? docSnap.id : null);
             tarjetaId = docSnap ? docSnap.id : null;
             tarjetaData = docSnap ? docSnap.data() : null;
             tarjetaTransmisiones = [];
+            tarjetaVisitas = [];
+            ultimaSesionChat = null;
             if(tarjetaId){
                 try{
-                    const sieteDiasAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                    const transSnap = await getDocs(query(collection(db, "streamers", tarjetaId, "transmisiones"), where("inicio", ">=", sieteDiasAtras)));
+                    // Todo el historial, no solo una ventana — hace falta para
+                    // racha/logros/nivel (que son de por vida) y para poder
+                    // alternar 7/30 días en Actividad sin volver a pedir nada.
+                    // Es una colección chica por streamer, no hace falta paginar.
+                    const transSnap = await getDocs(collection(db, "streamers", tarjetaId, "transmisiones"));
                     tarjetaTransmisiones = transSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                    const treintaDiasAtras = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                    const visitasSnap = await getDocs(collection(db, "streamers", tarjetaId, "visitas"));
+                    tarjetaVisitas = visitasSnap.docs
+                        .map(d => ({ fecha: d.id, total: d.data().total || 0 }))
+                        .filter(v => new Date(v.fecha) >= treintaDiasAtras);
+
+                    const cerradasOrdenadas = tarjetaTransmisiones.filter(t => t.fin).sort((a, b) => (b.fin?.toMillis?.() || 0) - (a.fin?.toMillis?.() || 0));
+                    if(cerradasOrdenadas.length){
+                        const ultima = cerradasOrdenadas[0];
+                        const chattersSnap = await getDocs(collection(db, "streamers", tarjetaId, "transmisiones", ultima.id, "chatters"));
+                        const totalMensajes = chattersSnap.docs.reduce((s, d) => s + (d.data().mensajes || 0), 0);
+                        ultimaSesionChat = { sesion: ultima, personas: chattersSnap.size, mensajes: totalMensajes };
+                    }
                 }catch(error){
                     console.error(error);
                 }
             }
+            if(tarjetaIdCambio) cargarBandeja();
             renderTarjeta();
         }, (error) => {
             console.error(error);
