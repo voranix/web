@@ -9,7 +9,7 @@ const TIPO_ICONOS = {
     liga: "fa-shield-halved"
 };
 
-const TIPO_LABELS = {
+export const TIPO_LABELS = {
     torneo: "Torneo",
     scrim: "Scrim",
     entrenamiento: "Práctica",

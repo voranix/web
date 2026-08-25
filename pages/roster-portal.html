@@ -53,6 +53,16 @@
             margin-bottom:18px; padding-left:14px; border-left:3px solid var(--morado);
         }
         .roster-portal-section h2 i{ color:var(--naranja); font-size:.95em; }
+        .actividad-section-head{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 18px; margin-bottom:18px; }
+        .actividad-section-head h2{ margin-bottom:0; }
+        .actividad-filtros{ display:flex; flex-wrap:wrap; gap:8px; }
+        .actividad-filtro-btn{
+            background:rgba(255,255,255,0.03); border:1px solid var(--border); color:var(--gris);
+            font-family:inherit; font-size:11.5px; font-weight:700; letter-spacing:.4px; text-transform:uppercase;
+            padding:7px 14px; border-radius:20px; cursor:pointer; transition:var(--ease);
+        }
+        .actividad-filtro-btn:hover{ color:#fff; border-color:var(--border-accent); }
+        .actividad-filtro-btn.active{ color:#fff; background:var(--grad); border-color:transparent; }
         .mini-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:16px; }
         .player-card{
             background:var(--grad-subtle); border:1px solid var(--border); border-top:3px solid var(--morado);
@@ -176,16 +186,19 @@
     <div id="roster-stats-strip" class="roster-stats-strip hidden"></div>
 
     <div class="roster-portal-section">
-        <h2><i class="fas fa-calendar-day"></i> Actividad del equipo</h2>
-        <div id="actividad-list">
-            <p class="loading">Cargando actividad...</p>
+        <h2><i class="fas fa-users"></i> Tu equipo</h2>
+        <div id="equipo-grid" class="mini-grid">
+            <p class="loading">Cargando equipo...</p>
         </div>
     </div>
 
     <div class="roster-portal-section">
-        <h2><i class="fas fa-users"></i> Tu equipo</h2>
-        <div id="equipo-grid" class="mini-grid">
-            <p class="loading">Cargando equipo...</p>
+        <div class="actividad-section-head">
+            <h2><i class="fas fa-calendar-day"></i> Actividad del equipo</h2>
+            <div id="actividad-filtros" class="actividad-filtros hidden"></div>
+        </div>
+        <div id="actividad-list">
+            <p class="loading">Cargando actividad...</p>
         </div>
     </div>
 </section>
@@ -253,7 +266,7 @@
         getDocs
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { auth, db, escapeHtml } from "/assets/js/firebase-config.js";
-    import { renderActividadList, getProximoEvento, formatRango } from "/assets/js/roster-activity.js";
+    import { renderActividadList, getProximoEvento, formatRango, TIPO_LABELS } from "/assets/js/roster-activity.js";
     import { initNotificationBell } from "/assets/js/notificaciones.js";
 
     // Habilita "Agregar a pantalla de inicio" (PWA) y deja el service
@@ -272,6 +285,7 @@
     const roleBadge = document.getElementById("role-badge");
     const equipoSubtitle = document.getElementById("equipo-subtitle");
     const actividadList = document.getElementById("actividad-list");
+    const actividadFiltros = document.getElementById("actividad-filtros");
     const equipoGrid = document.getElementById("equipo-grid");
     const statsStrip = document.getElementById("roster-stats-strip");
     const notifBell = initNotificationBell({
@@ -286,7 +300,36 @@
     let currentPlayers = [];
     let currentStats = {};
     let currentItems = [];
+    let currentFiltroTipo = "todos";
     let currentProfile = null;
+
+    // Botones "Todos" + uno por cada tipo que realmente aparece en la
+    // actividad del equipo (no tiene sentido mostrar un filtro de "Liga" si
+    // este equipo nunca tuvo un evento de ese tipo).
+    function renderActividadFiltros(){
+        const tipos = [...new Set(currentItems.map(item => item.tipo).filter(Boolean))];
+        if(tipos.length < 2){
+            actividadFiltros.classList.add("hidden");
+            actividadFiltros.innerHTML = "";
+            return;
+        }
+        actividadFiltros.classList.remove("hidden");
+        const opciones = [["todos", "Todos"], ...tipos.map(t => [t, TIPO_LABELS[t] || t])];
+        actividadFiltros.innerHTML = opciones.map(([key, label]) => `
+<button type="button" class="actividad-filtro-btn${currentFiltroTipo === key ? " active" : ""}" data-filtro="${escapeHtml(key)}">${escapeHtml(label)}</button>`).join("");
+        actividadFiltros.querySelectorAll("[data-filtro]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                currentFiltroTipo = btn.dataset.filtro;
+                renderActividadFiltros();
+                renderActividadFiltrada();
+            });
+        });
+    }
+
+    function renderActividadFiltrada(){
+        const items = currentFiltroTipo === "todos" ? currentItems : currentItems.filter(item => item.tipo === currentFiltroTipo);
+        actividadList.innerHTML = renderActividadList(items);
+    }
 
     function stopListeners(){
         if(unsubActividad) unsubActividad();
@@ -458,6 +501,7 @@
             actividadList.innerHTML = `<p class="loading">Tu cuenta no tiene un equipo asignado todavía.</p>`;
             return;
         }
+        currentFiltroTipo = "todos";
         unsubActividad = onSnapshot(
             query(collection(db, "equipoActividad"), where("juego", "==", juego)),
             (snapshot) => {
@@ -465,7 +509,8 @@
                     .map(d => d.data())
                     .filter(item => item.visiblePortal === true);
                 currentItems = items;
-                actividadList.innerHTML = renderActividadList(items);
+                renderActividadFiltros();
+                renderActividadFiltrada();
                 currentStats = computeStats(items);
                 renderEquipoGrid();
                 renderStatsStrip();
