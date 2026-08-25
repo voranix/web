@@ -1029,6 +1029,22 @@ exports.twitchEventSubWebhook = onRequest(
                             viewers: Number(event.viewers) || 0,
                             receivedAt: admin.firestore.FieldValue.serverTimestamp()
                         });
+                        // Para el Sello de Audiencia Real: si hay una sesión medida
+                        // abierta ahora mismo, se marca cuándo fue el último raid —
+                        // así se puede excluir a quienes llegan en la oleada del
+                        // "primera vez que aparece" de esa sesión (ver
+                        // registrarChatterEnSesion). No es una prueba aparte, solo
+                        // evita contar como "audiencia nueva" a gente que llegó
+                        // porque otro streamer los mandó, no porque los buscó.
+                        const encontradoRaid = await buscarStreamerPorTwitchLogin(canal);
+                        if (encontradoRaid) {
+                            const transmisionesRef = admin.firestore()
+                                .collection(encontradoRaid.coleccion).doc(encontradoRaid.id).collection("transmisiones");
+                            const abiertaSnap = await transmisionesRef.where("fin", "==", null).limit(1).get();
+                            if (!abiertaSnap.empty) {
+                                await abiertaSnap.docs[0].ref.update({ ultimoRaidEn: admin.firestore.FieldValue.serverTimestamp() });
+                            }
+                        }
                         logger.info(`twitchEventSubWebhook: raid registrado para ${canal}`);
                     }
                 } else if (subscription?.type === "stream.online" && event) {
@@ -1127,6 +1143,84 @@ async function registrarFinTransmision(event) {
     const duracionMinutos = inicio ? Math.round((fin.toMillis() - inicio.toMillis()) / 60000) : null;
     await masReciente.ref.update({ fin, duracionMinutos });
     logger.info(`registrarFinTransmision: transmision cerrada para ${event.broadcaster_user_login}`);
+}
+
+// ---------------------------------------------------------------------
+// Sello de Audiencia Real — fase 1, solo Twitch.
+//
+// Se cuenta, por sesión medida (transmisiones/{id}), cuántos mensajes
+// mandó cada persona y cuándo fue la primera y la última vez — NUNCA el
+// texto de lo que escribió. Alcanza para las pruebas de retorno y de
+// cruce entre canales sin guardar contenido de nadie. Corre desde que se
+// activó esto (ver SELLO_AUDIENCIA_DESDE en calcularSellosAudiencia),
+// no hay forma de reconstruir chat de antes.
+// ---------------------------------------------------------------------
+
+// Antigüedad de cuenta (una de las 4 pruebas, solo disponible en Twitch):
+// se consulta una sola vez por persona (no en cada mensaje) y se cachea
+// para siempre — la fecha de creación de una cuenta no cambia.
+async function cachearCreacionCuentaTwitch(db, chatterId) {
+    const ref = db.doc(`twitchUsuariosCache/${chatterId}`);
+    const snap = await ref.get();
+    if (snap.exists) return;
+    try {
+        const clientId = TWITCH_CLIENT_ID.value();
+        const clientSecret = TWITCH_CLIENT_SECRET.value();
+        const token = await getTwitchToken(clientId, clientSecret);
+        const res = await fetch(`https://api.twitch.tv/helix/users?id=${encodeURIComponent(chatterId)}`, {
+            headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const creadoEl = data.data?.[0]?.created_at;
+        if (!creadoEl) return;
+        await ref.set({ creadoEl, cacheadoEl: admin.firestore.FieldValue.serverTimestamp() });
+    } catch (err) {
+        logger.warn(`cachearCreacionCuentaTwitch[${chatterId}]: fallo`, err.message);
+    }
+}
+
+// Se llama en CADA mensaje de chat (no solo los que disparan un comando).
+// Si no hay una sesión medida abierta para ese streamer (no está en vivo,
+// o no es un streamer del directorio), no hace nada.
+async function registrarChatterEnSesion(db, encontrado, chatterId, chatterLogin) {
+    if (!encontrado || !chatterId) return;
+    const transmisionesRef = db.collection(encontrado.coleccion).doc(encontrado.id).collection("transmisiones");
+    const abiertaSnap = await transmisionesRef.where("fin", "==", null).limit(1).get();
+    if (abiertaSnap.empty) return;
+    const sesionDoc = abiertaSnap.docs[0];
+    const chatterRef = sesionDoc.ref.collection("chatters").doc(chatterId);
+    const chatterSnap = await chatterRef.get();
+    const ahora = admin.firestore.FieldValue.serverTimestamp();
+
+    if (chatterSnap.exists) {
+        await chatterRef.update({ mensajes: admin.firestore.FieldValue.increment(1), ultimaVez: ahora });
+        return;
+    }
+
+    // Primera vez que esta persona escribe en ESTA sesión: si fue justo
+    // después de un raid, se marca (no cuenta como "apareció" para el piso
+    // de evidencia de esta sesión puntual — pero si vuelve en otra sesión,
+    // ahí sí cuenta, que es lo justo).
+    const ultimoRaid = sesionDoc.data().ultimoRaidEn?.toMillis?.() || 0;
+    const llegoPorRaid = ultimoRaid > 0 && (Date.now() - ultimoRaid) < 5 * 60 * 1000;
+    await chatterRef.set({
+        login: chatterLogin || "", mensajes: 1,
+        primeraVez: ahora, ultimaVez: ahora, llegoPorRaid
+    });
+
+    // Índice invertido para la prueba de "también anda en otros canales":
+    // guardar en qué streamers del directorio se vio a esta persona, sin
+    // tener que escanear las sesiones de todos los demás streamers cada
+    // vez que se calcula un sello.
+    await db.doc(`chatterCanales/${chatterId}`).set({
+        canales: admin.firestore.FieldValue.arrayUnion(encontrado.id)
+    }, { merge: true });
+
+    // Va después de responderle a Twitch (el webhook ya mandó su 200 antes
+    // de llegar acá), así que no hay apuro, pero si no se espera acá la
+    // función puede cortarse antes de que termine de escribir el caché.
+    await cachearCreacionCuentaTwitch(db, chatterId);
 }
 
 exports.sincronizarRaidWebhooks = onSchedule(
@@ -1936,6 +2030,21 @@ exports.twitchChatWebhook = onRequest(
             const canal = String(event?.broadcaster_user_login || "").toLowerCase();
 
             const db = admin.firestore();
+
+            // Sello de Audiencia Real: corre en TODOS los mensajes, no solo
+            // los que disparan un comando — aparte del resto de esta función,
+            // si falla acá nunca debe frenar ni afectar la respuesta del bot.
+            try {
+                const chatterId = String(event?.chatter_user_id || "");
+                const chatterLogin = String(event?.chatter_user_login || "");
+                if (chatterId && canal) {
+                    const encontrado = await buscarStreamerPorTwitchLogin(canal);
+                    await registrarChatterEnSesion(db, encontrado, chatterId, chatterLogin);
+                }
+            } catch (err) {
+                logger.warn("twitchChatWebhook: fallo registrando chatter para el sello de audiencia", err.message);
+            }
+
             const comando = await buscarComandoCoincidente(db, texto, canal);
             if (!comando) return;
 
@@ -2047,6 +2156,128 @@ exports.sincronizarChatWebhooks = onSchedule(
             }
         }
         logger.info(`sincronizarChatWebhooks: ${creadas} creadas, ${existentes} ya existían, ${fallidas} fallidas`);
+    }
+);
+
+// Desde cuándo hay historial de chat medido (ver el comentario grande más
+// arriba, junto a registrarChatterEnSesion) — ninguna sesión de antes de
+// esta fecha tiene su subcolección "chatters" poblada, así que no deben
+// contar para el piso de evidencia ni para ninguna de las pruebas.
+const SELLO_AUDIENCIA_DESDE = Date.parse("2026-08-25T00:00:00Z");
+const SELLO_PISO_TRANSMISIONES = 5;
+const SELLO_PISO_HORAS = 10;
+const SELLO_PISO_PERSONAS = 20;
+const SELLO_UMBRAL_RETORNO = 0.15;
+const SELLO_UMBRAL_CUENTAS_NUEVAS = 0.10;
+const SELLO_UMBRAL_OTROS_CANALES = 0.05;
+const SELLO_MINIMO_CUENTAS_CON_FECHA = 25;
+const SELLO_DURACION_MS = 90 * 24 * 60 * 60 * 1000;
+
+async function evaluarSelloStreamer(db, coleccion, streamer) {
+    const transmisionesRef = db.collection(coleccion).doc(streamer.id).collection("transmisiones");
+    // Sin where(inicio>=) a propósito (mismo motivo que el resto de este
+    // archivo): combinarlo con fin!=null pediría un índice compuesto. Se
+    // filtra en memoria, nunca son muchas transmisiones por streamer.
+    const cerradasSnap = await transmisionesRef.where("fin", "!=", null).get();
+    const sesiones = cerradasSnap.docs.filter(d => (d.data().inicio?.toMillis?.() || 0) >= SELLO_AUDIENCIA_DESDE);
+
+    let horasTotales = 0;
+    const aparicionesPorChatter = new Map(); // chatterId -> cantidad de sesiones en las que apareció (sin contar llegadas por raid)
+    let sesionesConDatos = 0;
+
+    for (const sesionDoc of sesiones) {
+        const chattersSnap = await sesionDoc.ref.collection("chatters").get();
+        if (chattersSnap.empty) continue; // sesión sin chat medido (previa a esta función, o sin nadie escribiendo)
+        sesionesConDatos++;
+        horasTotales += (sesionDoc.data().duracionMinutos || 0) / 60;
+        chattersSnap.docs.forEach(cDoc => {
+            if (cDoc.data().llegoPorRaid) return;
+            aparicionesPorChatter.set(cDoc.id, (aparicionesPorChatter.get(cDoc.id) || 0) + 1);
+        });
+    }
+
+    const personasDistintas = aparicionesPorChatter.size;
+    if (sesionesConDatos < SELLO_PISO_TRANSMISIONES || horasTotales < SELLO_PISO_HORAS || personasDistintas < SELLO_PISO_PERSONAS) {
+        return; // no llega al piso de evidencia — ni se calculan las pruebas
+    }
+
+    // Prueba 1: gente que vuelve (≥15%, apareció en 3+ sesiones distintas).
+    const conRetorno = [...aparicionesPorChatter.values()].filter(n => n >= 3).length;
+    const pctRetorno = conRetorno / personasDistintas;
+    if (pctRetorno < SELLO_UMBRAL_RETORNO) return;
+
+    // Prueba 2: cuentas recién creadas (≤10%, solo Twitch, y solo si hay al
+    // menos 25 cuentas con fecha conocida en el caché — si no, esta prueba
+    // simplemente no se rinde, no cuenta en contra).
+    let pctCuentasNuevas = null;
+    const idsConFecha = [];
+    for (const chatterId of aparicionesPorChatter.keys()) {
+        const cacheSnap = await db.doc(`twitchUsuariosCache/${chatterId}`).get();
+        if (cacheSnap.exists && cacheSnap.data().creadoEl) idsConFecha.push(cacheSnap.data().creadoEl);
+    }
+    if (idsConFecha.length >= SELLO_MINIMO_CUENTAS_CON_FECHA) {
+        const hace30dias = Date.now() - 30 * 24 * 60 * 60 * 1000;
+        const nuevas = idsConFecha.filter(fecha => Date.parse(fecha) > hace30dias).length;
+        pctCuentasNuevas = nuevas / idsConFecha.length;
+        if (pctCuentasNuevas > SELLO_UMBRAL_CUENTAS_NUEVAS) return;
+    }
+
+    // Prueba 3: también andan en otros canales del directorio (≥5%) — sale
+    // del índice invertido chatterCanales/{id}, no hace falta escanear las
+    // sesiones de todos los demás streamers acá.
+    let enOtroCanal = 0;
+    for (const chatterId of aparicionesPorChatter.keys()) {
+        const canalesSnap = await db.doc(`chatterCanales/${chatterId}`).get();
+        const canales = canalesSnap.exists ? (canalesSnap.data().canales || []) : [];
+        if (canales.some(id => id !== streamer.id)) enOtroCanal++;
+    }
+    const pctOtrosCanales = enOtroCanal / personasDistintas;
+    if (pctOtrosCanales < SELLO_UMBRAL_OTROS_CANALES) return;
+
+    // Pasó las cuatro pruebas (o las que le aplican): se congela el sello.
+    // No se recalcula nunca — si mañana cambian los cortes, el sello de hoy
+    // sigue diciendo con qué regla se dio (reglas: "v1").
+    const ahora = Date.now();
+    await db.doc(`sellos/${streamer.id}`).set({
+        coleccion,
+        otorgadoEl: admin.firestore.Timestamp.fromMillis(ahora),
+        expiraEl: admin.firestore.Timestamp.fromMillis(ahora + SELLO_DURACION_MS),
+        reglas: "v1",
+        numeros: {
+            retorno: Math.round(pctRetorno * 1000) / 1000,
+            cuentasNuevas: pctCuentasNuevas === null ? null : Math.round(pctCuentasNuevas * 1000) / 1000,
+            otrosCanales: Math.round(pctOtrosCanales * 1000) / 1000,
+            evidencia: {
+                transmisiones: sesionesConDatos,
+                horas: Math.round(horasTotales * 10) / 10,
+                personas: personasDistintas
+            }
+        }
+    });
+    logger.info(`evaluarSelloStreamer: sello otorgado a ${coleccion}/${streamer.id}`);
+}
+
+// Corre una vez por día: recalcula para cada streamer con Twitch conectado
+// si corresponde otorgar (o renovar) el Sello de Audiencia Real. No hay
+// intervención de staff acá a propósito — nadie de VORANIX decide quién lo
+// tiene, sale solo de la fórmula.
+exports.calcularSellosAudiencia = onSchedule(
+    { schedule: "every day 06:00", timeZone: "America/Santiago" },
+    async () => {
+        const db = admin.firestore();
+        for (const coleccion of ["streamers", "influencers"]) {
+            const snapshot = await db.collection(coleccion).get();
+            const streamers = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(s => s.activo !== false && s.twitch);
+            for (const streamer of streamers) {
+                try {
+                    await evaluarSelloStreamer(db, coleccion, streamer);
+                } catch (err) {
+                    logger.error(`calcularSellosAudiencia: fallo con ${coleccion}/${streamer.id}`, err);
+                }
+            }
+        }
     }
 );
 

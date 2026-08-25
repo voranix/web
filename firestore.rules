@@ -91,6 +91,16 @@ service cloud.firestore {
         allow read: if isStaff() ||
           (signedIn() && get(/databases/$(database)/documents/streamers/$(doc)).data.uid == request.auth.uid);
         allow write: if false;
+
+        // Conteo de mensajes por persona (Sello de Audiencia Real) — nunca
+        // el texto de lo que escribió, solo cuántos mensajes y cuándo.
+        // Mismo criterio de lectura que la sesión misma; lo escribe solo
+        // el webhook de chat de Twitch con el Admin SDK.
+        match /chatters/{chatterId} {
+          allow read: if isStaff() ||
+            (signedIn() && get(/databases/$(database)/documents/streamers/$(doc)).data.uid == request.auth.uid);
+          allow write: if false;
+        }
       }
 
       // El email de contacto vive acá, no en el doc público (que tiene
@@ -266,6 +276,21 @@ service cloud.firestore {
     match /raidAlerts/{doc} {
       allow read: if true;
       allow write: if false;
+    }
+
+    // Sello de Audiencia Real: el sello en sí es público (es lo que se
+    // muestra en la tarjeta del streamer), pero todo lo que se usa para
+    // calcularlo es exclusivo del Admin SDK — ni siquiera staff lo lee
+    // desde el cliente, no hay ninguna vista que lo necesite.
+    match /sellos/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /twitchUsuariosCache/{doc} {
+      allow read, write: if false;
+    }
+    match /chatterCanales/{doc} {
+      allow read, write: if false;
     }
 
     // Qué canales autorizaron al bot: los docs por canal (broadcasterId,
