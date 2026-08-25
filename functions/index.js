@@ -291,6 +291,10 @@ const KICK_CLIENT_ID = defineSecret("KICK_CLIENT_ID");
 const KICK_CLIENT_SECRET = defineSecret("KICK_CLIENT_SECRET");
 const KICK_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthCallback";
 
+const TIKTOK_CLIENT_ID = defineSecret("TIKTOK_CLIENT_ID");
+const TIKTOK_CLIENT_SECRET = defineSecret("TIKTOK_CLIENT_SECRET");
+const TIKTOK_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthCallback";
+
 // Cache en memoria del token de Twitch entre invocaciones (dura ~60 días,
 // no hace falta pedirlo cada 5 minutos).
 let twitchTokenCache = { token: null, expiresAt: 0 };
@@ -503,10 +507,55 @@ async function obtenerSeguidoresKick(slug, clientId, clientSecret) {
     }
 }
 
+// Seguidores de TikTok, con el token del propio dueño de la cuenta.
+async function obtenerSeguidoresTiktok(openId, clientId, clientSecret) {
+    const tokenRef = admin.firestore().doc(`tiktokAuth/${openId}/privado/tokens`);
+    const tokenSnap = await tokenRef.get();
+    if (!tokenSnap.exists) return null;
+    let { accessToken, refreshToken } = tokenSnap.data();
+    if (!accessToken) return null;
+
+    const pedir = (token) => fetch("https://open.tiktokapis.com/v2/user/info/?fields=follower_count", {
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    try {
+        let res = await pedir(accessToken);
+        if (res.status === 401 && refreshToken) {
+            const refreshRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_key: clientId, client_secret: clientSecret,
+                    grant_type: "refresh_token", refresh_token: refreshToken
+                })
+            });
+            const refreshData = await refreshRes.json();
+            if (!refreshData.access_token) return null;
+            accessToken = refreshData.access_token;
+            refreshToken = refreshData.refresh_token || refreshToken;
+            await tokenRef.set({
+                accessToken, refreshToken, updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            res = await pedir(accessToken);
+        }
+        if (!res.ok) return null;
+        const data = await res.json();
+        const count = Number(data.data?.user?.follower_count);
+        return Number.isFinite(count) ? count : null;
+    } catch (err) {
+        logger.warn(`obtenerSeguidoresTiktok: fallo para ${openId}`, err.message);
+        return null;
+    }
+}
+
 exports.actualizarEnVivo = onSchedule(
     {
         schedule: "every 5 minutes",
-        secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET, KICK_CLIENT_ID, KICK_CLIENT_SECRET]
+        secrets: [
+            TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET,
+            KICK_CLIENT_ID, KICK_CLIENT_SECRET, TIKTOK_CLIENT_ID, TIKTOK_CLIENT_SECRET
+        ]
     },
     async () => {
         const db = admin.firestore();
@@ -516,6 +565,8 @@ exports.actualizarEnVivo = onSchedule(
         const youtubeClientSecret = YOUTUBE_CLIENT_SECRET.value();
         const kickClientId = KICK_CLIENT_ID.value();
         const kickClientSecret = KICK_CLIENT_SECRET.value();
+        const tiktokClientId = TIKTOK_CLIENT_ID.value();
+        const tiktokClientSecret = TIKTOK_CLIENT_SECRET.value();
 
         for (const coleccion of ["streamers", "influencers"]) {
             const snapshot = await db.collection(coleccion).get();
@@ -586,6 +637,7 @@ exports.actualizarEnVivo = onSchedule(
                 // / kickSlug), que es donde queda el dato verificado por OAuth.
                 let suscriptoresYoutube = null;
                 let seguidoresKick = null;
+                let seguidoresTiktok = null;
                 if (coleccion === "streamers" && item.uid) {
                     try {
                         const userSnap = await db.collection("users").doc(item.uid).get();
@@ -596,14 +648,18 @@ exports.actualizarEnVivo = onSchedule(
                         if (userData?.kickSlug && kickClientId && kickClientSecret) {
                             seguidoresKick = await obtenerSeguidoresKick(userData.kickSlug, kickClientId, kickClientSecret);
                         }
+                        if (userData?.tiktokOpenId && tiktokClientId && tiktokClientSecret) {
+                            seguidoresTiktok = await obtenerSeguidoresTiktok(userData.tiktokOpenId, tiktokClientId, tiktokClientSecret);
+                        }
                     } catch (err) {
                         logger.warn(`actualizarEnVivo: fallo consultando suscriptores/seguidores de ${item.uid}`, err.message);
                     }
                 }
                 const debeActualizarYoutube = suscriptoresYoutube !== null && suscriptoresYoutube !== (item.suscriptoresYoutube ?? null);
                 const debeActualizarKick = seguidoresKick !== null && seguidoresKick !== (item.seguidoresKick ?? null);
+                const debeActualizarTiktok = seguidoresTiktok !== null && seguidoresTiktok !== (item.seguidoresTiktok ?? null);
 
-                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarYoutube || debeActualizarKick) {
+                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarYoutube || debeActualizarKick || debeActualizarTiktok) {
                     const updateData = { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual };
                     if (debeActualizarJuegos) {
                         const juegosVistos = Array.isArray(item.juegosVistos) ? item.juegosVistos.map(j => ({ ...j })) : [];
@@ -621,6 +677,9 @@ exports.actualizarEnVivo = onSchedule(
                     }
                     if (debeActualizarKick) {
                         updateData.seguidoresKick = seguidoresKick;
+                    }
+                    if (debeActualizarTiktok) {
+                        updateData.seguidoresTiktok = seguidoresTiktok;
                     }
                     batch.update(db.collection(coleccion).doc(item.id), updateData);
                     cambios++;
@@ -951,6 +1010,17 @@ exports.generarEstadoKickCanal = onCall(
         }
         const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
         return { state: `kick:${request.auth.uid}:${firma}` };
+    }
+);
+
+exports.generarEstadoTiktokCanal = onCall(
+    { secrets: [TWITCH_CLIENT_SECRET] },
+    (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores para conectar tu cuenta de TikTok.");
+        }
+        const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
+        return { state: `tiktok:${request.auth.uid}:${firma}` };
     }
 );
 
@@ -1293,6 +1363,114 @@ exports.kickAuthCallback = onRequest(
             res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${slug}</b> de Kick. Tus seguidores van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
         } catch (err) {
             logger.error("kickAuthCallback: fallo", err);
+            res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");
+        }
+    }
+);
+
+// ---------------------------------------------------------------------
+// Conexión de cuenta de TikTok (Login Kit): mismo patrón OAuth 2.1 + PKCE
+// que Kick de acá arriba. TikTok usa "client_key" en vez de "client_id" en
+// sus parámetros — no es un typo, es como lo pide su API.
+// ---------------------------------------------------------------------
+
+const TIKTOK_AUTH_BASE = "https://www.tiktok.com/v2/auth/authorize/";
+const TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
+
+exports.tiktokAuthStart = onRequest(
+    { secrets: [TIKTOK_CLIENT_ID, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const state = String(req.query.state || "").trim();
+        if (!state.startsWith("tiktok:")) {
+            res.status(400).send("Este link para conectar tu cuenta es inválido o venció. Volvé al Portal Creadores y generalo de nuevo.");
+            return;
+        }
+        const { verifier, challenge } = generarPkce();
+        await admin.firestore().doc(`tiktokPkce/${state}`).set({
+            verifier, createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        const params = new URLSearchParams({
+            client_key: TIKTOK_CLIENT_ID.value(),
+            redirect_uri: TIKTOK_REDIRECT_URI,
+            response_type: "code",
+            scope: "user.info.basic,user.info.stats",
+            state,
+            code_challenge: challenge,
+            code_challenge_method: "S256"
+        });
+        res.redirect(`${TIKTOK_AUTH_BASE}?${params}`);
+    }
+);
+
+exports.tiktokAuthCallback = onRequest(
+    { secrets: [TIKTOK_CLIENT_ID, TIKTOK_CLIENT_SECRET, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const { code, state, error, error_description: errorDescription } = req.query;
+        if (error) {
+            res.status(400).send(`No se pudo autorizar: ${errorDescription || error}`);
+            return;
+        }
+        try {
+            const clientId = TIKTOK_CLIENT_ID.value();
+            const clientSecret = TIKTOK_CLIENT_SECRET.value();
+
+            const partes = String(state || "").split(":");
+            if (partes.length !== 3 || partes[0] !== "tiktok" || firmarEstadoCanal(partes[1], TWITCH_CLIENT_SECRET.value()) !== partes[2]) {
+                res.status(400).send("El link para conectar tu cuenta venció o no es válido. Volvé al Portal Creadores y generalo de nuevo.");
+                return;
+            }
+            const uid = partes[1];
+
+            const pkceRef = admin.firestore().doc(`tiktokPkce/${state}`);
+            const pkceSnap = await pkceRef.get();
+            if (!pkceSnap.exists) throw new Error("Venció el intento de conexión (PKCE), volvé a intentar.");
+            const { verifier } = pkceSnap.data();
+            await pkceRef.delete();
+
+            const tokenRes = await fetch(TIKTOK_TOKEN_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_key: clientId, client_secret: clientSecret, code,
+                    grant_type: "authorization_code", redirect_uri: TIKTOK_REDIRECT_URI,
+                    code_verifier: verifier
+                })
+            });
+            const tokenData = await tokenRes.json();
+            if (!tokenData.access_token || !tokenData.open_id) throw new Error(JSON.stringify(tokenData));
+
+            const userRes = await fetch("https://open.tiktokapis.com/v2/user/info/?fields=display_name", {
+                headers: { "Authorization": `Bearer ${tokenData.access_token}` }
+            });
+            const userData = await userRes.json();
+            const displayName = userData.data?.user?.display_name || "";
+
+            const openId = tokenData.open_id;
+
+            const duplicados = await admin.firestore().collection("users")
+                .where("tiktokOpenId", "==", openId).get();
+            const deOtraCuenta = duplicados.docs.find(docSnap => docSnap.id !== uid);
+            if (deOtraCuenta) {
+                res.status(409).send(`Esta cuenta de TikTok ya está conectada a otra cuenta de VORANIX. Si esto es un error, avisale al equipo.`);
+                return;
+            }
+
+            await admin.firestore().doc(`tiktokAuth/${openId}`).set({
+                openId, displayName,
+                authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`tiktokAuth/${openId}/privado/tokens`).set({
+                accessToken: tokenData.access_token, refreshToken: tokenData.refresh_token,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`users/${uid}`).set({
+                tiktokOpenId: openId
+            }, { merge: true });
+
+            res.send(`<h2>¡Listo!</h2><p>Conectaste tu cuenta <b>${escapeHtml(displayName) || "de TikTok"}</b>. Tus seguidores van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
+        } catch (err) {
+            logger.error("tiktokAuthCallback: fallo", err);
             res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");
         }
     }

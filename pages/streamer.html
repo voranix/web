@@ -189,7 +189,8 @@ function renderStreamer(item) {
     const seguidoresChips = [
         Number.isFinite(item.seguidoresTwitch) ? { icon: "fab fa-twitch", n: item.seguidoresTwitch } : null,
         Number.isFinite(item.suscriptoresYoutube) ? { icon: "fab fa-youtube", n: item.suscriptoresYoutube } : null,
-        Number.isFinite(item.seguidoresKick) ? { icon: "fas fa-bolt", n: item.seguidoresKick } : null
+        Number.isFinite(item.seguidoresKick) ? { icon: "fas fa-bolt", n: item.seguidoresKick } : null,
+        Number.isFinite(item.seguidoresTiktok) ? { icon: "fab fa-tiktok", n: item.seguidoresTiktok } : null
     ].filter(Boolean).map(s => `<span class="meta-chip"><i class="${s.icon}"></i> ${formatViewers(s.n)} seguidores</span>`).join("");
 
     const redes = REDES

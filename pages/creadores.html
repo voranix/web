@@ -278,6 +278,12 @@
         </div>
 
         <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fab fa-tiktok"></i> Tu cuenta de TikTok</h2>
+            <p class="muted overlay-links-sub">Conectala (OAuth, verificado por TikTok) para mostrar tu conteo de seguidores en tu tarjeta pública.</p>
+            <div id="tiktok-status-content"><p class="loading">Cargando...</p></div>
+        </div>
+
+        <div class="overlay-links-block">
             <h2 class="overlay-links-title"><i class="fas fa-desktop"></i> Tu overlay para streams</h2>
             <p class="muted overlay-links-sub" id="overlay-links-sub">Pegá estos links como Fuente de Navegador en OBS (Agregar → Fuente de navegador → URL).</p>
             <div id="overlay-links-content"></div>
@@ -478,6 +484,7 @@
     const TWITCH_BOT_AUTH_CANAL_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/twitchBotAuthStart?tipo=canal";
     const YOUTUBE_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/youtubeAuthStart";
     const KICK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthStart";
+    const TIKTOK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthStart";
 
     const CATEGORIAS = {
         torneo: "Torneo",
@@ -561,6 +568,7 @@
         renderTwitchStatus(profile);
         renderYoutubeStatus(profile);
         renderKickStatus(profile);
+        renderTiktokStatus(profile);
         renderMisComandos(profile);
         renderOverlayEditor(profile);
         renderStatsStrip();
@@ -582,6 +590,7 @@
             renderTwitchStatus(currentProfile);
             renderYoutubeStatus(currentProfile);
             renderKickStatus(currentProfile);
+            renderTiktokStatus(currentProfile);
             if(twitchLoginCambio){ renderMisComandos(currentProfile); renderOverlayEditor(currentProfile); }
             renderStatsStrip();
         });
@@ -823,6 +832,56 @@ ${!seguidoresActivos ? `
         }catch(error){
             console.error(error);
             content.innerHTML = `<p class="muted">No se pudo consultar el estado de Kick.</p>`;
+        }
+    }
+
+    async function conectarTiktok(button){
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Abriendo TikTok...";
+        try{
+            const generarEstado = httpsCallable(functionsInstance, "generarEstadoTiktokCanal");
+            const result = await generarEstado();
+            const url = `${TIKTOK_AUTH_URL}?state=${encodeURIComponent(result.data.state)}`;
+            window.open(url, "_blank", "noopener");
+        }catch(error){
+            console.error(error);
+            alert("No se pudo iniciar la conexión con TikTok. Intentá de nuevo.");
+        }
+        button.disabled = false;
+        button.textContent = original;
+    }
+
+    async function renderTiktokStatus(profile){
+        const content = document.getElementById("tiktok-status-content");
+        const openId = profile.tiktokOpenId || "";
+
+        if(!openId){
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste tu cuenta de TikTok.</p>
+</div>
+<button class="btn" type="button" data-connect-tiktok>Conectar mi cuenta de TikTok</button>`;
+            content.querySelector("[data-connect-tiktok]").addEventListener("click", (event) => conectarTiktok(event.currentTarget));
+            return;
+        }
+
+        content.innerHTML = `<p class="muted">Consultando estado...</p>`;
+        try{
+            const snapshot = await getDoc(doc(db, "tiktokAuth", openId));
+            const data = snapshot.exists() ? snapshot.data() : {};
+            const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">Conectado como <b>${escapeHtml(data.displayName || "cuenta de TikTok")}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por TikTok.</p>
+</div>
+<button class="btn secondary" type="button" data-connect-tiktok>Reconectar / cambiar de cuenta</button>`;
+            content.querySelector("[data-connect-tiktok]").addEventListener("click", (event) => conectarTiktok(event.currentTarget));
+        }catch(error){
+            console.error(error);
+            content.innerHTML = `<p class="muted">No se pudo consultar el estado de TikTok.</p>`;
         }
     }
 

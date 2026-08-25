@@ -308,10 +308,24 @@ service cloud.firestore {
       }
     }
 
-    // Estado temporal de PKCE del login de Kick (vive segundos, entre el
-    // redirect a Kick y que vuelva al callback) — nadie necesita leerlo ni
-    // escribirlo desde el cliente, solo el Admin SDK de esas dos funciones.
+    match /tiktokAuth/{doc} {
+      allow read: if true;
+      allow write: if false;
+
+      match /privado/{sub} {
+        allow read, write: if false;
+      }
+    }
+
+    // Estado temporal de PKCE del login de Kick/TikTok (vive segundos, entre
+    // el redirect a la plataforma y que vuelva al callback) — nadie necesita
+    // leerlo ni escribirlo desde el cliente, solo el Admin SDK de esas
+    // funciones.
     match /kickPkce/{doc} {
+      allow read, write: if false;
+    }
+
+    match /tiktokPkce/{doc} {
       allow read, write: if false;
     }
 
