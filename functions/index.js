@@ -515,13 +515,18 @@ async function obtenerSeguidoresKick(slug, clientId, clientSecret) {
         }
         const bodyText = await res.text();
         if (!res.ok) {
-            logger.warn(`obtenerSeguidoresKick[${slug}]: la API respondió ${res.status}`, bodyText.slice(0, 500));
+            logger.warn(`obtenerSeguidoresKick[${slug}]: la API respondió ${res.status}`, bodyText.slice(0, 2000));
             return null;
         }
         const data = JSON.parse(bodyText);
-        const count = Number(data.data?.[0]?.followers_count);
+        const canal = data.data?.[0] || {};
+        const count = Number(canal.followers_count);
         if (!Number.isFinite(count)) {
-            logger.warn(`obtenerSeguidoresKick[${slug}]: respuesta 200 pero sin followers_count utilizable`, bodyText.slice(0, 500));
+            // followers_count no está donde lo esperaba — se loguean las claves
+            // disponibles (no el objeto completo, para no repetir texto largo
+            // como la descripción del canal en cada corrida) para encontrar el
+            // nombre real del campo sin adivinar más.
+            logger.warn(`obtenerSeguidoresKick[${slug}]: respuesta 200 pero sin followers_count utilizable. Claves de nivel superior: ${JSON.stringify(Object.keys(canal))}. Claves de "stream": ${JSON.stringify(Object.keys(canal.stream || {}))}. Objeto completo: ${JSON.stringify(canal)}`);
             return null;
         }
         return count;
