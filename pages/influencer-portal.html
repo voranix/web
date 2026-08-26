@@ -77,6 +77,23 @@
         .creadores-tab.active{ color:#fff; border-bottom-color:var(--naranja); }
         .creadores-tab-panel.hidden{ display:none; }
 
+        .progreso-bar-track{ width:100%; height:10px; border-radius:8px; background:rgba(255,255,255,.06); border:1px solid var(--border); overflow:hidden; margin-top:12px; }
+        .progreso-bar-fill{ height:100%; border-radius:8px; background:var(--grad); transition:width .4s ease; }
+        .progreso-checklist{ display:flex; flex-direction:column; margin-top:6px; }
+        .progreso-item{
+            display:flex; align-items:flex-start; gap:12px; padding:12px 6px; background:none; border:none;
+            border-bottom:1px solid var(--border); text-align:left; cursor:pointer; width:100%; font-family:inherit; color:inherit;
+        }
+        .progreso-item:last-child{ border-bottom:none; }
+        .progreso-item:hover{ background:rgba(255,255,255,.03); }
+        .progreso-item-icon{ font-size:17px; color:var(--gris); flex-shrink:0; margin-top:2px; }
+        .progreso-item.is-done .progreso-item-icon{ color:#4ade80; }
+        .progreso-item-body{ display:flex; flex-direction:column; gap:2px; }
+        .progreso-item-body strong{ font-size:13px; color:#fff; }
+        .progreso-item.is-done .progreso-item-body strong{ text-decoration:line-through; color:var(--gris); }
+        .progreso-item-body span{ font-size:11.5px; color:var(--gris); line-height:1.5; }
+        .progreso-completo{ display:flex; align-items:center; gap:10px; color:#4ade80; font-size:13px; font-weight:700; margin-top:10px; }
+
         .dash-toggle{ display:inline-flex; gap:4px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:20px; padding:3px; }
         .dash-toggle button{
             background:none; border:none; border-radius:16px; padding:5px 14px; font-size:11px; font-weight:700;
@@ -222,6 +239,8 @@
     </div>
 
     <div id="influencer-tarjeta-content" class="hidden">
+        <div id="progreso-perfil-block" class="overlay-links-block"></div>
+
         <div class="creadores-tabs" role="tablist">
             <button type="button" class="creadores-tab active" data-tab="proyectos"><i class="fas fa-diagram-project"></i> Proyectos</button>
             <button type="button" class="creadores-tab" data-tab="redes"><i class="fas fa-link"></i> Redes</button>
@@ -646,6 +665,58 @@
         if(tiktokInput && document.activeElement !== tiktokInput) tiktokInput.value = ultimoSegmento(d.tiktok);
     }
 
+    // "Completá tu perfil": checklist con lo que falta y dónde cargarlo. Se
+    // recalcula cada vez que cambia la tarjeta o el perfil (TikTok vive en
+    // users/{uid}, no en el doc de influencer). TikTok aclara que está en
+    // fase de prueba (app de TikTok en modo Sandbox) porque puede fallar sin
+    // que sea un error del influencer. Instagram apunta al link manual (Redes
+    // → "Tus links públicos"), no a "conectar cuenta" — el OAuth de Instagram
+    // todavía no existe (pendiente de que VORANIX cree la app en Meta).
+    function calcularProgresoPerfil(){
+        const d = tarjetaData || {};
+        return [
+            { label: "Descripción", done: !!String(d.descripcion || "").trim(), tab: "tarjeta",
+              hint: "Contá de qué hacés contenido, en Mi Tarjeta → Identidad." },
+            { label: "Frase corta", done: !!String(d.fraseCorta || "").trim(), tab: "tarjeta",
+              hint: "Una línea corta que te represente, en Mi Tarjeta → Identidad." },
+            { label: "TikTok conectado", done: !!currentProfile?.tiktokOpenId, tab: "redes",
+              hint: "Conectá tu cuenta en Redes (todavía en fase de prueba, si falla intentá de nuevo más tarde)." },
+            { label: "Links públicos (Instagram / TikTok)", done: !!(String(d.instagram || "").trim() || String(d.tiktok || "").trim()), tab: "redes",
+              hint: "Cargá tu usuario en \"Tus links públicos\" (Redes) para que el botón aparezca en tu perfil — Instagram todavía es a mano, la conexión automática no está lista." }
+        ];
+    }
+
+    function renderProgresoPerfil(){
+        const block = document.getElementById("progreso-perfil-block");
+        if(!block || !tarjetaId) return;
+        const items = calcularProgresoPerfil();
+        const done = items.filter(i => i.done).length;
+        const pct = Math.round((done / items.length) * 100);
+        if(done === items.length){
+            block.innerHTML = `
+<h2 class="overlay-links-title" style="margin-bottom:0;"><i class="fas fa-list-check"></i> Tu perfil</h2>
+<p class="progreso-completo"><i class="fas fa-circle-check"></i>¡Completaste todo lo que depende de vos!</p>`;
+            return;
+        }
+        block.innerHTML = `
+<h2 class="overlay-links-title" style="margin-bottom:4px;"><i class="fas fa-list-check"></i> Completá tu perfil</h2>
+<p class="muted overlay-links-sub" style="margin-bottom:0;">${done}/${items.length} listo — cliqueá un paso para ir directo.</p>
+<div class="progreso-bar-track"><div class="progreso-bar-fill" style="width:${pct}%;"></div></div>
+<div class="progreso-checklist">
+    ${items.map(i => `
+    <button type="button" class="progreso-item${i.done ? " is-done" : ""}" data-jump-tab="${i.tab}">
+        <span class="progreso-item-icon"><i class="fas fa-${i.done ? "circle-check" : "circle"}"></i></span>
+        <span class="progreso-item-body"><strong>${escapeHtml(i.label)}</strong><span>${escapeHtml(i.hint)}</span></span>
+    </button>`).join("")}
+</div>`;
+    }
+
+    document.getElementById("progreso-perfil-block").addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-jump-tab]");
+        if(!btn) return;
+        document.querySelector(`.creadores-tab[data-tab="${btn.dataset.jumpTab}"]`)?.click();
+    });
+
     document.getElementById("identidad-form").addEventListener("submit", async (event) => {
         event.preventDefault();
         if(!tarjetaId) return;
@@ -873,6 +944,7 @@
             sinTarjetaMsg.classList.add("hidden");
             tarjetaContent.classList.remove("hidden");
             renderIdentidad();
+            renderProgresoPerfil();
             cargarPublicaciones();
         }, (error) => console.error(error));
     }
@@ -943,6 +1015,7 @@
                 if(!snapshot.exists()) return;
                 currentProfile = snapshot.data();
                 renderTiktokStatus(currentProfile);
+                renderProgresoPerfil();
             });
         }catch(error){
             console.error(error);

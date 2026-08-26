@@ -130,6 +130,24 @@
         .creadores-tab:hover{ color:#fff; }
         .creadores-tab.active{ color:#fff; border-bottom-color:var(--naranja); }
         .creadores-tab-panel.hidden{ display:none; }
+
+        .progreso-bar-track{ width:100%; height:10px; border-radius:8px; background:rgba(255,255,255,.06); border:1px solid var(--border); overflow:hidden; margin-top:12px; }
+        .progreso-bar-fill{ height:100%; border-radius:8px; background:var(--grad); transition:width .4s ease; }
+        .progreso-checklist{ display:flex; flex-direction:column; margin-top:6px; }
+        .progreso-item{
+            display:flex; align-items:flex-start; gap:12px; padding:12px 6px; background:none; border:none;
+            border-bottom:1px solid var(--border); text-align:left; cursor:pointer; width:100%; font-family:inherit; color:inherit;
+        }
+        .progreso-item:last-child{ border-bottom:none; }
+        .progreso-item:hover{ background:rgba(255,255,255,.03); }
+        .progreso-item-icon{ font-size:17px; color:var(--gris); flex-shrink:0; margin-top:2px; }
+        .progreso-item.is-done .progreso-item-icon{ color:#4ade80; }
+        .progreso-item-body{ display:flex; flex-direction:column; gap:2px; }
+        .progreso-item-body strong{ font-size:13px; color:#fff; }
+        .progreso-item.is-done .progreso-item-body strong{ text-decoration:line-through; color:var(--gris); }
+        .progreso-item-body span{ font-size:11.5px; color:var(--gris); line-height:1.5; }
+        .progreso-completo{ display:flex; align-items:center; gap:10px; color:#4ade80; font-size:13px; font-weight:700; margin-top:10px; }
+
         .tarjeta-preview{ display:flex; align-items:center; gap:14px; margin-bottom:20px; }
         .tarjeta-semana{ margin-bottom:28px; padding-bottom:24px; border-bottom:1px solid var(--border); }
         .tarjeta-semana h3{ font-size:1rem; margin-bottom:14px; }
@@ -388,6 +406,8 @@
     </div>
 
     <div id="creadores-stats-strip" class="creadores-stats-strip hidden"></div>
+
+    <div id="progreso-perfil-block" class="overlay-links-block hidden"></div>
 
     <div class="creadores-tabs" role="tablist">
         <button type="button" class="creadores-tab active" data-tab="proyectos"><i class="fas fa-diagram-project"></i> Proyectos</button>
@@ -2145,6 +2165,57 @@ ${guildId ? `
 </div>`;
     }
 
+    // "Completá tu perfil": checklist con lo que falta y dónde cargarlo.
+    // renderTarjeta() ya se dispara tanto cuando cambia tarjetaData como
+    // currentProfile (dos listeners separados), así que llamando esto desde
+    // ahí alcanza para mantenerlo al día sin un tercer listener propio.
+    function calcularProgresoPerfil(d){
+        return [
+            { label: "Descripción", done: !!String(d.descripcion || "").trim(), tab: "tarjeta",
+              hint: "Contá de qué va tu canal, en Mi Tarjeta → Identidad." },
+            { label: "Frase corta", done: !!String(d.fraseCorta || "").trim(), tab: "tarjeta",
+              hint: "Una línea corta que te represente, en Mi Tarjeta → Identidad." },
+            { label: "Twitch conectado", done: !!currentProfile?.twitchLogin, tab: "redes",
+              hint: "Conectá tu cuenta en Redes — habilita el bot de chat, tu overlay y el botón de Twitch en tu perfil." },
+            { label: "Categorías cargadas", done: (Array.isArray(d.juegosManual) && d.juegosManual.length > 0) || (Array.isArray(d.juegosVistos) && d.juegosVistos.length > 0), tab: "tarjeta",
+              hint: "Agregá a qué jugás en Mi Tarjeta → Categorías (o se completa solo la primera vez que streameás)." }
+        ];
+    }
+
+    function renderProgresoPerfil(){
+        const block = document.getElementById("progreso-perfil-block");
+        if(!block) return;
+        if(!tarjetaId){ block.classList.add("hidden"); return; }
+        block.classList.remove("hidden");
+        const d = tarjetaData || {};
+        const items = calcularProgresoPerfil(d);
+        const done = items.filter(i => i.done).length;
+        const pct = Math.round((done / items.length) * 100);
+        if(done === items.length){
+            block.innerHTML = `
+<h2 class="overlay-links-title" style="margin-bottom:0;"><i class="fas fa-list-check"></i> Tu perfil</h2>
+<p class="progreso-completo"><i class="fas fa-circle-check"></i>¡Completaste todo lo que depende de vos!</p>`;
+            return;
+        }
+        block.innerHTML = `
+<h2 class="overlay-links-title" style="margin-bottom:4px;"><i class="fas fa-list-check"></i> Completá tu perfil</h2>
+<p class="muted overlay-links-sub" style="margin-bottom:0;">${done}/${items.length} listo — cliqueá un paso para ir directo.</p>
+<div class="progreso-bar-track"><div class="progreso-bar-fill" style="width:${pct}%;"></div></div>
+<div class="progreso-checklist">
+    ${items.map(i => `
+    <button type="button" class="progreso-item${i.done ? " is-done" : ""}" data-jump-tab="${i.tab}">
+        <span class="progreso-item-icon"><i class="fas fa-${i.done ? "circle-check" : "circle"}"></i></span>
+        <span class="progreso-item-body"><strong>${escapeHtml(i.label)}</strong><span>${escapeHtml(i.hint)}</span></span>
+    </button>`).join("")}
+</div>`;
+    }
+
+    document.getElementById("progreso-perfil-block").addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-jump-tab]");
+        if(!btn) return;
+        document.querySelector(`.creadores-tab[data-tab="${btn.dataset.jumpTab}"]`)?.click();
+    });
+
     function renderIdentidad(d){
         const guardados = Array.isArray(d.paletaColores) ? d.paletaColores.filter(c => /^#[0-9a-f]{6}$/i.test(c || "")) : [];
         const colorActual = guardados.length === 3 ? guardados : PALETAS_PRESET[0].colores;
@@ -2580,6 +2651,7 @@ ${guildId ? `
     });
 
     function renderTarjeta(){
+        renderProgresoPerfil();
         const content = document.getElementById("tarjeta-content");
         if(!tarjetaId){
             content.innerHTML = `<div class="overlay-links-block"><p class="muted">Todavía no tenés una tarjeta de streamer vinculada a tu cuenta. Escribile al staff de VORANIX para que te la vinculen desde el panel de administración.</p></div>`;
