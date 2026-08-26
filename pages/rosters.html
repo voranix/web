@@ -443,7 +443,8 @@ function renderMatchRow(item, idx){
             </div>
             <div class="match-row-info">
                 <span class="match-tipo-badge">${escapeHtml(matchTipoLabel(item.tipo))}</span>
-                <h4 class="match-title">${escapeHtml(item.titulo) || "Partido"}</h4>
+                ${item.competicionTitulo ? `<span class="match-competicion-badge"><i class="fas fa-diagram-project"></i> ${escapeHtml(item.competicionTitulo)}</span>` : ""}
+                <h4 class="match-title">${escapeHtml(item.titulo) || "Partido"}${item.rival ? ` <span class="match-rival">vs ${escapeHtml(item.rival)}</span>` : ""}</h4>
                 ${item.resultado ? `<p class="match-resultado">${escapeHtml(item.resultado)}</p>` : ""}
             </div>
         </div>

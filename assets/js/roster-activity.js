@@ -98,9 +98,10 @@ function renderItem(item, isPast) {
         <div class="actividad-body">
             <div class="actividad-heading">
                 <span class="actividad-tipo">${escapeHtml(TIPO_LABELS[tipo] || tipo)}</span>
+                ${item.competicionTitulo ? `<span class="actividad-competicion"><i class="fas fa-diagram-project"></i> ${escapeHtml(item.competicionTitulo)}</span>` : ""}
                 ${rango ? `<span class="actividad-fecha">${escapeHtml(rango)}</span>` : ""}
             </div>
-            <h4>${escapeHtml(item.titulo) || "Sin título"}</h4>
+            <h4>${escapeHtml(item.titulo) || "Sin título"}${item.rival ? ` <span class="actividad-rival">vs ${escapeHtml(item.rival)}</span>` : ""}</h4>
             ${item.resultado ? `<p class="actividad-resultado">${escapeHtml(item.resultado)}</p>` : ""}
             ${item.descripcion ? `<p class="actividad-desc">${escapeHtml(item.descripcion)}</p>` : ""}
         </div>

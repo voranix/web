@@ -1012,6 +1012,8 @@ const ACTIVIDAD_TIPOS_VALORANT = [
     ["liga", "Liga"]
 ];
 
+const TIPO_LABELS_ADMIN = Object.fromEntries(ACTIVIDAD_TIPOS_VALORANT);
+
 // Lista de agentes de Valorant para el selector del lineup. Si sale un agente
 // nuevo que no esté acá, el campo es de texto libre con sugerencias (datalist).
 const VALORANT_AGENTS = [
@@ -1035,7 +1037,10 @@ function ACTIVIDAD_FIELDS(juegoValue, juegoLabel, tipos){
     const fields = [
         ["juego", "Juego", "select", [[juegoValue, juegoLabel]]],
         ["tipo", "Tipo", "select", tipos || ACTIVIDAD_TIPOS],
+        ["esCompeticion", "Es la inscripción a una competición completa (Torneo/Liga/Premier), no una partida suelta", "boolean"],
+        ["competicionId", "Partida de esta competición (opcional)", "competicionSelect"],
         ["titulo", "Título", "text"],
+        ["rival", "Rival (si es una partida)", "text"],
         ["fechaInicio", "Fecha de inicio", "date"],
         ["fechaFin", "Fecha de término", "date"],
         ["hora", "Hora", "time"],
@@ -1715,7 +1720,11 @@ function renderCrudSection(section){
             const data = item;
             return `<tr>
 <td class="select-col"><input type="checkbox" data-select="${item.id}" ${selected.has(item.id) ? "checked" : ""}></td>
-${section.fields.map(field => `<td data-label="${escapeHtml(field[1])}">${tableValue(data[field[0]], field[2], field[3])}</td>`).join("")}
+${section.fields.map(field => `<td data-label="${escapeHtml(field[1])}">${
+    field[2] === "competicionSelect"
+        ? (data[field[0]] ? `<span class="pill pill-neutral">${escapeHtml(data.competicionTitulo || competicionTitulosCache[data[field[0]]] || "Competición")}</span>` : "-")
+        : tableValue(data[field[0]], field[2], field[3])
+}</td>`).join("")}
 <td data-label="Acciones"><div class="actions">
     <button class="btn secondary small" type="button" data-edit="${item.id}">Editar</button>
     <button class="btn danger small" type="button" data-delete="${item.id}">Eliminar</button>
@@ -4908,6 +4917,10 @@ function fieldHtml(field, value){
         return `<div class="field" data-userlink-field="${name}"><label>${label}</label><select name="${name}" data-userlink-select disabled><option value="">Cargando cuentas...</option></select><span class="help">Solo cuentas con rol creador. Una vez vinculada, esa cuenta puede editar su descripción y redes desde el Portal Creadores.</span></div>`;
     }
 
+    if(type === "competicionSelect"){
+        return `<div class="field" data-competicion-field="${name}"><label>${label}</label><select name="${name}" data-competicion-select disabled><option value="">Cargando competiciones...</option></select><span class="help">Elegí la competición que ya inscribiste (marcada con "Es la inscripción..." arriba) para que esta partida quede agrupada con ella. Dejalo en "Ninguna" si esta partida no pertenece a ninguna.</span></div>`;
+    }
+
     if(type === "privateEmail"){
         return `<div class="field" data-private-email-field="${name}"><label>${label}</label><input name="${name}" type="email" value="" placeholder="Cargando..." disabled><span class="help">Se guarda aparte, en una subcolección visible solo para staff (no viaja en la tarjeta pública).</span></div>`;
     }
@@ -4982,6 +4995,32 @@ async function initUserlinkField(name, currentUid){
     const opciones = [`<option value="">— Sin vincular —</option>`]
         .concat(creadores.map(u => `<option value="${u.uid}" ${u.uid === currentUid ? "selected" : ""}>${escapeHtml(u.displayName || u.email || u.uid)}</option>`));
     select.innerHTML = opciones.join("");
+    select.disabled = false;
+}
+
+// título de cada competición cargada en el selector, para poder guardar una
+// copia (competicionTitulo) junto con el id al guardar la partida — así
+// rosters.html/roster-portal.html pueden mostrar "Premier Playoff · Acto 9"
+// sin tener que leer el doc de la competición aparte en cada partida.
+const competicionTitulosCache = {};
+
+async function initCompeticionField(name, currentId, rosterJuego){
+    const select = document.querySelector(`[data-competicion-field="${name}"] select[data-competicion-select]`);
+    if(!select) return;
+    try{
+        const snapshot = await getDocs(query(collection(db, "equipoActividad"), where("juego", "==", rosterJuego)));
+        const competiciones = snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(item => item.esCompeticion === true && item.id !== editingId)
+            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        competiciones.forEach(c => { competicionTitulosCache[c.id] = c.titulo || ""; });
+        const opciones = [`<option value="">— Ninguna —</option>`]
+            .concat(competiciones.map(c => `<option value="${c.id}" ${c.id === currentId ? "selected" : ""}>${escapeHtml(TIPO_LABELS_ADMIN[c.tipo] || c.tipo || "")} · ${escapeHtml(c.titulo || "Sin título")}</option>`));
+        select.innerHTML = opciones.join("");
+    }catch(error){
+        console.error(error);
+        select.innerHTML = `<option value="">No se pudieron cargar las competiciones</option>`;
+    }
     select.disabled = false;
 }
 
@@ -5285,6 +5324,7 @@ ${userFieldHtml("active", getUsersFieldValue(data, "active"))}
         if(lineupField) initLineupField(lineupField[0], data[lineupField[0]], section.filterValue);
         section.fields.filter(field => field[2] === "images").forEach(field => initImagesField(field[0], data[field[0]]));
         section.fields.filter(field => field[2] === "userlink").forEach(field => initUserlinkField(field[0], data[field[0]]));
+        section.fields.filter(field => field[2] === "competicionSelect").forEach(field => initCompeticionField(field[0], data[field[0]], section.filterValue));
         section.fields.filter(field => field[2] === "privateEmail").forEach(field => initPrivateEmailField(field[0]));
     }
     modal.classList.remove("hidden");
@@ -5440,6 +5480,9 @@ async function saveItem(event){
                     nuevasUrls.push(await uploadImage(archivo, section.collection, name));
                 }
                 payload[name] = [...keepUrls, ...nuevasUrls];
+            }else if(type === "competicionSelect"){
+                payload[name] = urlValue;
+                payload.competicionTitulo = urlValue ? (competicionTitulosCache[urlValue] || "") : "";
             }else if(type === "boolean"){
                 payload[name] = formData.get(name) === "true";
             }else{

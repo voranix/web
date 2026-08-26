@@ -476,7 +476,13 @@ button { cursor: pointer; }
     display:inline-block; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700; color:#fff;
     background:linear-gradient(90deg,var(--morado),var(--naranja)); padding:3px 10px; border-radius:12px; margin-bottom:6px;
 }
+.match-competicion-badge {
+    display:inline-flex; align-items:center; gap:5px; font-size:9.5px; color:var(--morado-light);
+    background:rgba(123,44,255,0.1); border:1px solid rgba(123,44,255,0.3); border-radius:12px;
+    padding:3px 9px; margin-bottom:6px; margin-left:6px;
+}
 .match-title { font-size:.9rem; color:#fff; }
+.match-rival { font-size:.9em; color:var(--gris); font-weight:600; }
 .match-resultado { font-size:12.5px; color:var(--naranja-light); font-weight:700; margin-top:2px; }
 .match-expand-btn { background:none; border:none; color:var(--gris-dark); font-size:13px; cursor:pointer; padding:6px; flex-shrink:0; transition:transform .2s, color .2s; }
 .match-row.open .match-expand-btn { transform:rotate(180deg); color:var(--naranja); }
@@ -522,6 +528,11 @@ button { cursor: pointer; }
     background:linear-gradient(90deg,var(--morado),var(--naranja)); padding:4px 12px; border-radius:20px;
 }
 .actividad-body h4 { font-size:1.05rem; color:#fff; margin:10px 0 2px; letter-spacing:.3px; }
+.actividad-rival { font-size:.85em; color:var(--gris); font-weight:600; }
+.actividad-competicion {
+    display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--morado-light);
+    background:rgba(123,44,255,0.1); border:1px solid rgba(123,44,255,0.3); border-radius:20px; padding:3px 10px;
+}
 .actividad-fecha { font-size:11px; color:var(--gris-dark); text-transform:uppercase; letter-spacing:1px; }
 .actividad-resultado { font-size:13px; color:var(--naranja-light); margin-top:4px; font-weight:700; }
 .actividad-desc { font-size:13px; color:var(--gris); margin-top:6px; line-height:1.6; }
