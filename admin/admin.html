@@ -1702,6 +1702,15 @@ function renderCrudSection(section){
         const currentIds = new Set(currentDocs.map(item => item.id));
         Array.from(selected).forEach(id => { if(!currentIds.has(id)) selected.delete(id); });
 
+        // Torneos/Scrims (equipoActividad): orden por fecha de publicación
+        // (createdAt, lo más recién cargado primero) en vez del orden natural
+        // de Firestore, que no sigue ningún criterio — el staff quiere ver
+        // arriba lo que acaba de agregar, no mezclado entre fechas de evento
+        // pasadas y futuras.
+        if(section.collection === "equipoActividad"){
+            filtered.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        }
+
         const rows = filtered.map(item => {
             const data = item;
             return `<tr>
