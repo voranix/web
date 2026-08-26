@@ -1346,6 +1346,7 @@ let editingData = {};
 let usersCache = [];
 let valorantRosterNamesCache = {}; // keyed por juego: "valorant" | "valorantsecundario"
 let lastAccessCache = {}; // keyed por uid: { lastSignInTime, creationTime }
+let usersRefreshInterval = null;
 
 // Referencias del DOM usadas por el login, layout y modal.
 const loginScreen = document.getElementById("login-screen");
@@ -1537,6 +1538,7 @@ function selectSection(key){
     sidebar.classList.remove("open");
     sidebarBackdrop.classList.remove("open");
     if(unsubscribeList) unsubscribeList();
+    if(usersRefreshInterval){ clearInterval(usersRefreshInterval); usersRefreshInterval = null; }
     if(key === "users") renderUsers();
     else if(key === "dashboard") renderDashboardSection();
     else if(key === "comunicados") renderComunicadosSection();
@@ -4861,15 +4863,23 @@ async function renderUsers(){
     }
 
     // El último ingreso vive solo en Firebase Auth (no en Firestore), asi que
-    // se pide aparte via Cloud Function y se repinta la tabla al llegar.
-    try{
-        const obtenerUltimoAcceso = httpsCallable(functionsInstance, "obtenerUltimoAcceso");
-        const result = await obtenerUltimoAcceso({ uids: usersCache.map(u => u.uid) });
-        (result.data.estados || []).forEach(estado => { lastAccessCache[estado.uid] = estado; });
-        renderFilteredUsers();
-    }catch(error){
-        console.error("No se pudo obtener el último ingreso:", error);
+    // se pide aparte via Cloud Function y se repinta la tabla al llegar. Se
+    // repite cada 5 min mientras la sección Usuarios esté abierta, para que
+    // quede al día sin que el staff tenga que recargar la página; el
+    // intervalo se corta al salir de la sección (ver selectSection).
+    async function actualizarUltimoIngreso(){
+        try{
+            const obtenerUltimoAcceso = httpsCallable(functionsInstance, "obtenerUltimoAcceso");
+            const result = await obtenerUltimoAcceso({ uids: usersCache.map(u => u.uid) });
+            (result.data.estados || []).forEach(estado => { lastAccessCache[estado.uid] = estado; });
+            renderFilteredUsers();
+        }catch(error){
+            console.error("No se pudo obtener el último ingreso:", error);
+        }
     }
+    await actualizarUltimoIngreso();
+    if(usersRefreshInterval) clearInterval(usersRefreshInterval);
+    usersRefreshInterval = setInterval(actualizarUltimoIngreso, 5 * 60 * 1000);
 }
 
 function fieldHtml(field, value){
