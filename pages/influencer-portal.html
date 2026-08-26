@@ -66,6 +66,17 @@
         .bot-status-icon.is-pending{ background:rgba(255,193,7,.18); color:#ffc107; }
         .bot-status-icon.is-soon{ background:rgba(144,144,176,.18); color:var(--gris); }
 
+        .creadores-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px; border-bottom:1px solid var(--border); }
+        .creadores-tab{
+            background:none; border:none; border-bottom:2px solid transparent; color:var(--gris); cursor:pointer;
+            font-family:inherit; font-weight:700; font-size:13px; letter-spacing:.5px; padding:12px 4px; margin-bottom:-1px;
+            display:flex; align-items:center; gap:8px; transition:var(--ease);
+        }
+        .creadores-tab i{ font-size:12px; }
+        .creadores-tab:hover{ color:#fff; }
+        .creadores-tab.active{ color:#fff; border-bottom-color:var(--naranja); }
+        .creadores-tab-panel.hidden{ display:none; }
+
         .influencer-identity{ display:flex; align-items:center; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
         .influencer-identity img{
             width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,106,0,.4); flex-shrink:0;
@@ -176,56 +187,68 @@
     </div>
 
     <div id="influencer-tarjeta-content" class="hidden">
-        <div class="influencer-portal-section">
-            <h2><i class="fas fa-id-card"></i> Tu perfil</h2>
-            <div class="overlay-links-block">
-                <div class="influencer-identity">
-                    <img id="influencer-foto" src="/imagenes/logo.jpg" alt="" onerror="this.src='/imagenes/logo.jpg'">
-                    <div>
-                        <h3 id="influencer-nombre">—</h3>
-                        <p id="influencer-categoria"></p>
-                    </div>
-                </div>
-                <p class="muted overlay-links-sub">Nombre, imagen y categoría los administra el staff de VORANIX. Tu descripción la editás vos.</p>
-                <form id="descripcion-form">
-                    <div class="field">
-                        <label for="descripcion-input">Descripción</label>
-                        <textarea id="descripcion-input" rows="3" maxlength="280" placeholder="Contanos de qué hacés contenido..."></textarea>
-                    </div>
-                    <button class="btn" type="submit">Guardar descripción</button>
-                    <span id="descripcion-msg" class="muted" style="margin-left:10px;font-size:12px;"></span>
-                </form>
+        <div class="creadores-tabs" role="tablist">
+            <button type="button" class="creadores-tab active" data-tab="proyectos"><i class="fas fa-diagram-project"></i> Proyectos</button>
+            <button type="button" class="creadores-tab" data-tab="redes"><i class="fas fa-link"></i> Redes</button>
+            <button type="button" class="creadores-tab" data-tab="tarjeta"><i class="fas fa-id-badge"></i> Mi Tarjeta</button>
+        </div>
+
+        <div class="creadores-tab-panel" data-tab-panel="proyectos">
+            <div id="proyectos-block" class="influencer-portal-section hidden">
+                <h2><i class="fas fa-diagram-project"></i> Proyectos VORANIX</h2>
+                <div id="proyectos-grid" class="creadores-grid"></div>
             </div>
         </div>
 
-        <div id="proyectos-block" class="influencer-portal-section hidden">
-            <h2><i class="fas fa-diagram-project"></i> Proyectos VORANIX</h2>
-            <div id="proyectos-grid" class="creadores-grid"></div>
-        </div>
+        <div class="creadores-tab-panel hidden" data-tab-panel="redes">
+            <div class="influencer-portal-section">
+                <h2><i class="fas fa-share-nodes"></i> Redes</h2>
+                <p class="muted overlay-links-sub">Conectá tus cuentas reales (OAuth, verificado por cada plataforma) para que tus publicaciones aparezcan solas en Mi Tarjeta, sin tener que pegar links a mano.</p>
+                <div class="influencer-redes-grid">
+                    <div class="overlay-links-block">
+                        <h2 class="overlay-links-title"><i class="fab fa-tiktok"></i> Tu cuenta de TikTok</h2>
+                        <div id="tiktok-status-content"><p class="loading">Cargando...</p></div>
+                    </div>
 
-        <div class="influencer-portal-section">
-            <h2><i class="fas fa-share-nodes"></i> Redes</h2>
-            <p class="muted overlay-links-sub">Conectá tus cuentas reales (OAuth, verificado por cada plataforma) para que tus publicaciones aparezcan solas acá, sin tener que pegar links a mano.</p>
-            <div class="influencer-redes-grid">
-                <div class="overlay-links-block">
-                    <h2 class="overlay-links-title"><i class="fab fa-tiktok"></i> Tu cuenta de TikTok</h2>
-                    <div id="tiktok-status-content"><p class="loading">Cargando...</p></div>
-                </div>
-
-                <div class="overlay-links-block">
-                    <h2 class="overlay-links-title"><i class="fab fa-instagram"></i> Tu cuenta de Instagram</h2>
-                    <div class="bot-status-row">
-                        <div class="bot-status-icon is-soon"><i class="fas fa-clock"></i></div>
-                        <p class="muted" style="margin:0;">Próximamente. Conectar Instagram necesita que VORANIX cree y verifique una app en Meta for Developers — todavía no está lista.</p>
+                    <div class="overlay-links-block">
+                        <h2 class="overlay-links-title"><i class="fab fa-instagram"></i> Tu cuenta de Instagram</h2>
+                        <div class="bot-status-row">
+                            <div class="bot-status-icon is-soon"><i class="fas fa-clock"></i></div>
+                            <p class="muted" style="margin:0;">Próximamente. Conectar Instagram necesita que VORANIX cree y verifique una app en Meta for Developers — todavía no está lista.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="influencer-portal-section">
-            <h2><i class="fas fa-photo-film"></i> Tus publicaciones</h2>
-            <div id="publicaciones-content">
-                <p class="muted">Conectá TikTok arriba para ver tus últimos videos acá.</p>
+        <div class="creadores-tab-panel hidden" data-tab-panel="tarjeta">
+            <div class="influencer-portal-section">
+                <h2><i class="fas fa-id-card"></i> Tu perfil</h2>
+                <div class="overlay-links-block">
+                    <div class="influencer-identity">
+                        <img id="influencer-foto" src="/imagenes/logo.jpg" alt="" onerror="this.src='/imagenes/logo.jpg'">
+                        <div>
+                            <h3 id="influencer-nombre">—</h3>
+                            <p id="influencer-categoria"></p>
+                        </div>
+                    </div>
+                    <p class="muted overlay-links-sub">Nombre, imagen y categoría los administra el staff de VORANIX. Tu descripción la editás vos.</p>
+                    <form id="descripcion-form">
+                        <div class="field">
+                            <label for="descripcion-input">Descripción</label>
+                            <textarea id="descripcion-input" rows="3" maxlength="280" placeholder="Contanos de qué hacés contenido..."></textarea>
+                        </div>
+                        <button class="btn" type="submit">Guardar descripción</button>
+                        <span id="descripcion-msg" class="muted" style="margin-left:10px;font-size:12px;"></span>
+                    </form>
+                </div>
+            </div>
+
+            <div class="influencer-portal-section">
+                <h2><i class="fas fa-photo-film"></i> Tus publicaciones</h2>
+                <div id="publicaciones-content">
+                    <p class="muted">Conectá TikTok en la pestaña Redes para ver tus últimos videos acá.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -407,6 +430,10 @@
         userEmailEl.textContent = profile.displayName || profile.email || user.email;
         roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
         notifBell.start(user.uid);
+
+        const hashTab = location.hash.replace("#", "");
+        const tabButton = document.querySelector(`.creadores-tab[data-tab="${hashTab}"]`);
+        if(tabButton) tabButton.click();
     }
 
     function renderIdentidad(){
@@ -562,6 +589,17 @@
             cargarPublicaciones();
         }, (error) => console.error(error));
     }
+
+    document.querySelectorAll(".creadores-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+            const target = tab.dataset.tab;
+            document.querySelectorAll(".creadores-tab").forEach(t => t.classList.toggle("active", t === tab));
+            document.querySelectorAll(".creadores-tab-panel").forEach(panel => {
+                panel.classList.toggle("hidden", panel.dataset.tabPanel !== target);
+            });
+            history.replaceState(null, "", `#${target}`);
+        });
+    });
 
     loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
