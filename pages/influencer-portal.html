@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Influencers - VORANIX</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" sizes="32x32" href="/imagenes/icon-32.png">
+    <link rel="apple-touch-icon" href="/imagenes/icon-180.png">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .portal-login{ min-height:calc(100vh - 74px); }
+        .influencer-portal-shell{ padding:36px 0 90px; }
+        .influencer-portal-topbar{
+            display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;
+            padding:0 0 26px; border-bottom:1px solid var(--border); margin-bottom:26px; position:relative;
+        }
+        .influencer-portal-topbar::after{
+            content:""; position:absolute; left:0; bottom:-1px; width:64px; height:2px; background:var(--grad);
+        }
+        .influencer-portal-title{ text-align:left; font-size:clamp(1.5rem,4vw,2.1rem); letter-spacing:2px; margin-bottom:6px; }
+        .influencer-portal-subtitle{ display:flex; align-items:center; gap:8px; color:var(--gris); font-size:13px; }
+        .influencer-portal-subtitle i{ color:var(--naranja); font-size:11px; }
+        .influencer-portal-user{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
+        .influencer-portal-user strong{ font-size:13px; }
+
+        .influencer-portal-section{ margin-bottom:44px; }
+        .influencer-portal-section h2{
+            display:flex; align-items:center; gap:10px; font-size:1.15rem; letter-spacing:1px;
+            margin-bottom:18px; padding-left:14px; border-left:3px solid var(--morado);
+        }
+        .influencer-portal-section h2 i{ color:var(--naranja); font-size:.95em; }
+
+        .overlay-links-block{
+            margin-bottom:22px; background:var(--card); border:1px solid var(--border); border-top:3px solid var(--morado);
+            border-radius:var(--r-lg); padding:22px;
+        }
+        .influencer-redes-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); gap:22px; }
+        .influencer-redes-grid .overlay-links-block{ margin-bottom:0; }
+        .overlay-links-title{
+            display:flex; align-items:center; gap:10px; font-size:1.05rem; letter-spacing:1px;
+            margin-bottom:14px; padding-left:14px; border-left:3px solid var(--morado);
+        }
+        .overlay-links-title i{ color:var(--naranja); font-size:.95em; }
+        .overlay-links-sub{ font-size:13px; margin-bottom:18px; }
+        .bot-status-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .bot-status-icon{
+            width:36px; height:36px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+            font-size:14px; color:#fff;
+        }
+        .bot-status-icon.is-ok{ background:rgba(0,200,83,.18); color:#00c853; }
+        .bot-status-icon.is-pending{ background:rgba(255,193,7,.18); color:#ffc107; }
+        .bot-status-icon.is-soon{ background:rgba(144,144,176,.18); color:var(--gris); }
+
+        .influencer-identity{ display:flex; align-items:center; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
+        .influencer-identity img{
+            width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,106,0,.4); flex-shrink:0;
+        }
+        .influencer-identity h3{ font-size:1.1rem; color:#fff; margin-bottom:2px; }
+        .influencer-identity p{ font-size:12px; color:var(--gris); margin:0; }
+
+        .perfil-videos-grid, .perfil-videos-section{ margin-bottom:0; }
+        @media (max-width:600px){
+            .influencer-portal-topbar{ flex-direction:column; }
+            .influencer-portal-user{ justify-content:flex-start; width:100%; }
+        }
+    </style>
+</head>
+<body>
+<div id="page-loader" class="page-loader">
+    <div class="page-loader-mark">
+        <div class="page-loader-ring"></div>
+        <img class="page-loader-logo" src="/imagenes/logopng.png" alt="VORANIX">
+    </div>
+</div>
+<script src="/assets/js/page-loader.js"></script>
+
+
+<header class="header header-contacto">
+    <div class="menu">
+        <div class="menu-content container">
+            <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+            <a href="/index.html">
+                <img class="logo" src="/imagenes/logopng.png" alt="logo">
+            </a>
+            <nav class="navbar">
+                <ul>
+                    <li><a href="/index.html">Inicio</a></li>
+                    <li class="nav-dropdown">
+                        <button type="button" class="nav-dropdown-toggle">Quiénes Somos <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/nosotros.html">Nosotros</a></li>
+                            <li><a href="/pages/staff.html">Staff</a></li>
+                            <li><a href="/pages/proyectos.html">Proyectos</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="/pages/reglamento.html">Reglamento</a></li>
+                    <li><a href="/pages/rosters.html">Rosters</a></li>
+                    <li><a href="/pages/rivals.html">Rivals</a></li>
+                    <li><a href="/pages/streamers.html">Streamers</a></li>
+                    <li><a href="/pages/influencers.html">Influencers</a></li>
+                    <li><a href="/pages/patrocinadores.html">Patrocinadores</a></li>
+                    <li><a href="/pages/contacto.html">Contacto</a></li>
+                    <li class="nav-dropdown admin-access">
+                        <button type="button" class="nav-dropdown-toggle active"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Acceso <i class="fas fa-chevron-down"></i></button>
+                        <ul class="nav-dropdown-menu">
+                            <li><a href="/pages/creadores.html"><i class="fas fa-star" style="font-size:9px;margin-right:6px;"></i>Portal Creadores</a></li>
+                            <li><a href="/pages/roster-portal.html"><i class="fas fa-users" style="font-size:9px;margin-right:6px;"></i>Portal Roster</a></li>
+                            <li><a href="/pages/influencer-portal.html" class="active"><i class="fas fa-hashtag" style="font-size:9px;margin-right:6px;"></i>Portal Influencers</a></li>
+                            <li><a href="/admin/admin.html"><i class="fas fa-lock" style="font-size:9px;margin-right:6px;"></i>Admin</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<!-- LOGIN -->
+<section id="login-screen" class="login-screen portal-login">
+    <form id="login-form" class="login-card">
+        <h1>Portal Influencers</h1>
+        <p class="muted">Ingresa con la cuenta que te entregó VORANIX.</p>
+        <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+            <label for="password">Contraseña</label>
+            <input id="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn" type="submit" style="width:100%;">Ingresar</button>
+        <button class="btn secondary small" type="button" id="forgot-password-btn" style="width:100%;margin-top:8px;">¿Olvidaste tu contraseña?</button>
+        <div id="login-error" class="error"></div>
+        <div id="forgot-password-msg" class="muted" style="font-size:12px;margin-top:6px;"></div>
+    </form>
+</section>
+
+<!-- CONTENIDO DEL PORTAL -->
+<section id="influencer-portal-shell" class="container influencer-portal-shell hidden">
+    <div class="influencer-portal-topbar">
+        <div>
+            <h1 class="influencer-portal-title">Portal Influencers</h1>
+            <p class="influencer-portal-subtitle"><i class="fas fa-hashtag"></i> Tu perfil y tus redes conectadas.</p>
+        </div>
+        <div class="influencer-portal-user">
+            <div class="notif-bell-wrap">
+                <button class="btn secondary notif-bell-btn" type="button" id="notif-bell-btn" title="Notificaciones"><i class="fas fa-bell"></i><span id="notif-badge" class="notif-badge hidden">0</span></button>
+                <div id="notif-panel" class="notif-panel hidden">
+                    <button type="button" id="notif-activar-btn" class="notif-activar-btn hidden">🔔 Activar notificaciones en este dispositivo</button>
+                    <div id="notif-list"></div>
+                </div>
+            </div>
+            <strong id="user-email"></strong>
+            <span id="role-badge" class="badge"></span>
+            <button class="btn secondary" type="button" data-logout>Cerrar sesión</button>
+        </div>
+    </div>
+
+    <div id="sin-tarjeta-msg" class="overlay-links-block hidden">
+        <p class="muted" style="margin:0;">Tu cuenta todavía no está vinculada a ninguna tarjeta de Influencer. Avisale al staff de VORANIX para que la vincule desde el admin.</p>
+    </div>
+
+    <div id="influencer-tarjeta-content" class="hidden">
+        <div class="influencer-portal-section">
+            <h2><i class="fas fa-id-card"></i> Tu perfil</h2>
+            <div class="overlay-links-block">
+                <div class="influencer-identity">
+                    <img id="influencer-foto" src="/imagenes/logo.jpg" alt="" onerror="this.src='/imagenes/logo.jpg'">
+                    <div>
+                        <h3 id="influencer-nombre">—</h3>
+                        <p id="influencer-categoria"></p>
+                    </div>
+                </div>
+                <p class="muted overlay-links-sub">Nombre, imagen y categoría los administra el staff de VORANIX. Tu descripción la editás vos.</p>
+                <form id="descripcion-form">
+                    <div class="field">
+                        <label for="descripcion-input">Descripción</label>
+                        <textarea id="descripcion-input" rows="3" maxlength="280" placeholder="Contanos de qué hacés contenido..."></textarea>
+                    </div>
+                    <button class="btn" type="submit">Guardar descripción</button>
+                    <span id="descripcion-msg" class="muted" style="margin-left:10px;font-size:12px;"></span>
+                </form>
+            </div>
+        </div>
+
+        <div class="influencer-portal-section">
+            <h2><i class="fas fa-share-nodes"></i> Redes</h2>
+            <p class="muted overlay-links-sub">Conectá tus cuentas reales (OAuth, verificado por cada plataforma) para que tus publicaciones aparezcan solas acá, sin tener que pegar links a mano.</p>
+            <div class="influencer-redes-grid">
+                <div class="overlay-links-block">
+                    <h2 class="overlay-links-title"><i class="fab fa-tiktok"></i> Tu cuenta de TikTok</h2>
+                    <div id="tiktok-status-content"><p class="loading">Cargando...</p></div>
+                </div>
+
+                <div class="overlay-links-block">
+                    <h2 class="overlay-links-title"><i class="fab fa-instagram"></i> Tu cuenta de Instagram</h2>
+                    <div class="bot-status-row">
+                        <div class="bot-status-icon is-soon"><i class="fas fa-clock"></i></div>
+                        <p class="muted" style="margin:0;">Próximamente. Conectar Instagram necesita que VORANIX cree y verifique una app en Meta for Developers — todavía no está lista.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="influencer-portal-section">
+            <h2><i class="fas fa-photo-film"></i> Tus publicaciones</h2>
+            <div id="publicaciones-content">
+                <p class="muted">Conectá TikTok arriba para ver tus últimos videos acá.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="footer-inner container">
+        <div class="footer-brand">
+            <div class="footer-brand-head">
+                <img src="/imagenes/logopng.png" alt="VORANIX" class="footer-logo">
+                <span>VORANIX</span>
+            </div>
+            <p class="footer-tagline">Comunidad y estudio de eventos gamer latino. Jugamos, conectamos y evolucionamos junto a nuestra gente.</p>
+            <div class="footer-social">
+                <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener" aria-label="Discord"><i class="fab fa-discord"></i></a>
+                <a href="https://www.instagram.com/voranixstudio/" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.twitch.tv/voranixstudio" target="_blank" rel="noopener" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
+                <a href="https://www.tiktok.com/@voranixstudio" target="_blank" rel="noopener" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+            </div>
+        </div>
+        <div class="footer-col">
+            <h4>Comunidad</h4>
+            <a href="/pages/nosotros.html">Nosotros</a>
+            <a href="/pages/staff.html">Staff</a>
+            <a href="/pages/reglamento.html">Reglamento</a>
+            <a href="/pages/proyectos.html">Proyectos</a>
+        </div>
+        <div class="footer-col">
+            <h4>Competitivo</h4>
+            <a href="/pages/rosters.html">Rosters</a>
+            <a href="/pages/rivals.html">Voranix Rivals</a>
+            <a href="/pages/streamers.html">Streamers</a>
+            <a href="/pages/influencers.html">Influencers</a>
+            <a href="/pages/patrocinadores.html">Patrocinadores</a>
+        </div>
+        <div class="footer-col">
+            <h4>Contacto</h4>
+            <a href="/pages/contacto.html">Escríbenos</a>
+            <a href="/pages/privacidad.html">Política de Privacidad</a>
+            <a href="/pages/terminos.html">Términos y Condiciones</a>
+            <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener">Únete al Discord</a>
+        </div>
+    </div>
+    <div class="footer-bottom container">
+        <p>© 2026 <span>VORANIX</span> — Todos los derechos reservados</p>
+        <p>Sitio desarrollado por <span>AniiSeong</span></p>
+    </div>
+</footer>
+
+<script src="/assets/js/nav.js"></script>
+
+<script type="module">
+    import {
+        signInWithEmailAndPassword,
+        onAuthStateChanged,
+        signOut,
+        sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import {
+        doc,
+        getDoc,
+        updateDoc,
+        collection,
+        query,
+        where,
+        onSnapshot,
+        serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+    import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
+    import { auth, db, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
+    import { initNotificationBell } from "/assets/js/notificaciones.js";
+    import { initParticles } from "/assets/js/particles.js";
+
+    const TIKTOK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthStart";
+
+    if("serviceWorker" in navigator){
+        navigator.serviceWorker.register("/firebase-messaging-sw.js").catch(err => console.error("service worker:", err));
+    }
+
+    const loginScreen = document.getElementById("login-screen");
+    const portalShell = document.getElementById("influencer-portal-shell");
+    const loginForm = document.getElementById("login-form");
+    const loginError = document.getElementById("login-error");
+    const userEmailEl = document.getElementById("user-email");
+    const roleBadge = document.getElementById("role-badge");
+    const sinTarjetaMsg = document.getElementById("sin-tarjeta-msg");
+    const tarjetaContent = document.getElementById("influencer-tarjeta-content");
+    const notifBell = initNotificationBell({
+        toggleBtn: document.getElementById("notif-bell-btn"),
+        badge: document.getElementById("notif-badge"),
+        panel: document.getElementById("notif-panel"),
+        listEl: document.getElementById("notif-list"),
+        activarBtn: document.getElementById("notif-activar-btn")
+    });
+
+    let currentUser = null;
+    let currentProfile = null;
+    let tarjetaId = null;
+    let tarjetaData = null;
+    let unsubProfile = null;
+    let unsubTarjeta = null;
+    let particlesIniciadas = false;
+
+    function assetUrl(path){
+        if(!path) return "";
+        return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+    }
+
+    function profileRoles(profile){
+        if(!profile) return [];
+        return Array.isArray(profile.roles) ? profile.roles : (profile.role ? [profile.role] : []);
+    }
+
+    function hasPortalAccess(profile){
+        return profile && profile.active !== false &&
+            profileRoles(profile).some(role => ["admin", "editor", "influencer"].includes(role));
+    }
+
+    async function loadProfile(user){
+        const snapshot = await getDoc(doc(db, "users", user.uid));
+        return snapshot.exists() ? snapshot.data() : null;
+    }
+
+    function stopListeners(){
+        if(unsubProfile) unsubProfile();
+        if(unsubTarjeta) unsubTarjeta();
+        unsubProfile = null;
+        unsubTarjeta = null;
+        notifBell.stop();
+    }
+
+    function showLogin(){
+        loginScreen.classList.remove("hidden");
+        portalShell.classList.add("hidden");
+    }
+
+    function showShell(user, profile){
+        currentUser = user;
+        loginScreen.classList.add("hidden");
+        portalShell.classList.remove("hidden");
+        if(!particlesIniciadas){
+            particlesIniciadas = true;
+            initParticles(null, { fixed: true, colors: ["#7b2cff", "#9d5bff", "#ff6a00"], count: 20, speed: 0.32, minSize: 1, maxSize: 3, opacityRange: [0.15, 0.45] });
+        }
+        userEmailEl.textContent = profile.displayName || profile.email || user.email;
+        roleBadge.textContent = profileRoles(profile).join(", ").toUpperCase();
+        notifBell.start(user.uid);
+    }
+
+    function renderIdentidad(){
+        if(!tarjetaData) return;
+        document.getElementById("influencer-foto").src = assetUrl(tarjetaData.foto) || "/imagenes/logo.jpg";
+        document.getElementById("influencer-nombre").textContent = tarjetaData.nombre || "Sin nombre";
+        document.getElementById("influencer-categoria").textContent = tarjetaData.categoria || "";
+        const input = document.getElementById("descripcion-input");
+        if(document.activeElement !== input) input.value = tarjetaData.descripcion || "";
+    }
+
+    document.getElementById("descripcion-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if(!tarjetaId) return;
+        const msgEl = document.getElementById("descripcion-msg");
+        const descripcion = document.getElementById("descripcion-input").value.trim();
+        try{
+            await updateDoc(doc(db, "influencers", tarjetaId), { descripcion, updatedAt: serverTimestamp() });
+            msgEl.textContent = "Guardado.";
+            setTimeout(() => { msgEl.textContent = ""; }, 2500);
+        }catch(error){
+            console.error(error);
+            msgEl.textContent = "No se pudo guardar.";
+        }
+    });
+
+    // ---- TikTok: mismo flujo OAuth que Portal Creadores (generarEstadoTiktokCanal
+    // / tiktokAuthStart / tiktokAuthCallback), no depende de la colección
+    // streamers en ningún punto — solo de users/{uid}, así que funciona igual acá. ----
+    async function conectarTiktok(button){
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Abriendo TikTok...";
+        try{
+            const generarEstado = httpsCallable(functionsInstance, "generarEstadoTiktokCanal");
+            const result = await generarEstado();
+            const url = `${TIKTOK_AUTH_URL}?state=${encodeURIComponent(result.data.state)}`;
+            window.open(url, "_blank", "noopener");
+        }catch(error){
+            console.error(error);
+            alert("No se pudo iniciar la conexión con TikTok. Intentá de nuevo.");
+        }
+        button.disabled = false;
+        button.textContent = original;
+    }
+
+    async function desconectarCuenta(plataforma, button){
+        if(!confirm("¿Desconectar esta cuenta? Vas a tener que volver a autorizarla si querés reconectarla.")) return;
+        button.disabled = true;
+        try{
+            const desconectar = httpsCallable(functionsInstance, "desconectarCuenta");
+            await desconectar({ plataforma });
+        }catch(error){
+            console.error(error);
+            alert("No se pudo desconectar la cuenta.");
+        }
+        button.disabled = false;
+    }
+
+    async function renderTiktokStatus(profile){
+        const content = document.getElementById("tiktok-status-content");
+        const openId = profile.tiktokOpenId || "";
+
+        if(!openId){
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste tu cuenta de TikTok.</p>
+</div>
+<button class="btn" type="button" data-connect-tiktok>Conectar mi cuenta de TikTok</button>`;
+            content.querySelector("[data-connect-tiktok]").addEventListener("click", (event) => conectarTiktok(event.currentTarget));
+            return;
+        }
+
+        content.innerHTML = `<p class="muted">Consultando estado...</p>`;
+        try{
+            const snapshot = await getDoc(doc(db, "tiktokAuth", openId));
+            const data = snapshot.exists() ? snapshot.data() : {};
+            const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">Conectado como <b>${escapeHtml(data.displayName || "cuenta de TikTok")}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por TikTok.</p>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn secondary" type="button" data-connect-tiktok>Reconectar / cambiar de cuenta</button>
+    <button class="btn danger small" type="button" data-disconnect="tiktok">Desconectar</button>
+</div>`;
+            content.querySelector("[data-connect-tiktok]").addEventListener("click", (event) => conectarTiktok(event.currentTarget));
+            content.querySelector("[data-disconnect]").addEventListener("click", (event) => desconectarCuenta("tiktok", event.currentTarget));
+        }catch(error){
+            console.error(error);
+            content.innerHTML = `<p class="muted">No se pudo consultar el estado de TikTok.</p>`;
+        }
+    }
+
+    // ---- Publicaciones: reusa obtenerContenidoCreador (generalizada para
+    // aceptar coleccion:"influencers"), mismo componente visual que streamer.html. ----
+    function formatViewers(n){
+        const value = Number(n) || 0;
+        if(value >= 1000) return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+        return String(value);
+    }
+
+    function formatFechaVideo(iso){
+        if(!iso) return "";
+        const fecha = new Date(iso);
+        if(isNaN(fecha.getTime())) return "";
+        return fecha.toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
+    }
+
+    function renderVideoCard(v){
+        const fecha = formatFechaVideo(v.fecha);
+        const tooltip = [v.titulo || "Sin título", fecha].filter(Boolean).join(" · ");
+        return `
+    <a class="perfil-video-card" href="${escapeHtml(v.url)}" target="_blank" rel="noopener" title="${escapeHtml(tooltip)}">
+        ${v.miniatura ? `<img src="${escapeHtml(v.miniatura)}" alt="" loading="lazy" onerror="this.remove()">` : `<div class="perfil-video-card-empty"><i class="fas fa-play"></i></div>`}
+        ${Number.isFinite(v.vistas) ? `<span class="perfil-video-card-views"><i class="fas fa-eye"></i>${formatViewers(v.vistas)}</span>` : ""}
+        <div class="perfil-video-card-overlay"><span class="perfil-video-card-title">${escapeHtml(v.titulo || "Sin título")}</span></div>
+    </a>`;
+    }
+
+    async function cargarPublicaciones(){
+        const el = document.getElementById("publicaciones-content");
+        if(!tarjetaId) return;
+        try{
+            const obtenerContenido = httpsCallable(functionsInstance, "obtenerContenidoCreador");
+            const { data } = await obtenerContenido({ streamerId: tarjetaId, coleccion: "influencers" });
+            const videos = [...(data.tiktok || [])].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+            el.innerHTML = videos.length
+                ? `<div class="perfil-videos-grid">${videos.map(renderVideoCard).join("")}</div>`
+                : `<p class="muted">Todavía no hay videos para mostrar (conectá TikTok si no lo hiciste, o esperá unos minutos si recién lo conectaste).</p>`;
+        }catch(error){
+            console.error(error);
+            el.innerHTML = `<p class="muted">No se pudieron cargar tus publicaciones.</p>`;
+        }
+    }
+
+    function loadMiTarjeta(){
+        unsubTarjeta = onSnapshot(query(collection(db, "influencers"), where("uid", "==", currentUser.uid)), (snapshot) => {
+            const docSnap = snapshot.docs[0];
+            tarjetaId = docSnap ? docSnap.id : null;
+            tarjetaData = docSnap ? docSnap.data() : null;
+
+            if(!tarjetaId){
+                sinTarjetaMsg.classList.remove("hidden");
+                tarjetaContent.classList.add("hidden");
+                return;
+            }
+            sinTarjetaMsg.classList.add("hidden");
+            tarjetaContent.classList.remove("hidden");
+            renderIdentidad();
+            cargarPublicaciones();
+        }, (error) => console.error(error));
+    }
+
+    loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        loginError.textContent = "";
+        try{
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            await signInWithEmailAndPassword(auth, email, password);
+        }catch(error){
+            console.error(error);
+            loginError.textContent = "Email o contraseña incorrectos.";
+        }
+    });
+
+    document.querySelectorAll("[data-logout]").forEach(btn => {
+        btn.addEventListener("click", () => signOut(auth));
+    });
+
+    document.getElementById("forgot-password-btn").addEventListener("click", async () => {
+        const msgEl = document.getElementById("forgot-password-msg");
+        const email = document.getElementById("email").value.trim();
+        if(!email){
+            msgEl.textContent = "Escribí tu email arriba y volvé a tocar el botón.";
+            return;
+        }
+        try{
+            await sendPasswordResetEmail(auth, email);
+        }catch(error){
+            console.error(error);
+        }
+        msgEl.textContent = "Si esa cuenta existe, te mandamos un link para restablecer la contraseña.";
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if(!user){
+            stopListeners();
+            showLogin();
+            return;
+        }
+
+        try{
+            const profile = await loadProfile(user);
+            if(!hasPortalAccess(profile)){
+                loginError.textContent = "Tu cuenta no tiene acceso al Portal Influencers.";
+                await signOut(auth);
+                return;
+            }
+            showShell(user, profile);
+            loadMiTarjeta();
+
+            if(unsubProfile) unsubProfile();
+            unsubProfile = onSnapshot(doc(db, "users", user.uid), snapshot => {
+                if(!snapshot.exists()) return;
+                currentProfile = snapshot.data();
+                renderTiktokStatus(currentProfile);
+            });
+        }catch(error){
+            console.error(error);
+            loginError.textContent = "No se pudo verificar tu cuenta. Intenta de nuevo.";
+            await signOut(auth);
+        }
+    });
+</script>
+<script type="module" src="/assets/js/report-bug.js"></script>
+</body>
+</html>
