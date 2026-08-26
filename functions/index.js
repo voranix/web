@@ -291,8 +291,12 @@ const KICK_CLIENT_ID = defineSecret("KICK_CLIENT_ID");
 const KICK_CLIENT_SECRET = defineSecret("KICK_CLIENT_SECRET");
 const KICK_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthCallback";
 
-const TIKTOK_CLIENT_ID = defineSecret("TIKTOK_CLIENT_ID");
-const TIKTOK_CLIENT_SECRET = defineSecret("TIKTOK_CLIENT_SECRET");
+// Nombres _V2 porque Secret Manager tardó en liberar los nombres viejos
+// (TIKTOK_CLIENT_ID/TIKTOK_CLIENT_SECRET) después de borrarlos para cargar
+// las credenciales de la nueva app de TikTok (organización) — nada más que
+// eso, no hay una v1 real conviviendo.
+const TIKTOK_CLIENT_ID = defineSecret("TIKTOK_CLIENT_ID_V2");
+const TIKTOK_CLIENT_SECRET = defineSecret("TIKTOK_CLIENT_SECRET_V2");
 const TIKTOK_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthCallback";
 
 // Cache en memoria del token de Twitch entre invocaciones (dura ~60 días,
