@@ -775,6 +775,7 @@
             if(!snapshot.exists()) return;
             const twitchLoginCambio = (currentProfile?.twitchLogin || "") !== (snapshot.data().twitchLogin || "");
             currentProfile = snapshot.data();
+            sincronizarCanalTwitch();
             renderOverlayLinks(currentProfile);
             renderTwitchStatus(currentProfile);
             renderYoutubeStatus(currentProfile);
@@ -1883,6 +1884,26 @@ ${guildId ? `
         return String(url).replace(/(?:\{width\}|\d+)x(?:\{height\}|\d+)\.jpg/, `${w}x${h}.jpg`);
     }
 
+    // El "Conectar mi cuenta de Twitch" de la pestaña Redes verifica la
+    // identidad (users/{uid}.twitchLogin, alimenta bot/overlay/comandos) —
+    // pero el perfil público lee un campo aparte, streamers/{doc}.twitch,
+    // que hasta ahora solo se llenaba escribiendo el usuario a mano en
+    // Canales. Un creador podía conectar Twitch y no darse cuenta de que
+    // igual necesitaba ese segundo paso, así que la tarjeta pública le
+    // quedaba sin nada de Twitch pese a decir "conectado". Esto sincroniza
+    // el canal automáticamente la primera vez que ambos datos están
+    // disponibles y streamers/{doc}.twitch todavía está vacío — no pisa un
+    // valor que el creador ya haya puesto a mano.
+    async function sincronizarCanalTwitch(){
+        if(!tarjetaId || !currentProfile?.twitchLogin || tarjetaData?.twitch) return;
+        try{
+            await updateDoc(doc(db, "streamers", tarjetaId), {
+                twitch: CANAL_PREFIJOS.twitch.build(currentProfile.twitchLogin),
+                updatedAt: serverTimestamp()
+            });
+        }catch(error){ console.error(error); }
+    }
+
     // Paleta de colores del perfil público: predefinida (3 colores curados)
     // o personalizada (el streamer elige los 3 a mano). Se guarda siempre
     // como los 3 colores ya resueltos (paletaColores) — la página pública no
@@ -2612,6 +2633,7 @@ ${renderCambiarPassword()}`;
                 }
             }
             if(tarjetaIdCambio) cargarBandeja();
+            sincronizarCanalTwitch();
             renderTarjeta();
             renderDiscordStatus(currentProfile);
         }, (error) => {
