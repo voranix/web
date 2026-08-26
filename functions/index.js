@@ -2122,14 +2122,16 @@ exports.tiktokAuthCallback = onRequest(
 const CUENTAS_DESCONECTABLES = {
     youtube: { campo: "youtubeChannelId", coleccion: "youtubeAuth" },
     kick: { campo: "kickSlug", coleccion: "kickAuth" },
-    tiktok: { campo: "tiktokOpenId", coleccion: "tiktokAuth" }
+    tiktok: { campo: "tiktokOpenId", coleccion: "tiktokAuth" },
+    discord: { campo: "discordUserId", coleccion: "discordAuth" }
 };
 
 exports.desconectarCuenta = onCall(async (request) => {
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores para desconectar una cuenta.");
     }
-    const config = CUENTAS_DESCONECTABLES[String(request.data?.plataforma || "")];
+    const plataforma = String(request.data?.plataforma || "");
+    const config = CUENTAS_DESCONECTABLES[plataforma];
     if (!config) {
         throw new HttpsError("invalid-argument", "Plataforma no reconocida.");
     }
@@ -2148,8 +2150,359 @@ exports.desconectarCuenta = onCall(async (request) => {
         await db.doc(`${config.coleccion}/${valor}`).delete().catch(() => {});
     }
 
+    // Desconectar Discord también borra la elección de servidor/rol del
+    // streamer: sin la cuenta OAuth conectada no hay forma de re-validarla
+    // contra Discord la próxima vez, así que no tiene sentido dejarla viva.
+    if (plataforma === "discord") {
+        const streamerSnap = await db.collection("streamers").where("uid", "==", uid).limit(1).get();
+        if (!streamerSnap.empty) {
+            await streamerSnap.docs[0].ref.update({
+                discordGuildId: admin.firestore.FieldValue.delete(),
+                discordGuildNombre: admin.firestore.FieldValue.delete(),
+                discordRoleId: admin.firestore.FieldValue.delete(),
+                discordRoleNombre: admin.firestore.FieldValue.delete()
+            }).catch(() => {});
+        }
+    }
+
     return { ok: true };
 });
+
+// ---------------------------------------------------------------------
+// Conexión de cuenta de Discord: mismo patrón OAuth que YouTube/Kick/TikTok
+// para que el creador vincule SU cuenta (scope identify+guilds). A
+// diferencia de esas, acá no alcanza con "leer datos públicos" — hacen
+// falta dos funciones más:
+//
+// 1) obtenerServidoresDiscord: cruza los servidores donde el creador es
+//    dueño/admin (con SU token OAuth) contra los servidores donde el bot
+//    de VORANIX ya está agregado (con el token del bot) — solo puede
+//    elegir un servidor donde se cumplen ambas cosas, y de ahí lista los
+//    roles asignables (sin @everyone ni roles administrados por otra
+//    integración) usando el token del bot.
+// 2) guardarDiscordConfig: guarda la elección (guildId + rol opcional) en
+//    el doc del streamer, re-validando todo contra la API de Discord del
+//    lado del servidor — nunca confía en lo que mande el cliente sin
+//    chequearlo.
+//
+// El "unirse al Discord" del visitante (discordJoinStart/Callback, más
+// abajo) es la pieza que realmente agrega a alguien al servidor con el rol
+// puesto: un solo llamado on-demand a la API (PUT .../members/{id} con el
+// access_token de guilds.join), no hace falta mantener el bot conectado
+// por Gateway escuchando quién entra — encaja con el resto de la
+// arquitectura serverless/on-demand del proyecto.
+// ---------------------------------------------------------------------
+
+const DISCORD_CLIENT_ID = defineSecret("DISCORD_CLIENT_ID");
+const DISCORD_CLIENT_SECRET = defineSecret("DISCORD_CLIENT_SECRET");
+const DISCORD_BOT_TOKEN = defineSecret("DISCORD_BOT_TOKEN");
+const DISCORD_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/discordAuthCallback";
+const DISCORD_JOIN_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/discordJoinCallback";
+const DISCORD_API = "https://discord.com/api/v10";
+const DISCORD_ADMINISTRATOR = 0x8n;
+
+function discordBotInviteUrl(clientId) {
+    // permissions=268435456 = MANAGE_ROLES, lo mínimo para poder asignar un
+    // rol al agregar gente. El creador tiene que invitar al bot UNA vez a
+    // su propio servidor antes de que aparezca en la lista de "en común".
+    return `${DISCORD_API}/oauth2/authorize?client_id=${clientId}&scope=bot&permissions=268435456`;
+}
+
+exports.generarEstadoDiscordCanal = onCall(
+    { secrets: [TWITCH_CLIENT_SECRET] },
+    (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores para conectar tu cuenta de Discord.");
+        }
+        const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
+        return { state: `discord:${request.auth.uid}:${firma}` };
+    }
+);
+
+exports.discordAuthStart = onRequest(
+    { secrets: [DISCORD_CLIENT_ID] },
+    (req, res) => {
+        const state = String(req.query.state || "").trim();
+        if (!state.startsWith("discord:")) {
+            res.status(400).send("Este link para conectar tu cuenta es inválido o venció. Volvé al Portal Creadores y generalo de nuevo.");
+            return;
+        }
+        const params = new URLSearchParams({
+            client_id: DISCORD_CLIENT_ID.value(),
+            redirect_uri: DISCORD_REDIRECT_URI,
+            response_type: "code",
+            scope: "identify guilds",
+            state,
+            prompt: "consent"
+        });
+        res.redirect(`${DISCORD_API}/oauth2/authorize?${params}`);
+    }
+);
+
+exports.discordAuthCallback = onRequest(
+    { secrets: [DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const { code, state, error, error_description: errorDescription } = req.query;
+        if (error) {
+            res.status(400).send(`No se pudo autorizar: ${errorDescription || error}`);
+            return;
+        }
+        try {
+            const clientId = DISCORD_CLIENT_ID.value();
+            const clientSecret = DISCORD_CLIENT_SECRET.value();
+
+            const partes = String(state || "").split(":");
+            if (partes.length !== 3 || partes[0] !== "discord" || firmarEstadoCanal(partes[1], TWITCH_CLIENT_SECRET.value()) !== partes[2]) {
+                res.status(400).send("El link para conectar tu cuenta venció o no es válido. Volvé al Portal Creadores y generalo de nuevo.");
+                return;
+            }
+            const uid = partes[1];
+
+            const tokenRes = await fetch(`${DISCORD_API}/oauth2/token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_id: clientId, client_secret: clientSecret, code,
+                    grant_type: "authorization_code", redirect_uri: DISCORD_REDIRECT_URI
+                })
+            });
+            const tokenData = await tokenRes.json();
+            if (!tokenData.access_token) throw new Error(JSON.stringify(tokenData));
+
+            const userRes = await fetch(`${DISCORD_API}/users/@me`, {
+                headers: { "Authorization": `Bearer ${tokenData.access_token}` }
+            });
+            const userData = await userRes.json();
+            if (!userData.id) throw new Error("No se pudo identificar la cuenta de Discord.");
+
+            const duplicados = await admin.firestore().collection("users")
+                .where("discordUserId", "==", userData.id).get();
+            const deOtraCuenta = duplicados.docs.find(docSnap => docSnap.id !== uid);
+            if (deOtraCuenta) {
+                res.status(409).send("Esta cuenta de Discord ya está conectada a otra cuenta de VORANIX. Si esto es un error, avisale al equipo.");
+                return;
+            }
+
+            const username = userData.global_name || userData.username || userData.id;
+            await admin.firestore().doc(`discordAuth/${userData.id}`).set({
+                discordUserId: userData.id, username,
+                authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`discordAuth/${userData.id}/privado/tokens`).set({
+                accessToken: tokenData.access_token, refreshToken: tokenData.refresh_token,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`users/${uid}`).set({
+                discordUserId: userData.id
+            }, { merge: true });
+
+            res.send(`<h2>¡Listo!</h2><p>Conectaste tu cuenta <b>${escapeHtml(username)}</b> de Discord. Volvé al Portal Creadores para elegir a qué servidor invitar a tu comunidad.</p>`);
+        } catch (err) {
+            logger.error("discordAuthCallback: fallo", err);
+            res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");
+        }
+    }
+);
+
+async function refrescarTokenDiscord(discordUserId, clientId, clientSecret) {
+    const tokensSnap = await admin.firestore().doc(`discordAuth/${discordUserId}/privado/tokens`).get();
+    if (!tokensSnap.exists) throw new Error("No hay una cuenta de Discord conectada.");
+    const tokens = tokensSnap.data();
+    const res = await fetch(`${DISCORD_API}/oauth2/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+            client_id: clientId, client_secret: clientSecret,
+            grant_type: "refresh_token", refresh_token: tokens.refreshToken
+        })
+    });
+    const data = await res.json();
+    if (!data.access_token) throw new Error("No se pudo refrescar el token de Discord.");
+    await admin.firestore().doc(`discordAuth/${discordUserId}/privado/tokens`).set({
+        accessToken: data.access_token, refreshToken: data.refresh_token || tokens.refreshToken,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    return data.access_token;
+}
+
+exports.obtenerServidoresDiscord = onCall(
+    { secrets: [DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_BOT_TOKEN] },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores.");
+        const db = admin.firestore();
+        const userSnap = await db.doc(`users/${request.auth.uid}`).get();
+        const discordUserId = userSnap.exists ? userSnap.data().discordUserId : null;
+        if (!discordUserId) throw new HttpsError("failed-precondition", "Conectá tu cuenta de Discord primero.");
+
+        const clientId = DISCORD_CLIENT_ID.value();
+        const clientSecret = DISCORD_CLIENT_SECRET.value();
+        const botToken = DISCORD_BOT_TOKEN.value();
+
+        const tokensSnap = await db.doc(`discordAuth/${discordUserId}/privado/tokens`).get();
+        if (!tokensSnap.exists) throw new HttpsError("failed-precondition", "Conectá tu cuenta de Discord primero.");
+        let accessToken = tokensSnap.data().accessToken;
+
+        async function pedirMisServidores(token) {
+            return fetch(`${DISCORD_API}/users/@me/guilds`, { headers: { "Authorization": `Bearer ${token}` } });
+        }
+        let misGuildsRes = await pedirMisServidores(accessToken);
+        if (misGuildsRes.status === 401) {
+            accessToken = await refrescarTokenDiscord(discordUserId, clientId, clientSecret);
+            misGuildsRes = await pedirMisServidores(accessToken);
+        }
+        if (!misGuildsRes.ok) throw new HttpsError("unavailable", "Discord no respondió tu lista de servidores. Probá de nuevo.");
+        const misGuilds = await misGuildsRes.json();
+
+        const misAdmin = misGuilds.filter(g => g.owner || (BigInt(g.permissions || 0) & DISCORD_ADMINISTRATOR) === DISCORD_ADMINISTRATOR);
+        if (!misAdmin.length) return { guilds: [], botInviteUrl: discordBotInviteUrl(clientId) };
+
+        const botGuildsRes = await fetch(`${DISCORD_API}/users/@me/guilds`, { headers: { "Authorization": `Bot ${botToken}` } });
+        if (!botGuildsRes.ok) throw new HttpsError("unavailable", "No se pudo consultar los servidores del bot de VORANIX.");
+        const botGuilds = await botGuildsRes.json();
+        const botGuildIds = new Set(botGuilds.map(g => g.id));
+
+        const enComun = misAdmin.filter(g => botGuildIds.has(g.id));
+
+        const guilds = [];
+        for (const g of enComun) {
+            const rolesRes = await fetch(`${DISCORD_API}/guilds/${g.id}/roles`, { headers: { "Authorization": `Bot ${botToken}` } });
+            const roles = rolesRes.ok ? await rolesRes.json() : [];
+            guilds.push({
+                id: g.id, nombre: g.name,
+                icono: g.icon ? `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=64` : null,
+                roles: roles
+                    .filter(r => r.id !== g.id && !r.managed)
+                    .sort((a, b) => b.position - a.position)
+                    .map(r => ({ id: r.id, nombre: r.name }))
+            });
+        }
+
+        return { guilds, botInviteUrl: discordBotInviteUrl(clientId) };
+    }
+);
+
+exports.guardarDiscordConfig = onCall(
+    { secrets: [DISCORD_BOT_TOKEN] },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "Iniciá sesión en el Portal Creadores.");
+        const guildId = String(request.data?.guildId || "").trim();
+        const roleId = String(request.data?.roleId || "").trim();
+        if (!guildId) throw new HttpsError("invalid-argument", "Falta elegir un servidor.");
+
+        const botToken = DISCORD_BOT_TOKEN.value();
+        const guildRes = await fetch(`${DISCORD_API}/guilds/${guildId}`, { headers: { "Authorization": `Bot ${botToken}` } });
+        if (!guildRes.ok) throw new HttpsError("failed-precondition", "El bot de VORANIX no está en ese servidor.");
+        const guild = await guildRes.json();
+
+        let roleNombre = null;
+        if (roleId) {
+            const rolesRes = await fetch(`${DISCORD_API}/guilds/${guildId}/roles`, { headers: { "Authorization": `Bot ${botToken}` } });
+            const roles = rolesRes.ok ? await rolesRes.json() : [];
+            const rol = roles.find(r => r.id === roleId);
+            if (!rol) throw new HttpsError("invalid-argument", "Ese rol ya no existe en el servidor.");
+            roleNombre = rol.name;
+        }
+
+        const db = admin.firestore();
+        const streamerSnap = await db.collection("streamers").where("uid", "==", request.auth.uid).limit(1).get();
+        if (streamerSnap.empty) throw new HttpsError("failed-precondition", "Todavía no tenés una tarjeta de streamer vinculada.");
+
+        await streamerSnap.docs[0].ref.update({
+            discordGuildId: guildId, discordGuildNombre: guild.name || "",
+            discordRoleId: roleId || admin.firestore.FieldValue.delete(),
+            discordRoleNombre: roleNombre || admin.firestore.FieldValue.delete(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return { ok: true, guildNombre: guild.name, roleNombre };
+    }
+);
+
+// "Unirse al Discord" desde el perfil público: el visitante autoriza con
+// el scope guilds.join y en el callback lo agregamos directo al servidor
+// (con el rol configurado, si el creador eligió uno) con el mismo llamado
+// PUT descrito arriba.
+exports.discordJoinStart = onRequest(
+    { secrets: [DISCORD_CLIENT_ID, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const streamerId = String(req.query.streamerId || "").trim();
+        if (!streamerId) { res.status(400).send("Falta el streamer."); return; }
+        const streamerSnap = await admin.firestore().doc(`streamers/${streamerId}`).get();
+        if (!streamerSnap.exists || !streamerSnap.data().discordGuildId) {
+            res.status(400).send("Este streamer todavía no configuró su Discord.");
+            return;
+        }
+        const firma = firmarEstadoCanal(streamerId, TWITCH_CLIENT_SECRET.value());
+        const params = new URLSearchParams({
+            client_id: DISCORD_CLIENT_ID.value(),
+            redirect_uri: DISCORD_JOIN_REDIRECT_URI,
+            response_type: "code",
+            scope: "identify guilds.join",
+            state: `join:${streamerId}:${firma}`
+        });
+        res.redirect(`${DISCORD_API}/oauth2/authorize?${params}`);
+    }
+);
+
+exports.discordJoinCallback = onRequest(
+    { secrets: [DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET, DISCORD_BOT_TOKEN, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const { code, state, error, error_description: errorDescription } = req.query;
+        if (error) { res.status(400).send(`No se pudo autorizar: ${errorDescription || error}`); return; }
+        try {
+            const partes = String(state || "").split(":");
+            if (partes.length !== 3 || partes[0] !== "join" || firmarEstadoCanal(partes[1], TWITCH_CLIENT_SECRET.value()) !== partes[2]) {
+                res.status(400).send("Este link venció o no es válido. Volvé al perfil del streamer e intentá de nuevo.");
+                return;
+            }
+            const streamerId = partes[1];
+            const streamerSnap = await admin.firestore().doc(`streamers/${streamerId}`).get();
+            const streamer = streamerSnap.exists ? streamerSnap.data() : null;
+            if (!streamer?.discordGuildId) throw new Error("El streamer ya no tiene un servidor de Discord configurado.");
+
+            const clientId = DISCORD_CLIENT_ID.value();
+            const clientSecret = DISCORD_CLIENT_SECRET.value();
+            const botToken = DISCORD_BOT_TOKEN.value();
+
+            const tokenRes = await fetch(`${DISCORD_API}/oauth2/token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_id: clientId, client_secret: clientSecret, code,
+                    grant_type: "authorization_code", redirect_uri: DISCORD_JOIN_REDIRECT_URI
+                })
+            });
+            const tokenData = await tokenRes.json();
+            if (!tokenData.access_token) throw new Error(JSON.stringify(tokenData));
+
+            const userRes = await fetch(`${DISCORD_API}/users/@me`, {
+                headers: { "Authorization": `Bearer ${tokenData.access_token}` }
+            });
+            const userData = await userRes.json();
+            if (!userData.id) throw new Error("No se pudo identificar tu cuenta de Discord.");
+
+            const addRes = await fetch(`${DISCORD_API}/guilds/${streamer.discordGuildId}/members/${userData.id}`, {
+                method: "PUT",
+                headers: { "Authorization": `Bot ${botToken}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    access_token: tokenData.access_token,
+                    ...(streamer.discordRoleId ? { roles: [streamer.discordRoleId] } : {})
+                })
+            });
+
+            if (![200, 201, 204].includes(addRes.status)) {
+                const detalle = await addRes.text().catch(() => "");
+                logger.error(`discordJoinCallback: Discord respondió ${addRes.status} agregando a ${userData.id} al server ${streamer.discordGuildId}`, detalle);
+                throw new Error("Discord no permitió agregarte al servidor. Puede que el bot haya perdido permisos.");
+            }
+
+            res.send(`<h2>¡Listo!</h2><p>Te uniste al Discord de <b>${escapeHtml(streamer.nombre || "este streamer")}</b>${streamer.discordRoleNombre ? ` con el rol <b>${escapeHtml(streamer.discordRoleNombre)}</b>` : ""}. Podés cerrar esta pestaña.</p>`);
+        } catch (err) {
+            logger.error("discordJoinCallback: fallo", err);
+            res.status(500).send("Hubo un error uniéndote al Discord. Intentá de nuevo o avisale al streamer.");
+        }
+    }
+);
 
 async function enviarMensajeChat(broadcasterId, botUserId, botToken, clientId, mensaje) {
     return fetch("https://api.twitch.tv/helix/chat/messages", {

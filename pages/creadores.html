@@ -432,6 +432,12 @@
                 <h2 class="overlay-links-title"><i class="fab fa-tiktok"></i> Tu cuenta de TikTok</h2>
                 <div id="tiktok-status-content"><p class="loading">Cargando...</p></div>
             </div>
+
+            <div class="overlay-links-block">
+                <h2 class="overlay-links-title"><i class="fab fa-discord"></i> Tu servidor de Discord</h2>
+                <p class="muted overlay-links-sub">A diferencia de las demás, acá conectás tu cuenta Y elegís a qué servidor invitar a tu comunidad (con un rol automático si querés).</p>
+                <div id="discord-status-content"><p class="loading">Cargando...</p></div>
+            </div>
         </div>
     </div>
 
@@ -649,6 +655,7 @@
     const YOUTUBE_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/youtubeAuthStart";
     const KICK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthStart";
     const TIKTOK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthStart";
+    const DISCORD_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/discordAuthStart";
 
     const CATEGORIAS = {
         torneo: "Torneo",
@@ -773,6 +780,7 @@
             renderYoutubeStatus(currentProfile);
             renderKickStatus(currentProfile);
             renderTiktokStatus(currentProfile);
+            renderDiscordStatus(currentProfile);
             if(twitchLoginCambio){ renderMisComandos(currentProfile); renderOverlayEditor(currentProfile); }
             renderStatsStrip();
             renderTarjeta();
@@ -1086,10 +1094,136 @@ ${!contenidoActivo ? `
         }
     }
 
-    // Desconectar YouTube/Kick/TikTok: útil si te equivocaste de cuenta o
-    // solo querés sacar la vinculación. No incluye Twitch a propósito (ver
-    // el comentario de desconectarCuenta del lado de las Cloud Functions).
-    const RENDER_STATUS_FN = { youtube: renderYoutubeStatus, kick: renderKickStatus, tiktok: renderTiktokStatus };
+    async function conectarDiscord(button){
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Abriendo Discord...";
+        try{
+            const generarEstado = httpsCallable(functionsInstance, "generarEstadoDiscordCanal");
+            const result = await generarEstado();
+            const url = `${DISCORD_AUTH_URL}?state=${encodeURIComponent(result.data.state)}`;
+            window.open(url, "_blank", "noopener");
+        }catch(error){
+            console.error(error);
+            alert("No se pudo iniciar la conexión con Discord. Intentá de nuevo.");
+        }
+        button.disabled = false;
+        button.textContent = original;
+    }
+
+    // A diferencia de Twitch/YouTube/Kick/TikTok (que solo leen datos
+    // públicos de la cuenta ya conectada), acá además hay que elegir a qué
+    // servidor invitar y con qué rol — por eso lee tarjetaData (el doc del
+    // streamer, donde vive esa elección) además del profile de la cuenta.
+    function renderDiscordStatus(profile){
+        const content = document.getElementById("discord-status-content");
+        if(!content) return;
+        const discordUserId = profile?.discordUserId || "";
+
+        if(!discordUserId){
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste tu cuenta de Discord.</p>
+</div>
+<button class="btn" type="button" data-connect-discord>Conectar mi cuenta de Discord</button>`;
+            content.querySelector("[data-connect-discord]").addEventListener("click", (event) => conectarDiscord(event.currentTarget));
+            return;
+        }
+
+        const guildId = tarjetaData?.discordGuildId || "";
+        const guildNombre = tarjetaData?.discordGuildNombre || "";
+        const roleNombre = tarjetaData?.discordRoleNombre || "";
+
+        content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">Cuenta de Discord conectada.</p>
+</div>
+${guildId ? `
+<p style="margin:0 0 14px;">Invitando gente a <b>${escapeHtml(guildNombre)}</b>${roleNombre ? ` con el rol <b>${escapeHtml(roleNombre)}</b>` : " sin asignar ningún rol"}.</p>` : `
+<p class="muted" style="margin:0 0 14px;">Todavía no elegiste a qué servidor invitar a tu comunidad.</p>`}
+<div id="discord-picker-block"></div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+    <button class="btn secondary" type="button" data-discord-elegir>${guildId ? "Cambiar servidor" : "Elegir servidor"}</button>
+    <button class="btn danger small" type="button" data-disconnect="discord">Desconectar</button>
+</div>`;
+        content.querySelector("[data-discord-elegir]").addEventListener("click", () => abrirSelectorDiscord());
+        content.querySelector("[data-disconnect]").addEventListener("click", (event) => desconectarCuenta("discord", event.currentTarget));
+    }
+
+    async function abrirSelectorDiscord(){
+        const block = document.getElementById("discord-picker-block");
+        if(!block) return;
+        block.innerHTML = `<p class="loading">Buscando tus servidores...</p>`;
+        try{
+            const obtenerServidores = httpsCallable(functionsInstance, "obtenerServidoresDiscord");
+            const result = await obtenerServidores();
+            const guilds = result.data?.guilds || [];
+            const botInviteUrl = result.data?.botInviteUrl || "#";
+            if(!guilds.length){
+                block.innerHTML = `
+<div class="checkbox-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+    <p style="margin:0;">No encontramos ningún servidor tuyo (donde seas dueño o admin) con el bot de VORANIX ya agregado.</p>
+    <a class="btn secondary small" href="${escapeHtml(botInviteUrl)}" target="_blank" rel="noopener">Invitar al bot a mi servidor</a>
+    <p class="muted" style="font-size:11.5px;margin:0;">Después de invitarlo, volvé a tocar "${tarjetaData?.discordGuildId ? "Cambiar" : "Elegir"} servidor".</p>
+</div>`;
+                return;
+            }
+            block.innerHTML = `
+<div class="field">
+    <label>Servidor</label>
+    <select id="discord-select-guild">
+        <option value="">Elegí un servidor...</option>
+        ${guilds.map(g => `<option value="${escapeHtml(g.id)}"${g.id === tarjetaData?.discordGuildId ? " selected" : ""}>${escapeHtml(g.nombre)}</option>`).join("")}
+    </select>
+</div>
+<div class="field">
+    <label>Rol al ingresar <span style="text-transform:none;">(opcional)</span></label>
+    <select id="discord-select-role"><option value="">Sin rol</option></select>
+</div>
+<button class="btn" type="button" id="discord-guardar-config">Guardar</button>
+<span id="discord-config-msg" class="muted" style="font-size:12px;margin-left:8px;"></span>
+<div id="discord-config-error" class="error"></div>`;
+
+            const guildSelect = document.getElementById("discord-select-guild");
+            const roleSelect = document.getElementById("discord-select-role");
+            function pintarRoles(guildId){
+                const guild = guilds.find(g => g.id === guildId);
+                roleSelect.innerHTML = `<option value="">Sin rol</option>` +
+                    (guild ? guild.roles.map(r => `<option value="${escapeHtml(r.id)}"${r.id === tarjetaData?.discordRoleId ? " selected" : ""}>${escapeHtml(r.nombre)}</option>`).join("") : "");
+            }
+            pintarRoles(guildSelect.value);
+            guildSelect.addEventListener("change", () => pintarRoles(guildSelect.value));
+
+            document.getElementById("discord-guardar-config").addEventListener("click", async (event) => {
+                const errorEl = document.getElementById("discord-config-error");
+                const msgEl = document.getElementById("discord-config-msg");
+                errorEl.textContent = ""; msgEl.textContent = "";
+                const guildId = guildSelect.value;
+                if(!guildId){ errorEl.textContent = "Elegí un servidor."; return; }
+                event.target.disabled = true;
+                try{
+                    const guardar = httpsCallable(functionsInstance, "guardarDiscordConfig");
+                    await guardar({ guildId, roleId: roleSelect.value || null });
+                    msgEl.textContent = "¡Guardado!";
+                }catch(error){
+                    console.error(error);
+                    errorEl.textContent = "No se pudo guardar. Intentá de nuevo.";
+                }
+                event.target.disabled = false;
+            });
+        }catch(error){
+            console.error(error);
+            block.innerHTML = `<p class="muted">No se pudo cargar tus servidores. Intentá de nuevo.</p>`;
+        }
+    }
+
+    // Desconectar YouTube/Kick/TikTok/Discord: útil si te equivocaste de
+    // cuenta o solo querés sacar la vinculación. No incluye Twitch a
+    // propósito (ver el comentario de desconectarCuenta del lado de las
+    // Cloud Functions).
+    const RENDER_STATUS_FN = { youtube: renderYoutubeStatus, kick: renderKickStatus, tiktok: renderTiktokStatus, discord: renderDiscordStatus };
 
     async function desconectarCuenta(plataforma, button){
         if(!confirm("¿Desconectar esta cuenta? Vas a tener que volver a autorizarla si querés reconectarla.")) return;
@@ -1736,8 +1870,7 @@ ${!contenidoActivo ? `
         twitch: { prefijo: "twitch.tv/", icon: "fab fa-twitch", label: "Twitch", build: h => `https://twitch.tv/${h}` },
         kick: { prefijo: "kick.com/", icon: "fas fa-bolt", label: "Kick", build: h => `https://kick.com/${h}` },
         tiktok: { prefijo: "tiktok.com/@", icon: "fab fa-tiktok", label: "TikTok", build: h => `https://tiktok.com/@${h.replace(/^@/, "")}` },
-        instagram: { prefijo: "instagram.com/", icon: "fab fa-instagram", label: "Instagram", build: h => `https://instagram.com/${h}` },
-        discord: { prefijo: "discord.gg/", icon: "fab fa-discord", label: "Discord", build: h => `https://discord.gg/${h}` }
+        instagram: { prefijo: "instagram.com/", icon: "fab fa-instagram", label: "Instagram", build: h => `https://instagram.com/${h}` }
     };
 
     // Paleta de colores del perfil público: predefinida (3 colores curados)
@@ -2470,6 +2603,7 @@ ${renderCambiarPassword()}`;
             }
             if(tarjetaIdCambio) cargarBandeja();
             renderTarjeta();
+            renderDiscordStatus(currentProfile);
         }, (error) => {
             console.error(error);
             document.getElementById("tarjeta-content").innerHTML = `<p class="loading">No se pudo cargar tu tarjeta.</p>`;

@@ -154,9 +154,10 @@ const REDES = [
     { key: "twitch", icon: "fab fa-twitch", label: "Twitch", css: "pf-tw" },
     { key: "kick", icon: "fas fa-bolt", label: "Kick", css: "pf-kk" },
     { key: "tiktok", icon: "fab fa-tiktok", label: "TikTok", css: "pf-tt" },
-    { key: "instagram", icon: "fab fa-instagram", label: "Instagram", css: "pf-ig" },
-    { key: "discord", icon: "fab fa-discord", label: "Discord", css: "pf-dc" }
+    { key: "instagram", icon: "fab fa-instagram", label: "Instagram", css: "pf-ig" }
 ];
+
+const DISCORD_JOIN_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/discordJoinStart";
 
 // Cada uno de estos campos solo existe si el streamer conectó esa red (OAuth
 // verificado) — hasta entonces, sin tarjeta, sin error ni placeholder falso.
@@ -548,11 +549,12 @@ function renderStreamer(item) {
         <div id="perfil-contenido"><p class="perfil-videos-loading"><i class="fas fa-spinner fa-spin"></i> Cargando...</p></div>
     </div>
 
-    ${redes.length ? `
+    ${(redes.length || item.discordGuildId) ? `
     <div class="perfil-card perfil-reveal">
         <h2><i class="fas fa-share-nodes"></i>Redes</h2>
         <div class="perfil-redes-grid">
             ${redes.map(r => `<a class="perfil-red-btn ${r.css}" href="${escapeHtml(r.url)}" target="_blank" rel="noopener"><i class="${r.icon}"></i>${escapeHtml(r.label)}</a>`).join("")}
+            ${item.discordGuildId ? `<a class="perfil-red-btn pf-dc" href="${DISCORD_JOIN_URL}?streamerId=${encodeURIComponent(item.id)}" target="_blank" rel="noopener"><i class="fab fa-discord"></i>Unirse al Discord${item.discordRoleNombre ? ` (${escapeHtml(item.discordRoleNombre)})` : ""}</a>` : ""}
         </div>
     </div>` : ""}
 
