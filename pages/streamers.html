@@ -158,9 +158,9 @@ function renderStreamer(streamer, i) {
         : "En vivo";
     return `
 <a class="card card-link fade-up" href="/pages/streamer.html?id=${encodeURIComponent(streamer.id)}" style="animation-delay:${i * 0.04}s">
-    ${streamer.enVivo ? `<span class="badge-live"><span></span>${liveLabel}</span>` : ""}
     <img src="${assetUrl(streamer.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(streamer.nombre) || 'Streamer'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
+        ${streamer.enVivo ? `<span class="badge-live"><span></span>${liveLabel}</span>` : ""}
         <h3>${escapeHtml(streamer.nombre) || "Streamer"}</h3>
         <p class="games"><i class="fas fa-gamepad" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(streamer.juegos) || "Variety"}</p>
         <p class="schedule"><i class="fas fa-clock" style="margin-right:6px;"></i>${escapeHtml(streamer.horario) || "Consultar redes"}</p>

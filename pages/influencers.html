@@ -158,9 +158,9 @@ function renderInfluencer(influencer, i) {
         : "En vivo";
     return `
 <div class="card fade-up" style="animation-delay:${i * 0.04}s">
-    ${influencer.enVivo ? `<span class="badge-live"><span></span>${liveLabel}</span>` : ""}
     <img src="${assetUrl(influencer.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(influencer.nombre) || 'Influencer'}" onerror="this.src='/imagenes/logo.jpg'">
     <div class="card-body">
+        ${influencer.enVivo ? `<span class="badge-live"><span></span>${liveLabel}</span>` : ""}
         <h3>${escapeHtml(influencer.nombre) || "Influencer"}</h3>
         <p class="games"><i class="fas fa-star" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(influencer.categoria) || "Contenido variado"}</p>
         <img class="flag" src="${flagPath(influencer.pais)}" alt="${flagAlt(influencer.pais)}">

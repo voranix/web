@@ -1265,12 +1265,15 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     }
 }
 
-/* Badge "EN VIVO" reusable en cards de streamers/influencers */
+/* Badge "EN VIVO" reusable en cards de streamers/influencers. Vive dentro
+   de .card-body (no superpuesto a la foto): con fondo semi-transparente
+   sobre una imagen clara/rosada se perdía por completo, y encima del
+   fondo sólido de la tarjeta siempre se lee igual sin importar la foto. */
 .badge-live {
     display: inline-flex; align-items: center; gap: 6px;
     background: rgba(255,45,85,0.15); border: 1px solid rgba(255,45,85,0.5); color: #ff2d55;
     font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-    border-radius: 20px; padding: 4px 10px; position: absolute; top: 12px; left: 12px; z-index: 2;
+    border-radius: 20px; padding: 4px 10px; margin-bottom: 8px;
 }
 .badge-live span { width: 6px; height: 6px; background: #ff2d55; border-radius: 50%; animation: pulse 1.4s infinite; }
 
