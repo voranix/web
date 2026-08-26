@@ -767,8 +767,6 @@
         const tabButton = document.querySelector(`.creadores-tab[data-tab="${hashTab}"]`);
         if(tabButton) tabButton.click();
 
-        if(localStorage.getItem(TUTORIAL_SEEN_KEY) !== "1") openTutorial();
-
         // Escucha en vivo: si el creador conecta su Twitch en otra pestaña
         // (vuelve del OAuth de Twitch), acá se refleja solo, sin recargar.
         if(unsubProfile) unsubProfile();
@@ -1593,10 +1591,8 @@ ${guildId ? `
         }
     });
 
-    // Tutorial paso a paso: aparece solo la primera vez que el creador entra
-    // al portal (bandera en localStorage) y después queda disponible desde
-    // el botón "Tutorial" de la barra superior.
-    const TUTORIAL_SEEN_KEY = "voranixCreadoresTutorialSeen";
+    // Tutorial paso a paso: se abre solo desde el botón "Tutorial" de la
+    // barra superior (ya no aparece solo la primera vez, molestaba).
     const TUTORIAL_STEPS = [
         {
             titulo: "Bienvenido al Portal Creadores",
@@ -1644,7 +1640,6 @@ ${guildId ? `
 
     function closeTutorial(){
         tutorialModal.classList.add("hidden");
-        localStorage.setItem(TUTORIAL_SEEN_KEY, "1");
     }
 
     document.getElementById("open-tutorial-btn").addEventListener("click", openTutorial);
