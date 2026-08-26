@@ -915,8 +915,12 @@ ${!seguidoresActivos ? `
     <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
     <p class="muted" style="margin:0;">Te faltan tus seguidores en la tarjeta pública: reconectá (mismo botón de abajo) para dar el permiso nuevo que agregamos.</p>
 </div>` : ""}
-<button class="btn secondary" type="button" data-connect-twitch>Reconectar / cambiar de cuenta</button>`;
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn secondary" type="button" data-connect-twitch>Reconectar / cambiar de cuenta</button>
+    <button class="btn danger small" type="button" data-disconnect="twitch">Desconectar</button>
+</div>`;
             content.querySelector("[data-connect-twitch]").addEventListener("click", (event) => conectarTwitch(event.currentTarget));
+            content.querySelector("[data-disconnect]").addEventListener("click", (event) => desconectarCuenta("twitch", event.currentTarget));
         }catch(error){
             console.error(error);
             botConectado = null;
@@ -1224,10 +1228,15 @@ ${guildId ? `
     // cuenta o solo querés sacar la vinculación. No incluye Twitch a
     // propósito (ver el comentario de desconectarCuenta del lado de las
     // Cloud Functions).
-    const RENDER_STATUS_FN = { youtube: renderYoutubeStatus, kick: renderKickStatus, tiktok: renderTiktokStatus, discord: renderDiscordStatus };
+    const RENDER_STATUS_FN = { youtube: renderYoutubeStatus, kick: renderKickStatus, tiktok: renderTiktokStatus, discord: renderDiscordStatus, twitch: renderTwitchStatus };
 
     async function desconectarCuenta(plataforma, button){
-        if(!confirm("¿Desconectar esta cuenta? Vas a tener que volver a autorizarla si querés reconectarla.")) return;
+        // Twitch alimenta más que las demás (bot de chat, overlay, comandos),
+        // así que acá la advertencia es más específica que el mensaje genérico.
+        const mensaje = plataforma === "twitch"
+            ? "¿Desconectar tu cuenta de Twitch? El bot de chat, el overlay y tus comandos dejan de funcionar hasta que reconectés. Tu tarjeta pública y tu historial de transmisiones no se borran."
+            : "¿Desconectar esta cuenta? Vas a tener que volver a autorizarla si querés reconectarla.";
+        if(!confirm(mensaje)) return;
         const original = button.textContent;
         button.disabled = true;
         button.textContent = "Desconectando...";

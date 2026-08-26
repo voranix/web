@@ -2119,15 +2119,20 @@ exports.tiktokAuthCallback = onRequest(
 // Desconectar YouTube/Kick/TikTok: le saca al propio uid el campo de cuenta
 // vinculada y borra el doc de autorización + sus tokens guardados (no revoca
 // el token en la plataforma en sí, pero deja de leerlo y de guardar una
-// copia acá). Deliberadamente NO incluye Twitch: twitchLogin alimenta mucho
-// más (bot de chat, overlay, comandos), desconectarlo tiene un radio de
-// impacto que no se pensó todavía — se puede agregar más adelante si hace
-// falta, con más cuidado.
+// copia acá). Twitch entra en el mismo mapa genérico — el radio de impacto
+// (bot de chat, overlay, comandos, EventSub) es mayor que en las demás, así
+// que el cliente muestra una advertencia más específica antes de confirmar
+// (ver desconectarCuenta del lado del cliente en creadores.html), pero el
+// borrado en sí es idéntico: se limpia el link verificado y se borra el doc
+// de autorización + sus tokens. No cancela la suscripción a EventSub en
+// Twitch ni borra el historial de transmisiones — si el creador reconecta
+// más adelante, retoma desde ahí.
 const CUENTAS_DESCONECTABLES = {
     youtube: { campo: "youtubeChannelId", coleccion: "youtubeAuth" },
     kick: { campo: "kickSlug", coleccion: "kickAuth" },
     tiktok: { campo: "tiktokOpenId", coleccion: "tiktokAuth" },
-    discord: { campo: "discordUserId", coleccion: "discordAuth" }
+    discord: { campo: "discordUserId", coleccion: "discordAuth" },
+    twitch: { campo: "twitchLogin", coleccion: "twitchBotAuth" }
 };
 
 exports.desconectarCuenta = onCall(async (request) => {
