@@ -63,6 +63,8 @@ button{ cursor:pointer; }
 .lineup-select-option.placeholder{ color:#7a7a90; }
 .lineup-mvp-btn{ background:var(--surface-2); border:1px solid var(--border-2); border-radius:6px; padding:8px 10px; font-size:16px; line-height:1; opacity:.4; filter:grayscale(1); flex-shrink:0; }
 .lineup-mvp-btn.active{ opacity:1; filter:none; background:rgba(255,193,7,.15); border-color:#ffc107; box-shadow:0 0 12px rgba(255,193,7,.35); }
+.lineup-topfragger-btn{ background:var(--surface-2); border:1px solid var(--border-2); border-radius:6px; padding:8px 10px; font-size:16px; line-height:1; opacity:.4; filter:grayscale(1); flex-shrink:0; }
+.lineup-topfragger-btn.active{ opacity:1; filter:none; background:rgba(255,45,85,.15); border-color:#ff2d55; box-shadow:0 0 12px rgba(255,45,85,.35); }
 .images-thumbs{ display:flex; flex-wrap:wrap; gap:10px; margin:10px 0; }
 .images-thumb{ position:relative; width:90px; height:90px; border-radius:8px; overflow:hidden; border:1px solid var(--border-2); }
 .images-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -4886,7 +4888,7 @@ function fieldHtml(field, value){
     }
 
     if(type === "lineup"){
-        return `<div class="field${full}" data-lineup-field="${name}"><label>${label}</label><div class="lineup-rows" data-lineup-rows></div><button type="button" class="btn secondary small" data-lineup-add>+ Agregar jugador</button><span class="help">Selecciona quiénes jugaron y con qué agente. Toca 👑 para marcar al MVP de la partida. Esto alimenta las estadísticas de cada jugador en el Portal Roster.</span></div>`;
+        return `<div class="field${full}" data-lineup-field="${name}"><label>${label}</label><div class="lineup-rows" data-lineup-rows></div><button type="button" class="btn secondary small" data-lineup-add>+ Agregar jugador</button><span class="help">Selecciona quiénes jugaron y con qué agente. Toca 👑 para marcar al MVP de la partida (y 🎯 para el Top Fragger, en Valorant). Esto alimenta las estadísticas de cada jugador en el Portal Roster.</span></div>`;
     }
 
     if(type === "images"){
@@ -5116,7 +5118,13 @@ async function initLineupField(fieldName, existingRows, rosterJuego){
     const players = await fetchValorantRosterNames(rosterJuego);
     const secondField = LINEUP_SECOND_FIELD[rosterJuego] || LINEUP_SECOND_FIELD.valorant;
 
-    function addRow(jugador = "", agente = "", mvp = false){
+    // Top Fragger (más eliminaciones de la partida) solo tiene sentido en
+    // Valorant, donde ya existe la cultura de distinguirlo del MVP (mejor
+    // impacto general, no necesariamente el que más mató). Otros rosters
+    // (FIFA, DBD) se quedan solo con MVP.
+    const mostrarTopFragger = rosterJuego === "valorant" || rosterJuego === "valorantsecundario";
+
+    function addRow(jugador = "", agente = "", mvp = false, topFragger = false){
         const row = document.createElement("div");
         row.className = "lineup-row" + (mvp ? " is-mvp" : "");
         row.style.cssText = "display:flex;gap:8px;margin-bottom:8px;align-items:center;";
@@ -5163,6 +5171,31 @@ async function initLineupField(fieldName, existingRows, rosterJuego){
         });
         row.appendChild(mvpBtn);
 
+        if(mostrarTopFragger){
+            const topFraggerInput = document.createElement("input");
+            topFraggerInput.type = "hidden";
+            topFraggerInput.name = `${fieldName}_topFragger`;
+            topFraggerInput.value = topFragger ? "true" : "false";
+            row.appendChild(topFraggerInput);
+
+            const topFraggerBtn = document.createElement("button");
+            topFraggerBtn.type = "button";
+            topFraggerBtn.className = "btn lineup-topfragger-btn" + (topFragger ? " active" : "");
+            topFraggerBtn.title = "Marcar como Top Fragger de la partida";
+            topFraggerBtn.textContent = "🎯";
+            topFraggerBtn.addEventListener("click", () => {
+                const makeTopFragger = topFraggerInput.value !== "true";
+                rowsWrap.querySelectorAll(".lineup-row").forEach(otherRow => {
+                    const otherInput = otherRow.querySelector(`input[name="${fieldName}_topFragger"]`);
+                    if(otherInput) otherInput.value = "false";
+                    otherRow.querySelector(".lineup-topfragger-btn")?.classList.remove("active");
+                });
+                topFraggerInput.value = makeTopFragger ? "true" : "false";
+                topFraggerBtn.classList.toggle("active", makeTopFragger);
+            });
+            row.appendChild(topFraggerBtn);
+        }
+
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
         removeBtn.className = "btn danger small";
@@ -5175,7 +5208,7 @@ async function initLineupField(fieldName, existingRows, rosterJuego){
 
     rowsWrap.innerHTML = "";
     if(Array.isArray(existingRows) && existingRows.length){
-        existingRows.forEach(item => addRow(item.jugador || "", item.agente || "", !!item.mvp));
+        existingRows.forEach(item => addRow(item.jugador || "", item.agente || "", !!item.mvp, !!item.topFragger));
     }else{
         addRow();
     }
@@ -5381,11 +5414,13 @@ async function saveItem(event){
                 const jugadores = formData.getAll(`${name}_jugador`);
                 const agentes = formData.getAll(`${name}_agente`);
                 const mvps = formData.getAll(`${name}_mvp`);
+                const topFraggers = formData.getAll(`${name}_topFragger`);
                 payload[name] = jugadores
                     .map((jugador, i) => ({
                         jugador: String(jugador || "").trim(),
                         agente: String(agentes[i] || "").trim(),
-                        mvp: mvps[i] === "true"
+                        mvp: mvps[i] === "true",
+                        topFragger: topFraggers[i] === "true"
                     }))
                     .filter(row => row.jugador || row.agente);
             }else if(type === "images"){

@@ -69,15 +69,17 @@ function renderLineup(lineup) {
     if (!Array.isArray(lineup) || !lineup.length) return "";
     const rows = lineup.filter(row => row && (row.jugador || row.agente));
     if (!rows.length) return "";
-    // El MVP va primero para que resalte de inmediato en la línea del equipo.
-    const sorted = [...rows].sort((a, b) => (b.mvp ? 1 : 0) - (a.mvp ? 1 : 0));
+    // El MVP (y el Top Fragger, si lo hay) van primero para que resalten de
+    // inmediato en la línea del equipo.
+    const sorted = [...rows].sort((a, b) => ((b.mvp ? 2 : 0) + (b.topFragger ? 1 : 0)) - ((a.mvp ? 2 : 0) + (a.topFragger ? 1 : 0)));
     return `
     <div class="actividad-lineup">
         <p class="actividad-lineup-title"><i class="fas fa-users"></i> Line-up</p>
         <ul class="actividad-lineup-list">
             ${sorted.map(row => `
-            <li class="${row.mvp ? "is-mvp" : ""}">
+            <li class="${row.mvp ? "is-mvp" : ""}${row.topFragger ? " is-top-fragger" : ""}">
                 ${row.mvp ? `<i class="fas fa-crown" title="MVP"></i>` : ""}
+                ${row.topFragger ? `<i class="fas fa-crosshairs" title="Top Fragger"></i>` : ""}
                 <span class="lineup-player">${escapeHtml(row.jugador || "?")}</span>
                 ${row.agente ? `<span class="lineup-agent">${escapeHtml(row.agente)}</span>` : ""}
             </li>`).join("")}
@@ -116,8 +118,14 @@ export function renderActividadList(items) {
     const anteriores = [];
     items.forEach(item => (isUpcoming(item) ? proximos : anteriores).push(item));
 
-    proximos.sort((a, b) => String(a.fechaInicio || "").localeCompare(String(b.fechaInicio || "")));
-    anteriores.sort((a, b) => String(b.fechaInicio || "").localeCompare(String(a.fechaInicio || "")));
+    // Mismo criterio de fecha que isUpcoming/getProximoEvento (fechaFin si
+    // existe, si no fechaInicio) — antes esto ordenaba solo por fechaInicio,
+    // así que un evento de varios días (ej. empieza en julio, termina en
+    // agosto) podía intercalarse fuera de orden contra eventos de un solo
+    // día en agosto, que sí quedan ubicados según esa misma fecha de
+    // referencia real.
+    proximos.sort((a, b) => (parseEventDate(a)?.getTime() || 0) - (parseEventDate(b)?.getTime() || 0));
+    anteriores.sort((a, b) => (parseEventDate(b)?.getTime() || 0) - (parseEventDate(a)?.getTime() || 0));
 
     const groups = [];
     if (proximos.length) {

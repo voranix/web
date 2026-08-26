@@ -73,9 +73,14 @@
         .player-card-head img{ width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,106,0,.4); flex-shrink:0; }
         .player-card-head h4{ font-size:1rem; color:#fff; margin-bottom:2px; letter-spacing:.3px; }
         .player-role{ font-size:11px; color:var(--morado-light); text-transform:uppercase; letter-spacing:1px; }
+        .player-badges{ margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
         .player-mvp-badge{
-            margin-left:auto; display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#ffc107;
+            display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#ffc107;
             background:rgba(255,193,7,.1); border:1px solid rgba(255,193,7,.35); border-radius:20px; padding:4px 10px; white-space:nowrap;
+        }
+        .player-topfragger-badge{
+            display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#ff2d55;
+            background:rgba(255,45,85,.1); border:1px solid rgba(255,45,85,.35); border-radius:20px; padding:4px 10px; white-space:nowrap;
         }
         .player-card-stats{ padding-top:14px; border-top:1px solid var(--border); }
         .player-stat-row{ display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--gris); margin-bottom:12px; }
@@ -393,9 +398,10 @@
             item.lineup.forEach(row => {
                 if(!row || !row.jugador) return;
                 const key = normalizeName(row.jugador);
-                if(!stats[key]) stats[key] = { matches: 0, mvpCount: 0, agentCounts: {} };
+                if(!stats[key]) stats[key] = { matches: 0, mvpCount: 0, topFraggerCount: 0, agentCounts: {} };
                 stats[key].matches += 1;
                 if(row.mvp) stats[key].mvpCount += 1;
+                if(row.topFragger) stats[key].topFraggerCount += 1;
                 if(row.agente){
                     stats[key].agentCounts[row.agente] = (stats[key].agentCounts[row.agente] || 0) + 1;
                 }
@@ -418,7 +424,11 @@
             <h4>${escapeHtml(player.nombre) || "Jugador"}</h4>
             <p class="player-role">${escapeHtml(player.rol || "")}</p>
         </div>
-        ${stats && stats.mvpCount ? `<span class="player-mvp-badge"><i class="fas fa-crown"></i> ${stats.mvpCount} MVP</span>` : ""}
+        ${(stats && (stats.mvpCount || stats.topFraggerCount)) ? `
+<div class="player-badges">
+    ${stats.mvpCount ? `<span class="player-mvp-badge"><i class="fas fa-crown"></i> ${stats.mvpCount} MVP</span>` : ""}
+    ${stats.topFraggerCount ? `<span class="player-topfragger-badge"><i class="fas fa-crosshairs"></i> ${stats.topFraggerCount} Top Fragger</span>` : ""}
+</div>` : ""}
     </div>
     <div class="player-card-stats">
         <div class="player-stat-row">
@@ -462,12 +472,14 @@
         // jugador logueado (se lo matchea por nombre contra el lineup,
         // mismo criterio que ya usa renderEquipoGrid/renderPlayerCard).
         const misMvps = currentStats[normalizeName(currentProfile?.displayName)]?.mvpCount || 0;
+        const misTopFragger = currentStats[normalizeName(currentProfile?.displayName)]?.topFraggerCount || 0;
         const proximo = getProximoEvento(currentItems);
 
         const tiles = [
             { icon: "fa-users", value: currentPlayers.length, label: "Jugadores" },
             { icon: "fa-gamepad", value: partidasConLineup, label: "Partidas registradas" },
             { icon: "fa-crown", value: misMvps, label: "Tus MVP" },
+            { icon: "fa-crosshairs", value: misTopFragger, label: "Tus Top Fragger" },
             {
                 icon: "fa-calendar-day",
                 value: proximo ? escapeHtml(proximo.titulo || "Evento") : "Sin agendar",

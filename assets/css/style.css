@@ -491,6 +491,10 @@ button { cursor: pointer; }
     display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:#ffc107;
     background:rgba(255,193,7,.1); border:1px solid rgba(255,193,7,.35); border-radius:20px; padding:3px 9px; margin-bottom:10px;
 }
+.card-topfragger-badge {
+    display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; color:#ff2d55;
+    background:rgba(255,45,85,.1); border:1px solid rgba(255,45,85,.35); border-radius:20px; padding:3px 9px; margin-bottom:10px; margin-left:6px;
+}
 .card-agents { display:flex; flex-direction:column; gap:7px; }
 .card-agent-row { display:grid; grid-template-columns:56px 1fr 28px; align-items:center; gap:6px; }
 .card-agent-name { font-size:10px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -545,6 +549,9 @@ button { cursor: pointer; }
 .actividad-lineup-list li.is-mvp { border-color:#ffc107; background:rgba(255,193,7,.1); }
 .actividad-lineup-list li.is-mvp .lineup-player { color:#ffc107; }
 .actividad-lineup-list li i.fa-crown { color:#ffc107; font-size:11px; }
+.actividad-lineup-list li.is-top-fragger { border-color:#ff2d55; background:rgba(255,45,85,.1); }
+.actividad-lineup-list li.is-top-fragger .lineup-player { color:#ff2d55; }
+.actividad-lineup-list li i.fa-crosshairs { color:#ff2d55; font-size:11px; }
 
 /* Roster cards */
 .card.rank-card { cursor:default; }

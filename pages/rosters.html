@@ -266,9 +266,10 @@ function computeStats(items){
         item.lineup.forEach(row => {
             if(!row || !row.jugador) return;
             const key = normalizeName(row.jugador);
-            if(!stats[key]) stats[key] = { matches: 0, mvpCount: 0, agentCounts: {} };
+            if(!stats[key]) stats[key] = { matches: 0, mvpCount: 0, topFraggerCount: 0, agentCounts: {} };
             stats[key].matches += 1;
             if(row.mvp) stats[key].mvpCount += 1;
+            if(row.topFragger) stats[key].topFraggerCount += 1;
             if(row.agente){
                 stats[key].agentCounts[row.agente] = (stats[key].agentCounts[row.agente] || 0) + 1;
             }
@@ -285,6 +286,7 @@ function renderStatsBlock(stats){
 <div class="card-match-stats">
     <div class="card-stat-row"><span>Partidas jugadas</span><span class="card-stat-value">${matches}</span></div>
     ${stats.mvpCount ? `<div class="card-mvp-badge"><i class="fas fa-crown"></i> ${stats.mvpCount} MVP</div>` : ""}
+    ${stats.topFraggerCount ? `<div class="card-topfragger-badge"><i class="fas fa-crosshairs"></i> ${stats.topFraggerCount} Top Fragger</div>` : ""}
     ${topAgents.length ? `
     <div class="card-agents">
         ${topAgents.map(([agente, count]) => {
@@ -409,13 +411,14 @@ function parseMatchDate(item){
 function renderMatchLineup(lineup){
     const rows = (lineup || []).filter(row => row && (row.jugador || row.agente));
     if(!rows.length) return `<p class="match-empty">Sin line-up cargado para esta partida.</p>`;
-    const sorted = [...rows].sort((a, b) => (b.mvp ? 1 : 0) - (a.mvp ? 1 : 0));
+    const sorted = [...rows].sort((a, b) => ((b.mvp ? 2 : 0) + (b.topFragger ? 1 : 0)) - ((a.mvp ? 2 : 0) + (a.topFragger ? 1 : 0)));
     return `
 <p class="actividad-lineup-title"><i class="fas fa-users"></i> Line-up</p>
 <ul class="actividad-lineup-list">
     ${sorted.map(row => `
-    <li class="${row.mvp ? "is-mvp" : ""}">
+    <li class="${row.mvp ? "is-mvp" : ""}${row.topFragger ? " is-top-fragger" : ""}">
         ${row.mvp ? `<i class="fas fa-crown" title="MVP"></i>` : ""}
+        ${row.topFragger ? `<i class="fas fa-crosshairs" title="Top Fragger"></i>` : ""}
         <span class="lineup-player">${escapeHtml(row.jugador || "?")}</span>
         ${row.agente ? `<span class="lineup-agent">${escapeHtml(row.agente)}</span>` : ""}
     </li>`).join("")}
