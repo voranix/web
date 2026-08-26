@@ -140,9 +140,10 @@ service cloud.firestore {
     }
 
     // Mismo criterio que isLinkedCreador: el influencer vinculado
-    // (influencers/{doc}.uid == su propio uid) puede editar su descripción y
-    // sus redes (TikTok/Instagram) desde su portal — imagen, nombre,
-    // categoría, etc. siguen siendo exclusivos de staff.
+    // (influencers/{doc}.uid == su propio uid) puede personalizar su tarjeta
+    // (descripción, frase corta, paleta de colores, avatar/banner propios y
+    // sus links de Instagram/TikTok) desde su portal — nombre, categoría y
+    // país siguen siendo exclusivos de staff.
     function isLinkedInfluencer(influencerData) {
       return hasRole("influencer") && ("uid" in influencerData) && influencerData.uid == request.auth.uid;
     }
@@ -153,7 +154,10 @@ service cloud.firestore {
       allow update: if isStaff() ||
         (isLinkedInfluencer(resource.data) &&
          request.resource.data.diff(resource.data).affectedKeys()
-           .hasOnly(["descripcion", "instagram", "tiktok", "updatedAt"]));
+           .hasOnly([
+             "descripcion", "instagram", "tiktok", "fraseCorta", "paletaColores",
+             "avatarOverride", "bannerOverride", "updatedAt"
+           ]));
 
       match /privado/{sub} {
         allow read, write: if isStaff();

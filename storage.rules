@@ -56,6 +56,25 @@ service firebase.storage {
         request.resource.contentType.matches("image/.*");
     }
 
+    // Mismo criterio que esCreadorDe, para el influencer vinculado subiendo
+    // su propio avatar/banner desde Portal Influencers.
+    function esInfluencerDe(influencerId) {
+      return signedIn() &&
+        firestore.get(/databases/(default)/documents/influencers/$(influencerId)).data.uid == request.auth.uid;
+    }
+    match /influencerAvatares/{influencerId}/{fileName} {
+      allow read: if true;
+      allow write: if esInfluencerDe(influencerId) &&
+        request.resource.size < 2 * 1024 * 1024 &&
+        request.resource.contentType.matches("image/.*");
+    }
+    match /influencerBanners/{influencerId}/{fileName} {
+      allow read: if true;
+      allow write: if esInfluencerDe(influencerId) &&
+        request.resource.size < 4 * 1024 * 1024 &&
+        request.resource.contentType.matches("image/.*");
+    }
+
     match /{allPaths=**} {
       allow read: if true;
       allow write: if hasValidRole();

@@ -77,6 +77,41 @@
         .creadores-tab.active{ color:#fff; border-bottom-color:var(--naranja); }
         .creadores-tab-panel.hidden{ display:none; }
 
+        .dash-toggle{ display:inline-flex; gap:4px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:20px; padding:3px; }
+        .dash-toggle button{
+            background:none; border:none; border-radius:16px; padding:5px 14px; font-size:11px; font-weight:700;
+            color:var(--gris); cursor:pointer; font-family:inherit;
+        }
+        .dash-toggle button.active{ background:var(--morado); color:#fff; }
+
+        .canal-input-prefix{ display:flex; align-items:stretch; }
+        .canal-input-prefix span{
+            display:flex; align-items:center; padding:0 10px; background:rgba(255,255,255,.04); border:1px solid var(--border);
+            border-right:none; border-radius:8px 0 0 8px; font-size:11.5px; color:var(--gris); white-space:nowrap;
+        }
+        .canal-input-prefix input{ border-radius:0 8px 8px 0 !important; }
+
+        .upload-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:18px; }
+        .upload-box{ background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:var(--r-md); padding:16px; display:flex; gap:14px; align-items:flex-start; }
+        .upload-box img{ width:64px; height:64px; border-radius:8px; object-fit:cover; background:#0d0d1e; flex-shrink:0; }
+        .upload-box-title{ font-size:12.5px; font-weight:700; color:#fff; margin-bottom:3px; }
+        .upload-box-sub{ font-size:11px; color:var(--gris); margin-bottom:10px; line-height:1.5; }
+
+        .paleta-preset-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; margin-top:12px; }
+        .paleta-preset-grid.hidden{ display:none; }
+        .paleta-preset-card{
+            display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 8px;
+            background:rgba(255,255,255,.03); border:2px solid var(--border); border-radius:var(--r-md);
+            cursor:pointer; color:#fff; font-size:11.5px;
+        }
+        .paleta-preset-card.selected{ border-color:#fff; background:rgba(255,255,255,.06); }
+        .paleta-preset-dots{ display:flex; gap:4px; }
+        .paleta-preset-dots i{ width:18px; height:18px; border-radius:50%; display:block; }
+        .paleta-custom-row{ display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; }
+        .paleta-custom-row.hidden{ display:none; }
+        .paleta-custom-row label{ display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--gris); text-transform:uppercase; letter-spacing:.5px; }
+        .paleta-custom-row input[type="color"]{ width:44px; height:36px; border:1px solid var(--border); border-radius:8px; padding:2px; background:transparent; cursor:pointer; }
+
         .influencer-identity{ display:flex; align-items:center; gap:16px; margin-bottom:18px; flex-wrap:wrap; }
         .influencer-identity img{
             width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,106,0,.4); flex-shrink:0;
@@ -219,6 +254,36 @@
                     </div>
                 </div>
             </div>
+
+            <div class="influencer-portal-section">
+                <div class="overlay-links-block">
+                    <h2 class="overlay-links-title"><i class="fas fa-link"></i> Tus links públicos</h2>
+                    <p class="muted overlay-links-sub">Solo el usuario, sin la URL completa. Es lo que se muestra como botón en tu perfil público — conectar TikTok arriba trae tus videos, pero el botón de acá es el que hace falta cargar aparte para que aparezca.</p>
+                    <form id="canales-form">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label><i class="fab fa-instagram" style="margin-right:6px;"></i>Instagram</label>
+                                <div class="canal-input-prefix">
+                                    <span>instagram.com/</span>
+                                    <input name="instagram" type="text" placeholder="tu_usuario">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label><i class="fab fa-tiktok" style="margin-right:6px;"></i>TikTok</label>
+                                <div class="canal-input-prefix">
+                                    <span>tiktok.com/@</span>
+                                    <input name="tiktok" type="text" placeholder="tu_usuario">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="canales-error" class="error"></div>
+                        <div class="modal-actions" style="justify-content:flex-start;">
+                            <button class="btn" type="submit">Guardar links</button>
+                            <span id="canales-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <div class="creadores-tab-panel hidden" data-tab-panel="tarjeta">
@@ -232,15 +297,78 @@
                             <p id="influencer-categoria"></p>
                         </div>
                     </div>
-                    <p class="muted overlay-links-sub">Nombre, imagen y categoría los administra el staff de VORANIX. Tu descripción la editás vos.</p>
-                    <form id="descripcion-form">
+                    <p class="muted overlay-links-sub">Nombre, categoría y país los administra el staff de VORANIX. El resto de tu tarjeta lo personalizás vos acá abajo.</p>
+                </div>
+            </div>
+
+            <div class="influencer-portal-section">
+                <div class="overlay-links-block">
+                    <h2 class="overlay-links-title"><i class="fas fa-user-pen"></i> Identidad</h2>
+                    <p class="muted overlay-links-sub">Cómo te ve la comunidad VORANIX en tu perfil público.</p>
+                    <form id="identidad-form">
                         <div class="field">
-                            <label for="descripcion-input">Descripción</label>
-                            <textarea id="descripcion-input" rows="3" maxlength="280" placeholder="Contanos de qué hacés contenido..."></textarea>
+                            <label>Frase corta <span style="text-transform:none;">(máx. 80)</span></label>
+                            <input name="fraseCorta" type="text" maxlength="80" placeholder="Ej: Contenido todos los días">
                         </div>
-                        <button class="btn" type="submit">Guardar descripción</button>
-                        <span id="descripcion-msg" class="muted" style="margin-left:10px;font-size:12px;"></span>
+                        <div class="field">
+                            <label>Descripción <span style="text-transform:none;">(máx. 280)</span></label>
+                            <textarea name="descripcion" maxlength="280" placeholder="Contanos de qué hacés contenido..."></textarea>
+                        </div>
+                        <div class="field">
+                            <label>Paleta de colores <span style="text-transform:none;">— se ve en tu perfil público (hero, avatar, íconos)</span></label>
+                            <div class="dash-toggle" id="paleta-modo-toggle">
+                                <button type="button" data-modo="preset" class="active">Predefinida</button>
+                                <button type="button" data-modo="custom">Personalizada</button>
+                            </div>
+                            <div id="paleta-preset-grid" class="paleta-preset-grid"></div>
+                            <div id="paleta-custom-row" class="paleta-custom-row hidden">
+                                <label>Primario <input type="color" id="paleta-custom-1"></label>
+                                <label>Secundario <input type="color" id="paleta-custom-2"></label>
+                                <label>Terciario <input type="color" id="paleta-custom-3"></label>
+                            </div>
+                            <input type="hidden" name="paletaColor1" id="paleta-hidden-1">
+                            <input type="hidden" name="paletaColor2" id="paleta-hidden-2">
+                            <input type="hidden" name="paletaColor3" id="paleta-hidden-3">
+                        </div>
+                        <div id="identidad-error" class="error"></div>
+                        <div class="modal-actions" style="justify-content:flex-start;">
+                            <button class="btn" type="submit">Guardar identidad</button>
+                            <span id="identidad-msg" class="muted" style="font-size:12px;align-self:center;"></span>
+                        </div>
                     </form>
+                </div>
+            </div>
+
+            <div class="influencer-portal-section">
+                <div class="overlay-links-block">
+                    <h2 class="overlay-links-title"><i class="fas fa-image"></i> Avatar y banner</h2>
+                    <p class="muted overlay-links-sub">PNG, JPG o WebP. Avatar máx 2MB, banner máx 4MB. Si no subís nada, se usa la foto que cargó el staff.</p>
+                    <div class="upload-grid">
+                        <div class="upload-box">
+                            <img id="influencer-avatar-preview" src="/imagenes/logo.jpg" alt="" onerror="this.src='/imagenes/logo.jpg'">
+                            <div style="flex:1;">
+                                <div class="upload-box-title">Avatar</div>
+                                <div class="upload-box-sub">Cuadrada queda mejor. Se ve en tu perfil.</div>
+                                <input type="file" accept="image/png,image/jpeg,image/webp" id="upload-avatar-input">
+                                <div class="modal-actions" style="justify-content:flex-start;margin-top:8px;">
+                                    <button class="btn secondary small" type="button" id="upload-avatar-btn"><i class="fas fa-check"></i> Subir</button>
+                                    <span id="upload-avatar-msg" class="muted" style="font-size:11px;align-self:center;"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="upload-box">
+                            <img id="influencer-banner-preview" src="/imagenes/logo.jpg" alt="" onerror="this.src='/imagenes/logo.jpg'" style="width:96px;height:54px;">
+                            <div style="flex:1;">
+                                <div class="upload-box-title">Banner</div>
+                                <div class="upload-box-sub">Horizontal (ej. 1500x500). Portada de tu perfil público.</div>
+                                <input type="file" accept="image/png,image/jpeg,image/webp" id="upload-banner-input">
+                                <div class="modal-actions" style="justify-content:flex-start;margin-top:8px;">
+                                    <button class="btn secondary small" type="button" id="upload-banner-btn"><i class="fas fa-check"></i> Subir</button>
+                                    <span id="upload-banner-msg" class="muted" style="font-size:11px;align-self:center;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -318,11 +446,29 @@
         serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
-    import { auth, db, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
+    import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
+    import { auth, db, storage, escapeHtml, functionsInstance } from "/assets/js/firebase-config.js";
     import { initNotificationBell } from "/assets/js/notificaciones.js";
     import { initParticles } from "/assets/js/particles.js";
 
     const TIKTOK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthStart";
+
+    // Misma paleta curada que Portal Creadores (Identidad) — se guarda
+    // siempre como los 3 colores ya resueltos, la página pública no necesita
+    // saber si vino de un preset o de un color a mano.
+    const PALETAS_PRESET = [
+        { key: "voranix", nombre: "VORANIX", colores: ["#7b2cff", "#ff6a00", "#ff2d78"] },
+        { key: "oceano", nombre: "Océano", colores: ["#00c8ff", "#7b2cff", "#00ffa3"] },
+        { key: "fuego", nombre: "Fuego", colores: ["#ff6a00", "#ff2d55", "#ffd700"] },
+        { key: "bosque", nombre: "Bosque", colores: ["#22c55e", "#00c8ff", "#facc15"] },
+        { key: "neon", nombre: "Neón", colores: ["#ff2d78", "#a855f7", "#38bdf8"] },
+        { key: "hielo", nombre: "Hielo", colores: ["#38bdf8", "#a5f3fc", "#7b2cff"] }
+    ];
+
+    function ultimoSegmento(url){
+        if(!url) return "";
+        return String(url).trim().replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
+    }
 
     if("serviceWorker" in navigator){
         navigator.serviceWorker.register("/firebase-messaging-sw.js").catch(err => console.error("service worker:", err));
@@ -436,29 +582,150 @@
         if(tabButton) tabButton.click();
     }
 
+    function resolverAvatar(d){ return d.avatarOverride || d.foto || ""; }
+
     function renderIdentidad(){
         if(!tarjetaData) return;
-        document.getElementById("influencer-foto").src = assetUrl(tarjetaData.foto) || "/imagenes/logo.jpg";
-        document.getElementById("influencer-nombre").textContent = tarjetaData.nombre || "Sin nombre";
-        document.getElementById("influencer-categoria").textContent = tarjetaData.categoria || "";
-        const input = document.getElementById("descripcion-input");
-        if(document.activeElement !== input) input.value = tarjetaData.descripcion || "";
+        const d = tarjetaData;
+        const avatarSrc = assetUrl(resolverAvatar(d));
+        document.getElementById("influencer-foto").src = avatarSrc || "/imagenes/logo.jpg";
+        document.getElementById("influencer-nombre").textContent = d.nombre || "Sin nombre";
+        document.getElementById("influencer-categoria").textContent = d.categoria || "";
+
+        const fraseInput = document.querySelector('#identidad-form [name="fraseCorta"]');
+        if(fraseInput && document.activeElement !== fraseInput) fraseInput.value = d.fraseCorta || "";
+        const descInput = document.querySelector('#identidad-form [name="descripcion"]');
+        if(descInput && document.activeElement !== descInput) descInput.value = d.descripcion || "";
+
+        const guardados = Array.isArray(d.paletaColores) ? d.paletaColores.filter(c => /^#[0-9a-f]{6}$/i.test(c || "")) : [];
+        const colorActual = guardados.length === 3 ? guardados : PALETAS_PRESET[0].colores;
+        const presetActivo = PALETAS_PRESET.find(p => p.colores.every((c, i) => c.toLowerCase() === colorActual[i].toLowerCase()));
+        const modoPersonalizado = !presetActivo;
+
+        const presetGrid = document.getElementById("paleta-preset-grid");
+        presetGrid.innerHTML = PALETAS_PRESET.map(p => `
+<button type="button" class="paleta-preset-card${presetActivo?.key === p.key ? " selected" : ""}" data-preset="${p.key}">
+    <span class="paleta-preset-dots">${p.colores.map(c => `<i style="background:${c};"></i>`).join("")}</span>
+    <span>${escapeHtml(p.nombre)}</span>
+</button>`).join("");
+        presetGrid.classList.toggle("hidden", modoPersonalizado);
+        document.getElementById("paleta-custom-row").classList.toggle("hidden", !modoPersonalizado);
+        document.querySelectorAll("#paleta-modo-toggle button").forEach(b => b.classList.toggle("active", (b.dataset.modo === "custom") === modoPersonalizado));
+        [1, 2, 3].forEach(n => {
+            const custom = document.getElementById(`paleta-custom-${n}`);
+            const hidden = document.getElementById(`paleta-hidden-${n}`);
+            if(custom) custom.value = colorActual[n - 1];
+            if(hidden) hidden.value = colorActual[n - 1];
+        });
+
+        document.getElementById("influencer-avatar-preview").src = avatarSrc || "/imagenes/logo.jpg";
+        document.getElementById("influencer-banner-preview").src = assetUrl(d.bannerOverride || "") || "/imagenes/logo.jpg";
+
+        const instagramInput = document.querySelector('#canales-form [name="instagram"]');
+        if(instagramInput && document.activeElement !== instagramInput) instagramInput.value = ultimoSegmento(d.instagram);
+        const tiktokInput = document.querySelector('#canales-form [name="tiktok"]');
+        if(tiktokInput && document.activeElement !== tiktokInput) tiktokInput.value = ultimoSegmento(d.tiktok);
     }
 
-    document.getElementById("descripcion-form").addEventListener("submit", async (event) => {
+    document.getElementById("identidad-form").addEventListener("submit", async (event) => {
         event.preventDefault();
         if(!tarjetaId) return;
-        const msgEl = document.getElementById("descripcion-msg");
-        const descripcion = document.getElementById("descripcion-input").value.trim();
+        const formData = new FormData(event.target);
+        const msgEl = document.getElementById("identidad-msg");
+        const errorEl = document.getElementById("identidad-error");
+        errorEl.textContent = ""; msgEl.textContent = "Guardando...";
         try{
-            await updateDoc(doc(db, "influencers", tarjetaId), { descripcion, updatedAt: serverTimestamp() });
-            msgEl.textContent = "Guardado.";
-            setTimeout(() => { msgEl.textContent = ""; }, 2500);
+            const paletaColores = ["paletaColor1", "paletaColor2", "paletaColor3"]
+                .map(k => String(formData.get(k) || "").trim())
+                .filter(c => /^#[0-9a-f]{6}$/i.test(c));
+            await updateDoc(doc(db, "influencers", tarjetaId), {
+                fraseCorta: String(formData.get("fraseCorta") || "").trim().slice(0, 80),
+                descripcion: String(formData.get("descripcion") || "").trim().slice(0, 280),
+                paletaColores: paletaColores.length === 3 ? paletaColores : PALETAS_PRESET[0].colores,
+                updatedAt: serverTimestamp()
+            });
+            msgEl.textContent = "¡Guardado!";
+            setTimeout(() => { if(msgEl) msgEl.textContent = ""; }, 2500);
+        }catch(error){ console.error(error); msgEl.textContent = ""; errorEl.textContent = "No se pudo guardar. Intenta de nuevo."; }
+    });
+
+    [1, 2, 3].forEach(n => {
+        document.getElementById(`paleta-custom-${n}`)?.addEventListener("input", (event) => {
+            const hidden = document.getElementById(`paleta-hidden-${n}`);
+            if(hidden) hidden.value = event.target.value;
+        });
+    });
+
+    document.getElementById("paleta-modo-toggle").addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-modo]");
+        if(!btn) return;
+        const esCustom = btn.dataset.modo === "custom";
+        document.querySelectorAll("#paleta-modo-toggle button").forEach(b => b.classList.toggle("active", b === btn));
+        document.getElementById("paleta-preset-grid")?.classList.toggle("hidden", esCustom);
+        document.getElementById("paleta-custom-row")?.classList.toggle("hidden", !esCustom);
+    });
+
+    document.getElementById("paleta-preset-grid").addEventListener("click", (event) => {
+        const presetBtn = event.target.closest(".paleta-preset-card[data-preset]");
+        if(!presetBtn) return;
+        const preset = PALETAS_PRESET.find(p => p.key === presetBtn.dataset.preset);
+        if(!preset) return;
+        document.querySelectorAll(".paleta-preset-card").forEach(c => c.classList.toggle("selected", c === presetBtn));
+        preset.colores.forEach((c, i) => {
+            const hidden = document.getElementById(`paleta-hidden-${i + 1}`);
+            const custom = document.getElementById(`paleta-custom-${i + 1}`);
+            if(hidden) hidden.value = c;
+            if(custom) custom.value = c;
+        });
+    });
+
+    document.getElementById("canales-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if(!tarjetaId) return;
+        const formData = new FormData(event.target);
+        const msgEl = document.getElementById("canales-msg");
+        const errorEl = document.getElementById("canales-error");
+        errorEl.textContent = ""; msgEl.textContent = "Guardando...";
+        try{
+            const instagram = String(formData.get("instagram") || "").trim();
+            const tiktok = String(formData.get("tiktok") || "").trim().replace(/^@/, "");
+            await updateDoc(doc(db, "influencers", tarjetaId), {
+                instagram: instagram ? `https://instagram.com/${instagram}` : "",
+                tiktok: tiktok ? `https://tiktok.com/@${tiktok}` : "",
+                updatedAt: serverTimestamp()
+            });
+            msgEl.textContent = "¡Guardado!";
+            setTimeout(() => { if(msgEl) msgEl.textContent = ""; }, 2500);
+        }catch(error){ console.error(error); msgEl.textContent = ""; errorEl.textContent = "No se pudo guardar. Intenta de nuevo."; }
+    });
+
+    async function subirImagenPerfil(tipo){
+        const input = document.getElementById(`upload-${tipo}-input`);
+        const msgEl = document.getElementById(`upload-${tipo}-msg`);
+        const file = input?.files?.[0];
+        const limite = tipo === "avatar" ? 2 * 1024 * 1024 : 4 * 1024 * 1024;
+        if(!tarjetaId) return;
+        if(!file){ msgEl.textContent = "Elegí un archivo primero."; return; }
+        if(file.size > limite){ msgEl.textContent = `Máximo ${tipo === "avatar" ? "2MB" : "4MB"}.`; return; }
+        msgEl.textContent = "Subiendo...";
+        try{
+            const carpeta = tipo === "avatar" ? "influencerAvatares" : "influencerBanners";
+            const storageRef = ref(storage, `${carpeta}/${tarjetaId}/${Date.now()}-${file.name}`.replace(/\s+/g, "_"));
+            const snapshot = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(snapshot.ref);
+            await updateDoc(doc(db, "influencers", tarjetaId), {
+                [tipo === "avatar" ? "avatarOverride" : "bannerOverride"]: url,
+                updatedAt: serverTimestamp()
+            });
+            msgEl.textContent = "¡Listo!";
         }catch(error){
             console.error(error);
-            msgEl.textContent = "No se pudo guardar.";
+            msgEl.textContent = "No se pudo subir.";
         }
-    });
+    }
+
+    document.getElementById("upload-avatar-btn").addEventListener("click", () => subirImagenPerfil("avatar"));
+    document.getElementById("upload-banner-btn").addEventListener("click", () => subirImagenPerfil("banner"));
 
     // ---- TikTok: mismo flujo OAuth que Portal Creadores (generarEstadoTiktokCanal
     // / tiktokAuthStart / tiktokAuthCallback), no depende de la colección

@@ -184,8 +184,19 @@ window.avatarError = function (imgEl) {
     if (frame) frame.innerHTML = `<div class="perfil-avatar-fallback"><i class="fas fa-user"></i></div>`;
 };
 
+// Igual que streamer.html: lo que el influencer haya cargado a mano desde
+// Portal Influencers (avatarOverride/bannerOverride) gana siempre sobre la
+// foto que cargó el staff — acá no hay auto-detección de ninguna red, así
+// que no hay un tercer nivel intermedio como en streamer.html.
+function resolverFoto(item) {
+    return item.avatarOverride || item.foto || "";
+}
+function resolverBanner(item) {
+    return item.bannerOverride || "";
+}
+
 function renderAvatar(item) {
-    const foto = assetUrl(item.foto);
+    const foto = assetUrl(resolverFoto(item));
     if (!foto) {
         return `<div class="perfil-avatar-fallback"><i class="fas fa-user"></i></div>`;
     }
@@ -261,6 +272,7 @@ function renderInfluencer(item) {
             <h1>${escapeHtml(item.nombre) || "Sin nombre"}</h1>
             <img class="perfil-flag" src="${flagPath(item.pais)}" alt="${flagAlt(item.pais)}" title="${flagAlt(item.pais)}">
         </div>
+        ${item.fraseCorta ? `<p class="perfil-frase perfil-in perfil-stagger-3">${escapeHtml(item.fraseCorta)}</p>` : ""}
         ${item.categoria ? `<div class="perfil-total-seguidores perfil-in perfil-stagger-3"><i class="fas fa-star"></i>${escapeHtml(item.categoria)}</div>` : ""}
     </div>
 
@@ -288,6 +300,26 @@ function renderInfluencer(item) {
     </div>`;
 
     activarScrollReveal();
+
+    const heroEl = content.querySelector(".perfil-hero");
+    if (heroEl) {
+        const banner = assetUrl(resolverBanner(item));
+        if (banner) {
+            heroEl.classList.add("has-banner");
+            heroEl.style.setProperty("--perfil-banner", `url("${banner.replace(/"/g, "%22")}")`);
+        }
+    }
+
+    // Paleta elegida desde Portal Influencers (predefinida o 3 colores a
+    // mano) — mismo mecanismo que streamer.html, cae en cascada sobre el
+    // hero, el anillo del avatar y los íconos genéricos vía las reglas ya
+    // existentes en style.css (var(--pf-acento, var(--morado))).
+    const paleta = Array.isArray(item.paletaColores) ? item.paletaColores.filter(c => /^#[0-9a-f]{6}$/i.test(c || "")) : [];
+    if (paleta.length === 3) {
+        content.style.setProperty("--pf-acento", paleta[0]);
+        content.style.setProperty("--pf-acento2", paleta[1]);
+        content.style.setProperty("--pf-acento3", paleta[2]);
+    }
 
     if (!particulasIniciadas) {
         particulasIniciadas = true;
