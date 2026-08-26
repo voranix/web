@@ -45,6 +45,18 @@
         }
         .overlay-links-title i{ color:var(--naranja); font-size:.95em; }
         .overlay-links-sub{ font-size:13px; margin-bottom:18px; }
+        .creadores-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:22px; }
+        .acceso-card{
+            background:var(--card); border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--border);
+            border-top:3px solid var(--morado); transition:var(--ease); display:flex; flex-direction:column;
+        }
+        .acceso-card:hover{ transform:translateY(-6px); border-color:var(--morado); border-top-color:var(--naranja); box-shadow:0 8px 30px var(--morado-glow); }
+        .acceso-img{ width:100%; aspect-ratio:16/9; height:auto; object-fit:cover; display:block; background:var(--bg-2); }
+        .acceso-body{ padding:22px; display:flex; flex-direction:column; gap:10px; flex:1; }
+        .acceso-body h3{ font-size:1.05rem; color:#fff; margin-bottom:0; }
+        .acceso-body > p{ font-size:13px; text-align:left; line-height:1.7; margin:0; }
+        .meta-line{ font-size:11px; color:var(--gris-dark); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+        .acceso-card .btn{ margin-top:auto; align-self:flex-start; }
         .bot-status-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
         .bot-status-icon{
             width:36px; height:36px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
@@ -186,6 +198,11 @@
             </div>
         </div>
 
+        <div id="proyectos-block" class="influencer-portal-section hidden">
+            <h2><i class="fas fa-diagram-project"></i> Proyectos VORANIX</h2>
+            <div id="proyectos-grid" class="creadores-grid"></div>
+        </div>
+
         <div class="influencer-portal-section">
             <h2><i class="fas fa-share-nodes"></i> Redes</h2>
             <p class="muted overlay-links-sub">Conectá tus cuentas reales (OAuth, verificado por cada plataforma) para que tus publicaciones aparezcan solas acá, sin tener que pegar links a mano.</p>
@@ -296,6 +313,8 @@
     const roleBadge = document.getElementById("role-badge");
     const sinTarjetaMsg = document.getElementById("sin-tarjeta-msg");
     const tarjetaContent = document.getElementById("influencer-tarjeta-content");
+    const proyectosBlock = document.getElementById("proyectos-block");
+    const proyectosGrid = document.getElementById("proyectos-grid");
     const notifBell = initNotificationBell({
         toggleBtn: document.getElementById("notif-bell-btn"),
         badge: document.getElementById("notif-badge"),
@@ -310,6 +329,7 @@
     let tarjetaData = null;
     let unsubProfile = null;
     let unsubTarjeta = null;
+    let unsubProyectos = null;
     let particlesIniciadas = false;
 
     function assetUrl(path){
@@ -335,9 +355,40 @@
     function stopListeners(){
         if(unsubProfile) unsubProfile();
         if(unsubTarjeta) unsubTarjeta();
+        if(unsubProyectos) unsubProyectos();
         unsubProfile = null;
         unsubTarjeta = null;
+        unsubProyectos = null;
         notifBell.stop();
+    }
+
+    // Mismo criterio que Portal Creadores: proyectos es pública (allow read:
+    // if true), no depende de tener tarjeta vinculada.
+    function renderProyecto(item){
+        const img = assetUrl(item.img);
+        return `
+<div class="acceso-card fade-up">
+    ${img ? `<img class="acceso-img" src="${escapeHtml(img)}" alt="${escapeHtml(item.titulo || "Proyecto")}" onerror="this.style.display='none'">` : ""}
+    <div class="acceso-body">
+        ${item.upcoming ? `<span class="tag-chip">Próximamente</span>` : ""}
+        <h3>${escapeHtml(item.titulo || "Sin título")}</h3>
+        ${item.descripcion ? `<p>${escapeHtml(item.descripcion)}</p>` : ""}
+        ${item.fecha ? `<div class="meta-line">${escapeHtml(item.fecha)}</div>` : ""}
+        ${item.link ? `<a class="btn btn-sm" href="${escapeHtml(item.link)}" target="_blank" rel="noopener">Ver más</a>` : ""}
+    </div>
+</div>`;
+    }
+
+    function loadProyectos(){
+        unsubProyectos = onSnapshot(collection(db, "proyectos"), (snapshot) => {
+            const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            proyectosBlock.classList.toggle("hidden", docs.length === 0);
+            proyectosGrid.innerHTML = docs.map(renderProyecto).join("");
+        }, (error) => {
+            console.error(error);
+            proyectosBlock.classList.remove("hidden");
+            proyectosGrid.innerHTML = `<p class="loading">No se pudieron cargar los proyectos.</p>`;
+        });
     }
 
     function showLogin(){
@@ -560,6 +611,7 @@
             }
             showShell(user, profile);
             loadMiTarjeta();
+            loadProyectos();
 
             if(unsubProfile) unsubProfile();
             unsubProfile = onSnapshot(doc(db, "users", user.uid), snapshot => {
