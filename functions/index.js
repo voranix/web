@@ -1072,6 +1072,13 @@ exports.actualizarEnVivo = onSchedule(
 
                 if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarPerfilAuto || debeActualizarYoutube || debeActualizarKick || debeActualizarTiktok) {
                     const updateData = { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual };
+                    // Se guarda en la transición vivo->offline (no en cada
+                    // chequeo) para poder ordenar streamers.html por "quién
+                    // prendió stream hace menos" sin tener que leer la
+                    // subcolección transmisiones de cada uno.
+                    if (coleccion === "streamers" && item.enVivo && !enVivo) {
+                        updateData.ultimaVezEnVivo = admin.firestore.FieldValue.serverTimestamp();
+                    }
                     if (debeActualizarJuegos) {
                         const juegosVistos = Array.isArray(item.juegosVistos) ? item.juegosVistos.map(j => ({ ...j })) : [];
                         const idx = juegosVistos.findIndex(j => j.nombre === juegoActual);

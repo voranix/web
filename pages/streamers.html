@@ -171,6 +171,14 @@ function renderStreamer(streamer, i) {
 </a>`;
 }
 
+// Cuántas redes tiene con seguidores/suscriptores reales (OAuth conectado
+// y ya confirmado por el poll de actualizarEnVivo) — no es solo "puso la
+// URL", es que la cuenta está de verdad vinculada y trayendo datos.
+function cuentasConectadas(item) {
+    return [item.seguidoresTwitch, item.suscriptoresYoutube, item.seguidoresKick, item.seguidoresTiktok]
+        .filter(n => Number.isFinite(n)).length;
+}
+
 async function loadStreamers() {
     try {
         const snapshot = await getDocs(collection(db, "streamers"));
@@ -178,7 +186,18 @@ async function loadStreamers() {
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(item => item.activo !== false)
             .sort((a, b) => {
+                // 1) En vivo ahora mismo, siempre primero.
                 if (!!b.enVivo !== !!a.enVivo) return b.enVivo ? 1 : -1;
+                // 2) Entre los que no están en vivo, quien prendió stream
+                //    hace menos tiempo (transición vivo->offline más reciente).
+                const ultimaA = a.ultimaVezEnVivo?.toMillis?.() || 0;
+                const ultimaB = b.ultimaVezEnVivo?.toMillis?.() || 0;
+                if (ultimaB !== ultimaA) return ultimaB - ultimaA;
+                // 3) Preferencia para cuentas realmente conectadas (más redes
+                //    verificadas con OAuth, no solo la URL cargada a mano).
+                const conectadasA = cuentasConectadas(a);
+                const conectadasB = cuentasConectadas(b);
+                if (conectadasB !== conectadasA) return conectadasB - conectadasA;
                 return String(a.nombre || "").localeCompare(String(b.nombre || ""));
             });
         grid.innerHTML = list.length
