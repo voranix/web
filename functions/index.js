@@ -943,7 +943,12 @@ exports.actualizarEnVivo = onSchedule(
             const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
             let twitchEnVivo = new Map();
-            const twitchHandles = docs.filter(d => d.twitch).map(d => handleFromUrl(d.twitch));
+            // handleFromUrl(d.twitch) puede devolver "" si el campo quedó con
+            // una URL sin el nombre al final (ej. "https://twitch.tv/"). Un
+            // user_login vacío en la consulta agrupada de Twitch puede tirar
+            // abajo la respuesta completa, dejando a TODOS los streamers sin
+            // detectar como en vivo, no solo al del dato malo.
+            const twitchHandles = [...new Set(docs.filter(d => d.twitch && handleFromUrl(d.twitch)).map(d => handleFromUrl(d.twitch)))];
             if (clientId && clientSecret && twitchHandles.length) {
                 try {
                     twitchEnVivo = await chequearTwitchEnVivo(twitchHandles, clientId, clientSecret);
