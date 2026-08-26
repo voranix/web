@@ -1893,6 +1893,12 @@ ${guildId ? `
         return String(url).replace(/(?:\{width\}|\d+)x(?:\{height\}|\d+)\.jpg/, `${w}x${h}.jpg`);
     }
 
+    function twitchHandleFromUrl(url){
+        if(!url) return "";
+        const clean = String(url).trim().replace(/\/+$/, "");
+        return (clean.split("/").pop() || "").replace(/^@/, "");
+    }
+
     // El "Conectar mi cuenta de Twitch" de la pestaña Redes verifica la
     // identidad (users/{uid}.twitchLogin, alimenta bot/overlay/comandos) —
     // pero el perfil público lee un campo aparte, streamers/{doc}.twitch,
@@ -1900,11 +1906,15 @@ ${guildId ? `
     // Canales. Un creador podía conectar Twitch y no darse cuenta de que
     // igual necesitaba ese segundo paso, así que la tarjeta pública le
     // quedaba sin nada de Twitch pese a decir "conectado". Esto sincroniza
-    // el canal automáticamente la primera vez que ambos datos están
-    // disponibles y streamers/{doc}.twitch todavía está vacío — no pisa un
-    // valor que el creador ya haya puesto a mano.
+    // el canal automáticamente cada vez que no coincide con el Twitch ya
+    // verificado por OAuth — incluyendo si streamers/{doc}.twitch tenía
+    // cargado algo distinto (a mano, viejo, o un link que ni siquiera era de
+    // Twitch), no solo cuando estaba vacío. El dato de OAuth es la fuente de
+    // verdad: no tiene sentido que la tarjeta pública diga otra cosa.
     async function sincronizarCanalTwitch(){
-        if(!tarjetaId || !currentProfile?.twitchLogin || tarjetaData?.twitch) return;
+        if(!tarjetaId || !currentProfile?.twitchLogin) return;
+        const actual = twitchHandleFromUrl(tarjetaData?.twitch).toLowerCase();
+        if(actual === currentProfile.twitchLogin.toLowerCase()) return;
         try{
             await updateDoc(doc(db, "streamers", tarjetaId), {
                 twitch: CANAL_PREFIJOS.twitch.build(currentProfile.twitchLogin),
