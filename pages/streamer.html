@@ -111,7 +111,7 @@
 <script src="/assets/js/nav.js"></script>
 
 <script type="module">
-import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { doc, getDoc, collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js";
 import { db, auth, functionsInstance, escapeHtml } from "/assets/js/firebase-config.js";
@@ -420,6 +420,39 @@ async function cargarSello(item) {
     }
 }
 
+// Ranking de "Fans más activos": agregado público de por vida (login +
+// total de mensajes en el chat de Twitch), separado de chatters (privado,
+// por sesión). Opcional igual que el Sello: si nunca se midió chat, o
+// nadie escribió lo suficiente, la tarjeta ni aparece.
+function rankSuffix(n) {
+    return n === 1 ? "1°" : n === 2 ? "2°" : n === 3 ? "3°" : `${n}°`;
+}
+function renderFanRow(fan, i) {
+    const puesto = i + 1;
+    return `
+    <div class="perfil-fan-row${puesto <= 3 ? ` rank-${puesto}` : ""}">
+        <span class="perfil-fan-rank">${rankSuffix(puesto)}</span>
+        <span class="perfil-fan-login">${escapeHtml(fan.login || "Anónimo")}</span>
+        <span class="perfil-fan-count">${formatViewers(fan.totalMensajes)} mensajes</span>
+    </div>`;
+}
+async function cargarFansActivos(item) {
+    const card = document.getElementById("perfil-fans-card");
+    if (!card) return;
+    try {
+        const fansQuery = query(collection(db, "streamers", item.id, "fansActivos"), orderBy("totalMensajes", "desc"), limit(10));
+        const snapshot = await getDocs(fansQuery);
+        if (snapshot.empty) { card.remove(); return; }
+        const fans = snapshot.docs.map(d => d.data());
+        document.getElementById("perfil-fans-list").innerHTML = fans.map(renderFanRow).join("");
+        card.style.display = "";
+        card.classList.add("is-visible");
+    } catch (e) {
+        console.error(e);
+        card.remove();
+    }
+}
+
 function badgeCuenta(item) {
     const tipo = String(item.twitchBroadcasterType || "").toLowerCase();
     if (tipo === "partner") return `<span class="perfil-badge-cuenta pf-partner" title="Partner de Twitch"><i class="fas fa-certificate"></i>Partner</span>`;
@@ -540,12 +573,19 @@ function renderStreamer(item) {
             ${badgeCuenta(item)}
         </div>
         ${item.fraseCorta ? `<p class="perfil-frase perfil-in perfil-stagger-3">${escapeHtml(item.fraseCorta)}</p>` : ""}
+        ${item.horario ? `<div class="perfil-horario perfil-in perfil-stagger-3"><i class="fas fa-clock"></i>${escapeHtml(item.horario)}</div>` : ""}
         ${totalSeguidores > 0 ? `<div class="perfil-total-seguidores perfil-in perfil-stagger-3"><i class="fas fa-users"></i>${formatViewers(totalSeguidores)} seguidores en total</div>` : ""}
         ${item.enVivo ? `<span class="perfil-live-label perfil-in perfil-stagger-3"><span></span>En vivo</span>` : ""}
         ${statCards(item)}
     </div>
 
     <div class="perfil-card perfil-reveal" id="perfil-sello-card" style="display:none;"></div>
+
+    <div class="perfil-card perfil-reveal" id="perfil-fans-card" style="display:none;">
+        <h2><i class="fas fa-ranking-star"></i>Fans más activos</h2>
+        <p class="muted" style="font-size:12.5px;margin-bottom:14px;">Ranking por mensajes escritos en el chat de Twitch, de por vida.</p>
+        <div class="perfil-fans-list" id="perfil-fans-list"></div>
+    </div>
 
     ${item.descripcion ? `
     <div class="perfil-card perfil-reveal">
@@ -625,6 +665,7 @@ async function load() {
         currentItem = item;
         renderStreamer(item);
         cargarContenido(item);
+        cargarFansActivos(item);
         cargarSello(item);
         await authListo;
         registrarVisitaSiCorresponde(item, !!(authActual && item.uid && authActual.uid === item.uid));

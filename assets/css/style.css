@@ -949,11 +949,11 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 
 .perfil-frase{ color:var(--gris); font-size:13.5px; font-style:italic; margin-bottom:10px; }
 
-.perfil-total-seguidores{
+.perfil-total-seguidores, .perfil-horario{
     display:inline-flex; align-items:center; gap:7px; color:var(--gris); font-size:12.5px;
     margin-bottom:14px;
 }
-.perfil-total-seguidores i{ color:var(--pf-acento2, var(--morado-light)); }
+.perfil-total-seguidores i, .perfil-horario i{ color:var(--pf-acento2, var(--morado-light)); }
 
 .perfil-stats-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(126px,1fr)); gap:12px; margin-top:24px; }
 .perfil-stat-card{
@@ -988,6 +988,22 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .perfil-red-btn.pf-tt i{ color:#ff2d78; }
 .perfil-red-btn.pf-ig i{ color:#e1306c; }
 .perfil-red-btn.pf-dc i{ color:#5865f2; }
+
+/* Ranking "Fans más activos" del perfil público: top 10 por mensajes en el
+   chat de Twitch, de por vida. Los primeros 3 puestos usan los mismos
+   colores de rango (oro/plata/bronce) que ya existen en :root para otros
+   rankings del sitio. */
+.perfil-fans-list{ display:flex; flex-direction:column; }
+.perfil-fan-row{
+    display:flex; align-items:center; gap:14px; padding:10px 0; border-bottom:1px solid var(--border);
+}
+.perfil-fan-row:last-child{ border-bottom:none; }
+.perfil-fan-rank{ font-family:var(--font); font-weight:800; font-size:1rem; color:var(--gris); width:26px; flex-shrink:0; text-align:center; }
+.perfil-fan-row.rank-1 .perfil-fan-rank{ color:var(--gold); }
+.perfil-fan-row.rank-2 .perfil-fan-rank{ color:var(--silver); }
+.perfil-fan-row.rank-3 .perfil-fan-rank{ color:var(--bronze); }
+.perfil-fan-login{ flex:1; color:#fff; font-size:13px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.perfil-fan-count{ color:var(--gris); font-size:11.5px; flex-shrink:0; }
 
 /* Contenido: una sección por red (con su propio encabezado) en vez de un
    único listado cronológico mezclado, cada una con una cuadrícula densa

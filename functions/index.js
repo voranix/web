@@ -1358,6 +1358,23 @@ async function cachearCreacionCuentaTwitch(db, chatterId) {
     }
 }
 
+// Ranking público de "Fans más activos" (perfil público del streamer): a
+// diferencia de chatters (privado, staff + dueño de la cuenta, vive por
+// sesión), esto es un agregado de por vida por persona — solo login +
+// total de mensajes, nada de horarios ni datos de sesión puntual. Se pisa
+// en cada mensaje (no hace falta recorrer todas las sesiones para mostrar
+// el ranking). Lo que ya era público de por sí: quién escribe en un chat
+// de Twitch lo ve cualquiera ahí mismo, esto solo lo agrega en un ranking.
+async function registrarFanActivo(db, encontrado, chatterId, chatterLogin) {
+    const fanRef = db.collection(encontrado.coleccion).doc(encontrado.id).collection("fansActivos").doc(chatterId);
+    const data = {
+        totalMensajes: admin.firestore.FieldValue.increment(1),
+        ultimaVez: admin.firestore.FieldValue.serverTimestamp()
+    };
+    if (chatterLogin) data.login = chatterLogin;
+    await fanRef.set(data, { merge: true });
+}
+
 // Se llama en CADA mensaje de chat (no solo los que disparan un comando).
 // Si no hay una sesión medida abierta para ese streamer (no está en vivo,
 // o no es un streamer del directorio), no hace nada.
@@ -1370,6 +1387,8 @@ async function registrarChatterEnSesion(db, encontrado, chatterId, chatterLogin)
     const chatterRef = sesionDoc.ref.collection("chatters").doc(chatterId);
     const chatterSnap = await chatterRef.get();
     const ahora = admin.firestore.FieldValue.serverTimestamp();
+
+    await registrarFanActivo(db, encontrado, chatterId, chatterLogin);
 
     if (chatterSnap.exists) {
         await chatterRef.update({ mensajes: admin.firestore.FieldValue.increment(1), ultimaVez: ahora });

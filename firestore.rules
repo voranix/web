@@ -123,6 +123,17 @@ service cloud.firestore {
           (signedIn() && get(/databases/$(database)/documents/streamers/$(doc)).data.uid == request.auth.uid);
         allow write: if false;
       }
+
+      // Ranking público de "Fans más activos" del perfil (registrarFanActivo,
+      // Admin SDK) — a diferencia de transmisiones/chatters, esto SÍ es
+      // público a propósito: es un agregado de por vida (login + total de
+      // mensajes, nada de horarios ni datos de sesión) de algo que ya es
+      // público de por sí (quién escribe en el chat de Twitch lo ve
+      // cualquiera ahí mismo).
+      match /fansActivos/{chatterId} {
+        allow read: if true;
+        allow write: if false;
+      }
     }
 
     match /rosters/{doc} {
@@ -161,6 +172,14 @@ service cloud.firestore {
 
       match /privado/{sub} {
         allow read, write: if isStaff();
+      }
+
+      // Mismo ranking público de "Fans más activos" que streamers/{doc} —
+      // solo aplica si el influencer tiene Twitch conectado (ver
+      // registrarFanActivo).
+      match /fansActivos/{chatterId} {
+        allow read: if true;
+        allow write: if false;
       }
     }
 
