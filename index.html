@@ -110,8 +110,12 @@
     <div class="home-live-wrap">
         <div class="home-live-main">
             <div class="home-live-player">
-                <div class="home-live-player-frame" id="home-live-player-frame">
-                    <div class="home-live-player-fallback"><i class="fas fa-moon"></i><p>Nadie está transmitiendo ahora mismo</p></div>
+                <div class="home-live-player-frame-wrap">
+                    <div class="home-live-player-frame" id="home-live-player-frame">
+                        <div class="home-live-player-fallback"><i class="fas fa-moon"></i><p>Nadie está transmitiendo ahora mismo</p></div>
+                    </div>
+                    <button type="button" class="home-live-nav prev" id="home-live-prev" aria-label="Streamer anterior"><i class="fas fa-chevron-left"></i></button>
+                    <button type="button" class="home-live-nav next" id="home-live-next" aria-label="Siguiente streamer"><i class="fas fa-chevron-right"></i></button>
                 </div>
                 <div class="home-live-player-info" id="home-live-player-info">
                     <div class="home-live-player-avatar" id="home-live-player-avatar"></div>
@@ -409,9 +413,30 @@ const playerViewers = document.getElementById("home-live-player-viewers").queryS
 const playerLink = document.getElementById("home-live-player-link");
 const chatEl = document.getElementById("home-live-chat");
 const thumbsEl = document.getElementById("home-live-thumbs");
+const prevBtn = document.getElementById("home-live-prev");
+const nextBtn = document.getElementById("home-live-next");
 
 let liveList = [];
 let activeId = null;
+
+// Las flechitas solo tienen sentido si hay más de un streamer en vivo para
+// elegir entre ellos (con 0 o 1 no hay a dónde navegar).
+function updateNavVisibility() {
+    const show = liveList.length > 1 ? "flex" : "none";
+    prevBtn.style.display = show;
+    nextBtn.style.display = show;
+}
+
+function goToOffset(delta) {
+    if (liveList.length < 2) return;
+    const idx = liveList.findIndex(it => it.id === activeId);
+    const nextIdx = (idx + delta + liveList.length) % liveList.length;
+    activeId = liveList[nextIdx].id;
+    renderFeatured();
+    renderThumbs();
+}
+prevBtn.addEventListener("click", () => goToOffset(-1));
+nextBtn.addEventListener("click", () => goToOffset(1));
 
 // Estado sin nadie en vivo: la sección queda visible igual, solo se oculta
 // el chat/info/miniaturas via la clase is-offline (ver CSS).
@@ -420,6 +445,7 @@ function renderOffline() {
     playerFrame.innerHTML = `<div class="home-live-player-fallback"><i class="fas fa-moon"></i><p>Nadie está transmitiendo ahora mismo</p></div>`;
     chatEl.innerHTML = "";
     thumbsEl.innerHTML = "";
+    updateNavVisibility();
 }
 
 function renderFeatured() {
@@ -483,6 +509,7 @@ async function loadLive() {
         activeId = liveList[0].id;
         renderFeatured();
         renderThumbs();
+        updateNavVisibility();
     } catch (e) {
         console.error(e);
         renderOffline();
