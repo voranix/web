@@ -1597,11 +1597,15 @@ exports.obtenerContenidoCreador = onCall(
     },
     async (request) => {
         const streamerId = String(request.data?.streamerId || "");
+        // Reusado por influencers (solo tienen TikTok/Instagram, sin canal de
+        // Twitch/YouTube/Kick) — mismo doc.uid -> users/{uid} para resolver
+        // qué cuentas conectó, ver comentario en la colección coleccion abajo.
+        const coleccion = request.data?.coleccion === "influencers" ? "influencers" : "streamers";
         if (!streamerId) throw new HttpsError("invalid-argument", "Falta streamerId.");
 
         const db = admin.firestore();
-        const streamerSnap = await db.doc(`streamers/${streamerId}`).get();
-        if (!streamerSnap.exists) throw new HttpsError("not-found", "Streamer no encontrado.");
+        const streamerSnap = await db.doc(`${coleccion}/${streamerId}`).get();
+        if (!streamerSnap.exists) throw new HttpsError("not-found", "No encontrado.");
         const streamer = streamerSnap.data();
 
         let youtubeChannelId = null;
@@ -2137,7 +2141,7 @@ exports.tiktokAuthCallback = onRequest(
                 tiktokOpenId: openId
             }, { merge: true });
 
-            res.send(`<h2>¡Listo!</h2><p>Conectaste tu cuenta <b>${escapeHtml(displayName) || "de TikTok"}</b>. Tus seguidores y tus últimos videos van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
+            res.send(`<h2>¡Listo!</h2><p>Conectaste tu cuenta <b>${escapeHtml(displayName) || "de TikTok"}</b>. Tus seguidores y tus últimos videos van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver a la pestaña anterior.</p>`);
         } catch (err) {
             logger.error("tiktokAuthCallback: fallo", err);
             res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");
@@ -2876,6 +2880,7 @@ exports.calcularSellosAudiencia = onSchedule(
 
 const PORTAL_INFO = {
     creador: { url: "https://voranix.web.app/pages/creadores.html", nombre: "Portal Creadores" },
+    influencer: { url: "https://voranix.web.app/pages/influencer-portal.html", nombre: "Portal Influencers" },
     capitan: { url: "https://voranix.web.app/pages/roster-portal.html", nombre: "Portal Roster" },
     segundocapitan: { url: "https://voranix.web.app/pages/roster-portal.html", nombre: "Portal Roster" },
     jugador: { url: "https://voranix.web.app/pages/roster-portal.html", nombre: "Portal Roster" },
