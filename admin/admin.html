@@ -1166,10 +1166,12 @@ const sections = {
         collection: "influencers",
         fields: [
             ["nombre", "Nombre", "text"],
+            ["uid", "Cuenta vinculada (influencer)", "userlink"],
             ["categoria", "Categoría", "text"],
             ["pais", "País", "select", PAISES],
             ["email", "Email (para comunicados)", "privateEmail"],
             ["foto", "Imagen", "imageurl"],
+            ["descripcion", "Descripción", "textarea"],
             ["instagram", "Instagram", "url"],
             ["twitch", "Twitch", "url"],
             ["kick", "Kick", "url"],
@@ -4924,7 +4926,7 @@ function fieldHtml(field, value){
     }
 
     if(type === "userlink"){
-        return `<div class="field" data-userlink-field="${name}"><label>${label}</label><select name="${name}" data-userlink-select disabled><option value="">Cargando cuentas...</option></select><span class="help">Solo cuentas con rol creador. Una vez vinculada, esa cuenta puede editar su descripción y redes desde el Portal Creadores.</span></div>`;
+        return `<div class="field" data-userlink-field="${name}"><label>${label}</label><select name="${name}" data-userlink-select disabled><option value="">Cargando cuentas...</option></select><span class="help">Solo cuentas con rol creador o influencer. Una vez vinculada, esa cuenta puede editar su descripción y redes desde su portal (Creadores o Influencers según su rol).</span></div>`;
     }
 
     if(type === "competicionSelect"){
@@ -4944,7 +4946,7 @@ function userFieldHtml(name, value, disabled = false){
     if(name === "roles"){
         const selected = Array.isArray(value) ? value : [];
         const options = [
-            ["admin", "admin"], ["editor", "staff"], ["creador", "creador"],
+            ["admin", "admin"], ["editor", "staff"], ["creador", "creador"], ["influencer", "influencer"],
             ["capitan", "capitan"], ["segundocapitan", "Second Caller"], ["jugador", "jugador"], ["viewer", "viewer"]
         ];
         return `
@@ -4993,7 +4995,7 @@ async function fetchCreadoresParaVincular(){
     const snapshot = await getDocs(collection(db, "users"));
     creadoresLinkCache = snapshot.docs
         .map(d => ({ uid: d.id, ...d.data() }))
-        .filter(u => profileRoles(u).includes("creador"))
+        .filter(u => profileRoles(u).some(role => ["creador", "influencer"].includes(role)))
         .sort((a, b) => String(a.displayName || a.email || "").localeCompare(String(b.displayName || b.email || "")));
     return creadoresLinkCache;
 }

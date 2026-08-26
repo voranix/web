@@ -139,9 +139,21 @@ service cloud.firestore {
         (isCapitanDe(resource.data.juego) && request.resource.data.juego == resource.data.juego);
     }
 
+    // Mismo criterio que isLinkedCreador: el influencer vinculado
+    // (influencers/{doc}.uid == su propio uid) puede editar su descripción y
+    // sus redes (TikTok/Instagram) desde su portal — imagen, nombre,
+    // categoría, etc. siguen siendo exclusivos de staff.
+    function isLinkedInfluencer(influencerData) {
+      return hasRole("influencer") && ("uid" in influencerData) && influencerData.uid == request.auth.uid;
+    }
+
     match /influencers/{doc} {
       allow read: if true;
-      allow write: if isStaff();
+      allow create, delete: if isStaff();
+      allow update: if isStaff() ||
+        (isLinkedInfluencer(resource.data) &&
+         request.resource.data.diff(resource.data).affectedKeys()
+           .hasOnly(["descripcion", "instagram", "tiktok", "updatedAt"]));
 
       match /privado/{sub} {
         allow read, write: if isStaff();
