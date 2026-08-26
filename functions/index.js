@@ -336,6 +336,13 @@ async function chequearTwitchEnVivo(handles, clientId, clientSecret) {
         const res = await fetch(`https://api.twitch.tv/helix/streams?${params}`, {
             headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
         });
+        if (!res.ok) {
+            // Antes esto seguía de largo silenciosamente (res.json() sobre una
+            // respuesta de error da {} y el batch entero queda como "nadie en
+            // vivo"), sin dejar rastro de que la API de Twitch falló.
+            logger.error(`chequearTwitchEnVivo: la API respondió ${res.status} para el lote [${lote.join(", ")}]`, await res.text());
+            continue;
+        }
         const data = await res.json();
         (data.data || []).forEach(s => enVivo.set(String(s.user_login).toLowerCase(), {
             viewerCount: Number(s.viewer_count) || 0,
