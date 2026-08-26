@@ -102,21 +102,27 @@
 </header>
 
 <!-- ================= EN VIVO AHORA ================= -->
-<!-- Oculta por defecto: si nadie está en vivo la sección ni se muestra,
-     nada de placeholder falso (mismo criterio que el resto del sitio). -->
-<section class="home-live-section container" id="home-live-section" style="display:none;">
+<!-- Siempre visible: arranca en estado "offline" (nadie transmitiendo) y
+     el script la actualiza a "en vivo" (video + chat) si encuentra algún
+     streamer con enVivo:true. -->
+<section class="home-live-section container is-offline" id="home-live-section">
     <h2><i class="fas fa-satellite-dish" style="margin-right:10px;color:#ff2d55;"></i>En Vivo Ahora</h2>
     <div class="home-live-wrap">
-        <div class="home-live-player">
-            <div class="home-live-player-frame" id="home-live-player-frame"></div>
-            <div class="home-live-player-info">
-                <div class="home-live-player-avatar" id="home-live-player-avatar"></div>
-                <div class="home-live-player-text">
-                    <h3 id="home-live-player-name"></h3>
-                    <p id="home-live-player-viewers"><i class="fas fa-eye"></i> <span></span></p>
+        <div class="home-live-main">
+            <div class="home-live-player">
+                <div class="home-live-player-frame" id="home-live-player-frame">
+                    <div class="home-live-player-fallback"><i class="fas fa-moon"></i><p>Nadie está transmitiendo ahora mismo</p></div>
                 </div>
-                <a class="btn btn-sm" id="home-live-player-link" href="#"><i class="fas fa-circle-info"></i> Ver perfil</a>
+                <div class="home-live-player-info" id="home-live-player-info">
+                    <div class="home-live-player-avatar" id="home-live-player-avatar"></div>
+                    <div class="home-live-player-text">
+                        <h3 id="home-live-player-name"></h3>
+                        <p id="home-live-player-viewers"><i class="fas fa-eye"></i> <span></span></p>
+                    </div>
+                    <a class="btn btn-sm" id="home-live-player-link" href="#"><i class="fas fa-circle-info"></i> Ver perfil</a>
+                </div>
             </div>
+            <div class="home-live-chat" id="home-live-chat"></div>
         </div>
         <div class="home-live-thumbs" id="home-live-thumbs"></div>
     </div>
@@ -381,16 +387,40 @@ function liveEmbedSrc(item) {
     return "";
 }
 
+// Mismo criterio Twitch-primero/Kick-respaldo que liveEmbedSrc, para el chat
+// embebido que se muestra al lado del video.
+function liveChatSrc(item) {
+    const twitchLogin = handleFromUrl(item.twitch);
+    if (twitchLogin) {
+        return `https://www.twitch.tv/embed/${encodeURIComponent(twitchLogin)}/chat?parent=${encodeURIComponent(location.hostname)}&darkpopout`;
+    }
+    const kickSlug = handleFromUrl(item.kick);
+    if (kickSlug) {
+        return `https://kick.com/popout/${encodeURIComponent(kickSlug)}/chat`;
+    }
+    return "";
+}
+
 const section = document.getElementById("home-live-section");
 const playerFrame = document.getElementById("home-live-player-frame");
 const playerAvatar = document.getElementById("home-live-player-avatar");
 const playerName = document.getElementById("home-live-player-name");
 const playerViewers = document.getElementById("home-live-player-viewers").querySelector("span");
 const playerLink = document.getElementById("home-live-player-link");
+const chatEl = document.getElementById("home-live-chat");
 const thumbsEl = document.getElementById("home-live-thumbs");
 
 let liveList = [];
 let activeId = null;
+
+// Estado sin nadie en vivo: la sección queda visible igual, solo se oculta
+// el chat/info/miniaturas via la clase is-offline (ver CSS).
+function renderOffline() {
+    section.classList.add("is-offline");
+    playerFrame.innerHTML = `<div class="home-live-player-fallback"><i class="fas fa-moon"></i><p>Nadie está transmitiendo ahora mismo</p></div>`;
+    chatEl.innerHTML = "";
+    thumbsEl.innerHTML = "";
+}
 
 function renderFeatured() {
     const item = liveList.find(it => it.id === activeId);
@@ -400,6 +430,9 @@ function renderFeatured() {
     playerFrame.innerHTML = src
         ? `<iframe src="${src}" allowfullscreen allow="autoplay; fullscreen" frameborder="0" scrolling="no"></iframe>`
         : `<div class="home-live-player-fallback"><i class="fas fa-video-slash"></i><p>Sin reproductor disponible</p></div>`;
+
+    const chatSrc = liveChatSrc(item);
+    chatEl.innerHTML = chatSrc ? `<iframe src="${chatSrc}" frameborder="0" scrolling="no"></iframe>` : "";
 
     const foto = assetUrl(item.foto);
     playerAvatar.innerHTML = foto
@@ -441,14 +474,18 @@ async function loadLive() {
             .filter(it => it.activo !== false && it.enVivo)
             .sort((a, b) => (b.viewerActual || 0) - (a.viewerActual || 0));
 
-        if (!liveList.length) return;
+        if (!liveList.length) {
+            renderOffline();
+            return;
+        }
 
+        section.classList.remove("is-offline");
         activeId = liveList[0].id;
-        section.style.display = "";
         renderFeatured();
         renderThumbs();
     } catch (e) {
         console.error(e);
+        renderOffline();
     }
 }
 loadLive();
