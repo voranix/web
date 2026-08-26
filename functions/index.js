@@ -943,12 +943,22 @@ exports.actualizarEnVivo = onSchedule(
             const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
             let twitchEnVivo = new Map();
-            // handleFromUrl(d.twitch) puede devolver "" si el campo quedó con
-            // una URL sin el nombre al final (ej. "https://twitch.tv/"). Un
-            // user_login vacío en la consulta agrupada de Twitch puede tirar
-            // abajo la respuesta completa, dejando a TODOS los streamers sin
-            // detectar como en vivo, no solo al del dato malo.
-            const twitchHandles = [...new Set(docs.filter(d => d.twitch && handleFromUrl(d.twitch)).map(d => handleFromUrl(d.twitch)))];
+            // handleFromUrl(d.twitch) puede devolver "" (URL sin nombre al
+            // final, ej. "https://twitch.tv/") o un valor con caracteres que
+            // Twitch no permite en un user_login (ej. "fulano.carrd.co" si el
+            // campo twitch quedó apuntando por error a una página de
+            // link-in-bio en vez de al canal). Un solo user_login inválido en
+            // la consulta agrupada hace que Twitch responda 400 para TODO el
+            // lote, dejando a todos los streamers sin detectar como en vivo,
+            // no solo al del dato malo — confirmado en logs reales
+            // ("Malformed query params").
+            const TWITCH_HANDLE_RE = /^[a-zA-Z0-9_]+$/;
+            const docsConTwitchInvalido = docs.filter(d => d.twitch && !TWITCH_HANDLE_RE.test(handleFromUrl(d.twitch)));
+            if (docsConTwitchInvalido.length) {
+                logger.warn(`actualizarEnVivo: ${coleccion} con campo twitch inválido (se ignoran en el chequeo de en vivo): ` +
+                    docsConTwitchInvalido.map(d => `${d.id}="${d.twitch}"`).join(", "));
+            }
+            const twitchHandles = [...new Set(docs.filter(d => d.twitch && TWITCH_HANDLE_RE.test(handleFromUrl(d.twitch))).map(d => handleFromUrl(d.twitch)))];
             if (clientId && clientSecret && twitchHandles.length) {
                 try {
                     twitchEnVivo = await chequearTwitchEnVivo(twitchHandles, clientId, clientSecret);
