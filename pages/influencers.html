@@ -153,7 +153,6 @@ function formatViewers(n) {
 }
 
 function renderInfluencer(influencer, i) {
-    const redesUrl = (influencer.enVivo && influencer.enVivoUrl) || influencer.instagram || influencer.tiktok || "#";
     const liveLabel = influencer.enVivo && influencer.viewerActual
         ? `En vivo · ${formatViewers(influencer.viewerActual)} viewers`
         : "En vivo";
@@ -165,8 +164,8 @@ function renderInfluencer(influencer, i) {
         <h3>${escapeHtml(influencer.nombre) || "Influencer"}</h3>
         <p class="games"><i class="fas fa-star" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(influencer.categoria) || "Contenido variado"}</p>
         <img class="flag" src="${flagPath(influencer.pais)}" alt="${flagAlt(influencer.pais)}">
-        <a href="${redesUrl}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
-            <i class="fas fa-external-link-alt"></i> Redes
+        <a href="/pages/influencer.html?id=${encodeURIComponent(influencer.id)}" class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
+            <i class="fas fa-circle-info"></i> Ver perfil
         </a>
     </div>
 </div>`;
