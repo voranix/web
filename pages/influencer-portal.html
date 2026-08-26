@@ -465,6 +465,25 @@
         { key: "hielo", nombre: "Hielo", colores: ["#38bdf8", "#a5f3fc", "#7b2cff"] }
     ];
 
+    // "Personalizar todo el portal": mismo mecanismo que Portal Creadores —
+    // la paleta de Identidad pisa las variables CSS de marca que ya usa todo
+    // Portal Influencers (botones, tabs, nav, badges, glows), no solo el
+    // perfil público. Solo afecta esta pestaña del navegador.
+    function aplicarPaletaPortal(d){
+        const guardados = Array.isArray(d?.paletaColores) ? d.paletaColores.filter(c => /^#[0-9a-f]{6}$/i.test(c || "")) : [];
+        const [c1, c2] = guardados.length === 3 ? guardados : PALETAS_PRESET[0].colores;
+        const root = document.documentElement.style;
+        root.setProperty("--morado", c1);
+        root.setProperty("--morado-light", `color-mix(in srgb, ${c1} 65%, white 35%)`);
+        root.setProperty("--morado-glow", `color-mix(in srgb, ${c1} 35%, transparent)`);
+        root.setProperty("--naranja", c2);
+        root.setProperty("--naranja-light", `color-mix(in srgb, ${c2} 75%, white 25%)`);
+        root.setProperty("--naranja-glow", `color-mix(in srgb, ${c2} 35%, transparent)`);
+        root.setProperty("--border-accent", `color-mix(in srgb, ${c1} 45%, transparent)`);
+        root.setProperty("--grad", `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`);
+        root.setProperty("--grad-subtle", `linear-gradient(135deg, color-mix(in srgb, ${c1} 10%, transparent) 0%, color-mix(in srgb, ${c2} 6%, transparent) 100%)`);
+    }
+
     function ultimoSegmento(url){
         if(!url) return "";
         return String(url).trim().replace(/\/+$/, "").split("/").pop().replace(/^@/, "");
@@ -844,6 +863,7 @@
             const docSnap = snapshot.docs[0];
             tarjetaId = docSnap ? docSnap.id : null;
             tarjetaData = docSnap ? docSnap.data() : null;
+            aplicarPaletaPortal(tarjetaData);
 
             if(!tarjetaId){
                 sinTarjetaMsg.classList.remove("hidden");

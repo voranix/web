@@ -1937,6 +1937,27 @@ ${guildId ? `
         { key: "hielo", nombre: "Hielo", colores: ["#38bdf8", "#a5f3fc", "#7b2cff"] }
     ];
 
+    // "Personalizar todo el portal": la paleta de Identidad no solo pinta el
+    // perfil público (streamer.html) — acá pisa las variables CSS de marca
+    // que ya usa TODO Portal Creadores (botones, tabs, nav, badges, glows),
+    // en vez de limitarse a las var(--pf-acento*) que solo lee ese perfil.
+    // Solo afecta esta pestaña del navegador (estilo inline en <html>), nunca
+    // el resto del sitio ni la sesión de otro usuario.
+    function aplicarPaletaPortal(d){
+        const guardados = Array.isArray(d?.paletaColores) ? d.paletaColores.filter(c => /^#[0-9a-f]{6}$/i.test(c || "")) : [];
+        const [c1, c2] = guardados.length === 3 ? guardados : PALETAS_PRESET[0].colores;
+        const root = document.documentElement.style;
+        root.setProperty("--morado", c1);
+        root.setProperty("--morado-light", `color-mix(in srgb, ${c1} 65%, white 35%)`);
+        root.setProperty("--morado-glow", `color-mix(in srgb, ${c1} 35%, transparent)`);
+        root.setProperty("--naranja", c2);
+        root.setProperty("--naranja-light", `color-mix(in srgb, ${c2} 75%, white 25%)`);
+        root.setProperty("--naranja-glow", `color-mix(in srgb, ${c2} 35%, transparent)`);
+        root.setProperty("--border-accent", `color-mix(in srgb, ${c1} 45%, transparent)`);
+        root.setProperty("--grad", `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`);
+        root.setProperty("--grad-subtle", `linear-gradient(135deg, color-mix(in srgb, ${c1} 10%, transparent) 0%, color-mix(in srgb, ${c2} 6%, transparent) 100%)`);
+    }
+
     function renderGreeting(d){
         const enVivo = !!d.enVivo;
         const noLeidos = bandejaMensajes.filter(m => !m.leido).length;
@@ -2654,6 +2675,7 @@ ${renderCambiarPassword()}`;
             }
             if(tarjetaIdCambio) cargarBandeja();
             sincronizarCanalTwitch();
+            aplicarPaletaPortal(tarjetaData);
             renderTarjeta();
             renderDiscordStatus(currentProfile);
         }, (error) => {
