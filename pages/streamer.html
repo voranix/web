@@ -129,6 +129,15 @@ function esUrlValida(value) {
     return /^https?:\/\//.test(String(value || "").trim());
 }
 
+// El box art de Twitch viene como URL con {width}x{height} sin resolver (o,
+// en entradas guardadas antes de este fix, ya resuelto a un tamaño chico) —
+// esto lo fuerza siempre al tamaño que ocupa la tarjeta en pantalla, para
+// que nunca se vea borroso por pedir menos resolución de la que hace falta.
+function boxArtEn(url, w, h) {
+    if (!url) return url;
+    return String(url).replace(/(?:\{width\}|\d+)x(?:\{height\}|\d+)\.jpg/, `${w}x${h}.jpg`);
+}
+
 function formatViewers(n) {
     const value = Number(n) || 0;
     if (value >= 1000) return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}K`;
@@ -254,7 +263,7 @@ function renderJuegosFrecuentes(item) {
         <div class="perfil-juegos-grid">
             ${todos.map(j => `
             <div class="perfil-juego-tile">
-                ${j.boxArtUrl ? `<img src="${escapeHtml(j.boxArtUrl)}" alt="${escapeHtml(j.nombre)}" loading="lazy">` : `<div class="perfil-juego-sin-arte"><i class="fas fa-gamepad"></i></div>`}
+                ${j.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(j.boxArtUrl, 380, 507))}" alt="${escapeHtml(j.nombre)}" loading="lazy">` : `<div class="perfil-juego-sin-arte"><i class="fas fa-gamepad"></i></div>`}
                 <span>${escapeHtml(j.nombre)}</span>
             </div>`).join("")}
         </div>

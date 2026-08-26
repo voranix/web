@@ -1873,6 +1873,16 @@ ${guildId ? `
         instagram: { prefijo: "instagram.com/", icon: "fab fa-instagram", label: "Instagram", build: h => `https://instagram.com/${h}` }
     };
 
+    // El box art de Twitch viene como URL con {width}x{height} sin resolver
+    // (o, en entradas guardadas antes de este fix, ya resuelto a un tamaño
+    // chico) — esto lo fuerza siempre al tamaño que necesita cada lugar
+    // donde se muestra, así nunca se ve borroso por pedir menos resolución
+    // de la que ocupa en pantalla (funciona con ambas formas de URL).
+    function boxArtEn(url, w, h) {
+        if (!url) return url;
+        return String(url).replace(/(?:\{width\}|\d+)x(?:\{height\}|\d+)\.jpg/, `${w}x${h}.jpg`);
+    }
+
     // Paleta de colores del perfil público: predefinida (3 colores curados)
     // o personalizada (el streamer elige los 3 a mano). Se guarda siempre
     // como los 3 colores ya resueltos (paletaColores) — la página pública no
@@ -2165,7 +2175,7 @@ ${guildId ? `
     <div class="categoria-tiles" id="categoria-tiles">
         ${juegosManual.length ? juegosManual.map((j, i) => `
 <div class="categoria-tile">
-    ${j.boxArtUrl ? `<img src="${escapeHtml(j.boxArtUrl)}" alt="${escapeHtml(j.nombre)}" loading="lazy">` : `<div class="categoria-tile-sin-arte"><i class="fas fa-gamepad"></i></div>`}
+    ${j.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(j.boxArtUrl, 380, 507))}" alt="${escapeHtml(j.nombre)}" loading="lazy">` : `<div class="categoria-tile-sin-arte"><i class="fas fa-gamepad"></i></div>`}
     <span>${escapeHtml(j.nombre)}</span>
     <button type="button" class="categoria-tile-quitar" data-quitar-categoria="${i}" aria-label="Quitar categoría"><i class="fas fa-xmark"></i></button>
 </div>`).join("") : `<p class="muted" style="grid-column:1/-1;">Todavía no agregaste categorías a mano.</p>`}
@@ -2347,7 +2357,7 @@ ${guildId ? `
                     categoriaResultados.innerHTML = categorias.length
                         ? categorias.map(c => `
 <div class="categoria-resultado-item" data-agregar-categoria data-id="${escapeHtml(c.id)}" data-nombre="${escapeHtml(c.nombre)}" data-box-art="${escapeHtml(c.boxArtUrl)}">
-    ${c.boxArtUrl ? `<img src="${escapeHtml(c.boxArtUrl)}" alt="">` : ""}
+    ${c.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(c.boxArtUrl, 76, 100))}" alt="">` : ""}
     <span>${escapeHtml(c.nombre)}</span>
 </div>`).join("")
                         : `<p class="categoria-resultado-vacio">Sin resultados en Twitch.</p>`;
