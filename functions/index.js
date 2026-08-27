@@ -2890,6 +2890,60 @@ exports.calcularSellosAudiencia = onSchedule(
 );
 
 // ---------------------------------------------------------------------
+// crearUsuarioStaff: crea la cuenta de Firebase Auth + su perfil en
+// users/{uid} en un solo paso, sin que quien lo hace necesite entrar a la
+// consola de Firebase (Authentication) a mano — hasta ahora había que
+// crear el login ahí, copiar el UID y recién después cargar el perfil acá.
+// Restringido a admin (mismo criterio que enviarAccesoCreador: crear/tocar
+// cuentas de Auth es una acción sensible, no algo que un editor deba poder
+// hacer). Se crea sin contraseña — la persona la configura sola con el
+// link que manda enviarAccesoCreador después, nunca queda una contraseña
+// provisoria dando vueltas.
+// ---------------------------------------------------------------------
+
+exports.crearUsuarioStaff = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+    }
+
+    const callerSnap = await admin.firestore().doc(`users/${request.auth.uid}`).get();
+    const callerProfile = callerSnap.exists ? callerSnap.data() : null;
+    if (!callerProfile || !profileRoles(callerProfile).includes("admin")) {
+        throw new HttpsError("permission-denied", "Solo un admin puede crear cuentas.");
+    }
+
+    const email = String(request.data?.email || "").trim().toLowerCase();
+    const displayName = String(request.data?.displayName || "").trim();
+    const roles = Array.isArray(request.data?.roles) ? request.data.roles.filter(Boolean) : [];
+    const equipoJuego = String(request.data?.equipoJuego || "");
+    const active = request.data?.active !== false;
+
+    if (!email) throw new HttpsError("invalid-argument", "Falta el email.");
+    if (!roles.length) throw new HttpsError("invalid-argument", "Elegí al menos un rol.");
+
+    let userRecord;
+    try {
+        userRecord = await admin.auth().createUser({ email, displayName: displayName || undefined });
+    } catch (err) {
+        if (err.code === "auth/email-already-exists") {
+            throw new HttpsError("already-exists", "Ya existe una cuenta con ese email.");
+        }
+        if (err.code === "auth/invalid-email") {
+            throw new HttpsError("invalid-argument", "Ese email no es válido.");
+        }
+        logger.error("crearUsuarioStaff: fallo creando la cuenta de Auth", err);
+        throw new HttpsError("internal", "No se pudo crear la cuenta.");
+    }
+
+    await admin.firestore().doc(`users/${userRecord.uid}`).set({
+        email, displayName, roles, equipoJuego, active,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { uid: userRecord.uid };
+});
+
+// ---------------------------------------------------------------------
 // enviarAccesoCreador: envía el link de "configurar/restablecer contraseña"
 // + un correo explicando dónde entrar, a cualquier cuenta de Usuarios (el
 // nombre de la función quedó de cuando era solo para creadores, pero ahora

@@ -5317,13 +5317,9 @@ function openItemModal(id = null, data = {}){
         const isNew = !id;
         formFields.innerHTML = `
 <div class="field">
-    <label>UID</label>
-    <input name="uid" type="text" value="${escapeHtml(data.uid || id || "")}" ${isNew ? "" : "disabled"}>
-    ${isNew ? '<span class="help">Cópialo desde Firebase Console → Authentication, después de crear el login de esa cuenta.</span>' : ""}
-</div>
-<div class="field">
     <label>Email</label>
     <input name="email" type="email" value="${escapeHtml(data.email || "")}" ${isNew ? "" : "disabled"}>
+    ${isNew ? '<span class="help">Se crea la cuenta de acceso (Firebase Auth) automáticamente al guardar — no hace falta pasar por Firebase Console.</span>' : ""}
 </div>
 ${userFieldHtml("displayName", getUsersFieldValue(data, "displayName"))}
 ${userFieldHtml("roles", getUsersFieldValue(data, "roles"))}
@@ -5435,15 +5431,17 @@ async function saveItem(event){
             if(editingId){
                 await updateDoc(doc(db, "users", editingId), payload);
             }else{
-                const uid = String(formData.get("uid") || "").trim();
                 const email = String(formData.get("email") || "").trim();
-                if(!uid){
-                    showError(formError, "Debes indicar el UID (cópialo desde Firebase Console → Authentication).");
+                if(!email){
+                    showError(formError, "Debes indicar el email.");
                     return;
                 }
-                payload.email = email;
-                payload.createdAt = serverTimestamp();
-                await setDoc(doc(db, "users", uid), payload);
+                if(!payload.roles.length){
+                    showError(formError, "Elegí al menos un rol.");
+                    return;
+                }
+                const crearUsuario = httpsCallable(functionsInstance, "crearUsuarioStaff");
+                await crearUsuario({ email, displayName: payload.displayName, roles: payload.roles, equipoJuego: payload.equipoJuego, active: payload.active });
             }
             closeModal();
             await renderUsers();
@@ -5520,7 +5518,7 @@ async function saveItem(event){
         closeModal();
     }catch(error){
         console.error(error);
-        showError(formError, "No se pudo guardar. Revisa los campos y permisos.");
+        showError(formError, error.message ? `No se pudo guardar: ${error.message}` : "No se pudo guardar. Revisa los campos y permisos.");
     }
 }
 
