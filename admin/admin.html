@@ -1343,6 +1343,8 @@ let currentUser = null;
 let currentProfile = null;
 let currentSection = "dashboard";
 let unsubscribeList = null;
+let metricasRango = "7d"; // "7d" | "mes" — se mantiene al abrir/cerrar detalle
+let metricasFiltro = "todos"; // "todos" | "cumple" | "no-cumple"
 let editingId = null;
 let editingData = {};
 let usersCache = [];
@@ -2267,11 +2269,58 @@ async function fetchStaffAccounts(){
 // Historial de transmisiones (streamers/{id}/transmisiones) lo alimenta el
 // webhook de Twitch (stream.online/stream.offline) — ver funciones/index.js.
 // Acá solo se lee y se agrupa por semana/día, no hay nada que escribir.
+// Rango "7d": rolling últimos 7 días. Rango "mes": mes calendario en curso
+// (día 1 00:00 hasta ahora) — para el archivo mensual que pide el equipo.
+function metricasInicioRango(rango){
+    if(rango === "mes"){
+        const ahora = new Date();
+        return new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    }
+    return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+}
+
+// Mínimo esperado de transmisiones para considerar "cumple": 3 por semana
+// (piso del contrato). En "mes" se prorratea según cuánto del mes ya pasó,
+// para no marcar en rojo a todo el mundo el día 2 del mes.
+function metricasMinimoEsperado(rango, inicioRango){
+    if(rango === "7d") return 3;
+    const diasTranscurridos = Math.max(1, (Date.now() - inicioRango.getTime()) / (24 * 60 * 60 * 1000));
+    return Math.max(3, Math.round((diasTranscurridos / 7) * 3));
+}
+
+const DIAS_SEMANA = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+function indiceDiaSemana(fecha){ return (fecha.getDay() + 6) % 7; } // 0=Lun..6=Dom
+
+function metricasExportarCSV(resumenes, rango, minimoEsperado){
+    const filas = [["Nombre", "Cuenta vinculada", `Transmisiones (${rango === "7d" ? "7 días" : "mes"})`, "Horas", "Mínimo esperado", "Cumple"]];
+    resumenes.forEach(r => {
+        filas.push([
+            r.nombre || "Sin nombre",
+            r.uid ? "Sí" : "No",
+            String(r.transmisiones.length),
+            (r.minutos / 60).toFixed(1),
+            String(minimoEsperado),
+            r.transmisiones.length >= minimoEsperado ? "Sí" : "No"
+        ]);
+    });
+    const csv = "﻿" + filas.map(fila => fila.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const fecha = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `metricas-streamers-${rango === "7d" ? "7dias" : "mes"}-${fecha}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
 async function renderStreamersMetricas(){
     if(unsubscribeList) unsubscribeList();
     unsubscribeList = null;
     sectionTitle.textContent = "Métricas Streamers";
-    sectionSubtitle.textContent = "Frecuencia de transmisiones de los últimos 7 días";
+    sectionSubtitle.textContent = metricasRango === "7d" ? "Frecuencia de transmisiones de los últimos 7 días" : "Frecuencia de transmisiones del mes en curso";
     content.innerHTML = `<p class="loading">Cargando...</p>`;
 
     try{
@@ -2281,9 +2330,10 @@ async function renderStreamersMetricas(){
             .filter(item => item.activo !== false)
             .sort((a, b) => String(a.nombre || "").localeCompare(String(b.nombre || "")));
 
-        const sieteDiasAtras = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        const resumenes = await Promise.all(streamersList.map(async (item) => {
-            const transSnap = await getDocs(query(collection(db, "streamers", item.id, "transmisiones"), where("inicio", ">=", sieteDiasAtras)));
+        const inicioRango = metricasInicioRango(metricasRango);
+        const minimoEsperado = metricasMinimoEsperado(metricasRango, inicioRango);
+        const resumenesTodos = await Promise.all(streamersList.map(async (item) => {
+            const transSnap = await getDocs(query(collection(db, "streamers", item.id, "transmisiones"), where("inicio", ">=", inicioRango)));
             const transmisiones = transSnap.docs
                 .map(d => ({ id: d.id, ...d.data() }))
                 .sort((a, b) => (b.inicio?.toMillis?.() || 0) - (a.inicio?.toMillis?.() || 0));
@@ -2291,28 +2341,52 @@ async function renderStreamersMetricas(){
             return { ...item, transmisiones, minutos };
         }));
 
+        const resumenes = resumenesTodos.filter(r => {
+            if(metricasFiltro === "cumple") return r.transmisiones.length >= minimoEsperado;
+            if(metricasFiltro === "no-cumple") return r.transmisiones.length < minimoEsperado;
+            return true;
+        });
+
+        const etiquetaCol = metricasRango === "7d" ? "7d" : "mes";
         content.innerHTML = `
 <div class="section-head">
     <div>
         <h2>Métricas Streamers</h2>
-        <p class="muted">Transmisiones detectadas automáticamente vía Twitch en los últimos 7 días — para chequear de un vistazo el mínimo semanal del contrato, sin tener que estar pendiente en vivo.</p>
+        <p class="muted">Transmisiones detectadas automáticamente vía Twitch — mínimo esperado en este rango: ${minimoEsperado}.</p>
     </div>
-    <button class="btn secondary small" type="button" id="metricas-sincronizar">Sincronizar ahora</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn secondary small" type="button" id="metricas-exportar">⬇ Exportar CSV</button>
+        <button class="btn secondary small" type="button" id="metricas-sincronizar">Sincronizar ahora</button>
+    </div>
 </div>
 <p class="muted" style="font-size:12.5px;margin:-10px 0 16px;">Si un streamer conectó o corrigió su canal de Twitch hace poco, sus transmisiones no se registran hasta que su canal quede suscrito a los avisos de Twitch — eso se hace solo todos los días a las 4am. Usá "Sincronizar ahora" para no tener que esperar.</p>
+<div class="panel" style="padding:16px 18px;margin-bottom:18px;display:flex;gap:22px;flex-wrap:wrap;align-items:center;">
+    <div class="tablero-tabs" style="margin:0;">
+        <button type="button" class="btn ${metricasRango === "7d" ? "" : "secondary"} small" data-metricas-rango="7d">Últimos 7 días</button>
+        <button type="button" class="btn ${metricasRango === "mes" ? "" : "secondary"} small" data-metricas-rango="mes">Este mes</button>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;">
+        Cumplimiento:
+        <select id="metricas-filtro" style="width:auto;">
+            <option value="todos" ${metricasFiltro === "todos" ? "selected" : ""}>Todos</option>
+            <option value="cumple" ${metricasFiltro === "cumple" ? "selected" : ""}>Cumpliendo</option>
+            <option value="no-cumple" ${metricasFiltro === "no-cumple" ? "selected" : ""}>No cumpliendo</option>
+        </select>
+    </label>
+</div>
 <div class="panel">
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Nombre</th><th>Vinculada</th><th>Transmisiones (7d)</th><th>Horas (7d)</th><th>Acciones</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Vinculada</th><th>Transmisiones (${etiquetaCol})</th><th>Horas (${etiquetaCol})</th><th>Acciones</th></tr></thead>
             <tbody>
                 ${resumenes.length ? resumenes.map(r => `
 <tr>
     <td data-label="Nombre">${escapeHtml(r.nombre || "Sin nombre")}</td>
     <td data-label="Vinculada"><span class="pill ${r.uid ? "pill-yes" : "pill-no"}">${r.uid ? "Sí" : "No"}</span></td>
-    <td data-label="Transmisiones (7d)"><span class="pill ${r.transmisiones.length >= 3 ? "pill-yes" : "pill-no"}">${r.transmisiones.length}</span></td>
-    <td data-label="Horas (7d)">${(r.minutos / 60).toFixed(1)} h</td>
+    <td data-label="Transmisiones (${etiquetaCol})"><span class="pill ${r.transmisiones.length >= minimoEsperado ? "pill-yes" : "pill-no"}">${r.transmisiones.length}</span></td>
+    <td data-label="Horas (${etiquetaCol})">${(r.minutos / 60).toFixed(1)} h</td>
     <td data-label="Acciones"><button class="btn secondary small" type="button" data-metricas-detalle="${r.id}">Ver detalle</button></td>
-</tr>`).join("") : `<tr><td colspan="5" class="empty">No hay streamers cargados.</td></tr>`}
+</tr>`).join("") : `<tr><td colspan="5" class="empty">Nadie coincide con este filtro.</td></tr>`}
             </tbody>
         </table>
     </div>
@@ -2322,9 +2396,26 @@ async function renderStreamersMetricas(){
         document.querySelectorAll("[data-metricas-detalle]").forEach(btn => {
             btn.addEventListener("click", () => {
                 const item = resumenes.find(r => r.id === btn.dataset.metricasDetalle);
-                if(item) renderMetricasDetalle(item);
+                if(item) renderMetricasDetalle(item, metricasRango);
             });
         });
+
+        document.querySelectorAll("[data-metricas-rango]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                if(metricasRango === btn.dataset.metricasRango) return;
+                metricasRango = btn.dataset.metricasRango;
+                renderStreamersMetricas();
+            });
+        });
+
+        const filtroSelect = document.getElementById("metricas-filtro");
+        if(filtroSelect) filtroSelect.addEventListener("change", () => {
+            metricasFiltro = filtroSelect.value;
+            renderStreamersMetricas();
+        });
+
+        const exportBtn = document.getElementById("metricas-exportar");
+        if(exportBtn) exportBtn.addEventListener("click", () => metricasExportarCSV(resumenes, metricasRango, minimoEsperado));
 
         const syncBtn = document.getElementById("metricas-sincronizar");
         if(syncBtn) syncBtn.addEventListener("click", async () => {
@@ -2349,30 +2440,46 @@ async function renderStreamersMetricas(){
     }
 }
 
-function renderMetricasDetalle(item){
+function renderMetricasDetalle(item, rango){
     const detalle = document.getElementById("metricas-detalle");
     if(!detalle) return;
+    rango = rango || "7d";
 
-    const dias = [];
-    for(let i = 6; i >= 0; i--){
-        const fecha = new Date();
-        fecha.setDate(fecha.getDate() - i);
-        dias.push({
-            fecha, minutos: 0,
-            label: fecha.toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "").toUpperCase()
-        });
+    // Barras por fecha: en "7d" un día por barra (calza 1 a 1 con día de la
+    // semana). En "mes" hay hasta ~30 fechas, así que en su lugar se agrupa
+    // por día de la semana (Lun..Dom) — responde mejor a "¿qué día suele
+    // transmitir?" que 30 barras angostas.
+    let dias, tituloRango;
+    if(rango === "mes"){
+        dias = DIAS_SEMANA.map(label => ({ minutos: 0, label }));
+        tituloRango = "este mes, por día de la semana";
+    } else {
+        dias = [];
+        for(let i = 6; i >= 0; i--){
+            const fecha = new Date();
+            fecha.setDate(fecha.getDate() - i);
+            dias.push({
+                fecha, minutos: 0,
+                label: fecha.toLocaleDateString("es-CL", { weekday: "short" }).replace(".", "").toUpperCase()
+            });
+        }
+        tituloRango = "últimos 7 días";
     }
     item.transmisiones.forEach(t => {
         const inicio = t.inicio?.toDate?.();
         if(!inicio) return;
-        const dia = dias.find(d => d.fecha.toDateString() === inicio.toDateString());
-        if(dia) dia.minutos += (t.duracionMinutos || 0);
+        if(rango === "mes"){
+            dias[indiceDiaSemana(inicio)].minutos += (t.duracionMinutos || 0);
+        } else {
+            const dia = dias.find(d => d.fecha.toDateString() === inicio.toDateString());
+            if(dia) dia.minutos += (t.duracionMinutos || 0);
+        }
     });
     const maxMinutos = Math.max(...dias.map(d => d.minutos), 60);
 
     detalle.innerHTML = `
 <div class="panel" style="padding:22px;margin-top:18px;">
-    <h3 style="margin-bottom:16px;">${escapeHtml(item.nombre || "")} — últimos 7 días</h3>
+    <h3 style="margin-bottom:16px;">${escapeHtml(item.nombre || "")} — ${tituloRango}</h3>
     <div class="metricas-bars">
         ${dias.map(d => `
 <div class="metricas-bar-col">
@@ -2394,7 +2501,7 @@ function renderMetricasDetalle(item){
 </tr>`).join("")}
             </tbody>
         </table>
-    </div>` : `<p class="muted" style="margin-top:14px;">Sin transmisiones detectadas en los últimos 7 días.</p>`}
+    </div>` : `<p class="muted" style="margin-top:14px;">Sin transmisiones detectadas ${tituloRango}.</p>`}
 </div>`;
     detalle.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
