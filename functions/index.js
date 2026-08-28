@@ -310,6 +310,14 @@ function handleFromUrl(url) {
     return last.replace(/^@/, "");
 }
 
+// Un user_login de Twitch nunca lleva puntos ni otros símbolos — si el campo
+// twitch de un perfil quedó apuntando por error a algo que no es un canal
+// (ej. una página de link-in-bio), un solo handle inválido en una consulta
+// agrupada a la API de Twitch hace que TODO el lote responda 400, no solo
+// esa cuenta (confirmado en logs reales, ver actualizarEnVivo/
+// sincronizarSuscripcionesEventSub, que filtran con esto antes de consultar).
+const TWITCH_HANDLE_RE = /^[a-zA-Z0-9_]+$/;
+
 async function getTwitchToken(clientId, clientSecret) {
     if (twitchTokenCache.token && Date.now() < twitchTokenCache.expiresAt) {
         return twitchTokenCache.token;
@@ -952,7 +960,6 @@ exports.actualizarEnVivo = onSchedule(
             // lote, dejando a todos los streamers sin detectar como en vivo,
             // no solo al del dato malo — confirmado en logs reales
             // ("Malformed query params").
-            const TWITCH_HANDLE_RE = /^[a-zA-Z0-9_]+$/;
             const docsConTwitchInvalido = docs.filter(d => d.twitch && !TWITCH_HANDLE_RE.test(handleFromUrl(d.twitch)));
             if (docsConTwitchInvalido.length) {
                 logger.warn(`actualizarEnVivo: ${coleccion} con campo twitch inválido (se ignoran en el chequeo de en vivo): ` +
@@ -1463,17 +1470,39 @@ async function sincronizarSuscripcionesEventSub() {
     }
     const token = await getTwitchToken(clientId, clientSecret);
 
+    // Mismo problema que en actualizarEnVivo: un solo handle inválido (ej.
+    // un link que no es de Twitch) tumba con 400 la consulta agrupada
+    // ENTERA a la API de Twitch, no solo esa cuenta — así que se filtran
+    // antes, en vez de mandarlos igual y perder el lote completo en
+    // silencio.
+    const logins = Array.from(handles).filter(h => h && TWITCH_HANDLE_RE.test(h));
+    const loginsInvalidos = Array.from(handles).filter(h => !logins.includes(h));
+    if (loginsInvalidos.length) {
+        logger.warn(`sincronizarSuscripcionesEventSub: handles de Twitch inválidos (se ignoran): ${loginsInvalidos.join(", ")}`);
+    }
+    if (logins.length === 0) {
+        return { creadas: 0, existentes: 0, fallidas: 0, canales: 0, revisados, conTwitch: handles.size, error: "handles-invalidos" };
+    }
+
     // Resolver login de Twitch -> user_id (channel.raid necesita el id, no el login).
-    const logins = Array.from(handles).filter(Boolean);
     const userIds = [];
+    let erroresHelix = 0;
     for (let i = 0; i < logins.length; i += 100) {
         const lote = logins.slice(i, i + 100);
         const params = lote.map(h => `login=${encodeURIComponent(h)}`).join("&");
         const res = await fetch(`https://api.twitch.tv/helix/users?${params}`, {
             headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
         });
+        if (!res.ok) {
+            erroresHelix++;
+            logger.error(`sincronizarSuscripcionesEventSub: /helix/users respondió ${res.status} para el lote [${lote.join(", ")}]`, await res.text());
+            continue;
+        }
         const data = await res.json();
         (data.data || []).forEach(u => userIds.push(u.id));
+    }
+    if (erroresHelix && userIds.length === 0) {
+        return { creadas: 0, existentes: 0, fallidas: 0, canales: 0, revisados, conTwitch: handles.size, error: "error-twitch-api" };
     }
 
     // Además del raid, se suscribe stream.online/stream.offline (mismo

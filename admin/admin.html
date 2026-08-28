@@ -2429,6 +2429,10 @@ async function renderStreamersMetricas(){
                     alert(`No se sincronizó nada: faltan las credenciales de Twitch (TWITCH_CLIENT_ID/TWITCH_CLIENT_SECRET) configuradas en el backend. Avisale a quien tenga acceso a Secret Manager.`);
                 } else if(conTwitch === 0){
                     alert(`Se revisaron ${revisados} streamer(s)/influencer(s), pero ninguno tiene el campo "Twitch" cargado en su tarjeta (Canales) — por eso no hay nada para sincronizar todavía. El canal se conecta desde Redes (Portal Creadores/Influencers) o se carga a mano en la tarjeta desde acá.`);
+                } else if(errorSync === "handles-invalidos"){
+                    alert(`Se encontraron ${conTwitch} canal(es) con "Twitch" cargado, pero ninguno tiene un usuario de Twitch válido (revisá que el campo tenga el link al canal, no a otra página) — revisá los logs del backend para ver cuáles.`);
+                } else if(errorSync === "error-twitch-api"){
+                    alert(`Twitch no respondió correctamente al buscar los ${conTwitch} canal(es) cargados — puede ser un problema temporal de la API o credenciales vencidas. Probá de nuevo en un rato; si sigue fallando, revisá los logs del backend.`);
                 } else {
                     alert(`Listo: ${canales} de ${conTwitch} canal(es) con Twitch cargado fueron revisados, ${creadas} suscripción(es) nueva(s), ${existentes} ya estaban activas${fallidas ? `, ${fallidas} fallaron` : ""}.`);
                 }
