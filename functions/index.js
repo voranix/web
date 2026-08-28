@@ -1288,7 +1288,10 @@ async function buscarStreamerPorTwitchLogin(login) {
 // un conteo semanal/mensual, no hace falta precisión al segundo).
 async function registrarInicioTransmision(event) {
     const encontrado = await buscarStreamerPorTwitchLogin(event.broadcaster_user_login);
-    if (!encontrado) return;
+    if (!encontrado) {
+        logger.warn(`registrarInicioTransmision: no se encontró streamer/influencer con twitch="${event.broadcaster_user_login}" — revisar que el campo "twitch" del perfil coincida y que ya haya suscripción EventSub sincronizada.`);
+        return;
+    }
     const coleccionRef = admin.firestore().collection(encontrado.coleccion).doc(encontrado.id).collection("transmisiones");
     // Evita duplicar si Twitch reintenta la notificación de stream.online.
     const abiertaSnap = await coleccionRef.where("fin", "==", null).limit(1).get();
@@ -1304,7 +1307,10 @@ async function registrarInicioTransmision(event) {
 
 async function registrarFinTransmision(event) {
     const encontrado = await buscarStreamerPorTwitchLogin(event.broadcaster_user_login);
-    if (!encontrado) return;
+    if (!encontrado) {
+        logger.warn(`registrarFinTransmision: no se encontró streamer/influencer con twitch="${event.broadcaster_user_login}" — revisar que el campo "twitch" del perfil coincida y que ya haya suscripción EventSub sincronizada.`);
+        return;
+    }
     const coleccionRef = admin.firestore().collection(encontrado.coleccion).doc(encontrado.id).collection("transmisiones");
     const abiertaSnap = await coleccionRef.where("fin", "==", null).get();
     if (abiertaSnap.empty) return;
@@ -1420,71 +1426,100 @@ async function registrarChatterEnSesion(db, encontrado, chatterId, chatterLogin)
     await cachearCreacionCuentaTwitch(db, chatterId);
 }
 
+// Lógica compartida entre el schedule diario (sincronizarRaidWebhooks) y el
+// botón "Sincronizar ahora" del admin (sincronizarWebhooksTwitch): recorre
+// todos los canales de Twitch activos y (re)crea sus 3 suscripciones
+// EventSub (raid + online/offline). Se separó del schedule para que un
+// streamer que recién conecta o corrige su canal de Twitch no tenga que
+// esperar hasta las 4am para que sus transmisiones empiecen a registrarse.
+async function sincronizarSuscripcionesEventSub() {
+    const clientId = TWITCH_CLIENT_ID.value();
+    const clientSecret = TWITCH_CLIENT_SECRET.value();
+    const eventSubSecret = TWITCH_EVENTSUB_SECRET.value();
+    if (!clientId || !clientSecret) {
+        logger.warn("sincronizarSuscripcionesEventSub: faltan credenciales de Twitch");
+        return { creadas: 0, existentes: 0, fallidas: 0, canales: 0 };
+    }
+    const token = await getTwitchToken(clientId, clientSecret);
+
+    const db = admin.firestore();
+    const handles = new Set();
+    for (const coleccion of ["streamers", "influencers"]) {
+        const snapshot = await db.collection(coleccion).get();
+        snapshot.docs.forEach(d => {
+            const data = d.data();
+            if (data.activo !== false && data.twitch) handles.add(handleFromUrl(data.twitch).toLowerCase());
+        });
+    }
+    if (handles.size === 0) {
+        logger.info("sincronizarSuscripcionesEventSub: no hay canales de Twitch cargados");
+        return { creadas: 0, existentes: 0, fallidas: 0, canales: 0 };
+    }
+
+    // Resolver login de Twitch -> user_id (channel.raid necesita el id, no el login).
+    const logins = Array.from(handles).filter(Boolean);
+    const userIds = [];
+    for (let i = 0; i < logins.length; i += 100) {
+        const lote = logins.slice(i, i + 100);
+        const params = lote.map(h => `login=${encodeURIComponent(h)}`).join("&");
+        const res = await fetch(`https://api.twitch.tv/helix/users?${params}`, {
+            headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        (data.data || []).forEach(u => userIds.push(u.id));
+    }
+
+    // Además del raid, se suscribe stream.online/stream.offline (mismo
+    // token de app, mismo callback) para llevar el registro de cuándo
+    // prende y apaga cada streamer — ver registrarInicioTransmision.
+    const SUSCRIPCIONES = [
+        { type: "channel.raid", condition: (userId) => ({ to_broadcaster_user_id: userId }) },
+        { type: "stream.online", condition: (userId) => ({ broadcaster_user_id: userId }) },
+        { type: "stream.offline", condition: (userId) => ({ broadcaster_user_id: userId }) }
+    ];
+
+    let creadas = 0, existentes = 0, fallidas = 0;
+    for (const userId of userIds) {
+        for (const sub of SUSCRIPCIONES) {
+            try {
+                const resultado = await crearSuscripcionEventSub(sub.type, sub.condition(userId), clientId, token, eventSubSecret);
+                if (resultado === "creada") creadas++; else existentes++;
+            } catch (err) {
+                fallidas++;
+                logger.error(`sincronizarSuscripcionesEventSub: fallo con ${sub.type} para user_id ${userId}`, err.message);
+            }
+        }
+    }
+    logger.info(`sincronizarSuscripcionesEventSub: ${creadas} creadas, ${existentes} ya existían, ${fallidas} fallidas`);
+    return { creadas, existentes, fallidas, canales: userIds.length };
+}
+
 exports.sincronizarRaidWebhooks = onSchedule(
     {
         schedule: "every day 04:00",
         timeZone: "America/Santiago",
         secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_EVENTSUB_SECRET]
     },
-    async () => {
-        const clientId = TWITCH_CLIENT_ID.value();
-        const clientSecret = TWITCH_CLIENT_SECRET.value();
-        const eventSubSecret = TWITCH_EVENTSUB_SECRET.value();
-        if (!clientId || !clientSecret) {
-            logger.warn("sincronizarRaidWebhooks: faltan credenciales de Twitch");
-            return;
-        }
-        const token = await getTwitchToken(clientId, clientSecret);
+    async () => { await sincronizarSuscripcionesEventSub(); }
+);
 
-        const db = admin.firestore();
-        const handles = new Set();
-        for (const coleccion of ["streamers", "influencers"]) {
-            const snapshot = await db.collection(coleccion).get();
-            snapshot.docs.forEach(d => {
-                const data = d.data();
-                if (data.activo !== false && data.twitch) handles.add(handleFromUrl(data.twitch).toLowerCase());
-            });
+// sincronizarWebhooksTwitch: versión "a demanda" de lo anterior, para el
+// botón "Sincronizar ahora" en Métricas Streamers del admin. Sin esto, un
+// streamer que conecta/corrige su canal de Twitch queda sin suscripción
+// EventSub (y por lo tanto sin ninguna métrica registrada, aunque el
+// detector de "en vivo" —que es otro sistema, actualizarEnVivo— sí lo vea)
+// hasta el próximo 4am. Restringido a admin, mismo criterio que las demás
+// acciones sensibles de este archivo.
+exports.sincronizarWebhooksTwitch = onCall(
+    { secrets: [TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_EVENTSUB_SECRET] },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+        const callerSnap = await admin.firestore().doc(`users/${request.auth.uid}`).get();
+        const callerProfile = callerSnap.exists ? callerSnap.data() : null;
+        if (!callerProfile || !profileRoles(callerProfile).includes("admin")) {
+            throw new HttpsError("permission-denied", "Solo un admin puede sincronizar los webhooks de Twitch.");
         }
-        if (handles.size === 0) {
-            logger.info("sincronizarRaidWebhooks: no hay canales de Twitch cargados");
-            return;
-        }
-
-        // Resolver login de Twitch -> user_id (channel.raid necesita el id, no el login).
-        const logins = Array.from(handles).filter(Boolean);
-        const userIds = [];
-        for (let i = 0; i < logins.length; i += 100) {
-            const lote = logins.slice(i, i + 100);
-            const params = lote.map(h => `login=${encodeURIComponent(h)}`).join("&");
-            const res = await fetch(`https://api.twitch.tv/helix/users?${params}`, {
-                headers: { "Client-Id": clientId, "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
-            (data.data || []).forEach(u => userIds.push(u.id));
-        }
-
-        // Además del raid, se suscribe stream.online/stream.offline (mismo
-        // token de app, mismo callback) para llevar el registro de cuándo
-        // prende y apaga cada streamer — ver registrarInicioTransmision.
-        const SUSCRIPCIONES = [
-            { type: "channel.raid", condition: (userId) => ({ to_broadcaster_user_id: userId }) },
-            { type: "stream.online", condition: (userId) => ({ broadcaster_user_id: userId }) },
-            { type: "stream.offline", condition: (userId) => ({ broadcaster_user_id: userId }) }
-        ];
-
-        let creadas = 0, existentes = 0, fallidas = 0;
-        for (const userId of userIds) {
-            for (const sub of SUSCRIPCIONES) {
-                try {
-                    const resultado = await crearSuscripcionEventSub(sub.type, sub.condition(userId), clientId, token, eventSubSecret);
-                    if (resultado === "creada") creadas++; else existentes++;
-                } catch (err) {
-                    fallidas++;
-                    logger.error(`sincronizarRaidWebhooks: fallo con ${sub.type} para user_id ${userId}`, err.message);
-                }
-            }
-        }
-        logger.info(`sincronizarRaidWebhooks: ${creadas} creadas, ${existentes} ya existían, ${fallidas} fallidas`);
+        return await sincronizarSuscripcionesEventSub();
     }
 );
 

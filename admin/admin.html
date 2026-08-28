@@ -2297,7 +2297,9 @@ async function renderStreamersMetricas(){
         <h2>Métricas Streamers</h2>
         <p class="muted">Transmisiones detectadas automáticamente vía Twitch en los últimos 7 días — para chequear de un vistazo el mínimo semanal del contrato, sin tener que estar pendiente en vivo.</p>
     </div>
+    <button class="btn secondary small" type="button" id="metricas-sincronizar">Sincronizar ahora</button>
 </div>
+<p class="muted" style="font-size:12.5px;margin:-10px 0 16px;">Si un streamer conectó o corrigió su canal de Twitch hace poco, sus transmisiones no se registran hasta que su canal quede suscrito a los avisos de Twitch — eso se hace solo todos los días a las 4am. Usá "Sincronizar ahora" para no tener que esperar.</p>
 <div class="panel">
     <div class="table-wrap">
         <table>
@@ -2322,6 +2324,24 @@ async function renderStreamersMetricas(){
                 const item = resumenes.find(r => r.id === btn.dataset.metricasDetalle);
                 if(item) renderMetricasDetalle(item);
             });
+        });
+
+        const syncBtn = document.getElementById("metricas-sincronizar");
+        if(syncBtn) syncBtn.addEventListener("click", async () => {
+            syncBtn.disabled = true;
+            syncBtn.textContent = "Sincronizando...";
+            try{
+                const sincronizarWebhooks = httpsCallable(functionsInstance, "sincronizarWebhooksTwitch");
+                const res = await sincronizarWebhooks();
+                const { creadas = 0, existentes = 0, fallidas = 0, canales = 0 } = res.data || {};
+                alert(`Listo: ${canales} canal(es) revisados, ${creadas} suscripción(es) nueva(s), ${existentes} ya estaban activas${fallidas ? `, ${fallidas} fallaron` : ""}.`);
+            }catch(error){
+                console.error(error);
+                alert(error.message ? `No se pudo sincronizar: ${error.message}` : "No se pudo sincronizar.");
+            }finally{
+                syncBtn.disabled = false;
+                syncBtn.textContent = "Sincronizar ahora";
+            }
         });
     }catch(error){
         console.error(error);
