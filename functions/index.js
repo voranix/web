@@ -1438,23 +1438,30 @@ async function sincronizarSuscripcionesEventSub() {
     const eventSubSecret = TWITCH_EVENTSUB_SECRET.value();
     if (!clientId || !clientSecret) {
         logger.warn("sincronizarSuscripcionesEventSub: faltan credenciales de Twitch");
-        return { creadas: 0, existentes: 0, fallidas: 0, canales: 0 };
+        return { creadas: 0, existentes: 0, fallidas: 0, canales: 0, revisados: 0, conTwitch: 0, error: "faltan-credenciales" };
     }
-    const token = await getTwitchToken(clientId, clientSecret);
 
     const db = admin.firestore();
     const handles = new Set();
+    let revisados = 0;
     for (const coleccion of ["streamers", "influencers"]) {
         const snapshot = await db.collection(coleccion).get();
         snapshot.docs.forEach(d => {
             const data = d.data();
+            revisados++;
             if (data.activo !== false && data.twitch) handles.add(handleFromUrl(data.twitch).toLowerCase());
         });
     }
+    // Diagnóstico para el botón "Sincronizar ahora" del admin: sin esto, un
+    // resultado en cero (por faltar el campo streamers/{id}.twitch en vez de
+    // por un problema real) se ve idéntico a que todo salió bien, y no hay
+    // forma de distinguirlo desde el cliente sin entrar a los logs de Cloud
+    // Functions (a los que el equipo no tiene acceso directo).
     if (handles.size === 0) {
         logger.info("sincronizarSuscripcionesEventSub: no hay canales de Twitch cargados");
-        return { creadas: 0, existentes: 0, fallidas: 0, canales: 0 };
+        return { creadas: 0, existentes: 0, fallidas: 0, canales: 0, revisados, conTwitch: 0 };
     }
+    const token = await getTwitchToken(clientId, clientSecret);
 
     // Resolver login de Twitch -> user_id (channel.raid necesita el id, no el login).
     const logins = Array.from(handles).filter(Boolean);
@@ -1491,7 +1498,7 @@ async function sincronizarSuscripcionesEventSub() {
         }
     }
     logger.info(`sincronizarSuscripcionesEventSub: ${creadas} creadas, ${existentes} ya existían, ${fallidas} fallidas`);
-    return { creadas, existentes, fallidas, canales: userIds.length };
+    return { creadas, existentes, fallidas, canales: userIds.length, revisados, conTwitch: handles.size };
 }
 
 exports.sincronizarRaidWebhooks = onSchedule(

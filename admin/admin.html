@@ -2424,8 +2424,14 @@ async function renderStreamersMetricas(){
             try{
                 const sincronizarWebhooks = httpsCallable(functionsInstance, "sincronizarWebhooksTwitch");
                 const res = await sincronizarWebhooks();
-                const { creadas = 0, existentes = 0, fallidas = 0, canales = 0 } = res.data || {};
-                alert(`Listo: ${canales} canal(es) revisados, ${creadas} suscripción(es) nueva(s), ${existentes} ya estaban activas${fallidas ? `, ${fallidas} fallaron` : ""}.`);
+                const { creadas = 0, existentes = 0, fallidas = 0, canales = 0, revisados = 0, conTwitch = 0, error: errorSync } = res.data || {};
+                if(errorSync === "faltan-credenciales"){
+                    alert(`No se sincronizó nada: faltan las credenciales de Twitch (TWITCH_CLIENT_ID/TWITCH_CLIENT_SECRET) configuradas en el backend. Avisale a quien tenga acceso a Secret Manager.`);
+                } else if(conTwitch === 0){
+                    alert(`Se revisaron ${revisados} streamer(s)/influencer(s), pero ninguno tiene el campo "Twitch" cargado en su tarjeta (Canales) — por eso no hay nada para sincronizar todavía. El canal se conecta desde Redes (Portal Creadores/Influencers) o se carga a mano en la tarjeta desde acá.`);
+                } else {
+                    alert(`Listo: ${canales} de ${conTwitch} canal(es) con Twitch cargado fueron revisados, ${creadas} suscripción(es) nueva(s), ${existentes} ya estaban activas${fallidas ? `, ${fallidas} fallaron` : ""}.`);
+                }
             }catch(error){
                 console.error(error);
                 alert(error.message ? `No se pudo sincronizar: ${error.message}` : "No se pudo sincronizar.");
