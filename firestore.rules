@@ -83,7 +83,7 @@ service cloud.firestore {
            .hasOnly([
              "descripcion", "instagram", "twitch", "kick", "tiktok", "discord", "juegosManual",
              "avatarOverride", "bannerOverride", "fraseCorta", "paletaColores",
-             "canalesSecundarios", "mensajesActivo", "updatedAt"
+             "canalesSecundarios", "mensajesActivo", "moderacion", "updatedAt"
            ]));
 
       // Historial de encendidos/apagados de stream (lo escribe solo el

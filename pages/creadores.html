@@ -479,6 +479,12 @@
         </div>
 
         <div class="overlay-links-block">
+            <h2 class="overlay-links-title"><i class="fas fa-shield-halved"></i> Moderación automática</h2>
+            <p class="muted overlay-links-sub">El bot de VORANIX puede borrar mensajes de tu chat solo, sin que tengas que estar mirando. Necesita ser moderador de tu canal — si lo activás y no borra nada, escribí <code>/mod voranixstudio</code> en tu propio chat una vez.</p>
+            <div id="moderacion-content"><p class="loading">Cargando...</p></div>
+        </div>
+
+        <div class="overlay-links-block">
             <h2 class="overlay-links-title"><i class="fas fa-globe"></i> Comandos generales de VORANIX</h2>
             <p class="muted overlay-links-sub">Cargados por el staff, ya activos en tu chat junto con los tuyos — no se pueden editar desde acá.</p>
             <div id="comandos-generales-list"></div>
@@ -779,6 +785,7 @@
         renderKickStatus(profile);
         renderTiktokStatus(profile);
         renderMisComandos(profile);
+        renderModeracion();
         renderComandosGenerales();
         renderOverlayEditor(profile);
         renderStatsStrip();
@@ -801,7 +808,7 @@
             renderKickStatus(currentProfile);
             renderTiktokStatus(currentProfile);
             renderDiscordStatus(currentProfile);
-            if(twitchLoginCambio){ renderMisComandos(currentProfile); renderOverlayEditor(currentProfile); }
+            if(twitchLoginCambio){ renderMisComandos(currentProfile); renderModeracion(); renderOverlayEditor(currentProfile); }
             renderStatsStrip();
             renderTarjeta();
         });
@@ -1324,6 +1331,77 @@ ${guildId ? `
         }, (error) => {
             console.error(error);
             listEl.innerHTML = `<p class="muted">No se pudieron cargar tus comandos.</p>`;
+        });
+    }
+
+    // Moderación automática del bot (streamers/{tarjetaId}.moderacion, en la
+    // whitelist de auto-edición del creador en firestore.rules) — depende de
+    // la tarjeta vinculada (tarjetaId/tarjetaData, cargadas por
+    // loadMiTarjeta), no solo de tener Twitch conectado en Redes.
+    function renderModeracion(){
+        const container = document.getElementById("moderacion-content");
+        if(!container) return;
+        const twitchLogin = currentProfile?.twitchLogin || "";
+        if(!twitchLogin){
+            container.innerHTML = `<p class="muted">Conectá tu cuenta de Twitch en la pestaña "Redes" para poder activar esto.</p>`;
+            return;
+        }
+        if(!tarjetaId){
+            container.innerHTML = `<p class="loading">Cargando...</p>`;
+            return;
+        }
+        const config = tarjetaData?.moderacion || {};
+        container.innerHTML = `
+<form id="moderacion-form">
+    <div class="form-grid">
+        <div class="field full" style="flex-direction:row;align-items:center;gap:10px;">
+            <input type="checkbox" id="mod-mayusculas-activo" name="mayusculasActivo" ${config.mayusculasActivo ? "checked" : ""} style="width:auto;">
+            <label for="mod-mayusculas-activo" style="margin:0;">Borrar mensajes en MAYÚSCULAS</label>
+        </div>
+        <div class="field">
+            <label>Umbral (% del mensaje en mayúscula)</label>
+            <input type="number" name="mayusculasUmbralPct" min="1" max="100" value="${config.mayusculasUmbralPct ?? 70}">
+        </div>
+        <div class="field">
+            <label>Largo mínimo (caracteres)</label>
+            <input type="number" name="mayusculasLargoMinimo" min="1" value="${config.mayusculasLargoMinimo ?? 10}">
+            <span class="help">Para no borrar mensajes cortos tipo "GG" o "NO".</span>
+        </div>
+        <div class="field full" style="flex-direction:row;align-items:center;gap:10px;">
+            <input type="checkbox" id="mod-palabras-activo" name="palabrasActivo" ${config.palabrasActivo ? "checked" : ""} style="width:auto;">
+            <label for="mod-palabras-activo" style="margin:0;">Borrar mensajes con palabras prohibidas</label>
+        </div>
+        <div class="field full">
+            <label>Palabras prohibidas</label>
+            <textarea name="palabras" placeholder="Una por línea o separadas por coma">${escapeHtml((config.palabras || []).join("\n"))}</textarea>
+            <span class="help">No hace falta cargar variantes en mayúscula — se compara sin importar cómo esté escrito el mensaje.</span>
+        </div>
+    </div>
+    <button class="btn" type="submit">Guardar</button>
+    <span id="moderacion-msg" class="muted" style="font-size:12px;margin-left:10px;"></span>
+</form>`;
+
+        document.getElementById("moderacion-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const msgEl = document.getElementById("moderacion-msg");
+            msgEl.textContent = "";
+            const formData = new FormData(event.target);
+            const palabras = String(formData.get("palabras") || "")
+                .split(/[\n,]+/).map(p => p.trim().toLowerCase()).filter(Boolean);
+            const moderacion = {
+                mayusculasActivo: formData.get("mayusculasActivo") === "on",
+                mayusculasUmbralPct: Number(formData.get("mayusculasUmbralPct")) || 70,
+                mayusculasLargoMinimo: Number(formData.get("mayusculasLargoMinimo")) || 10,
+                palabrasActivo: formData.get("palabrasActivo") === "on",
+                palabras
+            };
+            try{
+                await updateDoc(doc(db, "streamers", tarjetaId), { moderacion, updatedAt: serverTimestamp() });
+                msgEl.textContent = "Guardado.";
+            }catch(error){
+                console.error(error);
+                msgEl.textContent = "No se pudo guardar.";
+            }
         });
     }
 
@@ -2744,6 +2822,7 @@ ${renderCambiarPassword()}`;
             sincronizarCanalTwitch();
             aplicarPaletaPortal(tarjetaData);
             renderTarjeta();
+            renderModeracion();
             renderDiscordStatus(currentProfile);
         }, (error) => {
             console.error(error);

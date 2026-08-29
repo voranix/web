@@ -1792,10 +1792,14 @@ exports.twitchBotAuthStart = onRequest(
     (req, res) => {
         const tipo = req.query.tipo === "bot" ? "bot" : "canal";
         // moderator:read:followers habilita mostrar el conteo de seguidores en
-        // la tarjeta pública. Se agregó después de channel:bot, así que todo
-        // streamer que ya se había conectado antes tiene que reconectar una
-        // vez (el token viejo no tiene este permiso, Twitch no lo amplía solo).
-        const scope = tipo === "bot" ? "user:bot user:read:chat user:write:chat" : "channel:bot moderator:read:followers";
+        // la tarjeta pública, moderator:manage:chat_messages/channel:manage:moderators
+        // habilitan la moderación automática (borrar mensajes) — se agregaron
+        // después de channel:bot/user:bot, así que toda cuenta que ya se
+        // había conectado antes tiene que reconectar una vez (el token viejo
+        // no tiene estos permisos, Twitch no los amplía solo).
+        const scope = tipo === "bot"
+            ? "user:bot user:read:chat user:write:chat moderator:manage:chat_messages"
+            : "channel:bot moderator:read:followers channel:manage:moderators";
         let state = tipo;
 
         if (tipo === "canal") {
@@ -1895,7 +1899,33 @@ exports.twitchBotAuthCallback = onRequest(
                 await admin.firestore().doc(`users/${uid}`).set({
                     twitchLogin: loginVerificado
                 }, { merge: true });
-                res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${usuario.login}</b> al bot de VORANIX. Los comandos van a funcionar en tu chat a partir de mañana (la sincronización corre una vez por día) y tus seguidores van a empezar a aparecer en tu tarjeta pública en un rato. Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
+
+                // Para que la moderación automática (borrar mensajes) funcione,
+                // el bot tiene que ser moderador del canal — Twitch exige que
+                // moderator_id sea el propio streamer o alguien con status de
+                // moderador ahí. Se agrega solo, con el token recién obtenido
+                // (channel:manage:moderators); si falla (ej. token viejo sin
+                // este scope todavía, streamer ya lo agregó a mano, etc.) no
+                // rompe la conexión — queda como fallback /mod voranixstudio.
+                let botAgregadoComoMod = false;
+                try {
+                    const botSnap = await admin.firestore().doc("twitchBotAuth/_bot").get();
+                    const bot = botSnap.exists ? botSnap.data() : null;
+                    if (bot?.userId) {
+                        const modRes = await fetch(`https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=${usuario.id}&user_id=${bot.userId}`, {
+                            method: "POST",
+                            headers: { "Client-Id": clientId, "Authorization": `Bearer ${tokenData.access_token}` }
+                        });
+                        botAgregadoComoMod = modRes.status === 204 || modRes.status === 400; // 400 = ya lo era
+                        if (!botAgregadoComoMod) {
+                            logger.warn(`twitchBotAuthCallback: no se pudo agregar al bot como moderador de ${loginVerificado}`, modRes.status, await modRes.text());
+                        }
+                    }
+                } catch (err) {
+                    logger.warn(`twitchBotAuthCallback: fallo agregando al bot como moderador de ${loginVerificado}`, err.message);
+                }
+
+                res.send(`<h2>¡Listo!</h2><p>Conectaste el canal <b>${usuario.login}</b> al bot de VORANIX. Los comandos van a funcionar en tu chat a partir de mañana (la sincronización corre una vez por día) y tus seguidores van a empezar a aparecer en tu tarjeta pública en un rato.</p>${botAgregadoComoMod ? "<p>El bot ya quedó como moderador de tu canal, así que la moderación automática (si la activás en tu Portal) va a poder borrar mensajes.</p>" : `<p>Si activás la moderación automática en tu Portal y no borra mensajes, escribí <b>/mod ${TWITCH_BOT_LOGIN_OFICIAL}</b> en tu propio chat una vez.</p>`}<p>Podés cerrar esta pestaña y volver al Portal Creadores.</p>`);
             }
         } catch (err) {
             logger.error("twitchBotAuthCallback: fallo", err);
@@ -2679,6 +2709,76 @@ async function obtenerCodigoActivo(db) {
     return activo ? activo.data() : null;
 }
 
+// Moderación automática (streamers/influencers/{id}.moderacion, editable por
+// el propio dueño desde su Portal): dos reglas simples, opt-in por canal —
+// mensajes en mayúsculas y palabras prohibidas. Devuelve true si borró el
+// mensaje (para que el caller no siga procesando comandos sobre algo que ya
+// no existe en el chat).
+function textoDisparaModeracion(config, textoOriginal) {
+    if (config.mayusculasActivo) {
+        const letras = textoOriginal.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ]/g, "");
+        const mayus = textoOriginal.replace(/[^A-ZÁÉÍÓÚÑ]/g, "");
+        const largoMinimo = Number(config.mayusculasLargoMinimo) || 10;
+        const umbralPct = Number(config.mayusculasUmbralPct) || 70;
+        if (letras.length >= largoMinimo && (mayus.length / letras.length) * 100 >= umbralPct) {
+            return "mensaje en mayúsculas";
+        }
+    }
+    if (config.palabrasActivo && Array.isArray(config.palabras) && config.palabras.length) {
+        const textoLower = textoOriginal.toLowerCase();
+        const palabraEncontrada = config.palabras.find(p => p && textoLower.includes(String(p).toLowerCase()));
+        if (palabraEncontrada) return `palabra prohibida ("${palabraEncontrada}")`;
+    }
+    return null;
+}
+
+async function evaluarModeracion(db, encontrado, event) {
+    if (!encontrado || !event?.message_id) return false;
+    const streamerSnap = await db.collection(encontrado.coleccion).doc(encontrado.id).get();
+    const config = streamerSnap.exists ? streamerSnap.data().moderacion : null;
+    if (!config) return false;
+
+    const textoOriginal = String(event?.message?.text || "");
+    const motivo = textoDisparaModeracion(config, textoOriginal);
+    if (!motivo) return false;
+
+    // Borrar exige moderator_id con status de moderador en ESE canal (ver
+    // twitchBotAuthCallback, que intenta agregar al bot como moderador solo
+    // al conectar) y el token del bot con scope moderator:manage:chat_messages.
+    const botSnap = await db.doc("twitchBotAuth/_bot").get();
+    const bot = botSnap.exists ? botSnap.data() : null;
+    if (!bot) {
+        logger.warn("evaluarModeracion: el bot todavía no está autorizado, no se puede borrar");
+        return false;
+    }
+
+    const clientId = TWITCH_CLIENT_ID.value();
+    const params = new URLSearchParams({
+        broadcaster_id: event.broadcaster_user_id,
+        moderator_id: bot.userId,
+        message_id: event.message_id
+    });
+    let respuestaHttp = await fetch(`https://api.twitch.tv/helix/moderation/chat?${params}`, {
+        method: "DELETE",
+        headers: { "Client-Id": clientId, "Authorization": `Bearer ${bot.accessToken}` }
+    });
+    if (respuestaHttp.status === 401) {
+        const nuevoToken = await refrescarTokenBot(clientId, TWITCH_CLIENT_SECRET.value());
+        respuestaHttp = await fetch(`https://api.twitch.tv/helix/moderation/chat?${params}`, {
+            method: "DELETE",
+            headers: { "Client-Id": clientId, "Authorization": `Bearer ${nuevoToken}` }
+        });
+    }
+    if (!respuestaHttp.ok) {
+        // 403 típico cuando el bot todavía no es moderador del canal (ver
+        // fallback /mod voranixstudio que se explica al conectar el canal).
+        logger.error(`evaluarModeracion: no se pudo borrar el mensaje en ${event.broadcaster_user_login} (${motivo}), status ${respuestaHttp.status}`, await respuestaHttp.text());
+        return false;
+    }
+    logger.info(`evaluarModeracion: mensaje borrado en ${event.broadcaster_user_login} (${motivo})`);
+    return true;
+}
+
 exports.twitchChatWebhook = onRequest(
     { secrets: [TWITCH_EVENTSUB_SECRET, TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET] },
     async (req, res) => {
@@ -2710,6 +2810,7 @@ exports.twitchChatWebhook = onRequest(
             const canal = String(event?.broadcaster_user_login || "").toLowerCase();
 
             const db = admin.firestore();
+            const encontrado = canal ? await buscarStreamerPorTwitchLogin(canal) : null;
 
             // Sello de Audiencia Real: corre en TODOS los mensajes, no solo
             // los que disparan un comando — aparte del resto de esta función,
@@ -2718,11 +2819,19 @@ exports.twitchChatWebhook = onRequest(
                 const chatterId = String(event?.chatter_user_id || "");
                 const chatterLogin = String(event?.chatter_user_login || "");
                 if (chatterId && canal) {
-                    const encontrado = await buscarStreamerPorTwitchLogin(canal);
                     await registrarChatterEnSesion(db, encontrado, chatterId, chatterLogin);
                 }
             } catch (err) {
                 logger.warn("twitchChatWebhook: fallo registrando chatter para el sello de audiencia", err.message);
+            }
+
+            // Moderación automática (opt-in por canal, ver Portal Creadores):
+            // corre en TODOS los mensajes, antes de buscar comando — si el
+            // mensaje se borra no tiene sentido además contestarle un comando.
+            try {
+                if (await evaluarModeracion(db, encontrado, event)) return;
+            } catch (err) {
+                logger.warn("twitchChatWebhook: fallo evaluando moderación automática", err.message);
             }
 
             const comando = await buscarComandoCoincidente(db, texto, canal);
