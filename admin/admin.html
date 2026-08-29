@@ -310,6 +310,9 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .tarea-actions button:hover{ color:#fff; background:var(--surface-2); }
 .tarea-fecha{ font-size:11px; color:var(--muted); margin-bottom:8px; }
 .tarea-fecha.is-vencida{ color:var(--danger); font-weight:700; }
+.tarea-altoke{ font-size:11px; color:var(--morado-light); margin-bottom:8px; }
+.tarea-altoke-btn{ background:none; border:1px dashed var(--border); color:var(--muted); font-size:10.5px; padding:2px 8px; border-radius:20px; cursor:pointer; margin-bottom:8px; transition:border-color var(--ease), color var(--ease); }
+.tarea-altoke-btn:hover{ border-color:var(--morado-light); color:var(--morado-light); }
 .tarea-responsables-list{ display:flex; flex-wrap:wrap; gap:12px; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); }
 .tarea-responsables-list label{ display:flex; align-items:center; gap:6px; font-weight:normal; font-size:13px; }
 .tarea-responsables-list label input{ width:auto; }
@@ -562,6 +565,16 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
             <div class="field">
                 <label for="tarea-fecha-input">Fecha límite</label>
                 <input type="date" name="fechaLimite" id="tarea-fecha-input">
+            </div>
+            <div class="field">
+                <label for="tarea-prioridad-select">Prioridad</label>
+                <select name="prioridad" id="tarea-prioridad-select" aria-label="Prioridad">
+                    <option value="HIGHEST">Urgente</option>
+                    <option value="HIGH">Alta</option>
+                    <option value="MEDIUM" selected>Media</option>
+                    <option value="LOW">Baja</option>
+                    <option value="LOWEST">Mínima</option>
+                </select>
             </div>
         </div>
         <div id="tarea-error" class="error"></div>
@@ -3091,6 +3104,9 @@ function renderTareaCard(tarea){
     <p class="tarea-titulo">${escapeHtml(tarea.titulo) || "Sin título"}</p>
     ${tarea.descripcion ? `<p class="tarea-desc">${escapeHtml(tarea.descripcion)}</p>` : ""}
     ${tarea.fechaLimite ? `<p class="tarea-fecha${tareaVencida(tarea) ? " is-vencida" : ""}">📅 ${escapeHtml(formatFechaCorta(tarea.fechaLimite))}</p>` : ""}
+    ${tarea.altoke?.key
+        ? `<p class="tarea-altoke" title="Vinculada a Altoke">🔗 ${escapeHtml(tarea.altoke.key)}</p>`
+        : `<button type="button" class="tarea-altoke-btn" data-tarea-altoke="${tarea.id}" title="Crear incidencia en Altoke">→ Altoke</button>`}
     <div class="tarea-footer">
         <span class="tarea-responsable" title="${escapeHtml(nombres)}">${escapeHtml(nombres)}</span>
         <div class="tarea-actions">
@@ -3106,7 +3122,9 @@ async function renderTareasBoard(container){
 <div class="tareas-toolbar">
     <button class="btn small" type="button" id="tarea-add-btn">+ Nueva tarea</button>
     <label class="tareas-filter"><input type="checkbox" id="tarea-solo-mias"> Mostrar solo mis tareas</label>
+    ${isAdmin() ? `<button class="btn secondary small" type="button" id="altoke-config-btn" style="margin-left:auto;">⚙ Conectar Altoke</button>` : ""}
 </div>
+<div id="altoke-config-panel" class="panel hidden" style="padding:16px 18px;margin-bottom:18px;"></div>
 <div id="tareas-board" class="tareas-board">
     ${TAREA_ESTADOS.map(([value, label]) => `
     <div class="tareas-column">
@@ -3114,6 +3132,9 @@ async function renderTareasBoard(container){
         <div class="tareas-column-list" data-estado-list="${value}"></div>
     </div>`).join("")}
 </div>`;
+
+    const altokeConfigBtn = document.getElementById("altoke-config-btn");
+    if(altokeConfigBtn) altokeConfigBtn.addEventListener("click", toggleAltokeConfigPanel);
 
     // Si esto falla (ej. permisos), no debe tumbar el resto del tablero: las
     // tarjetas de tareas tienen que verse igual, solo quedaría vacío el
@@ -3192,20 +3213,144 @@ async function renderTareasBoard(container){
                 console.error(error);
                 alert("No se pudo eliminar la tarea.");
             });
+            return;
+        }
+        const altokeBtn = event.target.closest("[data-tarea-altoke]");
+        if(altokeBtn){
+            altokeBtn.disabled = true;
+            altokeBtn.textContent = "Enviando...";
+            const crearIncidencia = httpsCallable(functionsInstance, "altokeCrearIncidenciaDesdeTarea");
+            crearIncidencia({ tareaId: altokeBtn.dataset.tareaAltoke }).catch(error => {
+                console.error(error);
+                alert(error.message ? `No se pudo crear la incidencia: ${error.message}` : "No se pudo crear la incidencia en Altoke.");
+                if(altokeBtn.isConnected){
+                    altokeBtn.disabled = false;
+                    altokeBtn.textContent = "→ Altoke";
+                }
+            });
+        }
+    });
+}
+
+// Modal (bien simple, panel inline) para elegir a qué proyecto/tipo de
+// incidencia de Altoke van las tareas de este tablero — se guarda una sola
+// vez en configuracion/altoke y de ahí en más "→ Altoke" en cada tarjeta ya
+// sabe a dónde mandar. Solo admin puede tocar esto (mismo criterio que el
+// resto de decisiones de alcance de una integración).
+async function toggleAltokeConfigPanel(){
+    const panel = document.getElementById("altoke-config-panel");
+    if(!panel.classList.contains("hidden")){
+        panel.classList.add("hidden");
+        panel.innerHTML = "";
+        return;
+    }
+    panel.classList.remove("hidden");
+    panel.innerHTML = `<p class="loading">Cargando proyectos de Altoke...</p>`;
+
+    let config = null;
+    let proyectos = [];
+    try{
+        const configSnap = await getDoc(doc(db, "configuracion", "altoke"));
+        config = configSnap.exists() ? configSnap.data() : null;
+        const listarProyectos = httpsCallable(functionsInstance, "altokeListarProyectos");
+        const res = await listarProyectos();
+        proyectos = res.data?.projects || [];
+    }catch(error){
+        console.error(error);
+        panel.innerHTML = `<p class="loading">No se pudo conectar con Altoke — revisá que ALTOKE_API_KEY esté configurado en el backend.${error.message ? ` (${escapeHtml(error.message)})` : ""}</p>`;
+        return;
+    }
+
+    panel.innerHTML = `
+<h4 style="margin-bottom:10px;">Conectar Altoke</h4>
+<p class="muted" style="font-size:12.5px;margin-bottom:14px;">Elegí a qué proyecto y tipo de incidencia van las tareas que mandes desde este tablero con "→ Altoke".</p>
+<div class="form-grid">
+    <div class="field">
+        <label>Proyecto</label>
+        <select id="altoke-proyecto-select">
+            <option value="">Elegí un proyecto...</option>
+            ${proyectos.map(p => `<option value="${escapeHtml(p.id)}" ${config?.projectId === p.id ? "selected" : ""}>${escapeHtml(p.name || p.nombre || p.id)}</option>`).join("")}
+        </select>
+    </div>
+    <div class="field">
+        <label>Tipo de incidencia</label>
+        <select id="altoke-tipo-select"><option value="">Elegí un proyecto primero...</option></select>
+    </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:14px;">
+    <button class="btn small" type="button" id="altoke-config-guardar">Guardar</button>
+    <button class="btn secondary small" type="button" id="altoke-config-cancelar">Cerrar</button>
+</div>
+<p id="altoke-config-error" class="error"></p>`;
+
+    const proyectoSelect = document.getElementById("altoke-proyecto-select");
+    const tipoSelect = document.getElementById("altoke-tipo-select");
+
+    async function cargarTipos(projectId, tipoSeleccionadoId){
+        if(!projectId){
+            tipoSelect.innerHTML = `<option value="">Elegí un proyecto primero...</option>`;
+            return;
+        }
+        tipoSelect.innerHTML = `<option value="">Cargando...</option>`;
+        try{
+            const listarTipos = httpsCallable(functionsInstance, "altokeListarTiposIncidencia");
+            const res = await listarTipos({ projectId });
+            const tipos = res.data?.issueTypes || [];
+            tipoSelect.innerHTML = tipos.length
+                ? tipos.map(t => `<option value="${escapeHtml(t.id)}" ${tipoSeleccionadoId === t.id ? "selected" : ""}>${escapeHtml(t.name || t.nombre || t.id)}</option>`).join("")
+                : `<option value="">Sin tipos de incidencia</option>`;
+        }catch(error){
+            console.error(error);
+            tipoSelect.innerHTML = `<option value="">No se pudieron cargar</option>`;
+        }
+    }
+
+    if(config?.projectId) await cargarTipos(config.projectId, config.issueTypeId);
+    proyectoSelect.addEventListener("change", () => cargarTipos(proyectoSelect.value, null));
+
+    document.getElementById("altoke-config-cancelar").addEventListener("click", () => {
+        panel.classList.add("hidden");
+        panel.innerHTML = "";
+    });
+    document.getElementById("altoke-config-guardar").addEventListener("click", async () => {
+        const errorEl = document.getElementById("altoke-config-error");
+        errorEl.textContent = "";
+        const projectId = proyectoSelect.value;
+        const issueTypeId = tipoSelect.value;
+        if(!projectId || !issueTypeId){
+            errorEl.textContent = "Elegí un proyecto y un tipo de incidencia.";
+            return;
+        }
+        try{
+            await setDoc(doc(db, "configuracion", "altoke"), {
+                projectId,
+                projectNombre: proyectoSelect.options[proyectoSelect.selectedIndex].textContent,
+                issueTypeId,
+                issueTypeNombre: tipoSelect.options[tipoSelect.selectedIndex].textContent,
+                actualizadoEl: serverTimestamp()
+            }, { merge: true });
+            panel.classList.add("hidden");
+            panel.innerHTML = "";
+        }catch(error){
+            console.error(error);
+            errorEl.textContent = "No se pudo guardar (¿sos admin?).";
         }
     });
 }
 
 let editingTareaId = null;
+let editingTareaAltoke = null;
 
 function openTareaModal(tarea, staffAccounts){
     editingTareaId = tarea ? tarea.id : null;
+    editingTareaAltoke = tarea?.altoke || null;
     document.getElementById("tarea-modal-title").textContent = tarea ? "Editar tarea" : "Nueva tarea";
     tareaError.textContent = "";
     tareaForm.reset();
     tareaForm.titulo.value = tarea?.titulo || "";
     tareaForm.descripcion.value = tarea?.descripcion || "";
     document.getElementById("tarea-fecha-input").value = tarea?.fechaLimite || "";
+    document.getElementById("tarea-prioridad-select").value = tarea?.prioridad || "MEDIUM";
 
     const selectedUids = new Set(tareaResponsables(tarea || {}).map(r => r.uid));
     const listEl = document.getElementById("tarea-responsables-list");
@@ -3273,6 +3418,7 @@ tareaForm.addEventListener("submit", async (event) => {
         descripcion: String(formData.get("descripcion") || "").trim(),
         estado: String(formData.get("estado") || "pendiente"),
         fechaLimite: String(formData.get("fechaLimite") || ""),
+        prioridad: String(formData.get("prioridad") || "MEDIUM"),
         responsables,
         updatedAt: serverTimestamp()
     };
@@ -3280,6 +3426,13 @@ tareaForm.addEventListener("submit", async (event) => {
     try{
         if(editingTareaId){
             await updateDoc(doc(db, "tareas", editingTareaId), payload);
+            // Best-effort: si la tarea ya está vinculada a una incidencia de
+            // Altoke, la actualiza allá también. No bloquea el guardado local
+            // si Altoke falla (ej. la incidencia se borró del otro lado).
+            if(editingTareaAltoke?.id){
+                httpsCallable(functionsInstance, "altokeActualizarIncidenciaDesdeTarea")({ tareaId: editingTareaId })
+                    .catch(error => console.error("No se pudo actualizar la incidencia en Altoke:", error));
+            }
         }else{
             payload.createdAt = serverTimestamp();
             payload.creadorUid = currentUser.uid;
