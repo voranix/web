@@ -321,15 +321,6 @@ service cloud.firestore {
       allow read, write: if isStaff();
     }
 
-    // Configuración de integraciones (ej. a qué proyecto/tipo de incidencia
-    // de Altoke van las tareas del tablero) — cualquier staff la necesita
-    // para leer, pero elegir/cambiar el proyecto queda en admin, mismo
-    // criterio que el resto de las decisiones de alcance de una integración.
-    match /configuracion/{doc} {
-      allow read: if isStaff();
-      allow write: if isAdmin();
-    }
-
     // Voranix Rivals: temporada competitiva entre 2 Alianzas. Lectura pública
     // (es la página de resultados en vivo), pero la carga de equipos/puntajes
     // queda exclusiva de admin (ni Staff), a pedido explícito del usuario.
