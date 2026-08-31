@@ -19,12 +19,14 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
    sombra propia para mantenerse legibles sobre cualquier imagen de fondo. */
 .bar{
     position:absolute; left:0; right:0; bottom:0; height:170px;
-    display:flex; align-items:center; gap:32px; padding:0 44px 0 260px;
+    display:flex; align-items:center; gap:32px; padding:0 508px 0 260px;
 }
-/* El logo se sacó de la barra para poder moverlo de forma independiente
-   (editor de layout del Portal Creadores); la barra le deja el mismo
-   espacio de siempre (padding-left) para que, sin un layout personalizado
-   guardado, se vea idéntica a como era antes. */
+/* El logo, los sponsors y los códigos se sacaron de la barra para poder
+   moverlos de forma independiente (editor de layout del Portal
+   Creadores); la barra les deja el mismo espacio de siempre (padding)
+   para que, sin un layout personalizado guardado, se vea idéntica a como
+   era antes — el padding-right (antes 44px) ahora también reserva el
+   ancho que ocupaban sponsors+código+separaciones. */
 #logo-block{ position:absolute; left:44px; top:920px; z-index:5; }
 /* La línea de acento solo se ve mientras el ticker está en pantalla
    (ver .show-line, activado desde overlay.js junto con el ticker). */
@@ -62,7 +64,8 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
 .timer-value{ font-size:33px; font-weight:800; letter-spacing:3px; text-shadow:0 0 16px var(--glow-morado), 0 2px 8px rgba(0,0,0,.9); font-variant-numeric:tabular-nums; }
 
 .sponsor{
-    height:120px; min-width:170px; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative;
+    position:absolute; left:1444px; top:935px; z-index:5;
+    width:190px; height:120px; display:flex; align-items:center; justify-content:center;
 }
 .sponsor img{
     max-height:110px; max-width:190px; object-fit:contain; position:absolute; opacity:0; transition:opacity .5s ease;
@@ -70,7 +73,7 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
 }
 .sponsor img.show{ opacity:1; }
 
-.codigo-box{ height:120px; min-width:210px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.codigo-box{ position:absolute; left:1666px; top:935px; z-index:5; width:210px; height:120px; display:flex; align-items:center; justify-content:center; }
 .codigo-chip{
     display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center;
     opacity:0; transform:translateY(8px); transition:opacity .5s ease, transform .5s ease;
@@ -158,16 +161,17 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
         <span id="overlay-timer-label" class="timer-label"></span>
         <span id="overlay-timer-value" class="timer-value"></span>
     </div>
-    <div id="overlay-sponsors" class="sponsor hidden">
-        <img id="overlay-sponsor-logo-a" class="sponsor-img" alt="Sponsor">
-        <img id="overlay-sponsor-logo-b" class="sponsor-img" alt="Sponsor">
-    </div>
-    <div id="overlay-codigos" class="codigo-box hidden">
-        <div id="overlay-codigo-chip" class="codigo-chip">
-            <img id="overlay-codigo-img" class="codigo-chip-img hidden" alt="">
-            <span id="overlay-codigo-code" class="codigo-code"></span>
-            <span id="overlay-codigo-desc" class="codigo-desc"></span>
-        </div>
+</div>
+
+<div id="overlay-sponsors" class="sponsor hidden">
+    <img id="overlay-sponsor-logo-a" class="sponsor-img" alt="Sponsor">
+    <img id="overlay-sponsor-logo-b" class="sponsor-img" alt="Sponsor">
+</div>
+<div id="overlay-codigos" class="codigo-box hidden">
+    <div id="overlay-codigo-chip" class="codigo-chip">
+        <img id="overlay-codigo-img" class="codigo-chip-img hidden" alt="">
+        <span id="overlay-codigo-code" class="codigo-code"></span>
+        <span id="overlay-codigo-desc" class="codigo-desc"></span>
     </div>
 </div>
 

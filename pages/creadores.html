@@ -492,7 +492,7 @@
 
         <div id="overlay-editor-block" class="overlay-links-block hidden">
             <h2 class="overlay-links-title"><i class="fas fa-object-ungroup"></i> Personalizá tu overlay</h2>
-            <p class="muted overlay-links-sub">Arrastrá el logo, el cartel de redes, el banner de comandos y el de raid a donde quieras — pensado para acomodar tu cámara o tu layout de stream. El resto (ticker, timer, sponsors, códigos) sigue en su lugar de siempre.</p>
+            <p class="muted overlay-links-sub">Arrastrá el logo, el cartel de redes, el banner de comandos, el de raid, los sponsors y los códigos de descuento a donde quieras — pensado para acomodar tu cámara o tu layout de stream. El ticker y el timer siguen en su lugar de siempre.</p>
             <div class="layout-editor-tabs">
                 <button class="btn small" type="button" data-layout-tab="horizontal">Horizontal</button>
                 <button class="btn secondary small" type="button" data-layout-tab="vertical">Vertical</button>
@@ -1534,19 +1534,34 @@ ${guildId ? `
     // dependen de estar todos juntos). Guarda en overlayLayout/{twitchLogin}
     // como { horizontal:{...}, vertical:{...} }; si un elemento no tiene
     // posición guardada, el overlay usa su ubicación de siempre.
-    const LAYOUT_LABELS = { logo: "Logo", social: "Redes sociales", comando: "Comando de chat", raid: "Raid" };
+    const LAYOUT_LABELS = {
+        logo: "Logo", social: "Redes sociales", comando: "Comando de chat", raid: "Raid",
+        sponsors: "Sponsors", codigos: "Códigos"
+    };
     const LAYOUT_DEFAULTS = {
         horizontal: {
-            logo:    { x: 2,  y: 85, visible: true },
-            social:  { x: 78, y: 6,  visible: true },
-            comando: { x: 2,  y: 6,  visible: true },
-            raid:    { x: 50, y: 8,  visible: true }
+            logo:     { x: 2,  y: 85, visible: true },
+            social:   { x: 78, y: 6,  visible: true },
+            comando:  { x: 2,  y: 6,  visible: true },
+            raid:     { x: 50, y: 8,  visible: true },
+            // Igual que el resto: estas coordenadas tienen que coincidir con
+            // la posición real en overlay/horizontal.html (ver sus comentarios
+            // "left/top" en px) — "Guardar diseño" graba TODAS las posiciones
+            // del layout actual, no solo la que se tocó, así que si estos
+            // valores no coinciden con la posición real, la primera vez que
+            // alguien mueva cualquier OTRO elemento (ej. el Raid) sponsors y
+            // códigos saltarían de golpe a un lugar distinto de donde ya
+            // estaban en su overlay real.
+            sponsors: { x: 68, y: 80, visible: true },
+            codigos:  { x: 84, y: 91, visible: true }
         },
         vertical: {
-            logo:    { x: 25, y: 3,  visible: true },
-            social:  { x: 5,  y: 38, visible: true },
-            comando: { x: 5,  y: 58, visible: true },
-            raid:    { x: 30, y: 78, visible: true }
+            logo:     { x: 25, y: 3,  visible: true },
+            social:   { x: 5,  y: 38, visible: true },
+            comando:  { x: 5,  y: 58, visible: true },
+            raid:     { x: 30, y: 78, visible: true },
+            sponsors: { x: 6,  y: 30, visible: true },
+            codigos:  { x: 6,  y: 44, visible: true }
         }
     };
     // Tamaño de la vista previa en pantalla (no el tamaño real del overlay,

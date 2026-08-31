@@ -21,11 +21,14 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
     position:absolute; top:0; right:0; bottom:0; width:100%;
     display:flex; flex-direction:column; align-items:center; gap:30px; padding:236px 20px 36px;
 }
-/* El logo se sacó de la columna para poder moverlo de forma independiente
-   (editor de layout del Portal Creadores); la columna le deja el mismo
-   espacio de siempre (padding-top) para que, sin un layout personalizado
+/* El logo, los sponsors y los códigos se sacaron de la columna para poder
+   moverlos de forma independiente (editor de layout del Portal
+   Creadores); la columna le deja el mismo espacio de siempre (padding-top
+   para el logo, un spacer donde iban sponsors/códigos — ver
+   .legacy-spacer más abajo) para que, sin un layout personalizado
    guardado, se vea idéntica a como era antes. */
 #logo-block{ position:absolute; left:85px; top:36px; z-index:5; }
+.legacy-spacer{ flex-shrink:0; height:310px; width:1px; }
 /* La línea de acento solo se ve mientras el ticker está en pantalla
    (ver .show-line, activado desde overlay.js junto con el ticker). */
 .column::before{
@@ -47,14 +50,17 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
 .timer-label{ font-size:12px; letter-spacing:2.5px; text-transform:uppercase; color:var(--naranja-light); font-weight:700; text-shadow:0 2px 6px rgba(0,0,0,.9); }
 .timer-value{ font-size:28px; font-weight:800; letter-spacing:2px; text-shadow:0 0 16px var(--glow-morado), 0 2px 8px rgba(0,0,0,.9); font-variant-numeric:tabular-nums; }
 
-.sponsor{ height:130px; width:100%; display:flex; align-items:center; justify-content:center; position:relative; }
+.sponsor{
+    position:absolute; left:20px; top:320px; z-index:5;
+    height:130px; width:300px; display:flex; align-items:center; justify-content:center;
+}
 .sponsor img{
     max-height:120px; max-width:96%; object-fit:contain; position:absolute; opacity:0; transition:opacity .5s ease;
     filter:drop-shadow(0 4px 12px rgba(0,0,0,.7));
 }
 .sponsor img.show{ opacity:1; }
 
-.codigo-box{ height:120px; width:100%; display:flex; align-items:center; justify-content:center; }
+.codigo-box{ position:absolute; left:20px; top:480px; z-index:5; height:120px; width:300px; display:flex; align-items:center; justify-content:center; }
 .codigo-chip{
     display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center;
     opacity:0; transform:translateY(8px); transition:opacity .5s ease, transform .5s ease;
@@ -134,22 +140,24 @@ body{ font-family:"Orbitron",sans-serif; color:var(--text); }
     </div>
 </div>
 
+<div id="overlay-sponsors" class="sponsor hidden">
+    <img id="overlay-sponsor-logo-a" class="sponsor-img" alt="Sponsor">
+    <img id="overlay-sponsor-logo-b" class="sponsor-img" alt="Sponsor">
+</div>
+<div id="overlay-codigos" class="codigo-box hidden">
+    <div id="overlay-codigo-chip" class="codigo-chip">
+        <img id="overlay-codigo-img" class="codigo-chip-img hidden" alt="">
+        <span id="overlay-codigo-code" class="codigo-code"></span>
+        <span id="overlay-codigo-desc" class="codigo-desc"></span>
+    </div>
+</div>
+
 <div class="column">
     <div id="overlay-timer" class="timer hidden">
         <span id="overlay-timer-label" class="timer-label"></span>
         <span id="overlay-timer-value" class="timer-value"></span>
     </div>
-    <div id="overlay-sponsors" class="sponsor hidden">
-        <img id="overlay-sponsor-logo-a" class="sponsor-img" alt="Sponsor">
-        <img id="overlay-sponsor-logo-b" class="sponsor-img" alt="Sponsor">
-    </div>
-    <div id="overlay-codigos" class="codigo-box hidden">
-        <div id="overlay-codigo-chip" class="codigo-chip">
-            <img id="overlay-codigo-img" class="codigo-chip-img hidden" alt="">
-            <span id="overlay-codigo-code" class="codigo-code"></span>
-            <span id="overlay-codigo-desc" class="codigo-desc"></span>
-        </div>
-    </div>
+    <div class="legacy-spacer"></div>
     <div class="ticker-wrap">
         <div id="overlay-ticker" class="ticker hidden"></div>
     </div>

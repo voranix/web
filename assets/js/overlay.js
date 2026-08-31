@@ -391,14 +391,17 @@ export function initOverlayEvento() {
 
 // Elementos que cada creador puede reposicionar libremente desde el editor
 // de layout del Portal Creadores (overlayLayout/{canal}.horizontal|vertical).
-// El resto de la pantalla (barra de logo+ticker+timer+sponsors+códigos)
-// queda fija: es un conjunto con animaciones/anchos que dependen de estar
-// todos juntos, así que no se puede desarmar en piezas sueltas sin riesgo.
+// Solo la barra de ticker+timer queda fija en su lugar de siempre (ver
+// overlay/horizontal.html y overlay/vertical.html — reservan el mismo
+// espacio de antes con padding/spacer para que, sin un layout personalizado
+// guardado, no se note ningún cambio).
 const LAYOUT_ELEMENTOS = {
     logo: () => document.getElementById("logo-block"),
     social: () => document.getElementById("social-popup"),
     comando: () => document.getElementById("comando-banner"),
-    raid: () => document.getElementById("raid-banner")
+    raid: () => document.getElementById("raid-banner"),
+    sponsors: () => document.getElementById("overlay-sponsors"),
+    codigos: () => document.getElementById("overlay-codigos")
 };
 
 // Si un elemento no tiene posición guardada, se deja tal cual estaba (su
