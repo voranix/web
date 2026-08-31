@@ -1598,12 +1598,28 @@ ${guildId ? `
                 event.preventDefault();
                 chip.setPointerCapture(event.pointerId);
                 const canvasRect = canvas.getBoundingClientRect();
+                const chipRect = chip.getBoundingClientRect();
+                // Offset entre dónde se agarró el chip y su esquina superior
+                // izquierda (que es el punto que en realidad se guarda como
+                // x/y) — sin esto, apenas arrancaba el arrastre el chip
+                // "saltaba" a poner esa esquina justo debajo del cursor, sin
+                // importar de qué parte del chip se haya agarrado, así que
+                // terminaba en cualquier lado en vez de donde se soltaba.
+                const offsetXPct = ((event.clientX - chipRect.left) / canvasRect.width) * 100;
+                const offsetYPct = ((event.clientY - chipRect.top) / canvasRect.height) * 100;
+                // Tope real según el tamaño del chip (no un número fijo): un
+                // chip con texto largo (Comando de chat, Redes sociales) es
+                // más ancho que Logo/Raid, así que el mismo 96% fijo lo
+                // dejaba casi entero afuera del cuadrado — y como el
+                // contenedor recorta lo que se sale, quedaba invisible.
+                const maxX = Math.max(0, 100 - (chipRect.width / canvasRect.width) * 100);
+                const maxY = Math.max(0, 100 - (chipRect.height / canvasRect.height) * 100);
 
                 function onMove(moveEvent){
-                    const relX = ((moveEvent.clientX - canvasRect.left) / canvasRect.width) * 100;
-                    const relY = ((moveEvent.clientY - canvasRect.top) / canvasRect.height) * 100;
-                    pos.x = Math.max(0, Math.min(96, relX));
-                    pos.y = Math.max(0, Math.min(92, relY));
+                    const relX = ((moveEvent.clientX - canvasRect.left) / canvasRect.width) * 100 - offsetXPct;
+                    const relY = ((moveEvent.clientY - canvasRect.top) / canvasRect.height) * 100 - offsetYPct;
+                    pos.x = Math.max(0, Math.min(maxX, relX));
+                    pos.y = Math.max(0, Math.min(maxY, relY));
                     chip.style.left = pos.x + "%";
                     chip.style.top = pos.y + "%";
                 }
