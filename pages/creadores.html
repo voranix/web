@@ -105,19 +105,12 @@
         .bot-status-icon.is-pending{ background:rgba(255,193,7,.18); color:#ffc107; }
         .layout-editor-tabs{ display:flex; gap:8px; margin-bottom:16px; }
         .layout-editor-canvas-wrap{ overflow-x:auto; padding-bottom:6px; }
-        .layout-editor-canvas{
-            position:relative; background:var(--bg-2); border:1px dashed var(--border-accent); border-radius:var(--r-md);
+        .layout-editor-preview{
+            position:relative; overflow:hidden; background:var(--bg-2); border:1px dashed var(--border-accent); border-radius:var(--r-md);
             background-image:radial-gradient(circle, rgba(255,255,255,.06) 1.5px, transparent 1.5px);
             background-size:20px 20px; margin-bottom:16px; flex-shrink:0;
         }
-        .layout-chip{
-            position:absolute; display:flex; align-items:center; gap:6px; background:rgba(10,10,16,.85);
-            border:1px solid var(--morado); border-radius:20px; padding:6px 12px 6px 14px; font-size:11px; font-weight:700;
-            color:#fff; cursor:grab; touch-action:none; white-space:nowrap; user-select:none; transition:opacity .2s;
-        }
-        .layout-chip:active{ cursor:grabbing; }
-        .layout-chip button{ background:none; border:none; color:var(--gris); cursor:pointer; font-size:12px; padding:2px; }
-        .layout-chip button:hover{ color:#fff; }
+        .layout-editor-iframe{ border:0; display:block; transform-origin:top left; }
         .layout-editor-actions{ display:flex; gap:10px; flex-wrap:wrap; }
 
         .creadores-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px; border-bottom:1px solid var(--border); }
@@ -492,13 +485,15 @@
 
         <div id="overlay-editor-block" class="overlay-links-block hidden">
             <h2 class="overlay-links-title"><i class="fas fa-object-ungroup"></i> Personalizá tu overlay</h2>
-            <p class="muted overlay-links-sub">Arrastrá el logo, el cartel de redes, el banner de comandos, el de raid, los sponsors y los códigos de descuento a donde quieras — pensado para acomodar tu cámara o tu layout de stream. El ticker y el timer siguen en su lugar de siempre.</p>
+            <p class="muted overlay-links-sub">Esta es tu vista en vivo real, a escala: arrastrá el logo, el cartel de redes, el banner de comandos, el de raid, los sponsors y los códigos de descuento a donde quieras, y agrandalos hasta 3 veces desde la esquina inferior derecha de cada uno (nunca se achican por debajo del tamaño que ves acá). El ticker y el timer siguen en su lugar de siempre.</p>
             <div class="layout-editor-tabs">
                 <button class="btn small" type="button" data-layout-tab="horizontal">Horizontal</button>
                 <button class="btn secondary small" type="button" data-layout-tab="vertical">Vertical</button>
             </div>
             <div class="layout-editor-canvas-wrap">
-                <div id="layout-canvas" class="layout-editor-canvas"></div>
+                <div id="layout-preview-wrap" class="layout-editor-preview">
+                    <iframe id="layout-iframe" class="layout-editor-iframe" title="Vista previa del overlay" tabindex="-1"></iframe>
+                </div>
             </div>
             <div class="layout-editor-actions">
                 <button class="btn" type="button" id="layout-save-btn">Guardar diseño</button>
@@ -1528,144 +1523,41 @@ ${guildId ? `
         }
     });
 
-    // Editor de layout del overlay: reposicionar libremente logo, redes,
-    // banner de comando y banner de raid (el resto — ticker/timer/sponsors/
-    // códigos — queda fijo, es un bloque con animaciones/anchos que
-    // dependen de estar todos juntos). Guarda en overlayLayout/{twitchLogin}
-    // como { horizontal:{...}, vertical:{...} }; si un elemento no tiene
-    // posición guardada, el overlay usa su ubicación de siempre.
-    const LAYOUT_LABELS = {
-        logo: "Logo", social: "Redes sociales", comando: "Comando de chat", raid: "Raid",
-        sponsors: "Sponsors", codigos: "Códigos"
-    };
-    const LAYOUT_DEFAULTS = {
-        horizontal: {
-            logo:     { x: 2,  y: 85, visible: true },
-            social:   { x: 78, y: 6,  visible: true },
-            comando:  { x: 2,  y: 6,  visible: true },
-            raid:     { x: 50, y: 8,  visible: true },
-            // Igual que el resto: estas coordenadas tienen que coincidir con
-            // la posición real en overlay/horizontal.html (ver sus comentarios
-            // "left/top" en px) — "Guardar diseño" graba TODAS las posiciones
-            // del layout actual, no solo la que se tocó, así que si estos
-            // valores no coinciden con la posición real, la primera vez que
-            // alguien mueva cualquier OTRO elemento (ej. el Raid) sponsors y
-            // códigos saltarían de golpe a un lugar distinto de donde ya
-            // estaban en su overlay real.
-            sponsors: { x: 68, y: 80, visible: true },
-            codigos:  { x: 84, y: 91, visible: true }
-        },
-        vertical: {
-            logo:     { x: 25, y: 3,  visible: true },
-            social:   { x: 5,  y: 38, visible: true },
-            comando:  { x: 5,  y: 58, visible: true },
-            raid:     { x: 30, y: 78, visible: true },
-            sponsors: { x: 6,  y: 30, visible: true },
-            codigos:  { x: 6,  y: 44, visible: true }
-        }
-    };
-    // Tamaño de la vista previa en pantalla (no el tamaño real del overlay,
-    // que es 1920x1080 / 340x1080 — acá solo hace falta guardar % relativos).
+    // Editor de layout del overlay: vista en vivo real, achicada con
+    // transform:scale() sobre un <iframe> same-origin que carga el propio
+    // overlay (/overlay/{orientacion}.html?editor=1) — ahí adentro corre
+    // initEditorMode() (ver assets/js/overlay.js), que muestra los 6
+    // elementos movibles de forma estática y los deja arrastrar/agrandar.
+    // Esta página solo decide qué orientación/canal mostrar y lee el
+    // estado final desde iframe.contentWindow.__editorLayout al guardar —
+    // el estado en sí (posición, tamaño) vive únicamente adentro del
+    // iframe, no hay copia duplicada acá.
+    const LAYOUT_NATIVE_SIZE = { horizontal: { w: 1920, h: 1080 }, vertical: { w: 340, h: 1080 } };
+    // Tamaño de la vista previa en pantalla (no el tamaño real del overlay).
     const LAYOUT_CANVAS_SIZE = { horizontal: { w: 480, h: 270 }, vertical: { w: 200, h: 635 } };
 
     let layoutOrientacion = "horizontal";
-    let layoutState = null; // { horizontal:{...}, vertical:{...} }: copia editable en memoria
-    let layoutTieneGuardado = { horizontal: false, vertical: false }; // qué orientaciones tienen doc propio en Firestore
-    let layoutCargado = false;
+    let layoutTwitchLogin = "";
 
-    function clonarLayoutDefaults(){
-        return JSON.parse(JSON.stringify(LAYOUT_DEFAULTS));
-    }
-
-    function drawLayoutCanvas(){
-        const canvas = document.getElementById("layout-canvas");
+    function drawLayoutPreview(){
+        const wrap = document.getElementById("layout-preview-wrap");
+        const iframe = document.getElementById("layout-iframe");
         const size = LAYOUT_CANVAS_SIZE[layoutOrientacion];
-        canvas.style.width = size.w + "px";
-        canvas.style.height = size.h + "px";
-        canvas.innerHTML = "";
+        const native = LAYOUT_NATIVE_SIZE[layoutOrientacion];
+        const scale = size.w / native.w;
+        wrap.style.width = size.w + "px";
+        wrap.style.height = size.h + "px";
+        iframe.width = native.w;
+        iframe.height = native.h;
+        iframe.style.transform = `scale(${scale})`;
 
         document.querySelectorAll("[data-layout-tab]").forEach(btn => {
             btn.classList.toggle("secondary", btn.dataset.layoutTab !== layoutOrientacion);
         });
 
-        if(!layoutState) return;
-        const estadoOrientacion = layoutState[layoutOrientacion];
-
-        Object.entries(LAYOUT_LABELS).forEach(([key, label]) => {
-            const pos = estadoOrientacion[key];
-            const chip = document.createElement("div");
-            chip.className = "layout-chip";
-            chip.dataset.layoutKey = key;
-            chip.style.left = pos.x + "%";
-            chip.style.top = pos.y + "%";
-            chip.style.opacity = pos.visible === false ? "0.4" : "1";
-            chip.innerHTML = `<span>${escapeHtml(label)}</span><button type="button" data-layout-toggle title="Mostrar/ocultar">${pos.visible === false ? "🚫" : "👁"}</button>`;
-            canvas.appendChild(chip);
-
-            chip.querySelector("[data-layout-toggle]").addEventListener("click", (event) => {
-                event.stopPropagation();
-                pos.visible = pos.visible === false ? true : false;
-                drawLayoutCanvas();
-            });
-
-            chip.addEventListener("pointerdown", (event) => {
-                if(event.target.closest("[data-layout-toggle]")) return;
-                event.preventDefault();
-                chip.setPointerCapture(event.pointerId);
-                const canvasRect = canvas.getBoundingClientRect();
-                const chipRect = chip.getBoundingClientRect();
-                // Offset entre dónde se agarró el chip y su esquina superior
-                // izquierda (que es el punto que en realidad se guarda como
-                // x/y) — sin esto, apenas arrancaba el arrastre el chip
-                // "saltaba" a poner esa esquina justo debajo del cursor, sin
-                // importar de qué parte del chip se haya agarrado, así que
-                // terminaba en cualquier lado en vez de donde se soltaba.
-                const offsetXPct = ((event.clientX - chipRect.left) / canvasRect.width) * 100;
-                const offsetYPct = ((event.clientY - chipRect.top) / canvasRect.height) * 100;
-                // Tope real según el tamaño del chip (no un número fijo): un
-                // chip con texto largo (Comando de chat, Redes sociales) es
-                // más ancho que Logo/Raid, así que el mismo 96% fijo lo
-                // dejaba casi entero afuera del cuadrado — y como el
-                // contenedor recorta lo que se sale, quedaba invisible.
-                const maxX = Math.max(0, 100 - (chipRect.width / canvasRect.width) * 100);
-                const maxY = Math.max(0, 100 - (chipRect.height / canvasRect.height) * 100);
-
-                function onMove(moveEvent){
-                    const relX = ((moveEvent.clientX - canvasRect.left) / canvasRect.width) * 100 - offsetXPct;
-                    const relY = ((moveEvent.clientY - canvasRect.top) / canvasRect.height) * 100 - offsetYPct;
-                    pos.x = Math.max(0, Math.min(maxX, relX));
-                    pos.y = Math.max(0, Math.min(maxY, relY));
-                    chip.style.left = pos.x + "%";
-                    chip.style.top = pos.y + "%";
-                }
-                function onUp(){
-                    chip.removeEventListener("pointermove", onMove);
-                    chip.removeEventListener("pointerup", onUp);
-                }
-                chip.addEventListener("pointermove", onMove);
-                chip.addEventListener("pointerup", onUp);
-            });
-        });
-    }
-
-    async function cargarLayoutSiHaceFalta(twitchLogin){
-        if(layoutCargado) return;
-        layoutCargado = true;
-        layoutState = clonarLayoutDefaults();
-        try{
-            const snapshot = await getDoc(doc(db, "overlayLayout", twitchLogin));
-            const saved = snapshot.exists() ? snapshot.data() : {};
-            for(const orientacion of ["horizontal", "vertical"]){
-                if(!saved[orientacion]) continue;
-                layoutTieneGuardado[orientacion] = true;
-                for(const key of Object.keys(LAYOUT_LABELS)){
-                    if(saved[orientacion][key]) layoutState[orientacion][key] = { ...saved[orientacion][key] };
-                }
-            }
-        }catch(error){
-            console.error(error);
+        if(layoutTwitchLogin){
+            iframe.src = `/overlay/${layoutOrientacion}.html?canal=${encodeURIComponent(layoutTwitchLogin)}&editor=1`;
         }
-        drawLayoutCanvas();
     }
 
     function renderOverlayEditor(profile){
@@ -1676,26 +1568,33 @@ ${guildId ? `
             return;
         }
         block.classList.remove("hidden");
-        cargarLayoutSiHaceFalta(twitchLogin);
+        if(layoutTwitchLogin === twitchLogin) return; // ya está cargado para este canal
+        layoutTwitchLogin = twitchLogin;
+        drawLayoutPreview();
     }
 
     document.querySelectorAll("[data-layout-tab]").forEach(btn => {
         btn.addEventListener("click", () => {
             layoutOrientacion = btn.dataset.layoutTab;
-            drawLayoutCanvas();
+            drawLayoutPreview();
         });
     });
 
     document.getElementById("layout-save-btn").addEventListener("click", async () => {
         const twitchLogin = currentProfile?.twitchLogin || "";
         const msgEl = document.getElementById("layout-msg");
-        if(!twitchLogin || !layoutState) return;
+        const iframe = document.getElementById("layout-iframe");
+        if(!twitchLogin) return;
+        const estado = iframe.contentWindow?.__editorLayout?.getState?.();
+        if(!estado){
+            msgEl.textContent = "La vista previa todavía está cargando, esperá un segundo.";
+            return;
+        }
         msgEl.textContent = "Guardando...";
         try{
             await setDoc(doc(db, "overlayLayout", twitchLogin), {
-                [layoutOrientacion]: layoutState[layoutOrientacion]
+                [layoutOrientacion]: estado
             }, { merge: true });
-            layoutTieneGuardado[layoutOrientacion] = true;
             msgEl.textContent = "¡Guardado! Ya se aplica en tu overlay (puede tardar unos segundos en OBS).";
         }catch(error){
             console.error(error);
@@ -1706,18 +1605,21 @@ ${guildId ? `
     document.getElementById("layout-reset-btn").addEventListener("click", async () => {
         const twitchLogin = currentProfile?.twitchLogin || "";
         const msgEl = document.getElementById("layout-msg");
-        if(!twitchLogin || !layoutState) return;
-        layoutState[layoutOrientacion] = clonarLayoutDefaults()[layoutOrientacion];
-        drawLayoutCanvas();
-        if(!layoutTieneGuardado[layoutOrientacion]){ msgEl.textContent = "Restablecido."; return; }
+        const iframe = document.getElementById("layout-iframe");
+        if(!twitchLogin) return;
         try{
             await updateDoc(doc(db, "overlayLayout", twitchLogin), { [layoutOrientacion]: deleteField() });
-            layoutTieneGuardado[layoutOrientacion] = false;
-            msgEl.textContent = "Restablecido a la posición original.";
         }catch(error){
-            console.error(error);
-            msgEl.textContent = "No se pudo restablecer.";
+            // Si nunca se había guardado nada para este canal, el doc ni
+            // existe todavía — no hay nada que restablecer, no es un error.
+            if(error?.code !== "not-found"){
+                console.error(error);
+                msgEl.textContent = "No se pudo restablecer.";
+                return;
+            }
         }
+        msgEl.textContent = "Restablecido a la posición original.";
+        iframe.contentWindow?.location.reload();
     });
 
     // Tutorial paso a paso: se abre solo desde el botón "Tutorial" de la

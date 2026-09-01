@@ -1,4 +1,4 @@
-import { doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { doc, onSnapshot, collection, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { db } from "/assets/js/firebase-config.js";
 
 const DEFAULT_LOGO = "/imagenes/logopng.png";
@@ -404,6 +404,51 @@ const LAYOUT_ELEMENTOS = {
     codigos: () => document.getElementById("overlay-codigos")
 };
 
+// Etiquetas y posiciones/tamaño por defecto de cada elemento movible,
+// co-ubicadas acá (en vez de duplicadas en pages/creadores.html) junto al
+// resto de este archivo que ya conoce el CSS real de cada overlay — así no
+// se pueden desincronizar. "Guardar diseño" en el Portal Creadores graba
+// TODAS las posiciones del layout actual (no solo la que se tocó), así que
+// estos valores tienen que coincidir con la posición real en
+// overlay/horizontal.html y vertical.html (ver sus comentarios "left/top"
+// en px), o el primer guardado haría "saltar" a los elementos sin mover.
+export const LAYOUT_LABELS = {
+    logo: "Logo", social: "Redes sociales", comando: "Comando de chat", raid: "Raid",
+    sponsors: "Sponsors", codigos: "Códigos"
+};
+export const LAYOUT_DEFAULTS = {
+    horizontal: {
+        logo:     { x: 2,  y: 85, visible: true, scale: 1 },
+        social:   { x: 78, y: 6,  visible: true, scale: 1 },
+        comando:  { x: 2,  y: 6,  visible: true, scale: 1 },
+        raid:     { x: 50, y: 8,  visible: true, scale: 1 },
+        sponsors: { x: 68, y: 80, visible: true, scale: 1 },
+        codigos:  { x: 84, y: 91, visible: true, scale: 1 }
+    },
+    vertical: {
+        logo:     { x: 25, y: 3,  visible: true, scale: 1 },
+        social:   { x: 5,  y: 38, visible: true, scale: 1 },
+        comando:  { x: 5,  y: 58, visible: true, scale: 1 },
+        raid:     { x: 30, y: 78, visible: true, scale: 1 },
+        sponsors: { x: 6,  y: 30, visible: true, scale: 1 },
+        codigos:  { x: 6,  y: 44, visible: true, scale: 1 }
+    }
+};
+
+// Tamaño nativo (px reales) de cada overlay — el editor los usa para
+// calcular arrastre/tope directamente en píxeles, y el iframe de vista
+// previa del Portal Creadores los usa para calcular su escala visual.
+export const LAYOUT_NATIVE_SIZE = { horizontal: { w: 1920, h: 1080 }, vertical: { w: 340, h: 1080 } };
+
+// raid-banner (ambas orientaciones) y social/comando (solo vertical) se
+// centran con un transform de translate% además de su left/top — hay que
+// combinar ese transform "base" con el scale() del editor en vez de
+// pisarlo, o pierden el centrado.
+const LAYOUT_BASE_TRANSFORM = {
+    horizontal: { logo: "", social: "", comando: "", raid: "translate(-50%, 0)", sponsors: "", codigos: "" },
+    vertical: { logo: "", social: "translate(0, -50%)", comando: "translate(0, -50%)", raid: "translate(-50%, -50%)", sponsors: "", codigos: "" }
+};
+
 // Si un elemento no tiene posición guardada, se deja tal cual estaba (su
 // CSS original) — así ningún creador que nunca abrió el editor nota ningún
 // cambio en su overlay. Solo se pisan left/top/right/bottom cuando SÍ hay
@@ -425,6 +470,270 @@ export function initCustomLayout(orientacion) {
             el.style.right = "auto";
             el.style.bottom = "auto";
             el.style.display = pos.visible === false ? "none" : "";
+            // El scale solo pisa el transform inline cuando el creador
+            // realmente agrandó el elemento — así el resto (sin scale
+            // guardado, la inmensa mayoría) no pierde la animación de
+            // aparición/retiro que controla el transform vía la clase
+            // .show del CSS.
+            if (pos.scale && pos.scale !== 1) {
+                const base = (LAYOUT_BASE_TRANSFORM[orientacion] || {})[key] || "";
+                el.style.transformOrigin = "top left";
+                el.style.transform = `${base} scale(${pos.scale})`.trim();
+            }
         }
     }, (error) => console.error("overlayLayout", error));
+}
+
+// ---------------------------------------------------------------------
+// Editor "WYSIWYG" del layout (Portal Creadores → Herramientas): corre
+// SOLO dentro del iframe que carga este mismo overlay con ?editor=1 (ver
+// el <script> final de horizontal.html/vertical.html) — nunca se ejecuta
+// en el overlay real que ve OBS. Muestra los 6 elementos movibles de
+// forma estática (con su contenido real o un placeholder) y los deja
+// arrastrar (mover) y redimensionar (agarre en la esquina inferior
+// derecha, scale clamped a [1,3] — 1 es el tamaño predeterminado real y
+// nunca se puede achicar por debajo de eso).
+// ---------------------------------------------------------------------
+
+const EDITOR_EMPTY_LABELS = { sponsors: "Sin sponsors todavía", codigos: "Sin códigos todavía" };
+
+function aplicarTransformEditor(el, orientacion, key, scale) {
+    const base = (LAYOUT_BASE_TRANSFORM[orientacion] || {})[key] || "";
+    el.style.transformOrigin = "top left";
+    el.style.transform = scale && scale !== 1 ? `${base} scale(${scale})`.trim() : base;
+}
+
+function injectEditorStyles() {
+    if (document.getElementById("__editor-mode-style")) return;
+    const style = document.createElement("style");
+    style.id = "__editor-mode-style";
+    style.textContent = `
+        [data-editor-el]{ outline:2px dashed rgba(255,255,255,.55); outline-offset:3px; cursor:grab; touch-action:none; }
+        [data-editor-el]:active{ cursor:grabbing; }
+        [data-editor-el].editor-empty{ background:rgba(255,255,255,.08) !important; border-radius:8px; }
+        [data-editor-el].editor-empty > *:not(.editor-empty-label){ visibility:hidden; }
+        .editor-empty-label{
+            position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+            font-size:13px; font-weight:700; color:rgba(255,255,255,.85); text-align:center; padding:0 8px; pointer-events:none;
+        }
+        .editor-resize-handle{
+            position:absolute; width:22px; height:22px; border-radius:50%; line-height:18px; text-align:center;
+            background:#7b2cff; border:2px solid #fff; z-index:99999; cursor:nwse-resize; touch-action:none;
+            font-size:11px; color:#fff;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+export async function initEditorMode(orientacion) {
+    const params = new URLSearchParams(location.search);
+    const canal = (params.get("canal") || "").toLowerCase().trim();
+    if (!canal) return;
+
+    injectEditorStyles();
+    const native = LAYOUT_NATIVE_SIZE[orientacion];
+    const state = JSON.parse(JSON.stringify(LAYOUT_DEFAULTS[orientacion]));
+
+    try {
+        const snap = await getDoc(doc(db, "overlayLayout", canal));
+        const saved = (snap.exists() ? snap.data()[orientacion] : null) || {};
+        for (const key of Object.keys(LAYOUT_ELEMENTOS)) {
+            if (saved[key]) state[key] = { scale: 1, ...saved[key] };
+        }
+    } catch (error) { console.error("overlayLayout", error); }
+
+    // Contenido real (o de ejemplo, para lo que normalmente solo aparece
+    // disparado por un evento en vivo) de cada elemento, para que se
+    // pueda ver y agarrar aunque ahora mismo no esté pasando nada.
+    try {
+        const cfgSnap = await getDoc(doc(db, "overlayConfig", "config"));
+        const cfg = cfgSnap.exists() ? cfgSnap.data() : {};
+        const logoEl = document.getElementById("overlay-logo");
+        if (logoEl) logoEl.src = assetUrl(cfg.logoOverlay) || DEFAULT_LOGO;
+    } catch (error) { console.error("overlayConfig", error); }
+
+    const popup = document.getElementById("social-popup");
+    if (popup) {
+        const item = SOCIAL_LINKS[0];
+        const monoEl = popup.querySelector(".social-popup-mono");
+        const platformEl = popup.querySelector(".social-popup-platform");
+        const handleEl = popup.querySelector(".social-popup-handle");
+        if (monoEl) { monoEl.textContent = item.mono; monoEl.style.background = item.color; }
+        if (platformEl) platformEl.textContent = item.platform;
+        if (handleEl) handleEl.textContent = item.handle;
+        popup.classList.add("show");
+    }
+
+    const raidNameEl = document.getElementById("raid-banner-name");
+    const raidViewersEl = document.getElementById("raid-banner-viewers");
+    if (raidNameEl) raidNameEl.textContent = "EjemploStreamer";
+    if (raidViewersEl) raidViewersEl.textContent = "123 viewers se sumaron a la fiesta 🎉";
+    document.getElementById("raid-banner")?.classList.add("show");
+
+    const comandoTitleEl = document.getElementById("comando-banner-title");
+    const comandoDetailEl = document.getElementById("comando-banner-detail");
+    const comandoImgEl = document.getElementById("comando-banner-img");
+    if (comandoTitleEl) comandoTitleEl.textContent = "Vista previa de comando";
+    if (comandoDetailEl) { comandoDetailEl.textContent = "Así se ve cuando alguien usa un comando."; comandoDetailEl.classList.remove("hidden"); }
+    if (comandoImgEl) comandoImgEl.classList.add("hidden");
+    document.getElementById("comando-banner")?.classList.add("show");
+
+    const sponsorsBox = document.getElementById("overlay-sponsors");
+    const sponsorImgA = document.getElementById("overlay-sponsor-logo-a");
+    try {
+        const snap = await getDocs(collection(db, "sponsors"));
+        const activos = snap.docs.map((item) => item.data()).filter((item) => item.activo !== false && item.logo);
+        if (activos.length && sponsorImgA) {
+            sponsorImgA.src = assetUrl(activos[0].logo);
+            sponsorImgA.alt = activos[0].nombre || "Sponsor";
+            sponsorImgA.classList.add("show");
+            sponsorsBox?.classList.remove("editor-empty");
+        } else {
+            sponsorsBox?.classList.add("editor-empty");
+        }
+    } catch (error) { console.error("sponsors", error); sponsorsBox?.classList.add("editor-empty"); }
+    sponsorsBox?.classList.remove("hidden");
+
+    const codigosBox = document.getElementById("overlay-codigos");
+    const codigoChip = document.getElementById("overlay-codigo-chip");
+    const codigoImg = document.getElementById("overlay-codigo-img");
+    const codigoCodeEl = document.getElementById("overlay-codigo-code");
+    const codigoDescEl = document.getElementById("overlay-codigo-desc");
+    try {
+        const snap = await getDocs(collection(db, "overlayCodigos"));
+        const activos = snap.docs.map((item) => item.data()).filter((item) => item.activo !== false && item.codigo);
+        if (activos.length) {
+            const codigo = activos[0];
+            if (codigoImg) {
+                if (codigo.imagen) { codigoImg.src = assetUrl(codigo.imagen); codigoImg.classList.remove("hidden"); }
+                else codigoImg.classList.add("hidden");
+            }
+            if (codigoCodeEl) codigoCodeEl.textContent = codigo.codigo || "";
+            if (codigoDescEl) codigoDescEl.textContent = codigo.descripcion || "";
+            codigoChip?.classList.add("show");
+            codigosBox?.classList.remove("editor-empty");
+        } else {
+            codigosBox?.classList.add("editor-empty");
+        }
+    } catch (error) { console.error("overlayCodigos", error); codigosBox?.classList.add("editor-empty"); }
+    codigosBox?.classList.remove("hidden");
+
+    for (const key of Object.keys(EDITOR_EMPTY_LABELS)) {
+        const el = LAYOUT_ELEMENTOS[key]?.();
+        if (!el) continue;
+        let label = el.querySelector(".editor-empty-label");
+        if (!label) {
+            label = document.createElement("span");
+            label.className = "editor-empty-label";
+            label.textContent = EDITOR_EMPTY_LABELS[key];
+            el.appendChild(label);
+        }
+        label.style.display = el.classList.contains("editor-empty") ? "flex" : "none";
+    }
+
+    // --- Ubicar/escalar los 6 elementos y hacerlos arrastrables + redimensionables ---
+    const handles = {};
+
+    function crearHandle(key) {
+        const handle = document.createElement("div");
+        handle.className = "editor-resize-handle";
+        handle.dataset.editorHandle = key;
+        handle.textContent = "⤡";
+        document.body.appendChild(handle);
+        return handle;
+    }
+
+    function posicionarHandle(key, el) {
+        const handle = handles[key];
+        if (!handle) return;
+        const rect = el.getBoundingClientRect();
+        handle.style.left = `${rect.right - 11}px`;
+        handle.style.top = `${rect.bottom - 11}px`;
+    }
+
+    function aplicarPosicion(key) {
+        const el = LAYOUT_ELEMENTOS[key]();
+        if (!el) return;
+        const pos = state[key];
+        el.dataset.editorEl = "1";
+        el.style.left = `${pos.x}%`;
+        el.style.top = `${pos.y}%`;
+        el.style.right = "auto";
+        el.style.bottom = "auto";
+        el.style.display = pos.visible === false ? "none" : "";
+        aplicarTransformEditor(el, orientacion, key, pos.scale || 1);
+        posicionarHandle(key, el);
+    }
+
+    for (const key of Object.keys(LAYOUT_ELEMENTOS)) {
+        const el = LAYOUT_ELEMENTOS[key]();
+        if (!el) continue;
+        handles[key] = crearHandle(key);
+        aplicarPosicion(key);
+
+        // Arrastrar para mover: mismo patrón offset punto-de-agarre/tope
+        // según tamaño real ya usado en el editor anterior de
+        // pages/creadores.html, ahora en píxeles nativos del propio
+        // overlay en vez de un canvas chico a escala.
+        el.addEventListener("pointerdown", (event) => {
+            if (event.target.closest(".editor-resize-handle")) return;
+            event.preventDefault();
+            el.setPointerCapture(event.pointerId);
+            const elRect = el.getBoundingClientRect();
+            const offsetXPct = ((event.clientX - elRect.left) / native.w) * 100;
+            const offsetYPct = ((event.clientY - elRect.top) / native.h) * 100;
+            const maxX = Math.max(0, 100 - (elRect.width / native.w) * 100);
+            const maxY = Math.max(0, 100 - (elRect.height / native.h) * 100);
+
+            function onMove(moveEvent) {
+                const relX = (moveEvent.clientX / native.w) * 100 - offsetXPct;
+                const relY = (moveEvent.clientY / native.h) * 100 - offsetYPct;
+                state[key].x = Math.max(0, Math.min(maxX, relX));
+                state[key].y = Math.max(0, Math.min(maxY, relY));
+                aplicarPosicion(key);
+            }
+            function onUp() {
+                el.removeEventListener("pointermove", onMove);
+                el.removeEventListener("pointerup", onUp);
+            }
+            el.addEventListener("pointermove", onMove);
+            el.addEventListener("pointerup", onUp);
+        });
+
+        // Redimensionar: la distancia entre el punto de agarre y la
+        // esquina superior izquierda del elemento (su ancla x/y) contra
+        // su tamaño natural (sin escalar) define el nuevo scale. Nunca
+        // baja de 1 (el tamaño predeterminado es el piso) ni sube de 3
+        // (tope).
+        handles[key].addEventListener("pointerdown", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            handles[key].setPointerCapture(event.pointerId);
+            const elRect = el.getBoundingClientRect();
+            const scaleActual = state[key].scale || 1;
+            const naturalW = elRect.width / scaleActual;
+            const naturalH = elRect.height / scaleActual;
+            const anchorX = elRect.left;
+            const anchorY = elRect.top;
+
+            function onMove(moveEvent) {
+                const distX = moveEvent.clientX - anchorX;
+                const distY = moveEvent.clientY - anchorY;
+                const nuevaEscala = Math.max(distX / naturalW, distY / naturalH);
+                state[key].scale = Math.max(1, Math.min(3, nuevaEscala));
+                aplicarPosicion(key);
+            }
+            function onUp() {
+                handles[key].removeEventListener("pointermove", onMove);
+                handles[key].removeEventListener("pointerup", onUp);
+            }
+            handles[key].addEventListener("pointermove", onMove);
+            handles[key].addEventListener("pointerup", onUp);
+        });
+    }
+
+    window.__editorLayout = {
+        getState() { return JSON.parse(JSON.stringify(state)); },
+        reload() { location.reload(); }
+    };
 }
