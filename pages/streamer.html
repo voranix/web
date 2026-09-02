@@ -188,6 +188,9 @@ function statCards(item) {
     if (Number.isFinite(item.seguidoresTiktok)) {
         cards.push({ css: "pf-tt", icon: "fab fa-tiktok", n: item.seguidoresTiktok, label: "TikTok" });
     }
+    if (Number.isFinite(item.seguidoresInstagram)) {
+        cards.push({ css: "pf-ig", icon: "fab fa-instagram", n: item.seguidoresInstagram, label: "Instagram" });
+    }
     if (!cards.length) return "";
     return `
     <div class="perfil-stats-grid perfil-in perfil-stagger-5">
@@ -557,7 +560,7 @@ function renderStreamer(item) {
         .map(r => ({ ...r, url: item[r.key] }))
         .filter(r => esUrlValida(r.url));
 
-    const totalSeguidores = [item.seguidoresTwitch, item.suscriptoresYoutube, item.seguidoresKick, item.seguidoresTiktok]
+    const totalSeguidores = [item.seguidoresTwitch, item.suscriptoresYoutube, item.seguidoresKick, item.seguidoresTiktok, item.seguidoresInstagram]
         .filter(n => Number.isFinite(n))
         .reduce((sum, n) => sum + n, 0);
 

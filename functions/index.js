@@ -299,6 +299,14 @@ const TIKTOK_CLIENT_ID = defineSecret("TIKTOK_CLIENT_ID_V2");
 const TIKTOK_CLIENT_SECRET = defineSecret("TIKTOK_CLIENT_SECRET_V2");
 const TIKTOK_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthCallback";
 
+// Instagram (API con Instagram Login, no Facebook Login): a diferencia de
+// las demás, la conexión sirve tanto para streamers como para influencers
+// (a pedido explícito) — actualizarEnVivo la corre para las dos
+// colecciones, no solo para "streamers" como con YouTube/Kick/TikTok.
+const INSTAGRAM_CLIENT_ID = defineSecret("INSTAGRAM_CLIENT_ID");
+const INSTAGRAM_CLIENT_SECRET = defineSecret("INSTAGRAM_CLIENT_SECRET");
+const INSTAGRAM_REDIRECT_URI = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/instagramAuthCallback";
+
 // Cache en memoria del token de Twitch entre invocaciones (dura ~60 días,
 // no hace falta pedirlo cada 5 minutos).
 let twitchTokenCache = { token: null, expiresAt: 0 };
@@ -857,6 +865,53 @@ async function obtenerSeguidoresTiktok(openId, clientId, clientSecret) {
     }
 }
 
+// Seguidores de Instagram, con el token del propio dueño de la cuenta. A
+// diferencia de TikTok, acá no hay un refresh_token separado: el mismo
+// access_token de larga duración (60 días) se extiende llamando a este
+// mismo endpoint con grant_type=ig_refresh_token, sin necesitar el
+// client_secret de nuevo — si falta poco para que venza, se extiende antes
+// de usarlo. followers_count solo lo devuelve la API para cuentas
+// profesionales (Business/Creator); si la cuenta es personal, el campo
+// simplemente no viene y esto devuelve null (no es un error).
+async function obtenerSeguidoresInstagram(userId) {
+    const tokenRef = admin.firestore().doc(`instagramAuth/${userId}/privado/tokens`);
+    const tokenSnap = await tokenRef.get();
+    if (!tokenSnap.exists) return null;
+    let { accessToken, expiresAt } = tokenSnap.data();
+    if (!accessToken) return null;
+
+    try {
+        const faltanMs = expiresAt?.toMillis?.() ? expiresAt.toMillis() - Date.now() : null;
+        if (faltanMs !== null && faltanMs < 5 * 24 * 60 * 60 * 1000) {
+            const refreshRes = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(accessToken)}`);
+            const refreshData = await refreshRes.json();
+            if (refreshData.access_token) {
+                accessToken = refreshData.access_token;
+                await tokenRef.set({
+                    accessToken,
+                    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + (refreshData.expires_in || 0) * 1000),
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            } else {
+                logger.warn(`obtenerSeguidoresInstagram[${userId}]: no se pudo extender el token`, JSON.stringify(refreshData));
+            }
+        }
+
+        const res = await fetch(`https://graph.instagram.com/v21.0/${userId}?fields=followers_count&access_token=${encodeURIComponent(accessToken)}`);
+        const bodyText = await res.text();
+        if (!res.ok) {
+            logger.warn(`obtenerSeguidoresInstagram[${userId}]: la API respondió ${res.status}`, bodyText.slice(0, 500));
+            return null;
+        }
+        const data = JSON.parse(bodyText);
+        const count = Number(data.followers_count);
+        return Number.isFinite(count) ? count : null;
+    } catch (err) {
+        logger.warn(`obtenerSeguidoresInstagram: fallo para ${userId}`, err.message);
+        return null;
+    }
+}
+
 // Últimos videos de TikTok (video.list, scope agregado después de que ya
 // había gente conectada con solo user.info.basic/stats — por eso el gate
 // por contenidoActivo antes de llamar a esto, ver obtenerContenidoCreador).
@@ -1055,18 +1110,27 @@ exports.actualizarEnVivo = onSchedule(
                 let suscriptoresYoutube = null;
                 let seguidoresKick = null;
                 let seguidoresTiktok = null;
-                if (coleccion === "streamers" && item.uid) {
+                let seguidoresInstagram = null;
+                if (item.uid) {
                     try {
                         const userSnap = await db.collection("users").doc(item.uid).get();
                         const userData = userSnap.exists ? userSnap.data() : null;
-                        if (userData?.youtubeChannelId && youtubeClientId && youtubeClientSecret) {
-                            suscriptoresYoutube = await obtenerSuscriptoresYoutube(userData.youtubeChannelId, youtubeClientId, youtubeClientSecret);
+                        if (coleccion === "streamers") {
+                            if (userData?.youtubeChannelId && youtubeClientId && youtubeClientSecret) {
+                                suscriptoresYoutube = await obtenerSuscriptoresYoutube(userData.youtubeChannelId, youtubeClientId, youtubeClientSecret);
+                            }
+                            if (userData?.kickSlug && kickClientId && kickClientSecret) {
+                                seguidoresKick = await obtenerSeguidoresKick(userData.kickSlug, kickClientId, kickClientSecret);
+                            }
+                            if (userData?.tiktokOpenId && tiktokClientId && tiktokClientSecret) {
+                                seguidoresTiktok = await obtenerSeguidoresTiktok(userData.tiktokOpenId, tiktokClientId, tiktokClientSecret);
+                            }
                         }
-                        if (userData?.kickSlug && kickClientId && kickClientSecret) {
-                            seguidoresKick = await obtenerSeguidoresKick(userData.kickSlug, kickClientId, kickClientSecret);
-                        }
-                        if (userData?.tiktokOpenId && tiktokClientId && tiktokClientSecret) {
-                            seguidoresTiktok = await obtenerSeguidoresTiktok(userData.tiktokOpenId, tiktokClientId, tiktokClientSecret);
+                        // Instagram corre para las dos colecciones (streamers e
+                        // influencers), a diferencia de YouTube/Kick/TikTok de acá
+                        // arriba — ver comentario junto a INSTAGRAM_CLIENT_ID.
+                        if (userData?.instagramUserId) {
+                            seguidoresInstagram = await obtenerSeguidoresInstagram(userData.instagramUserId);
                         }
                     } catch (err) {
                         logger.warn(`actualizarEnVivo: fallo consultando suscriptores/seguidores de ${item.uid}`, err.message);
@@ -1075,6 +1139,7 @@ exports.actualizarEnVivo = onSchedule(
                 const debeActualizarYoutube = suscriptoresYoutube !== null && suscriptoresYoutube !== (item.suscriptoresYoutube ?? null);
                 const debeActualizarKick = seguidoresKick !== null && seguidoresKick !== (item.seguidoresKick ?? null);
                 const debeActualizarTiktok = seguidoresTiktok !== null && seguidoresTiktok !== (item.seguidoresTiktok ?? null);
+                const debeActualizarInstagram = seguidoresInstagram !== null && seguidoresInstagram !== (item.seguidoresInstagram ?? null);
 
                 // Peak/promedio de viewers por sesión (solo streamers, mientras
                 // está en vivo): se acumula en el doc de transmisión abierto en
@@ -1099,7 +1164,7 @@ exports.actualizarEnVivo = onSchedule(
                     }
                 }
 
-                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarPerfilAuto || debeActualizarYoutube || debeActualizarKick || debeActualizarTiktok) {
+                if (item.enVivo !== enVivo || item.enVivoPlataforma !== plataforma || (item.viewerActual || 0) !== viewerActual || debeActualizarJuegos || debeActualizarSeguidores || debeActualizarPerfilAuto || debeActualizarYoutube || debeActualizarKick || debeActualizarTiktok || debeActualizarInstagram) {
                     const updateData = { enVivo, enVivoPlataforma: plataforma, enVivoUrl: url, viewerActual };
                     // Se guarda en la transición vivo->offline (no en cada
                     // chequeo) para poder ordenar streamers.html por "quién
@@ -1139,6 +1204,9 @@ exports.actualizarEnVivo = onSchedule(
                     }
                     if (debeActualizarTiktok) {
                         updateData.seguidoresTiktok = seguidoresTiktok;
+                    }
+                    if (debeActualizarInstagram) {
+                        updateData.seguidoresInstagram = seguidoresInstagram;
                     }
                     batch.update(db.collection(coleccion).doc(item.id), updateData);
                     cambios++;
@@ -1666,6 +1734,19 @@ exports.generarEstadoTiktokCanal = onCall(
         }
         const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
         return { state: `tiktok:${request.auth.uid}:${firma}` };
+    }
+);
+
+// Usado tanto desde el Portal Creadores como desde el Portal Influencers —
+// ver el comentario junto a INSTAGRAM_CLIENT_ID.
+exports.generarEstadoInstagramCanal = onCall(
+    { secrets: [TWITCH_CLIENT_SECRET] },
+    (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "Iniciá sesión para conectar tu cuenta de Instagram.");
+        }
+        const firma = firmarEstadoCanal(request.auth.uid, TWITCH_CLIENT_SECRET.value());
+        return { state: `instagram:${request.auth.uid}:${firma}` };
     }
 );
 
@@ -2269,6 +2350,187 @@ exports.tiktokAuthCallback = onRequest(
     }
 );
 
+// ---------------------------------------------------------------------
+// Instagram (API con Instagram Login, no Facebook Login): mismo patrón de
+// state firmado que YouTube/Kick/TikTok, pero con dos pasos de token en vez
+// de uno — código -> token corto (1h) -> token largo (60 días, el que se
+// guarda y se va extendiendo desde obtenerSeguidoresInstagram). No usa PKCE
+// (a diferencia de TikTok). followers_count solo lo trae la API para
+// cuentas profesionales (Business/Creator) — si la cuenta es personal, se
+// conecta igual pero no va a haber seguidores para mostrar hasta que la
+// cambien.
+// ---------------------------------------------------------------------
+
+const INSTAGRAM_AUTH_BASE = "https://www.instagram.com/oauth/authorize";
+const INSTAGRAM_TOKEN_URL = "https://api.instagram.com/oauth/access_token";
+
+exports.instagramAuthStart = onRequest(
+    { secrets: [INSTAGRAM_CLIENT_ID] },
+    (req, res) => {
+        const state = String(req.query.state || "").trim();
+        if (!state.startsWith("instagram:")) {
+            res.status(400).send("Este link para conectar tu cuenta es inválido o venció. Volvé al portal y generalo de nuevo.");
+            return;
+        }
+        const params = new URLSearchParams({
+            client_id: INSTAGRAM_CLIENT_ID.value(),
+            redirect_uri: INSTAGRAM_REDIRECT_URI,
+            response_type: "code",
+            scope: "instagram_business_basic",
+            state
+        });
+        res.redirect(`${INSTAGRAM_AUTH_BASE}?${params}`);
+    }
+);
+
+exports.instagramAuthCallback = onRequest(
+    { secrets: [INSTAGRAM_CLIENT_ID, INSTAGRAM_CLIENT_SECRET, TWITCH_CLIENT_SECRET] },
+    async (req, res) => {
+        const { code, state, error, error_description: errorDescription } = req.query;
+        if (error) {
+            res.status(400).send(`No se pudo autorizar: ${errorDescription || error}`);
+            return;
+        }
+        try {
+            const clientId = INSTAGRAM_CLIENT_ID.value();
+            const clientSecret = INSTAGRAM_CLIENT_SECRET.value();
+
+            const partes = String(state || "").split(":");
+            if (partes.length !== 3 || partes[0] !== "instagram" || firmarEstadoCanal(partes[1], TWITCH_CLIENT_SECRET.value()) !== partes[2]) {
+                res.status(400).send("El link para conectar tu cuenta venció o no es válido. Volvé al portal y generalo de nuevo.");
+                return;
+            }
+            const uid = partes[1];
+
+            // Paso 1: código -> token de corta duración (1 hora).
+            const tokenRes = await fetch(INSTAGRAM_TOKEN_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({
+                    client_id: clientId, client_secret: clientSecret, code,
+                    grant_type: "authorization_code", redirect_uri: INSTAGRAM_REDIRECT_URI
+                })
+            });
+            const tokenData = await tokenRes.json();
+            const shortToken = tokenData.access_token;
+            const userId = String(tokenData.user_id || "");
+            if (!shortToken || !userId) throw new Error(JSON.stringify(tokenData));
+
+            // Paso 2: token corto -> token largo (60 días).
+            const longParams = new URLSearchParams({
+                grant_type: "ig_exchange_token", client_secret: clientSecret, access_token: shortToken
+            });
+            const longRes = await fetch(`https://graph.instagram.com/access_token?${longParams}`);
+            const longData = await longRes.json();
+            if (!longData.access_token) throw new Error(JSON.stringify(longData));
+            const accessToken = longData.access_token;
+            const expiresAt = admin.firestore.Timestamp.fromMillis(Date.now() + (longData.expires_in || 0) * 1000);
+
+            const perfilRes = await fetch(`https://graph.instagram.com/v21.0/me?fields=username,account_type&access_token=${encodeURIComponent(accessToken)}`);
+            const perfil = await perfilRes.json();
+            const username = perfil.username || "";
+            const esProfesional = perfil.account_type === "BUSINESS" || perfil.account_type === "MEDIA_CREATOR";
+
+            const duplicados = await admin.firestore().collection("users")
+                .where("instagramUserId", "==", userId).get();
+            const deOtraCuenta = duplicados.docs.find(docSnap => docSnap.id !== uid);
+            if (deOtraCuenta) {
+                res.status(409).send(`Esta cuenta de Instagram ya está conectada a otra cuenta de VORANIX. Si esto es un error, avisale al equipo.`);
+                return;
+            }
+
+            await admin.firestore().doc(`instagramAuth/${userId}`).set({
+                userId, username,
+                authorizedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`instagramAuth/${userId}/privado/tokens`).set({
+                accessToken, expiresAt,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await admin.firestore().doc(`users/${uid}`).set({
+                instagramUserId: userId
+            }, { merge: true });
+
+            res.send(`<h2>¡Listo!</h2><p>Conectaste tu cuenta <b>@${escapeHtml(username) || "de Instagram"}</b>.${esProfesional ? " Tus seguidores van a empezar a aparecer en tu tarjeta pública en un rato." : " Ojo: para que se muestren tus seguidores tu cuenta tiene que ser profesional (Business o Creator) — la tuya parece ser personal, la podés cambiar desde la app de Instagram (Configuración → Cuenta → Cambiar a cuenta profesional)."} Podés cerrar esta pestaña y volver a la pestaña anterior.</p>`);
+        } catch (err) {
+            logger.error("instagramAuthCallback: fallo", err);
+            res.status(500).send("Hubo un error autorizando. Intentá de nuevo o avisale al equipo de VORANIX.");
+        }
+    }
+);
+
+// Meta exige estos dos webhooks para cualquier app que lea datos de
+// Instagram: cuando alguien desconecta la app desde Instagram (deauthorize)
+// o pide explícitamente que le borren los datos, Meta llama acá con un
+// "signed_request" (payload + firma HMAC-SHA256 con el App Secret, todo en
+// base64url) — hay que verificar la firma antes de confiar en el user_id
+// que trae adentro, para que nadie pueda borrar los datos de otra cuenta
+// mandando un POST inventado.
+function decodificarSignedRequest(signedRequest, appSecret) {
+    const [firmaB64, payloadB64] = String(signedRequest || "").split(".");
+    if (!firmaB64 || !payloadB64) throw new Error("signed_request mal formado");
+    const firma = Buffer.from(firmaB64, "base64url");
+    const data = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf8"));
+    if (String(data.algorithm || "").toUpperCase() !== "HMAC-SHA256") {
+        throw new Error(`algoritmo de firma inesperado: ${data.algorithm}`);
+    }
+    const esperada = crypto.createHmac("sha256", appSecret).update(payloadB64).digest();
+    if (firma.length !== esperada.length || !crypto.timingSafeEqual(firma, esperada)) {
+        throw new Error("firma inválida");
+    }
+    return data;
+}
+
+async function borrarDatosInstagram(userId) {
+    if (!userId) return;
+    const db = admin.firestore();
+    await db.doc(`instagramAuth/${userId}/privado/tokens`).delete().catch(() => {});
+    await db.doc(`instagramAuth/${userId}`).delete().catch(() => {});
+    const usuarios = await db.collection("users").where("instagramUserId", "==", userId).get();
+    await Promise.all(usuarios.docs.map(docSnap => docSnap.ref.update({
+        instagramUserId: admin.firestore.FieldValue.delete()
+    }).catch(() => {})));
+}
+
+exports.instagramDeauthorize = onRequest(
+    { secrets: [INSTAGRAM_CLIENT_SECRET] },
+    async (req, res) => {
+        try {
+            const data = decodificarSignedRequest(req.body?.signed_request, INSTAGRAM_CLIENT_SECRET.value());
+            await borrarDatosInstagram(String(data.user_id || ""));
+            res.status(200).send("ok");
+        } catch (err) {
+            logger.error("instagramDeauthorize: fallo", err);
+            res.status(400).send("signed_request inválido");
+        }
+    }
+);
+
+exports.instagramDataDeletion = onRequest(
+    { secrets: [INSTAGRAM_CLIENT_SECRET] },
+    async (req, res) => {
+        try {
+            const data = decodificarSignedRequest(req.body?.signed_request, INSTAGRAM_CLIENT_SECRET.value());
+            await borrarDatosInstagram(String(data.user_id || ""));
+            const confirmationCode = crypto.randomBytes(12).toString("hex");
+            res.status(200).json({
+                url: `https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/instagramDataDeletionStatus?id=${confirmationCode}`,
+                confirmation_code: confirmationCode
+            });
+        } catch (err) {
+            logger.error("instagramDataDeletion: fallo", err);
+            res.status(400).send("signed_request inválido");
+        }
+    }
+);
+
+// Meta puede seguir este link para confirmar que el borrado se completó —
+// como borrarDatosInstagram ya corrió antes de generar el confirmation_code
+// (ver instagramDataDeletion), acá alcanza con confirmar siempre.
+exports.instagramDataDeletionStatus = onRequest((req, res) => {
+    res.status(200).json({ status: "complete", confirmation_code: req.query.id || "" });
+});
+
 // Desconectar YouTube/Kick/TikTok: le saca al propio uid el campo de cuenta
 // vinculada y borra el doc de autorización + sus tokens guardados (no revoca
 // el token en la plataforma en sí, pero deja de leerlo y de guardar una
@@ -2284,6 +2546,7 @@ const CUENTAS_DESCONECTABLES = {
     youtube: { campo: "youtubeChannelId", coleccion: "youtubeAuth" },
     kick: { campo: "kickSlug", coleccion: "kickAuth" },
     tiktok: { campo: "tiktokOpenId", coleccion: "tiktokAuth" },
+    instagram: { campo: "instagramUserId", coleccion: "instagramAuth" },
     discord: { campo: "discordUserId", coleccion: "discordAuth" },
     twitch: { campo: "twitchLogin", coleccion: "twitchBotAuth" }
 };

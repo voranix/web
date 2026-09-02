@@ -448,6 +448,11 @@
             </div>
 
             <div class="overlay-links-block">
+                <h2 class="overlay-links-title"><i class="fab fa-instagram"></i> Tu cuenta de Instagram</h2>
+                <div id="instagram-status-content"><p class="loading">Cargando...</p></div>
+            </div>
+
+            <div class="overlay-links-block">
                 <h2 class="overlay-links-title"><i class="fab fa-discord"></i> Tu servidor de Discord</h2>
                 <p class="muted overlay-links-sub">A diferencia de las demás, acá conectás tu cuenta Y elegís a qué servidor invitar a tu comunidad (con un rol automático si querés).</p>
                 <div id="discord-status-content"><p class="loading">Cargando...</p></div>
@@ -677,6 +682,7 @@
     const YOUTUBE_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/youtubeAuthStart";
     const KICK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/kickAuthStart";
     const TIKTOK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthStart";
+    const INSTAGRAM_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/instagramAuthStart";
     const DISCORD_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/discordAuthStart";
 
     const CATEGORIAS = {
@@ -779,6 +785,7 @@
         renderYoutubeStatus(profile);
         renderKickStatus(profile);
         renderTiktokStatus(profile);
+        renderInstagramStatus(profile);
         renderMisComandos(profile);
         renderModeracion();
         renderComandosGenerales();
@@ -802,6 +809,7 @@
             renderYoutubeStatus(currentProfile);
             renderKickStatus(currentProfile);
             renderTiktokStatus(currentProfile);
+            renderInstagramStatus(currentProfile);
             renderDiscordStatus(currentProfile);
             if(twitchLoginCambio){ renderMisComandos(currentProfile); renderModeracion(); renderOverlayEditor(currentProfile); }
             renderStatsStrip();
@@ -1117,6 +1125,60 @@ ${!contenidoActivo ? `
         }catch(error){
             console.error(error);
             content.innerHTML = `<p class="muted">No se pudo consultar el estado de TikTok.</p>`;
+        }
+    }
+
+    async function conectarInstagram(button){
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Abriendo Instagram...";
+        try{
+            const generarEstado = httpsCallable(functionsInstance, "generarEstadoInstagramCanal");
+            const result = await generarEstado();
+            const url = `${INSTAGRAM_AUTH_URL}?state=${encodeURIComponent(result.data.state)}`;
+            window.open(url, "_blank", "noopener");
+        }catch(error){
+            console.error(error);
+            alert("No se pudo iniciar la conexión con Instagram. Intentá de nuevo.");
+        }
+        button.disabled = false;
+        button.textContent = original;
+    }
+
+    async function renderInstagramStatus(profile){
+        const content = document.getElementById("instagram-status-content");
+        const userId = profile.instagramUserId || "";
+
+        if(!userId){
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste tu cuenta de Instagram.</p>
+</div>
+<button class="btn" type="button" data-connect-instagram>Conectar mi cuenta de Instagram</button>`;
+            content.querySelector("[data-connect-instagram]").addEventListener("click", (event) => conectarInstagram(event.currentTarget));
+            return;
+        }
+
+        content.innerHTML = `<p class="muted">Consultando estado...</p>`;
+        try{
+            const snapshot = await getDoc(doc(db, "instagramAuth", userId));
+            const data = snapshot.exists() ? snapshot.data() : {};
+            const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">Conectado como <b>@${escapeHtml(data.username || "cuenta de Instagram")}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Instagram. Si tu cuenta no es profesional (Business/Creator) todavía no vas a ver seguidores.</p>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn secondary" type="button" data-connect-instagram>Reconectar / cambiar de cuenta</button>
+    <button class="btn danger small" type="button" data-disconnect="instagram">Desconectar</button>
+</div>`;
+            content.querySelector("[data-connect-instagram]").addEventListener("click", (event) => conectarInstagram(event.currentTarget));
+            content.querySelector("[data-disconnect]").addEventListener("click", (event) => desconectarCuenta("instagram", event.currentTarget));
+        }catch(error){
+            console.error(error);
+            content.innerHTML = `<p class="muted">No se pudo consultar el estado de Instagram.</p>`;
         }
     }
 

@@ -415,6 +415,15 @@ service cloud.firestore {
       }
     }
 
+    match /instagramAuth/{doc} {
+      allow read: if true;
+      allow write: if false;
+
+      match /privado/{sub} {
+        allow read, write: if false;
+      }
+    }
+
     // A diferencia de youtubeAuth/kickAuth/tiktokAuth de acá arriba, nada del
     // cliente necesita leer este doc directo — Portal Creadores muestra el
     // estado de Discord a partir de users/{uid}.discordUserId y de

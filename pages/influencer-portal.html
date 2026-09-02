@@ -64,7 +64,6 @@
         }
         .bot-status-icon.is-ok{ background:rgba(0,200,83,.18); color:#00c853; }
         .bot-status-icon.is-pending{ background:rgba(255,193,7,.18); color:#ffc107; }
-        .bot-status-icon.is-soon{ background:rgba(144,144,176,.18); color:var(--gris); }
 
         .creadores-tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px; border-bottom:1px solid var(--border); }
         .creadores-tab{
@@ -266,10 +265,7 @@
 
                     <div class="overlay-links-block">
                         <h2 class="overlay-links-title"><i class="fab fa-instagram"></i> Tu cuenta de Instagram</h2>
-                        <div class="bot-status-row">
-                            <div class="bot-status-icon is-soon"><i class="fas fa-clock"></i></div>
-                            <p class="muted" style="margin:0;">Próximamente. Conectar Instagram necesita que VORANIX cree y verifique una app en Meta for Developers — todavía no está lista.</p>
-                        </div>
+                        <div id="instagram-status-content"><p class="loading">Cargando...</p></div>
                     </div>
                 </div>
             </div>
@@ -471,6 +467,7 @@
     import { initParticles } from "/assets/js/particles.js";
 
     const TIKTOK_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/tiktokAuthStart";
+    const INSTAGRAM_AUTH_URL = "https://southamerica-east1-voranix-2ecc9.cloudfunctions.net/instagramAuthStart";
 
     // Misma paleta curada que Portal Creadores (Identidad) — se guarda
     // siempre como los 3 colores ya resueltos, la página pública no necesita
@@ -666,12 +663,13 @@
     }
 
     // "Completá tu perfil": checklist con lo que falta y dónde cargarlo. Se
-    // recalcula cada vez que cambia la tarjeta o el perfil (TikTok vive en
-    // users/{uid}, no en el doc de influencer). TikTok aclara que está en
-    // fase de prueba (app de TikTok en modo Sandbox) porque puede fallar sin
-    // que sea un error del influencer. Instagram apunta al link manual (Redes
-    // → "Tus links públicos"), no a "conectar cuenta" — el OAuth de Instagram
-    // todavía no existe (pendiente de que VORANIX cree la app en Meta).
+    // recalcula cada vez que cambia la tarjeta o el perfil (TikTok e
+    // Instagram viven en users/{uid}, no en el doc de influencer). TikTok
+    // aclara que está en fase de prueba (app de TikTok en modo Sandbox)
+    // porque puede fallar sin que sea un error del influencer. El link
+    // manual de "Tus links públicos" es aparte de conectar la cuenta: ese es
+    // el botón que aparece en el perfil público, conectar acá solo trae
+    // seguidores (e Instagram, solo si la cuenta es profesional).
     function calcularProgresoPerfil(){
         const d = tarjetaData || {};
         return [
@@ -681,8 +679,10 @@
               hint: "Una línea corta que te represente, en Mi Tarjeta → Identidad." },
             { label: "TikTok conectado", done: !!currentProfile?.tiktokOpenId, tab: "redes",
               hint: "Conectá tu cuenta en Redes (todavía en fase de prueba, si falla intentá de nuevo más tarde)." },
+            { label: "Instagram conectado", done: !!currentProfile?.instagramUserId, tab: "redes",
+              hint: "Conectá tu cuenta en Redes para que se muestren tus seguidores (necesita cuenta profesional Business/Creator)." },
             { label: "Links públicos (Instagram / TikTok)", done: !!(String(d.instagram || "").trim() || String(d.tiktok || "").trim()), tab: "redes",
-              hint: "Cargá tu usuario en \"Tus links públicos\" (Redes) para que el botón aparezca en tu perfil — Instagram todavía es a mano, la conexión automática no está lista." }
+              hint: "Cargá tu usuario en \"Tus links públicos\" (Redes) para que el botón aparezca en tu perfil." }
         ];
     }
 
@@ -887,6 +887,63 @@
         }
     }
 
+    // ---- Instagram: mismo flujo OAuth que Portal Creadores (generarEstadoInstagramCanal
+    // / instagramAuthStart / instagramAuthCallback), tampoco depende de la colección
+    // streamers en ningún punto — solo de users/{uid}. ----
+    async function conectarInstagram(button){
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = "Abriendo Instagram...";
+        try{
+            const generarEstado = httpsCallable(functionsInstance, "generarEstadoInstagramCanal");
+            const result = await generarEstado();
+            const url = `${INSTAGRAM_AUTH_URL}?state=${encodeURIComponent(result.data.state)}`;
+            window.open(url, "_blank", "noopener");
+        }catch(error){
+            console.error(error);
+            alert("No se pudo iniciar la conexión con Instagram. Intentá de nuevo.");
+        }
+        button.disabled = false;
+        button.textContent = original;
+    }
+
+    async function renderInstagramStatus(profile){
+        const content = document.getElementById("instagram-status-content");
+        const userId = profile.instagramUserId || "";
+
+        if(!userId){
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-pending"><i class="fas fa-exclamation"></i></div>
+    <p class="muted" style="margin:0;">Todavía no conectaste tu cuenta de Instagram.</p>
+</div>
+<button class="btn" type="button" data-connect-instagram>Conectar mi cuenta de Instagram</button>`;
+            content.querySelector("[data-connect-instagram]").addEventListener("click", (event) => conectarInstagram(event.currentTarget));
+            return;
+        }
+
+        content.innerHTML = `<p class="muted">Consultando estado...</p>`;
+        try{
+            const snapshot = await getDoc(doc(db, "instagramAuth", userId));
+            const data = snapshot.exists() ? snapshot.data() : {};
+            const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            content.innerHTML = `
+<div class="bot-status-row" style="margin-bottom:14px;">
+    <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
+    <p style="margin:0;">Conectado como <b>@${escapeHtml(data.username || "cuenta de Instagram")}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Instagram. Si tu cuenta no es profesional (Business/Creator) todavía no vas a ver seguidores.</p>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn secondary" type="button" data-connect-instagram>Reconectar / cambiar de cuenta</button>
+    <button class="btn danger small" type="button" data-disconnect="instagram">Desconectar</button>
+</div>`;
+            content.querySelector("[data-connect-instagram]").addEventListener("click", (event) => conectarInstagram(event.currentTarget));
+            content.querySelector("[data-disconnect]").addEventListener("click", (event) => desconectarCuenta("instagram", event.currentTarget));
+        }catch(error){
+            console.error(error);
+            content.innerHTML = `<p class="muted">No se pudo consultar el estado de Instagram.</p>`;
+        }
+    }
+
     // ---- Publicaciones: reusa obtenerContenidoCreador (generalizada para
     // aceptar coleccion:"influencers"), mismo componente visual que streamer.html. ----
     function formatViewers(n){
@@ -1015,6 +1072,7 @@
                 if(!snapshot.exists()) return;
                 currentProfile = snapshot.data();
                 renderTiktokStatus(currentProfile);
+                renderInstagramStatus(currentProfile);
                 renderProgresoPerfil();
             });
         }catch(error){

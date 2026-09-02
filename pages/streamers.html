@@ -176,7 +176,7 @@ function renderStreamer(streamer, i) {
 // y ya confirmado por el poll de actualizarEnVivo) — no es solo "puso la
 // URL", es que la cuenta está de verdad vinculada y trayendo datos.
 function cuentasConectadas(item) {
-    return [item.seguidoresTwitch, item.suscriptoresYoutube, item.seguidoresKick, item.seguidoresTiktok]
+    return [item.seguidoresTwitch, item.suscriptoresYoutube, item.seguidoresKick, item.seguidoresTiktok, item.seguidoresInstagram]
         .filter(n => Number.isFinite(n)).length;
 }
 
