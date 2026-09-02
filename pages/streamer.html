@@ -310,7 +310,8 @@ const VIDEO_PLATAFORMA = {
     twitch: { css: "pf-tw", icon: "fab fa-twitch", label: "Twitch" },
     youtube: { css: "pf-yt", icon: "fab fa-youtube", label: "YouTube" },
     kick: { css: "pf-kk", icon: "fas fa-bolt", label: "Kick" },
-    tiktok: { css: "pf-tt", icon: "fab fa-tiktok", label: "TikTok" }
+    tiktok: { css: "pf-tt", icon: "fab fa-tiktok", label: "TikTok" },
+    instagram: { css: "pf-ig", icon: "fab fa-instagram", label: "Instagram" }
 };
 
 function formatFechaVideo(iso) {
@@ -360,7 +361,7 @@ async function cargarContenido(item) {
     try {
         const obtenerContenido = httpsCallable(functionsInstance, "obtenerContenidoCreador");
         const { data } = await obtenerContenido({ streamerId: item.id });
-        const secciones = ["twitch", "youtube", "kick", "tiktok"]
+        const secciones = ["twitch", "youtube", "kick", "tiktok", "instagram"]
             .map(key => renderVideosSection(key, data[key] || []))
             .join("");
 

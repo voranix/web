@@ -865,37 +865,44 @@ async function obtenerSeguidoresTiktok(openId, clientId, clientSecret) {
     }
 }
 
-// Seguidores de Instagram, con el token del propio dueño de la cuenta. A
-// diferencia de TikTok, acá no hay un refresh_token separado: el mismo
-// access_token de larga duración (60 días) se extiende llamando a este
-// mismo endpoint con grant_type=ig_refresh_token, sin necesitar el
-// client_secret de nuevo — si falta poco para que venza, se extiende antes
-// de usarlo. followers_count solo lo devuelve la API para cuentas
-// profesionales (Business/Creator); si la cuenta es personal, el campo
-// simplemente no viene y esto devuelve null (no es un error).
-async function obtenerSeguidoresInstagram(userId) {
+// Token vigente de Instagram para el dueño de la cuenta, compartido entre
+// obtenerSeguidoresInstagram y obtenerMediaInstagram. A diferencia de
+// TikTok, acá no hay un refresh_token separado: el mismo access_token de
+// larga duración (60 días) se extiende llamando a este mismo endpoint con
+// grant_type=ig_refresh_token, sin necesitar el client_secret de nuevo — si
+// falta poco para que venza, se extiende antes de devolverlo.
+async function tokenInstagramVigente(userId) {
     const tokenRef = admin.firestore().doc(`instagramAuth/${userId}/privado/tokens`);
     const tokenSnap = await tokenRef.get();
     if (!tokenSnap.exists) return null;
     let { accessToken, expiresAt } = tokenSnap.data();
     if (!accessToken) return null;
 
-    try {
-        const faltanMs = expiresAt?.toMillis?.() ? expiresAt.toMillis() - Date.now() : null;
-        if (faltanMs !== null && faltanMs < 5 * 24 * 60 * 60 * 1000) {
-            const refreshRes = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(accessToken)}`);
-            const refreshData = await refreshRes.json();
-            if (refreshData.access_token) {
-                accessToken = refreshData.access_token;
-                await tokenRef.set({
-                    accessToken,
-                    expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + (refreshData.expires_in || 0) * 1000),
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            } else {
-                logger.warn(`obtenerSeguidoresInstagram[${userId}]: no se pudo extender el token`, JSON.stringify(refreshData));
-            }
+    const faltanMs = expiresAt?.toMillis?.() ? expiresAt.toMillis() - Date.now() : null;
+    if (faltanMs !== null && faltanMs < 5 * 24 * 60 * 60 * 1000) {
+        const refreshRes = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(accessToken)}`);
+        const refreshData = await refreshRes.json();
+        if (refreshData.access_token) {
+            accessToken = refreshData.access_token;
+            await tokenRef.set({
+                accessToken,
+                expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + (refreshData.expires_in || 0) * 1000),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        } else {
+            logger.warn(`tokenInstagramVigente[${userId}]: no se pudo extender el token`, JSON.stringify(refreshData));
         }
+    }
+    return accessToken;
+}
+
+// followers_count solo lo devuelve la API para cuentas profesionales
+// (Business/Creator); si la cuenta es personal, el campo simplemente no
+// viene y esto devuelve null (no es un error).
+async function obtenerSeguidoresInstagram(userId) {
+    try {
+        const accessToken = await tokenInstagramVigente(userId);
+        if (!accessToken) return null;
 
         const res = await fetch(`https://graph.instagram.com/v21.0/${userId}?fields=followers_count&access_token=${encodeURIComponent(accessToken)}`);
         const bodyText = await res.text();
@@ -909,6 +916,44 @@ async function obtenerSeguidoresInstagram(userId) {
     } catch (err) {
         logger.warn(`obtenerSeguidoresInstagram: fallo para ${userId}`, err.message);
         return null;
+    }
+}
+
+// Últimas publicaciones de Instagram (feed propio, /media), mismo formato
+// {id,titulo,url,miniatura,fecha,vistas} que usan Twitch/YouTube/Kick/TikTok
+// para la sección "Contenido" de la tarjeta pública (ver
+// obtenerContenidoCreador). No hay conteo de vistas disponible con el scope
+// básico (instagram_business_basic no incluye insights), así que vistas
+// siempre queda null — el front ya sabe ocultar ese dato cuando falta.
+async function obtenerMediaInstagram(userId) {
+    try {
+        const accessToken = await tokenInstagramVigente(userId);
+        if (!accessToken) return [];
+
+        const campos = "id,caption,media_type,media_url,permalink,thumbnail_url,timestamp";
+        const res = await fetch(`https://graph.instagram.com/v21.0/${userId}/media?fields=${campos}&limit=8&access_token=${encodeURIComponent(accessToken)}`);
+        const bodyText = await res.text();
+        if (!res.ok) {
+            logger.warn(`obtenerMediaInstagram[${userId}]: la API respondió ${res.status}`, bodyText.slice(0, 500));
+            return [];
+        }
+        const data = JSON.parse(bodyText);
+        const items = data.data;
+        if (!Array.isArray(items)) {
+            logger.warn(`obtenerMediaInstagram[${userId}]: forma de respuesta inesperada. Claves de nivel superior: ${JSON.stringify(Object.keys(data || {}))}`);
+            return [];
+        }
+        return items.map(m => ({
+            id: m.id,
+            titulo: m.caption || "",
+            url: m.permalink || "",
+            miniatura: m.media_type === "VIDEO" ? (m.thumbnail_url || "") : (m.media_url || m.thumbnail_url || ""),
+            fecha: m.timestamp || "",
+            vistas: null
+        })).filter(m => m.id && m.url);
+    } catch (err) {
+        logger.warn(`obtenerMediaInstagram: fallo para ${userId}`, err.message);
+        return [];
     }
 }
 
@@ -1782,12 +1827,14 @@ exports.obtenerContenidoCreador = onCall(
         let youtubeChannelId = null;
         let kickSlug = null;
         let tiktokOpenId = null;
+        let instagramUserId = null;
         if (streamer.uid) {
             const userSnap = await db.doc(`users/${streamer.uid}`).get();
             const userData = userSnap.exists ? userSnap.data() : null;
             youtubeChannelId = userData?.youtubeChannelId || null;
             kickSlug = userData?.kickSlug || null;
             tiktokOpenId = userData?.tiktokOpenId || null;
+            instagramUserId = userData?.instagramUserId || null;
         }
         if (tiktokOpenId) {
             const tiktokAuthSnap = await db.doc(`tiktokAuth/${tiktokOpenId}`).get();
@@ -1801,14 +1848,15 @@ exports.obtenerContenidoCreador = onCall(
             broadcasterId = authSnap.exists ? (authSnap.data().broadcasterId || null) : null;
         }
 
-        const [twitch, youtube, kick, tiktok] = await Promise.all([
+        const [twitch, youtube, kick, tiktok, instagram] = await Promise.all([
             broadcasterId ? obtenerVideosTwitch(broadcasterId, TWITCH_CLIENT_ID.value(), TWITCH_CLIENT_SECRET.value()) : [],
             youtubeChannelId ? obtenerVideosYoutube(youtubeChannelId, YOUTUBE_CLIENT_ID.value(), YOUTUBE_CLIENT_SECRET.value()) : [],
             kickSlug ? obtenerVideosKick(kickSlug) : [],
-            tiktokOpenId ? obtenerVideosTiktok(tiktokOpenId, TIKTOK_CLIENT_ID.value(), TIKTOK_CLIENT_SECRET.value()) : []
+            tiktokOpenId ? obtenerVideosTiktok(tiktokOpenId, TIKTOK_CLIENT_ID.value(), TIKTOK_CLIENT_SECRET.value()) : [],
+            instagramUserId ? obtenerMediaInstagram(instagramUserId) : []
         ]);
 
-        return { twitch, youtube, kick, tiktok };
+        return { twitch, youtube, kick, tiktok, instagram };
     }
 );
 
@@ -2440,7 +2488,7 @@ exports.instagramAuthCallback = onRequest(
             }
 
             await admin.firestore().doc(`instagramAuth/${userId}`).set({
-                userId, username,
+                userId, username, accountType: perfil.account_type || "",
                 authorizedAt: admin.firestore.FieldValue.serverTimestamp()
             });
             await admin.firestore().doc(`instagramAuth/${userId}/privado/tokens`).set({

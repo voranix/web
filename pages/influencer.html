@@ -224,15 +224,16 @@ function renderVideoCard(v) {
     </a>`;
 }
 
-// Por ahora solo hay TikTok conectable (Instagram todavía no tiene OAuth
-// armado, ver Portal Influencers) — misma grilla que streamer.html/Contenido.
+// TikTok e Instagram conectables (ver Portal Influencers) — misma grilla
+// mezclada cronológicamente que streamer.html/Contenido, sin secciones por
+// plataforma separadas (acá alcanza con menos redes).
 async function cargarContenido(item) {
     const el = document.getElementById("perfil-contenido");
     if (!el) return;
     try {
         const obtenerContenido = httpsCallable(functionsInstance, "obtenerContenidoCreador");
         const { data } = await obtenerContenido({ streamerId: item.id, coleccion: "influencers" });
-        const videos = [...(data.tiktok || [])].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+        const videos = [...(data.tiktok || []), ...(data.instagram || [])].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
 
         if (!videos.length) {
             el.closest(".perfil-card").remove();

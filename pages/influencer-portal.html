@@ -927,10 +927,17 @@
             const snapshot = await getDoc(doc(db, "instagramAuth", userId));
             const data = snapshot.exists() ? snapshot.data() : {};
             const fecha = snapshot.exists() ? (data.authorizedAt?.toDate?.().toLocaleDateString("es-CL") || "") : "";
+            const esProfesional = data.accountType === "BUSINESS" || data.accountType === "MEDIA_CREATOR";
+            const tipoTexto = data.accountType === "BUSINESS" ? "Business" : data.accountType === "MEDIA_CREATOR" ? "Creator" : data.accountType === "PERSONAL" ? "Personal" : "";
+            const avisoTipo = esProfesional
+                ? ` Cuenta ${tipoTexto} — vas a ver tus seguidores y publicaciones acá.`
+                : tipoTexto
+                    ? ` Cuenta ${tipoTexto} — cambiala a profesional (Business o Creator) desde la app de Instagram para ver seguidores y publicaciones, y reconectá.`
+                    : " Si no ves seguidores ni publicaciones, reconectá (mismo botón de abajo) para verificar el tipo de cuenta.";
             content.innerHTML = `
 <div class="bot-status-row" style="margin-bottom:14px;">
     <div class="bot-status-icon is-ok"><i class="fas fa-check"></i></div>
-    <p style="margin:0;">Conectado como <b>@${escapeHtml(data.username || "cuenta de Instagram")}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Instagram. Si tu cuenta no es profesional (Business/Creator) todavía no vas a ver seguidores.</p>
+    <p style="margin:0;">Conectado como <b>@${escapeHtml(data.username || "cuenta de Instagram")}</b>${fecha ? ` desde el ${escapeHtml(fecha)}` : ""} — verificado por Instagram.${avisoTipo}</p>
 </div>
 <div style="display:flex;gap:10px;flex-wrap:wrap;">
     <button class="btn secondary" type="button" data-connect-instagram>Reconectar / cambiar de cuenta</button>
