@@ -261,27 +261,52 @@ function renderCategorias() {
     el.innerHTML = leyenda + `<div class="rivals-categorias-grid">${categorias}</div>`;
 }
 
+// Mismos 4 tipos de miembro que carga el admin (RIVALS_MIEMBRO_TIPOS en
+// admin.html) — acá solo se les pone un ícono para que la lista se lea
+// organizada por rol de un vistazo, en vez de un montón de nombres sueltos.
+const RIVALS_TIPO_INFO = {
+    streamer: { icon: "fa-video", label: "Streamer" },
+    influencer: { icon: "fa-hashtag", label: "Influencer" },
+    roster: { icon: "fa-gamepad", label: "Roster" },
+    creador: { icon: "fa-star", label: "Creador" }
+};
+
+function miembroItemHtml(m, colorHex) {
+    const tipoInfo = RIVALS_TIPO_INFO[m.tipo];
+    const foto = m.foto
+        ? `<img class="rivals-miembro-foto" src="${escapeHtml(assetUrl(m.foto))}" alt="${escapeHtml(m.nombre)}">`
+        : `<span class="rivals-miembro-foto rivals-miembro-foto-fallback" style="background:${escapeHtml(colorHex || "#7b2cff")};">${escapeHtml((m.nombre || "?").charAt(0).toUpperCase())}</span>`;
+    return `
+<div class="rivals-miembro-item">
+    ${foto}
+    <span class="rivals-miembro-nombre">${escapeHtml(m.nombre) || "Sin nombre"}</span>
+    ${tipoInfo ? `<span class="rivals-miembro-tipo"><i class="fas ${tipoInfo.icon}"></i>${tipoInfo.label}</span>` : ""}
+</div>`;
+}
+
 function renderTeams() {
     const el = document.getElementById("rivals-teams");
     if (!alianzas.length) {
         el.innerHTML = `<p class="loading">Todavía no se cargaron las Alianzas de esta temporada.</p>`;
         return;
     }
-    el.innerHTML = alianzas.map(a => `
+    el.innerHTML = alianzas.map(a => {
+        const miembros = a.miembros || [];
+        return `
 <div class="rivals-team-card" style="border-top-color:${escapeHtml(a.colorHex || "#7b2cff")};">
     <div class="rivals-team-head">
         ${a.logo ? `<img src="${escapeHtml(assetUrl(a.logo))}" alt="${escapeHtml(a.nombre)}">` : ""}
-        <h3>${escapeHtml(a.nombre) || "Alianza"}</h3>
+        <div>
+            <h3>${escapeHtml(a.nombre) || "Alianza"}</h3>
+            <p class="rivals-team-count">${miembros.length} integrante${miembros.length === 1 ? "" : "s"}</p>
+        </div>
     </div>
     ${a.lema ? `<p class="rivals-team-lema">"${escapeHtml(a.lema)}"</p>` : ""}
     <div class="rivals-team-miembros">
-        ${(a.miembros || []).map(m => `
-        <span class="rivals-miembro-chip">
-            ${m.foto ? `<img src="${escapeHtml(assetUrl(m.foto))}" alt="${escapeHtml(m.nombre)}">` : `<span class="sin-foto">${escapeHtml((m.nombre || "?").charAt(0).toUpperCase())}</span>`}
-            ${escapeHtml(m.nombre) || "Sin nombre"}
-        </span>`).join("") || `<span class="help">Todavía sin miembros asignados.</span>`}
+        ${miembros.length ? miembros.map(m => miembroItemHtml(m, a.colorHex)).join("") : `<span class="help">Todavía sin miembros asignados.</span>`}
     </div>
-</div>`).join("");
+</div>`;
+    }).join("");
 }
 
 function renderMomentos() {
