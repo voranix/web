@@ -199,6 +199,15 @@ function totalAlianza(alianzaId, categoria) {
     return total;
 }
 
+// Chip con la foto de la Alianza si tiene logo cargado, o un círculo con su
+// color e inicial si no — mismo criterio que los chips de miembros más abajo.
+function alianzaLogoHtml(alianza) {
+    if (alianza.logo) {
+        return `<img class="rivals-vs-logo" src="${escapeHtml(assetUrl(alianza.logo))}" alt="${escapeHtml(alianza.nombre)}">`;
+    }
+    return `<span class="rivals-vs-logo rivals-vs-logo-fallback" style="background:${escapeHtml(alianza.colorHex || "#7b2cff")};">${escapeHtml((alianza.nombre || "?").charAt(0).toUpperCase())}</span>`;
+}
+
 function renderVsTotal() {
     const el = document.getElementById("rivals-vs-total");
     if (alianzas.length < 1) {
@@ -207,14 +216,24 @@ function renderVsTotal() {
     }
     const totales = alianzas.map(a => ({ alianza: a, total: totalAlianza(a.id) }));
     const sumaTotal = totales.reduce((sum, t) => sum + t.total, 0) || 1;
+    // Sin corona si todavía no hay puntos cargados o si están empatadas — la
+    // corona tiene que significar "va ganando", no ser un adorno fijo.
+    const empatadas = totales.length > 1 && totales.every(t => t.total === totales[0].total);
+    const lider = !empatadas && totales.length ? totales.reduce((a, b) => (b.total > a.total ? b : a)) : null;
 
     el.innerHTML = `
-<div class="rivals-vs-labels">
-    <span>${escapeHtml(totales[0]?.alianza.nombre || "Alianza 1")} — ${totales[0]?.total || 0} pts</span>
-    <span>${escapeHtml(totales[1]?.alianza.nombre || "Alianza 2")} — ${totales[1]?.total || 0} pts</span>
+<div class="rivals-vs-head">
+    ${totales.map((t, i) => `
+    <div class="rivals-vs-side${i === 1 ? " is-reverse" : ""}">
+        ${alianzaLogoHtml(t.alianza)}
+        <div class="rivals-vs-side-info">
+            <span class="rivals-vs-name">${escapeHtml(t.alianza.nombre) || `Alianza ${i + 1}`}${lider && lider.alianza.id === t.alianza.id ? ` <i class="fas fa-crown rivals-vs-crown" title="Va liderando"></i>` : ""}</span>
+            <span class="rivals-vs-pts">${t.total}<small> pts</small></span>
+        </div>
+    </div>${i === 0 ? `<span class="rivals-vs-versus">VS</span>` : ""}`).join("")}
 </div>
 <div class="rivals-vs-bar">
-    ${totales.map(t => `<div class="rivals-vs-fill" style="flex-basis:${Math.max((t.total / sumaTotal) * 100, t.total > 0 ? 8 : 0)}%;background:${escapeHtml(t.alianza.colorHex || "#7b2cff")};">${t.total > 0 ? t.total : ""}</div>`).join("")}
+    ${totales.map(t => `<div class="rivals-vs-fill" title="${escapeHtml(t.alianza.nombre)}: ${t.total} pts" style="flex-basis:${Math.max((t.total / sumaTotal) * 100, t.total > 0 ? 8 : 0)}%;background:${escapeHtml(t.alianza.colorHex || "#7b2cff")};">${t.total > 0 ? t.total : ""}</div>`).join("")}
 </div>
 <p class="rivals-vs-total">${sumaTotal} puntos en juego esta temporada</p>`;
 }
@@ -222,17 +241,24 @@ function renderVsTotal() {
 function renderCategorias() {
     const el = document.getElementById("rivals-categorias");
     if (!alianzas.length) { el.innerHTML = ""; return; }
-    el.innerHTML = CATEGORIAS.map(([catValue, catLabel]) => {
+    // Leyenda una sola vez arriba de las 3 categorías — así cada barra no
+    // necesita repetir el nombre de la Alianza, solo el color ya alcanza.
+    const leyenda = `
+<div class="rivals-categorias-leyenda">
+    ${alianzas.map(a => `<span class="rivals-categorias-leyenda-item"><span class="rivals-color-dot" style="background:${escapeHtml(a.colorHex || "#7b2cff")};"></span>${escapeHtml(a.nombre)}</span>`).join("")}
+</div>`;
+    const categorias = CATEGORIAS.map(([catValue, catLabel]) => {
         const totales = alianzas.map(a => ({ alianza: a, total: totalAlianza(a.id, catValue) }));
         const sumaTotal = totales.reduce((sum, t) => sum + t.total, 0) || 1;
         return `
 <div class="rivals-categoria">
     <h4>${escapeHtml(catLabel)}</h4>
     <div class="rivals-vs-bar">
-        ${totales.map(t => `<div class="rivals-vs-fill" style="flex-basis:${Math.max((t.total / sumaTotal) * 100, t.total > 0 ? 10 : 0)}%;background:${escapeHtml(t.alianza.colorHex || "#7b2cff")};">${t.total > 0 ? t.total : ""}</div>`).join("")}
+        ${totales.map(t => `<div class="rivals-vs-fill" title="${escapeHtml(t.alianza.nombre)}: ${t.total} pts" style="flex-basis:${Math.max((t.total / sumaTotal) * 100, t.total > 0 ? 10 : 0)}%;background:${escapeHtml(t.alianza.colorHex || "#7b2cff")};">${t.total > 0 ? t.total : ""}</div>`).join("")}
     </div>
 </div>`;
     }).join("");
+    el.innerHTML = leyenda + `<div class="rivals-categorias-grid">${categorias}</div>`;
 }
 
 function renderTeams() {
