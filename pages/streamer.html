@@ -146,18 +146,37 @@ function formatViewers(n) {
 }
 
 // Mismo criterio que pages/streamers.html — un país de acá arriba o Chile
-// por defecto (no todos los streamers tienen el campo cargado).
-function flagPath(pais) {
+// por defecto (no todos los streamers tienen el campo cargado). Bandera
+// como emoji (no imagen): cubre todo LATAM sin depender de tener un ícono
+// propio por país.
+const PAIS_INFO = {
+    chile: { emoji: "🇨🇱", label: "Chile" },
+    mexico: { emoji: "🇲🇽", label: "México" },
+    argentina: { emoji: "🇦🇷", label: "Argentina" },
+    colombia: { emoji: "🇨🇴", label: "Colombia" },
+    peru: { emoji: "🇵🇪", label: "Perú" },
+    venezuela: { emoji: "🇻🇪", label: "Venezuela" },
+    ecuador: { emoji: "🇪🇨", label: "Ecuador" },
+    bolivia: { emoji: "🇧🇴", label: "Bolivia" },
+    paraguay: { emoji: "🇵🇾", label: "Paraguay" },
+    uruguay: { emoji: "🇺🇾", label: "Uruguay" },
+    brasil: { emoji: "🇧🇷", label: "Brasil" },
+    costa_rica: { emoji: "🇨🇷", label: "Costa Rica" },
+    panama: { emoji: "🇵🇦", label: "Panamá" },
+    republica_dominicana: { emoji: "🇩🇴", label: "República Dominicana" },
+    guatemala: { emoji: "🇬🇹", label: "Guatemala" },
+    honduras: { emoji: "🇭🇳", label: "Honduras" },
+    el_salvador: { emoji: "🇸🇻", label: "El Salvador" },
+    nicaragua: { emoji: "🇳🇮", label: "Nicaragua" },
+    cuba: { emoji: "🇨🇺", label: "Cuba" }
+};
+function flagEmoji(pais) {
     const key = String(pais || "").toLowerCase();
-    if (key === "mexico") return "/imagenes/flags/mexico.png";
-    if (key === "argentina") return "/imagenes/flags/argentina.png";
-    return "/imagenes/flags/chile.png";
+    return (PAIS_INFO[key] || PAIS_INFO.chile).emoji;
 }
 function flagAlt(pais) {
     const key = String(pais || "").toLowerCase();
-    if (key === "mexico") return "México";
-    if (key === "argentina") return "Argentina";
-    return "Chile";
+    return (PAIS_INFO[key] || PAIS_INFO.chile).label;
 }
 
 const REDES = [
@@ -573,7 +592,7 @@ function renderStreamer(item) {
         </div>
         <div class="perfil-nombre-row perfil-in perfil-stagger-2">
             <h1>${escapeHtml(item.nombre) || "Sin nombre"}</h1>
-            <img class="perfil-flag" src="${flagPath(item.pais)}" alt="${flagAlt(item.pais)}" title="${flagAlt(item.pais)}">
+            <span class="perfil-flag" title="${flagAlt(item.pais)}">${flagEmoji(item.pais)}</span>
             ${badgeCuenta(item)}
         </div>
         ${item.fraseCorta ? `<p class="perfil-frase perfil-in perfil-stagger-3">${escapeHtml(item.fraseCorta)}</p>` : ""}

@@ -132,18 +132,35 @@ function assetUrl(path) {
     return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
 }
 
-function flagPath(pais) {
+const PAIS_INFO = {
+    chile: { emoji: "🇨🇱", label: "Chile" },
+    mexico: { emoji: "🇲🇽", label: "México" },
+    argentina: { emoji: "🇦🇷", label: "Argentina" },
+    colombia: { emoji: "🇨🇴", label: "Colombia" },
+    peru: { emoji: "🇵🇪", label: "Perú" },
+    venezuela: { emoji: "🇻🇪", label: "Venezuela" },
+    ecuador: { emoji: "🇪🇨", label: "Ecuador" },
+    bolivia: { emoji: "🇧🇴", label: "Bolivia" },
+    paraguay: { emoji: "🇵🇾", label: "Paraguay" },
+    uruguay: { emoji: "🇺🇾", label: "Uruguay" },
+    brasil: { emoji: "🇧🇷", label: "Brasil" },
+    costa_rica: { emoji: "🇨🇷", label: "Costa Rica" },
+    panama: { emoji: "🇵🇦", label: "Panamá" },
+    republica_dominicana: { emoji: "🇩🇴", label: "República Dominicana" },
+    guatemala: { emoji: "🇬🇹", label: "Guatemala" },
+    honduras: { emoji: "🇭🇳", label: "Honduras" },
+    el_salvador: { emoji: "🇸🇻", label: "El Salvador" },
+    nicaragua: { emoji: "🇳🇮", label: "Nicaragua" },
+    cuba: { emoji: "🇨🇺", label: "Cuba" }
+};
+function flagEmoji(pais) {
     const key = String(pais || "").toLowerCase();
-    if (key === "mexico") return "/imagenes/flags/mexico.png";
-    if (key === "argentina") return "/imagenes/flags/argentina.png";
-    return "/imagenes/flags/chile.png";
+    return (PAIS_INFO[key] || PAIS_INFO.chile).emoji;
 }
 
 function flagAlt(pais) {
     const key = String(pais || "").toLowerCase();
-    if (key === "mexico") return "México";
-    if (key === "argentina") return "Argentina";
-    return "Chile";
+    return (PAIS_INFO[key] || PAIS_INFO.chile).label;
 }
 
 function formatViewers(n) {
@@ -163,7 +180,7 @@ function renderInfluencer(influencer, i) {
         ${influencer.enVivo ? `<span class="badge-live"><span></span>${liveLabel}</span>` : ""}
         <h3>${escapeHtml(influencer.nombre) || "Influencer"}</h3>
         <p class="games"><i class="fas fa-star" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(influencer.categoria) || "Contenido variado"}</p>
-        <img class="flag" src="${flagPath(influencer.pais)}" alt="${flagAlt(influencer.pais)}">
+        <span class="flag" title="${flagAlt(influencer.pais)}">${flagEmoji(influencer.pais)}</span>
         <a href="/pages/influencer.html?id=${encodeURIComponent(influencer.id)}" class="btn btn-sm" style="margin-top:12px;width:100%;justify-content:center;">
             <i class="fas fa-circle-info"></i> Ver perfil
         </a>

@@ -226,6 +226,7 @@ function dbdTipoJugadorLabel(tipo) {
 const FIFA_ROLE_LABELS = {
     "portero": "Portero",
     "ct/portero": "CT/Portero",
+    "defensa": "Defensa",
     "centrales": "Centrales",
     "ct/centrales": "CT/Centrales",
     "laterales": "Laterales",
@@ -239,19 +240,37 @@ function fifaRoleLabel(rol) {
 }
 
 // Mismo criterio que streamers.html/influencers.html: bandera segun el pais
-// guardado en el perfil, Chile por defecto si no se especificó.
-function flagPath(pais) {
+// guardado en el perfil, Chile por defecto si no se especificó. Emoji en
+// vez de imagen: cubre todo LATAM sin depender de un ícono propio por país.
+const PAIS_INFO = {
+    chile: { emoji: "🇨🇱", label: "Chile" },
+    mexico: { emoji: "🇲🇽", label: "México" },
+    argentina: { emoji: "🇦🇷", label: "Argentina" },
+    colombia: { emoji: "🇨🇴", label: "Colombia" },
+    peru: { emoji: "🇵🇪", label: "Perú" },
+    venezuela: { emoji: "🇻🇪", label: "Venezuela" },
+    ecuador: { emoji: "🇪🇨", label: "Ecuador" },
+    bolivia: { emoji: "🇧🇴", label: "Bolivia" },
+    paraguay: { emoji: "🇵🇾", label: "Paraguay" },
+    uruguay: { emoji: "🇺🇾", label: "Uruguay" },
+    brasil: { emoji: "🇧🇷", label: "Brasil" },
+    costa_rica: { emoji: "🇨🇷", label: "Costa Rica" },
+    panama: { emoji: "🇵🇦", label: "Panamá" },
+    republica_dominicana: { emoji: "🇩🇴", label: "República Dominicana" },
+    guatemala: { emoji: "🇬🇹", label: "Guatemala" },
+    honduras: { emoji: "🇭🇳", label: "Honduras" },
+    el_salvador: { emoji: "🇸🇻", label: "El Salvador" },
+    nicaragua: { emoji: "🇳🇮", label: "Nicaragua" },
+    cuba: { emoji: "🇨🇺", label: "Cuba" }
+};
+function flagEmoji(pais) {
     const key = normalizeText(pais);
-    if (key === "mexico") return "/imagenes/flags/mexico.png";
-    if (key === "argentina") return "/imagenes/flags/argentina.png";
-    return "/imagenes/flags/chile.png";
+    return (PAIS_INFO[key] || PAIS_INFO.chile).emoji;
 }
 
 function flagAlt(pais) {
     const key = normalizeText(pais);
-    if (key === "mexico") return "México";
-    if (key === "argentina") return "Argentina";
-    return "Chile";
+    return (PAIS_INFO[key] || PAIS_INFO.chile).label;
 }
 
 function normalizeName(value){
@@ -320,7 +339,7 @@ function renderCard(player, i, key, stats){
         ${isDbd && player.personaje ? `<p class="games">${escapeHtml(player.personaje)}</p>` : ""}
         ${rankImg ? `<img class="rank-img" src="${rankImg}" alt="${escapeHtml(rankText) || 'Rango'}" onerror="this.style.display='none'">` : ""}
         ${rankText ? `<div class="stats"><p style="color:var(--diamond)">${escapeHtml(rankText)}</p></div>` : ""}
-        <img class="flag" src="${flagPath(player.pais)}" alt="${flagAlt(player.pais)}">
+        <span class="flag" title="${flagAlt(player.pais)}">${flagEmoji(player.pais)}</span>
         ${renderStatsBlock(stats)}
     </div>
 </div>`;
