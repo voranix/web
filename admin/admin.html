@@ -13,6 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="VX Admin">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
     --morado:#7b2cff; --morado-light:#9d5bff; --naranja:#ff6a00; --bg:#0a0a0f;
@@ -188,6 +189,7 @@ td img{ width:52px; height:52px; object-fit:cover; border-radius:var(--radius-sm
 td.select-col,th.select-col{ width:40px; text-align:center; }
 .modal{ position:fixed; inset:0; background:rgba(0,0,0,.78); display:flex; align-items:center; justify-content:center; padding:18px; z-index:20; animation:adminFadeIn .15s ease; }
 .modal-card{ width:min(760px,100%); max-height:90vh; overflow:auto; background:#101020; border:1px solid rgba(123,44,255,.5); border-radius:var(--radius-lg); padding:24px; box-shadow:var(--shadow-md); animation:adminModalIn .18s cubic-bezier(.4,0,.2,1); }
+.modal-card-wide{ width:min(980px,100%); }
 @keyframes adminFadeIn{ from{ opacity:0; } to{ opacity:1; } }
 @keyframes adminModalIn{ from{ opacity:0; transform:scale(.96) translateY(8px); } to{ opacity:1; transform:scale(1) translateY(0); } }
 .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:14px; }
@@ -318,6 +320,15 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 /* Voranix Rivals (admin: Alianzas / Puntajes / Configuración) */
 .rivals-denied{ color:var(--muted); padding:20px 0; }
 .rivals-toolbar{ display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
+.rivals-actividades-filtros{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.rivals-actividades-filtros select{ width:auto; min-width:160px; }
+.rivals-import-table-wrap{ max-height:50vh; overflow:auto; border:1px solid var(--border); border-radius:var(--radius-sm); margin-top:12px; }
+.rivals-import-table{ width:100%; border-collapse:collapse; font-size:12px; }
+.rivals-import-table th, .rivals-import-table td{ padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+.rivals-import-table td:nth-child(3), .rivals-import-table td:nth-child(7){ white-space:normal; }
+.rivals-import-table .import-ok{ color:var(--ok); font-weight:700; }
+.rivals-import-table .import-fail{ color:var(--danger); font-weight:700; }
+.rivals-import-table tr.import-row-fail{ opacity:.6; }
 .rivals-alianzas-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
 .rivals-alianza-card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; border-top:4px solid var(--morado); transition:transform var(--ease), box-shadow var(--ease); }
 .rivals-alianza-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-sm); }
@@ -688,8 +699,12 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
                 <textarea name="descripcion" placeholder="Qué tienen que hacer..."></textarea>
             </div>
             <div class="field full">
-                <label>Reglas de puntaje</label>
-                <textarea name="reglasPuntaje" placeholder="Ej: Cada publicación +1. Bonus: etiquetar Voranix +1."></textarea>
+                <label>Cómo se gana (opcional)</label>
+                <textarea name="comoGana" placeholder="Ej: Ganás la serie (2 mapas de 3)."></textarea>
+            </div>
+            <div class="field full">
+                <label>Cómo se pierde (opcional)</label>
+                <textarea name="comoPierde" placeholder="Ej: Perdés la serie, o no te presentás a la hora acordada."></textarea>
                 <span class="help">Texto libre, se muestra tal cual en la página pública (no se interpreta).</span>
             </div>
             <div class="field">
@@ -710,8 +725,14 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
                 <span class="help">Semanales: publicar el domingo antes. Mensuales: publicar 2 semanas antes.</span>
             </div>
             <div class="field">
-                <label for="actividad-fecha-evento-input">Fecha del evento</label>
-                <input type="date" name="fechaEvento" id="actividad-fecha-evento-input" required>
+                <label for="actividad-fecha-inicio-input">Fecha y hora de inicio</label>
+                <input type="datetime-local" name="fechaInicio" id="actividad-fecha-inicio-input" required>
+                <span class="help">Si no ponés hora, queda 00:00.</span>
+            </div>
+            <div class="field">
+                <label for="actividad-fecha-fin-input">Fecha y hora de término (opcional)</label>
+                <input type="datetime-local" name="fechaFin" id="actividad-fecha-fin-input">
+                <span class="help">Si la dejás vacía, se usa el fin del día de inicio.</span>
             </div>
             <div class="field">
                 <label for="actividad-fecha-publicacion-input">Fecha de publicación</label>
@@ -782,6 +803,33 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
             <select id="actividad-resultado-select"></select>
         </div>
         <div id="actividad-resultado-form-wrap"></div>
+    </div>
+</div>
+
+<div id="actividades-import-modal" class="modal hidden">
+    <div class="modal-card modal-card-wide">
+        <div class="modal-head">
+            <h2>Importar actividades desde Excel</h2>
+            <button class="btn secondary small" type="button" id="close-actividades-import-modal">Cerrar</button>
+        </div>
+        <div id="actividades-import-step-elegir">
+            <p class="help">Subí la planilla (hoja "Actividades") con los resultados ya jugados. Los nombres de Alianza tienen que coincidir con los ya cargados.</p>
+            <input type="file" id="actividades-import-file" accept=".xlsx,.xls">
+        </div>
+        <div id="actividades-import-preview" class="hidden">
+            <p id="actividades-import-resumen" class="help"></p>
+            <div class="rivals-import-table-wrap">
+                <table class="rivals-import-table">
+                    <thead><tr><th></th><th>Fila</th><th>Título</th><th>Fecha inicio</th><th>Alianza 1</th><th>Alianza 2</th><th>Motivo</th></tr></thead>
+                    <tbody id="actividades-import-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="actividades-import-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="cancel-actividades-import">Cancelar</button>
+            <button class="btn" type="button" id="confirm-actividades-import" disabled>Importar filas válidas</button>
+        </div>
     </div>
 </div>
 
@@ -1411,6 +1459,7 @@ const actividadModal = document.getElementById("actividad-modal");
 const actividadForm = document.getElementById("actividad-form");
 const actividadError = document.getElementById("actividad-error");
 const actividadResultadoModal = document.getElementById("actividad-resultado-modal");
+const actividadesImportModal = document.getElementById("actividades-import-modal");
 const comandoModal = document.getElementById("comando-modal");
 const comandoForm = document.getElementById("comando-form");
 const comandoError = document.getElementById("comando-error");
@@ -3850,22 +3899,38 @@ const RIVALS_MODO_LABELS = {
     manual: "Manual"
 };
 
+// Actividades viejas solo tienen fechaEvento (date-only). Las nuevas tienen
+// fechaInicio/fechaFin (datetime-local). Este helper normaliza ambas a un
+// rango {inicio, fin} en formato datetime-local para el resto del código.
+function actividadRangoFechas(actividad){
+    const inicio = actividad.fechaInicio || (actividad.fechaEvento ? `${actividad.fechaEvento}T00:00` : "");
+    const fin = actividad.fechaFin || (inicio ? `${inicio.slice(0, 10)}T23:59` : "");
+    return { inicio, fin };
+}
+
 function estadoActividad(actividad){
     const hoy = new Date();
-    const evento = new Date(`${actividad.fechaEvento}T23:59:59`);
-    if(evento < hoy) return "finalizada";
-    const eventoInicio = new Date(`${actividad.fechaEvento}T00:00:00`);
-    if(eventoInicio <= hoy) return "activa";
+    const { inicio, fin } = actividadRangoFechas(actividad);
+    if(!inicio) return "proxima";
+    if(new Date(fin) < hoy) return "finalizada";
+    if(new Date(inicio) <= hoy) return "activa";
     return "proxima";
 }
 
 const ESTADO_ACTIVIDAD_LABELS = { activa: "Activa", proxima: "Próxima", finalizada: "Finalizada" };
 
+function formatFechaHoraCorta(fechaIso){
+    const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(fechaIso || "");
+    if(!match) return "";
+    const fecha = `${match[3]}/${match[2]}`;
+    return match[4] ? `${fecha} ${match[4]}:${match[5]}` : fecha;
+}
+
 // Sugerencia de fecha de publicación según la política de la temporada:
 // semanales se publican el domingo antes, mensuales 2 semanas antes. Es solo
 // una ayuda -queda editable-, no una regla forzada por el sistema.
-function sugerirFechaPublicacion(fechaEvento, frecuencia){
-    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaEvento || "");
+function sugerirFechaPublicacion(fechaInicio, frecuencia){
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaInicio || "");
     if(!match) return "";
     const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
     if(frecuencia === "semanal") d.setDate(d.getDate() - 6);
@@ -3877,30 +3942,71 @@ function renderActividadesPanel(container){
     container.innerHTML = `
 <div class="rivals-toolbar">
     <button class="btn small" type="button" id="actividad-add-btn">+ Nueva actividad</button>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn secondary small" type="button" id="actividades-import-btn">📥 Importar desde Excel</button>
+        <button class="btn secondary small" type="button" id="actividades-plantilla-btn">⬇️ Descargar planilla de ejemplo</button>
+    </div>
+</div>
+<div class="rivals-actividades-filtros">
+    <select id="actividad-filtro-estado">
+        <option value="">Estado: todas</option>
+        <option value="activa">Activa</option>
+        <option value="proxima">Próxima</option>
+        <option value="finalizada">Finalizada</option>
+    </select>
+    <select id="actividad-filtro-categoria">
+        <option value="">Categoría: todas</option>
+        ${RIVALS_CATEGORIAS.map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`).join("")}
+    </select>
+    <select id="actividad-filtro-modo">
+        <option value="">Modo: todos</option>
+        ${Object.entries(RIVALS_MODO_LABELS).map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`).join("")}
+    </select>
 </div>
 <div id="actividades-list"></div>`;
 
     document.getElementById("actividad-add-btn").addEventListener("click", () => openActividadModal(null));
+    document.getElementById("actividades-import-btn").addEventListener("click", () => openActividadesImportModal());
+    document.getElementById("actividades-plantilla-btn").addEventListener("click", () => descargarPlantillaActividades());
 
     const listEl = document.getElementById("actividades-list");
+    const filtroEstado = document.getElementById("actividad-filtro-estado");
+    const filtroCategoria = document.getElementById("actividad-filtro-categoria");
+    const filtroModo = document.getElementById("actividad-filtro-modo");
     let currentActividades = [];
-    const unsub = onSnapshot(collection(db, "rivalsActividades"), (snapshot) => {
-        currentActividades = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-            .sort((a, b) => String(a.fechaEvento || "").localeCompare(String(b.fechaEvento || "")));
-        listEl.innerHTML = currentActividades.length ? currentActividades.map(act => {
+
+    function pintarLista(){
+        const fEstado = filtroEstado.value;
+        const fCategoria = filtroCategoria.value;
+        const fModo = filtroModo.value;
+        const filtradas = currentActividades.filter(act => {
+            if(fEstado && estadoActividad(act) !== fEstado) return false;
+            if(fCategoria && act.categoria !== fCategoria) return false;
+            if(fModo && act.modoPuntaje !== fModo) return false;
+            return true;
+        });
+        listEl.innerHTML = filtradas.length ? filtradas.map(act => {
             const estado = estadoActividad(act);
             return `
 <div class="rivals-actividad-row">
     <span class="rivals-actividad-estado ${estado}">${ESTADO_ACTIVIDAD_LABELS[estado]}</span>
     <span class="rivals-actividad-titulo">${escapeHtml(act.titulo) || "Sin título"}</span>
     <span class="rivals-actividad-modo">${escapeHtml(RIVALS_MODO_LABELS[act.modoPuntaje] || act.modoPuntaje || "")}</span>
-    <span class="rivals-actividad-fecha">${escapeHtml(formatFechaCorta(act.fechaEvento))}</span>
+    <span class="rivals-actividad-fecha">${escapeHtml(formatFechaHoraCorta(act.fechaInicio || act.fechaEvento))}</span>
     <div class="rivals-actividad-actions">
         <button type="button" data-actividad-edit="${act.id}" title="Editar">✎</button>
         <button type="button" data-actividad-delete="${act.id}" title="Eliminar">✕</button>
     </div>
 </div>`;
-        }).join("") : `<p class="loading">Todavía no hay actividades cargadas.</p>`;
+        }).join("") : `<p class="loading">${currentActividades.length ? "Ninguna actividad coincide con los filtros." : "Todavía no hay actividades cargadas."}</p>`;
+    }
+
+    [filtroEstado, filtroCategoria, filtroModo].forEach(sel => sel.addEventListener("change", pintarLista));
+
+    const unsub = onSnapshot(collection(db, "rivalsActividades"), (snapshot) => {
+        currentActividades = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => String(a.fechaInicio || a.fechaEvento || "").localeCompare(String(b.fechaInicio || b.fechaEvento || "")));
+        pintarLista();
     }, (error) => {
         console.error(error);
         listEl.innerHTML = `<p class="loading">No se pudieron cargar las actividades.</p>`;
@@ -3965,10 +4071,12 @@ function openActividadModal(actividad){
     actividadForm.reset();
     actividadForm.titulo.value = actividad?.titulo || "";
     actividadForm.descripcion.value = actividad?.descripcion || "";
-    actividadForm.reglasPuntaje.value = actividad?.reglasPuntaje || "";
+    actividadForm.comoGana.value = actividad?.comoGana || "";
+    actividadForm.comoPierde.value = actividad?.comoPierde || "";
     actividadForm.categoria.value = actividad?.categoria || "contenido";
     actividadForm.frecuencia.value = actividad?.frecuencia || "diaria";
-    actividadForm.fechaEvento.value = actividad?.fechaEvento || "";
+    actividadForm.fechaInicio.value = actividad ? (actividad.fechaInicio || (actividad.fechaEvento ? `${actividad.fechaEvento}T00:00` : "")) : "";
+    actividadForm.fechaFin.value = actividad?.fechaFin || "";
     actividadForm.fechaPublicacion.value = actividad?.fechaPublicacion || "";
     actividadForm.modoPuntaje.value = actividad?.modoPuntaje || "publicaciones";
     actividadForm.puntosPorPublicacion.value = actividad?.puntosPorPublicacion ?? "";
@@ -4004,10 +4112,10 @@ document.getElementById("actividad-modo-select").addEventListener("change", (eve
 
 function actualizarSugerenciaFechaPublicacion(){
     if(fechaPublicacionTocada) return;
-    actividadForm.fechaPublicacion.value = sugerirFechaPublicacion(actividadForm.fechaEvento.value, actividadForm.frecuencia.value);
+    actividadForm.fechaPublicacion.value = sugerirFechaPublicacion(actividadForm.fechaInicio.value, actividadForm.frecuencia.value);
 }
 document.getElementById("actividad-frecuencia-select").addEventListener("change", actualizarSugerenciaFechaPublicacion);
-document.getElementById("actividad-fecha-evento-input").addEventListener("change", actualizarSugerenciaFechaPublicacion);
+document.getElementById("actividad-fecha-inicio-input").addEventListener("change", actualizarSugerenciaFechaPublicacion);
 document.getElementById("actividad-fecha-publicacion-input").addEventListener("input", () => { fechaPublicacionTocada = true; });
 
 document.getElementById("actividad-delete-btn").addEventListener("click", async () => {
@@ -4028,19 +4136,25 @@ actividadForm.addEventListener("submit", async (event) => {
 
     const formData = new FormData(actividadForm);
     const titulo = String(formData.get("titulo") || "").trim();
-    const fechaEvento = String(formData.get("fechaEvento") || "");
+    let fechaInicio = String(formData.get("fechaInicio") || "");
     if(!titulo){ actividadError.textContent = "Escribe un título."; return; }
-    if(!fechaEvento){ actividadError.textContent = "Elegí la fecha del evento."; return; }
+    if(!fechaInicio){ actividadError.textContent = "Elegí la fecha de inicio."; return; }
+    if(fechaInicio.length === 10) fechaInicio += "T00:00";
+    let fechaFin = String(formData.get("fechaFin") || "");
+    if(fechaFin.length === 10) fechaFin += "T23:59";
+    if(!fechaFin) fechaFin = `${fechaInicio.slice(0, 10)}T23:59`;
 
     const modoPuntaje = String(formData.get("modoPuntaje") || "manual");
     const payload = {
         titulo,
         descripcion: String(formData.get("descripcion") || "").trim(),
-        reglasPuntaje: String(formData.get("reglasPuntaje") || "").trim(),
+        comoGana: String(formData.get("comoGana") || "").trim(),
+        comoPierde: String(formData.get("comoPierde") || "").trim(),
         categoria: String(formData.get("categoria") || "contenido"),
         frecuencia: String(formData.get("frecuencia") || "diaria"),
-        fechaEvento,
-        fechaPublicacion: String(formData.get("fechaPublicacion") || "") || fechaEvento,
+        fechaInicio,
+        fechaFin,
+        fechaPublicacion: String(formData.get("fechaPublicacion") || "") || fechaInicio.slice(0, 10),
         modoPuntaje,
         updatedAt: serverTimestamp()
     };
@@ -4101,12 +4215,21 @@ function renderResultadoFormPublicaciones(actividad, alianzas, wrap){
             ${(actividad.bonuses || []).map((b, i) => `<label>${escapeHtml(b.label)} (+${b.puntos}) <input type="number" step="1" min="0" value="0" data-bono="${a.id}:${i}"></label>`).join("")}
         </div>
     </div>`).join("")}
+    <div class="field full">
+        <label>Veredicto / motivo del resultado (opcional)</label>
+        <textarea data-veredicto placeholder="Explicá por qué salió así el resultado..."></textarea>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-weight:normal;">
+        <input type="checkbox" data-destacar style="width:auto;"> Destacar en Momentos Destacados
+    </label>
     <div id="actividad-resultado-error" class="error"></div>
     <div class="modal-actions"><button class="btn" type="submit">Guardar resultado</button></div>
 </form>`;
 
     document.getElementById("resultado-inner-form").addEventListener("submit", async (event) => {
         event.preventDefault();
+        const veredicto = wrap.querySelector("[data-veredicto]").value.trim();
+        const destacar = wrap.querySelector("[data-destacar]").checked;
         try{
             for(const a of alianzas){
                 const cantidad = Number(wrap.querySelector(`[data-cant="${a.id}"]`).value) || 0;
@@ -4119,8 +4242,8 @@ function renderResultadoFormPublicaciones(actividad, alianzas, wrap){
                 await addDoc(collection(db, "rivalsPuntos"), {
                     alianzaId: a.id, alianzaNombre: a.nombre, actividadId: actividad.id,
                     categoria: actividad.categoria, tipo: "gana", puntos: total,
-                    titulo: actividad.titulo, descripcion: "", destacado: false, mediaUrl: "",
-                    fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+                    titulo: actividad.titulo, descripcion: veredicto, destacado: destacar, mediaUrl: "",
+                    fecha: actividad.fechaInicio || actividad.fechaEvento, createdAt: serverTimestamp()
                 });
             }
             closeActividadResultadoModal();
@@ -4147,6 +4270,13 @@ function renderResultadoFormEnfrentamiento(actividad, alianzas, wrap){
         <label>¿De qué Alianza es el MVP? (opcional)</label>
         <select id="resultado-mvp"><option value="">Sin MVP</option>${alianzas.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)}</option>`).join("")}</select>
     </div>` : ""}
+    <div class="field full">
+        <label>Veredicto / motivo del resultado (opcional)</label>
+        <textarea data-veredicto placeholder="Explicá por qué salió así el resultado..."></textarea>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-weight:normal;">
+        <input type="checkbox" data-destacar style="width:auto;"> Destacar en Momentos Destacados
+    </label>
     <div id="actividad-resultado-error" class="error"></div>
     <div class="modal-actions"><button class="btn" type="submit">Guardar resultado</button></div>
 </form>`;
@@ -4157,21 +4287,23 @@ function renderResultadoFormEnfrentamiento(actividad, alianzas, wrap){
         const ganadora = alianzas.find(a => a.id === ganadoraId);
         const perdedoras = alianzas.filter(a => a.id !== ganadoraId);
         const mvpId = document.getElementById("resultado-mvp")?.value || "";
+        const veredicto = wrap.querySelector("[data-veredicto]").value.trim();
+        const destacar = wrap.querySelector("[data-destacar]").checked;
         try{
             await addDoc(collection(db, "rivalsPuntos"), {
                 alianzaId: ganadora.id, alianzaNombre: ganadora.nombre, actividadId: actividad.id,
                 categoria: actividad.categoria, tipo: "gana",
                 puntos: (Number(actividad.puntosGanador) || 0) + (mvpId === ganadora.id ? (Number(actividad.puntosMvp) || 0) : 0),
-                titulo: `${actividad.titulo} — Ganó ${ganadora.nombre}`, descripcion: "", destacado: false, mediaUrl: "",
-                fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+                titulo: `${actividad.titulo} — Ganó ${ganadora.nombre}`, descripcion: veredicto, destacado: destacar, mediaUrl: "",
+                fecha: actividad.fechaInicio || actividad.fechaEvento, createdAt: serverTimestamp()
             });
             for(const perdedora of perdedoras){
                 await addDoc(collection(db, "rivalsPuntos"), {
                     alianzaId: perdedora.id, alianzaNombre: perdedora.nombre, actividadId: actividad.id,
                     categoria: actividad.categoria, tipo: "pierde",
                     puntos: (Number(actividad.puntosPerdedor) || 0) + (mvpId === perdedora.id ? (Number(actividad.puntosMvp) || 0) : 0),
-                    titulo: `${actividad.titulo} — Perdió ${perdedora.nombre}`, descripcion: "", destacado: false, mediaUrl: "",
-                    fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+                    titulo: `${actividad.titulo} — Perdió ${perdedora.nombre}`, descripcion: veredicto, destacado: false, mediaUrl: "",
+                    fecha: actividad.fechaInicio || actividad.fechaEvento, createdAt: serverTimestamp()
                 });
             }
             closeActividadResultadoModal();
@@ -4195,12 +4327,21 @@ function renderResultadoFormCarrera(actividad, alianzas, wrap){
         <label>${escapeHtml(p.label)} (+${p.puntos})</label>
         <select data-puesto-alianza="${i}"><option value="">Sin asignar</option>${alianzas.map(a => `<option value="${a.id}">${escapeHtml(a.nombre)}</option>`).join("")}</select>
     </div>`).join("")}
+    <div class="field full">
+        <label>Veredicto / motivo del resultado (opcional)</label>
+        <textarea data-veredicto placeholder="Explicá por qué salió así el resultado..."></textarea>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-weight:normal;">
+        <input type="checkbox" data-destacar style="width:auto;"> Destacar en Momentos Destacados
+    </label>
     <div id="actividad-resultado-error" class="error"></div>
     <div class="modal-actions"><button class="btn" type="submit">Guardar resultado</button></div>
 </form>`;
 
     document.getElementById("resultado-inner-form").addEventListener("submit", async (event) => {
         event.preventDefault();
+        const veredicto = wrap.querySelector("[data-veredicto]").value.trim();
+        const destacar = wrap.querySelector("[data-destacar]").checked;
         try{
             for(let i = 0; i < puestos.length; i++){
                 const alianzaId = wrap.querySelector(`[data-puesto-alianza="${i}"]`).value;
@@ -4209,8 +4350,8 @@ function renderResultadoFormCarrera(actividad, alianzas, wrap){
                 await addDoc(collection(db, "rivalsPuntos"), {
                     alianzaId: alianza.id, alianzaNombre: alianza.nombre, actividadId: actividad.id,
                     categoria: actividad.categoria, tipo: "gana", puntos: Number(puestos[i].puntos) || 0,
-                    titulo: `${actividad.titulo} — ${puestos[i].label}`, descripcion: "", destacado: false, mediaUrl: "",
-                    fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+                    titulo: `${actividad.titulo} — ${puestos[i].label}`, descripcion: veredicto, destacado: destacar, mediaUrl: "",
+                    fecha: actividad.fechaInicio || actividad.fechaEvento, createdAt: serverTimestamp()
                 });
             }
             closeActividadResultadoModal();
@@ -4236,6 +4377,13 @@ function renderResultadoFormRobo(actividad, alianzas, wrap){
         <label>Alianza víctima</label>
         <select id="resultado-victima"></select>
     </div>
+    <div class="field full">
+        <label>Veredicto / motivo del resultado (opcional)</label>
+        <textarea data-veredicto placeholder="Explicá por qué salió así el resultado..."></textarea>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-weight:normal;">
+        <input type="checkbox" data-destacar checked style="width:auto;"> Destacar en Momentos Destacados
+    </label>
     <div id="actividad-resultado-error" class="error"></div>
     <div class="modal-actions"><button class="btn" type="submit">Guardar resultado</button></div>
 </form>`;
@@ -4257,14 +4405,16 @@ function renderResultadoFormRobo(actividad, alianzas, wrap){
             document.getElementById("actividad-resultado-error").textContent = "Elegí dos Alianzas distintas.";
             return;
         }
+        const veredicto = wrap.querySelector("[data-veredicto]").value.trim();
+        const destacar = wrap.querySelector("[data-destacar]").checked;
         try{
             await addDoc(collection(db, "rivalsPuntos"), {
                 alianzaId: robadora.id, alianzaNombre: robadora.nombre,
                 alianzaVictimaId: victima.id, alianzaVictimaNombre: victima.nombre,
                 actividadId: actividad.id, categoria: actividad.categoria, tipo: "roba",
                 puntos: Number(actividad.puntosRobados) || 0,
-                titulo: actividad.titulo, descripcion: "", destacado: true, mediaUrl: "",
-                fecha: actividad.fechaEvento, createdAt: serverTimestamp()
+                titulo: actividad.titulo, descripcion: veredicto, destacado: destacar, mediaUrl: "",
+                fecha: actividad.fechaInicio || actividad.fechaEvento, createdAt: serverTimestamp()
             });
             closeActividadResultadoModal();
         }catch(error){
@@ -4276,7 +4426,7 @@ function renderResultadoFormRobo(actividad, alianzas, wrap){
 
 function openActividadResultadoModal(actividades, alianzas){
     const select = document.getElementById("actividad-resultado-select");
-    select.innerHTML = actividades.map(a => `<option value="${a.id}">${escapeHtml(a.titulo)} (${escapeHtml(formatFechaCorta(a.fechaEvento))})</option>`).join("");
+    select.innerHTML = actividades.map(a => `<option value="${a.id}">${escapeHtml(a.titulo)} (${escapeHtml(formatFechaHoraCorta(a.fechaInicio || a.fechaEvento))})</option>`).join("");
 
     const wrap = document.getElementById("actividad-resultado-form-wrap");
     function renderForm(){
@@ -4291,6 +4441,238 @@ function openActividadResultadoModal(actividades, alianzas){
     select.onchange = renderForm;
     renderForm();
     actividadResultadoModal.classList.remove("hidden");
+}
+
+// ---------------------------------------------------------------------
+// Importar actividades (ya jugadas, con resultado) desde una planilla
+// Excel: una fila = una actividad + los puntos que sumó cada Alianza.
+// No usa Cloud Functions: todo se valida y sube desde el cliente.
+// ---------------------------------------------------------------------
+
+const RIVALS_IMPORT_COLUMNAS = {
+    fechaInicio: "Fecha de inicio",
+    horaInicio: "Hora de inicio (opcional)",
+    fechaFin: "Fecha de término (opcional)",
+    horaFin: "Hora de término (opcional)",
+    fechaPublicacion: "Fecha de publicación (opcional)",
+    categoria: "Categoría",
+    titulo: "Título",
+    descripcion: "Descripción",
+    comoGana: "Cómo se gana",
+    comoPierde: "Cómo se pierde",
+    alianza1Nombre: "Nombre Alianza 1",
+    alianza1Puntos: "Puntos Alianza 1",
+    alianza2Nombre: "Nombre Alianza 2",
+    alianza2Puntos: "Puntos Alianza 2",
+    veredicto: "Veredicto / motivo del resultado",
+    destacar: "Destacar (Sí/No)",
+    mediaUrl: "Link de imagen o clip (opcional)"
+};
+
+const RIVALS_IMPORT_CATEGORIA_MAP = { contenido: "contenido", videojuegos: "videojuegos", presencial: "presencial" };
+
+function excelImportParseFecha(value){
+    if(value instanceof Date && !isNaN(value)){
+        const y = value.getFullYear(), m = String(value.getMonth() + 1).padStart(2, "0"), d = String(value.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    }
+    const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(value || "").trim());
+    if(!match) return null;
+    const d = Number(match[1]), m = Number(match[2]), y = Number(match[3]);
+    if(m < 1 || m > 12 || d < 1 || d > 31) return null;
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+function excelImportParseHora(value){
+    const str = String(value || "").trim();
+    if(!str) return "00:00";
+    const match = /^(\d{1,2}):(\d{2})$/.exec(str);
+    if(!match) return null;
+    const h = Number(match[1]), min = Number(match[2]);
+    if(h > 23 || min > 59) return null;
+    return `${String(h).padStart(2, "0")}:${match[2]}`;
+}
+
+// Convierte una fila cruda de la planilla en {ok, motivo, actividad, puntos[]}.
+// No sube nada: solo valida y arma el payload para la previsualización.
+function excelImportParseFila(row, alianzas){
+    const get = (key) => String(row[RIVALS_IMPORT_COLUMNAS[key]] ?? "").trim();
+
+    const titulo = get("titulo");
+    if(!titulo) return { ok: false, motivo: "Falta el título." };
+
+    const fechaInicioDia = excelImportParseFecha(row[RIVALS_IMPORT_COLUMNAS.fechaInicio]);
+    if(!fechaInicioDia) return { ok: false, motivo: "Fecha de inicio inválida (usá DD/MM/AAAA)." };
+    const horaInicio = excelImportParseHora(row[RIVALS_IMPORT_COLUMNAS.horaInicio]);
+    if(horaInicio === null) return { ok: false, motivo: "Hora de inicio inválida (usá HH:MM)." };
+
+    const fechaFinDiaRaw = get("fechaFin") ? excelImportParseFecha(row[RIVALS_IMPORT_COLUMNAS.fechaFin]) : fechaInicioDia;
+    if(!fechaFinDiaRaw) return { ok: false, motivo: "Fecha de término inválida (usá DD/MM/AAAA)." };
+    const horaFinRaw = get("horaFin");
+    const horaFin = horaFinRaw ? excelImportParseHora(row[RIVALS_IMPORT_COLUMNAS.horaFin]) : "23:59";
+    if(horaFin === null) return { ok: false, motivo: "Hora de término inválida (usá HH:MM)." };
+
+    const categoriaTexto = get("categoria").toLowerCase();
+    const categoria = RIVALS_IMPORT_CATEGORIA_MAP[categoriaTexto];
+    if(!categoria) return { ok: false, motivo: `Categoría inválida ("${get("categoria")}"). Tiene que ser Contenido, Videojuegos o Presencial.` };
+
+    const fechaPublicacion = get("fechaPublicacion") ? excelImportParseFecha(row[RIVALS_IMPORT_COLUMNAS.fechaPublicacion]) : fechaInicioDia;
+    if(!fechaPublicacion) return { ok: false, motivo: "Fecha de publicación inválida (usá DD/MM/AAAA)." };
+
+    const puntos = [];
+    for(const n of [1, 2]){
+        const nombre = get(`alianza${n}Nombre`);
+        if(!nombre) continue;
+        const alianza = alianzas.find(a => a.nombre.trim().toLowerCase() === nombre.toLowerCase());
+        if(!alianza) return { ok: false, motivo: `La Alianza "${nombre}" no coincide con ninguna cargada en el admin.` };
+        const puntosTexto = get(`alianza${n}Puntos`);
+        const cant = puntosTexto ? Number(puntosTexto) : 0;
+        if(puntosTexto && Number.isNaN(cant)) return { ok: false, motivo: `Puntos de Alianza ${n} no es un número válido.` };
+        if(cant !== 0) puntos.push({ alianzaId: alianza.id, alianzaNombre: alianza.nombre, puntos: cant });
+    }
+
+    const destacarTexto = get("destacar").toLowerCase();
+    const destacado = destacarTexto === "sí" || destacarTexto === "si";
+    const veredicto = get("veredicto");
+    const mediaUrl = get("mediaUrl");
+    const descripcion = get("descripcion");
+    const comoGana = get("comoGana");
+    const comoPierde = get("comoPierde");
+
+    return {
+        ok: true,
+        actividad: {
+            titulo, descripcion, comoGana, comoPierde, categoria,
+            frecuencia: "diaria",
+            fechaInicio: `${fechaInicioDia}T${horaInicio}`,
+            fechaFin: `${fechaFinDiaRaw}T${horaFin}`,
+            fechaPublicacion,
+            modoPuntaje: "manual",
+            createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+        },
+        puntos: puntos.map(p => ({
+            alianzaId: p.alianzaId, alianzaNombre: p.alianzaNombre,
+            categoria, tipo: p.puntos >= 0 ? "gana" : "pierde", puntos: p.puntos,
+            titulo, descripcion: veredicto, destacado, mediaUrl,
+            fecha: `${fechaInicioDia}T${horaInicio}`
+        }))
+    };
+}
+
+let actividadesImportFilas = [];
+
+function renderActividadesImportPreview(){
+    const validas = actividadesImportFilas.filter(f => f.ok);
+    document.getElementById("actividades-import-resumen").textContent =
+        `${actividadesImportFilas.length} fila(s) leídas: ${validas.length} válida(s), ${actividadesImportFilas.length - validas.length} con error.`;
+    document.getElementById("actividades-import-tbody").innerHTML = actividadesImportFilas.map((f, i) => `
+<tr class="${f.ok ? "" : "import-row-fail"}">
+    <td>${f.ok ? '<span class="import-ok">✓</span>' : '<span class="import-fail">✗</span>'}</td>
+    <td>${i + 2}</td>
+    <td>${escapeHtml(f.ok ? f.actividad.titulo : (f.tituloCrudo || ""))}</td>
+    <td>${escapeHtml(f.ok ? f.actividad.fechaInicio.replace("T", " ") : "")}</td>
+    <td>${escapeHtml(f.ok ? (f.puntos[0]?.alianzaNombre || "") : "")}</td>
+    <td>${escapeHtml(f.ok ? (f.puntos[1]?.alianzaNombre || "") : "")}</td>
+    <td>${escapeHtml(f.ok ? "" : (f.motivo || ""))}</td>
+</tr>`).join("");
+    document.getElementById("actividades-import-preview").classList.remove("hidden");
+    document.getElementById("confirm-actividades-import").disabled = !validas.length;
+}
+
+function openActividadesImportModal(){
+    document.getElementById("actividades-import-step-elegir").classList.remove("hidden");
+    document.getElementById("actividades-import-preview").classList.add("hidden");
+    document.getElementById("actividades-import-error").textContent = "";
+    document.getElementById("actividades-import-file").value = "";
+    document.getElementById("confirm-actividades-import").disabled = true;
+    actividadesImportFilas = [];
+    actividadesImportModal.classList.remove("hidden");
+}
+function closeActividadesImportModal(){
+    actividadesImportModal.classList.add("hidden");
+}
+document.getElementById("close-actividades-import-modal").addEventListener("click", closeActividadesImportModal);
+document.getElementById("cancel-actividades-import").addEventListener("click", closeActividadesImportModal);
+
+document.getElementById("actividades-import-file").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if(!file) return;
+    const errorEl = document.getElementById("actividades-import-error");
+    errorEl.textContent = "";
+    try{
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+        const sheetName = workbook.SheetNames.includes("Actividades") ? "Actividades" : workbook.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: "" });
+        const alianzasSnap = await getDocs(collection(db, "alianzas"));
+        const alianzas = alianzasSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        actividadesImportFilas = rows.map(row => {
+            const resultado = excelImportParseFila(row, alianzas);
+            if(!resultado.ok) resultado.tituloCrudo = String(row[RIVALS_IMPORT_COLUMNAS.titulo] || "");
+            return resultado;
+        });
+        if(!actividadesImportFilas.length){
+            errorEl.textContent = "La planilla no tiene filas para importar.";
+            return;
+        }
+        renderActividadesImportPreview();
+    }catch(error){
+        console.error(error);
+        errorEl.textContent = "No se pudo leer el archivo. Verificá que sea el .xlsx de la planilla.";
+    }
+});
+
+document.getElementById("confirm-actividades-import").addEventListener("click", async () => {
+    const btn = document.getElementById("confirm-actividades-import");
+    const errorEl = document.getElementById("actividades-import-error");
+    const validas = actividadesImportFilas.filter(f => f.ok);
+    if(!validas.length) return;
+    btn.disabled = true;
+    errorEl.textContent = "";
+    try{
+        for(const fila of validas){
+            const actividadRef = await addDoc(collection(db, "rivalsActividades"), fila.actividad);
+            for(const punto of fila.puntos){
+                await addDoc(collection(db, "rivalsPuntos"), {
+                    ...punto, actividadId: actividadRef.id, createdAt: serverTimestamp()
+                });
+            }
+        }
+        closeActividadesImportModal();
+        alert(`Se importaron ${validas.length} actividad(es).`);
+    }catch(error){
+        console.error(error);
+        errorEl.textContent = "Se subieron algunas filas, pero hubo un error a mitad de camino. Revisá la lista de Actividades antes de reintentar.";
+        btn.disabled = false;
+    }
+});
+
+function descargarPlantillaActividades(){
+    const columnas = Object.values(RIVALS_IMPORT_COLUMNAS);
+    const ejemplo = {
+        [RIVALS_IMPORT_COLUMNAS.fechaInicio]: "10/09/2026",
+        [RIVALS_IMPORT_COLUMNAS.horaInicio]: "19:00",
+        [RIVALS_IMPORT_COLUMNAS.fechaFin]: "10/09/2026",
+        [RIVALS_IMPORT_COLUMNAS.horaFin]: "21:00",
+        [RIVALS_IMPORT_COLUMNAS.fechaPublicacion]: "05/09/2026",
+        [RIVALS_IMPORT_COLUMNAS.categoria]: "Videojuegos",
+        [RIVALS_IMPORT_COLUMNAS.titulo]: "Torneo Valorant 5v5",
+        [RIVALS_IMPORT_COLUMNAS.descripcion]: "Enfrentamiento directo entre las dos Alianzas, mejor de 3 mapas.",
+        [RIVALS_IMPORT_COLUMNAS.comoGana]: "Ganás la serie (2 mapas de 3).",
+        [RIVALS_IMPORT_COLUMNAS.comoPierde]: "Perdés la serie, o no te presentás a la hora acordada.",
+        [RIVALS_IMPORT_COLUMNAS.alianza1Nombre]: "Alianza Fénix",
+        [RIVALS_IMPORT_COLUMNAS.alianza1Puntos]: 50,
+        [RIVALS_IMPORT_COLUMNAS.alianza2Nombre]: "Alianza Sombra",
+        [RIVALS_IMPORT_COLUMNAS.alianza2Puntos]: 20,
+        [RIVALS_IMPORT_COLUMNAS.veredicto]: "Fénix ganó 2-1 tras un remonte en el mapa 3.",
+        [RIVALS_IMPORT_COLUMNAS.destacar]: "Sí",
+        [RIVALS_IMPORT_COLUMNAS.mediaUrl]: "https://clips.twitch.tv/ejemplo"
+    };
+    const hoja = XLSX.utils.json_to_sheet([ejemplo], { header: columnas });
+    hoja["!cols"] = columnas.map(() => ({ wch: 22 }));
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Actividades");
+    XLSX.writeFile(libro, "Voranix_Rivals_Planilla_Actividades.xlsx");
 }
 
 function renderOverlaySection(tab){

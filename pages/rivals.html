@@ -183,6 +183,21 @@ function fechaCorta(iso) {
     return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
+function fechaHoraCorta(iso) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(iso || "");
+    if (!match) return "";
+    const fecha = `${match[3]}/${match[2]}/${match[1]}`;
+    return match[4] ? `${fecha} ${match[4]}:${match[5]}` : fecha;
+}
+
+// Actividades viejas solo tienen fechaEvento (date-only). Las nuevas tienen
+// fechaInicio/fechaFin (datetime-local). Normaliza ambas a un rango.
+function actividadRangoFechas(act) {
+    const inicio = act.fechaInicio || (act.fechaEvento ? `${act.fechaEvento}T00:00` : "");
+    const fin = act.fechaFin || (inicio ? `${inicio.slice(0, 10)}T23:59` : "");
+    return { inicio, fin };
+}
+
 let alianzas = [];
 let puntos = [];
 let actividades = [];
@@ -345,32 +360,40 @@ function renderMomentos() {
 
 function estadoActividadPublico(act) {
     const hoy = new Date();
-    const evento = new Date(`${act.fechaEvento}T23:59:59`);
-    if (evento < hoy) return "finalizada";
-    const eventoInicio = new Date(`${act.fechaEvento}T00:00:00`);
-    if (eventoInicio <= hoy) return "activa";
+    const { inicio, fin } = actividadRangoFechas(act);
+    if (!inicio) return "proxima";
+    if (new Date(fin) < hoy) return "finalizada";
+    if (new Date(inicio) <= hoy) return "activa";
     return "proxima";
 }
 
 function actividadCardHtml(act, estado) {
+    const reglas = (act.comoGana || act.comoPierde) ? `
+    <div class="rivals-actividad-reglas">
+        ${act.comoGana ? `<p class="rivals-actividad-regla-gana">✅ ${escapeHtml(act.comoGana)}</p>` : ""}
+        ${act.comoPierde ? `<p class="rivals-actividad-regla-pierde">❌ ${escapeHtml(act.comoPierde)}</p>` : ""}
+    </div>` : (act.reglasPuntaje ? `<div class="rivals-actividad-reglas">${escapeHtml(act.reglasPuntaje)}</div>` : "");
     return `
 <div class="rivals-actividad-card${estado === "activa" ? " es-activa" : ""}">
     ${estado !== "finalizada" ? `<span class="estado-tag ${estado}">${estado === "activa" ? "Activa hoy" : "Próxima"}</span>` : ""}
     <h4>${escapeHtml(act.titulo) || "Actividad"}</h4>
     ${act.descripcion ? `<p>${escapeHtml(act.descripcion)}</p>` : ""}
-    ${act.reglasPuntaje ? `<div class="rivals-actividad-reglas">${escapeHtml(act.reglasPuntaje)}</div>` : ""}
-    <p class="rivals-actividad-fecha">${escapeHtml(fechaCorta(act.fechaEvento))}</p>
+    ${reglas}
+    <p class="rivals-actividad-fecha">${escapeHtml(fechaHoraCorta(act.fechaInicio || act.fechaEvento))}</p>
 </div>`;
 }
 
 function renderActividades() {
     const hoy = new Date().toISOString().slice(0, 10);
-    const publicadas = actividades.filter(act => (act.fechaPublicacion || act.fechaEvento) <= hoy);
+    const publicadas = actividades.filter(act => (act.fechaPublicacion || act.fechaInicio || act.fechaEvento || "").slice(0, 10) <= hoy);
 
     const activas = publicadas.filter(act => estadoActividadPublico(act) === "activa");
     const proximas = publicadas.filter(act => estadoActividadPublico(act) === "proxima");
-    const finalizadas = publicadas.filter(act => estadoActividadPublico(act) === "finalizada")
-        .sort((a, b) => String(b.fechaEvento || "").localeCompare(String(a.fechaEvento || "")));
+    const finalizadas = publicadas.filter(act => {
+        if (estadoActividadPublico(act) !== "finalizada") return false;
+        const { fin } = actividadRangoFechas(act);
+        return Date.now() - new Date(fin).getTime() <= 7 * 86400000;
+    }).sort((a, b) => String(b.fechaInicio || b.fechaEvento || "").localeCompare(String(a.fechaInicio || a.fechaEvento || "")));
 
     document.getElementById("rivals-actividades-activas").innerHTML = activas.map(a => actividadCardHtml(a, "activa")).join("");
     document.getElementById("rivals-actividades-proximas").innerHTML = proximas.map(a => actividadCardHtml(a, "proxima")).join("");
