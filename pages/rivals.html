@@ -174,6 +174,15 @@ const CATEGORIAS = [
 
 const FRECUENCIA_LABELS = { diaria: "Diaria", semanal: "Semanal", mensual: "Mensual" };
 
+// Un color + ícono por categoría, distintos a los de FRECUENCIA_LABELS más
+// arriba, para que una tarjeta se pueda identificar por tipo de un vistazo
+// aunque también tenga la etiqueta de frecuencia puesta.
+const RIVALS_ACTIVIDAD_CATEGORIA_INFO = {
+    contenido: { icon: "fa-hashtag", color: "#ff3d9a", label: "Contenido en redes" },
+    videojuegos: { icon: "fa-gamepad", color: "#00e676", label: "Videojuegos" },
+    presencial: { icon: "fa-users", color: "#ffd60a", label: "Presencial / en vivo" }
+};
+
 function assetUrl(path) {
     if (!path) return "";
     return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
@@ -377,10 +386,14 @@ function actividadCardHtml(act, estado) {
     </div>` : (act.reglasPuntaje ? `<div class="rivals-actividad-reglas">${escapeHtml(act.reglasPuntaje)}</div>` : "");
     const estadoTag = estado !== "finalizada" ? `<span class="estado-tag ${estado}">${estado === "activa" ? "Activa hoy" : "Próxima"}</span>` : "";
     const frecuenciaTag = FRECUENCIA_LABELS[act.frecuencia] ? `<span class="rivals-actividad-frecuencia ${act.frecuencia}">${FRECUENCIA_LABELS[act.frecuencia]}</span>` : "";
+    const catInfo = RIVALS_ACTIVIDAD_CATEGORIA_INFO[act.categoria];
+    const catClass = catInfo ? `cat-${act.categoria}` : "";
+    const catTag = catInfo ? `<div class="rivals-actividad-categoria ${catClass}"><i class="fas ${catInfo.icon}"></i> ${escapeHtml(catInfo.label)}</div>` : "";
     return `
-<div class="rivals-actividad-card${estado === "activa" ? " es-activa" : ""}">
+<div class="rivals-actividad-card${estado === "activa" ? " es-activa" : ""} ${catClass}">
     ${(estadoTag || frecuenciaTag) ? `<div class="rivals-actividad-top">${estadoTag}${frecuenciaTag}</div>` : ""}
     <h4>${escapeHtml(act.titulo) || "Actividad"}</h4>
+    ${catTag}
     ${act.descripcion ? `<p>${escapeHtml(act.descripcion)}</p>` : ""}
     ${reglas}
     <p class="rivals-actividad-fecha">${escapeHtml(fechaHoraCorta(act.fechaInicio || act.fechaEvento))}</p>
