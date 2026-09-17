@@ -1439,7 +1439,12 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .rivals-actividades-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 20px; margin-bottom: 20px; }
 .rivals-actividad-card { background: var(--card); border: 1px solid var(--border-accent); border-radius: 14px; padding: 20px; position: relative; }
 .rivals-actividad-card.es-activa { border-color: #00c853; box-shadow: 0 0 0 1px rgba(0,200,83,.3); }
-.rivals-actividad-card .estado-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; }
+.rivals-actividad-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rivals-actividad-frecuencia { margin-left: auto; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.rivals-actividad-frecuencia.diaria { background: rgba(0,184,212,.15); color: #00b8d4; border: 1px solid rgba(0,184,212,.4); }
+.rivals-actividad-frecuencia.semanal { background: rgba(123,44,255,.18); color: var(--morado-light); border: 1px solid rgba(123,44,255,.45); }
+.rivals-actividad-frecuencia.mensual { background: rgba(255,106,0,.15); color: var(--naranja); border: 1px solid rgba(255,106,0,.4); }
+.rivals-actividad-card .estado-tag { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 3px 10px; border-radius: 20px; }
 .rivals-actividad-card .estado-tag.activa { background: rgba(0,200,83,.15); color: #00c853; border: 1px solid rgba(0,200,83,.4); }
 .rivals-actividad-card .estado-tag.proxima { background: rgba(0,184,212,.15); color: #00b8d4; border: 1px solid rgba(0,184,212,.4); }
 .rivals-actividad-card h4 { color: #fff; margin-bottom: 6px; }

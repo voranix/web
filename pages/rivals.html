@@ -172,6 +172,8 @@ const CATEGORIAS = [
     ["presencial", "Presencial / en vivo"]
 ];
 
+const FRECUENCIA_LABELS = { diaria: "Diaria", semanal: "Semanal", mensual: "Mensual" };
+
 function assetUrl(path) {
     if (!path) return "";
     return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
@@ -373,9 +375,11 @@ function actividadCardHtml(act, estado) {
         ${act.comoGana ? `<p class="rivals-actividad-regla-gana">✅ ${escapeHtml(act.comoGana)}</p>` : ""}
         ${act.comoPierde ? `<p class="rivals-actividad-regla-pierde">❌ ${escapeHtml(act.comoPierde)}</p>` : ""}
     </div>` : (act.reglasPuntaje ? `<div class="rivals-actividad-reglas">${escapeHtml(act.reglasPuntaje)}</div>` : "");
+    const estadoTag = estado !== "finalizada" ? `<span class="estado-tag ${estado}">${estado === "activa" ? "Activa hoy" : "Próxima"}</span>` : "";
+    const frecuenciaTag = FRECUENCIA_LABELS[act.frecuencia] ? `<span class="rivals-actividad-frecuencia ${act.frecuencia}">${FRECUENCIA_LABELS[act.frecuencia]}</span>` : "";
     return `
 <div class="rivals-actividad-card${estado === "activa" ? " es-activa" : ""}">
-    ${estado !== "finalizada" ? `<span class="estado-tag ${estado}">${estado === "activa" ? "Activa hoy" : "Próxima"}</span>` : ""}
+    ${(estadoTag || frecuenciaTag) ? `<div class="rivals-actividad-top">${estadoTag}${frecuenciaTag}</div>` : ""}
     <h4>${escapeHtml(act.titulo) || "Actividad"}</h4>
     ${act.descripcion ? `<p>${escapeHtml(act.descripcion)}</p>` : ""}
     ${reglas}
