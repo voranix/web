@@ -183,6 +183,16 @@ const RIVALS_ACTIVIDAD_CATEGORIA_INFO = {
     presencial: { icon: "fa-users", color: "#ffd60a", label: "Presencial / en vivo" }
 };
 
+// Cómo se define el resultado de la actividad (ver los formularios rápidos
+// del admin). "manual" no se muestra: es "sin mecánica automática", no le
+// aporta nada al público.
+const RIVALS_MODO_INFO = {
+    publicaciones: { icon: "fa-share-nodes", label: "Por publicación" },
+    enfrentamiento: { icon: "fa-people-arrows", label: "Enfrentamiento directo" },
+    carrera: { icon: "fa-flag-checkered", label: "Carrera / Podio" },
+    robo: { icon: "fa-user-secret", label: "Robo de puntos" }
+};
+
 function assetUrl(path) {
     if (!path) return "";
     return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
@@ -389,14 +399,23 @@ function actividadCardHtml(act, estado) {
     const catInfo = RIVALS_ACTIVIDAD_CATEGORIA_INFO[act.categoria];
     const catClass = catInfo ? `cat-${act.categoria}` : "";
     const catTag = catInfo ? `<div class="rivals-actividad-categoria ${catClass}"><i class="fas ${catInfo.icon}"></i> ${escapeHtml(catInfo.label)}</div>` : "";
+    const modoInfo = RIVALS_MODO_INFO[act.modoPuntaje];
+    const modoTag = modoInfo ? `<div class="rivals-actividad-modo${act.modoPuntaje === "robo" ? " robo" : ""}"><i class="fas ${modoInfo.icon}"></i> ${escapeHtml(modoInfo.label)}</div>` : "";
+    const { inicio, fin } = actividadRangoFechas(act);
+    const mismoDia = fin && inicio.slice(0, 10) === fin.slice(0, 10);
+    const finTxt = fin ? (mismoDia ? fin.slice(11, 16) : fechaHoraCorta(fin)) : "";
     return `
 <div class="rivals-actividad-card${estado === "activa" ? " es-activa" : ""} ${catClass}">
     ${(estadoTag || frecuenciaTag) ? `<div class="rivals-actividad-top">${estadoTag}${frecuenciaTag}</div>` : ""}
     <h4>${escapeHtml(act.titulo) || "Actividad"}</h4>
     ${catTag}
+    ${modoTag}
     ${act.descripcion ? `<p>${escapeHtml(act.descripcion)}</p>` : ""}
     ${reglas}
-    <p class="rivals-actividad-fecha">${escapeHtml(fechaHoraCorta(act.fechaInicio || act.fechaEvento))}</p>
+    <p class="rivals-actividad-fecha">
+        <span><i class="fas fa-calendar"></i> ${escapeHtml(fechaHoraCorta(inicio))}</span>
+        ${finTxt ? `<span class="fin"><i class="fas fa-flag-checkered"></i> Termina ${mismoDia ? "a las " : ""}${escapeHtml(finTxt)}</span>` : ""}
+    </p>
 </div>`;
 }
 

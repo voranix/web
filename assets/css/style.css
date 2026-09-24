@@ -1455,12 +1455,16 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
 .rivals-actividad-categoria.cat-contenido { color: #ff3d9a; }
 .rivals-actividad-categoria.cat-videojuegos { color: #00e676; }
 .rivals-actividad-categoria.cat-presencial { color: #ffd60a; }
-.rivals-actividad-card p { color: var(--gris); font-size: 13px; line-height: 1.6; margin-bottom: 8px; }
-.rivals-actividad-reglas { background: rgba(255,255,255,.04); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #fff; display: flex; flex-direction: column; gap: 6px; }
+.rivals-actividad-modo { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--gris); margin-bottom: 8px; }
+.rivals-actividad-modo.robo { background: rgba(255,59,92,.15); color: #ff3b5c; border: 1px solid rgba(255,59,92,.4); padding: 3px 10px; border-radius: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+.rivals-actividad-card p { color: var(--gris); font-size: 13px; line-height: 1.6; margin-bottom: 8px; white-space: pre-line; }
+.rivals-actividad-reglas { background: rgba(255,255,255,.04); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #fff; display: flex; flex-direction: column; gap: 6px; white-space: pre-line; }
 .rivals-actividad-reglas p { margin-bottom: 0 !important; color: #fff !important; font-size: 12px !important; }
 .rivals-actividad-regla-gana { color: #00c853 !important; }
 .rivals-actividad-regla-pierde { color: #ff5252 !important; }
-.rivals-actividad-fecha { color: var(--gris); font-size: 11px; margin-top: 8px; }
+.rivals-actividad-fecha { color: var(--gris); font-size: 11px; margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+.rivals-actividad-fecha .fin { color: var(--gris); opacity: .85; }
+.rivals-actividad-fecha .fin i { color: #ff5252; }
 .rivals-historial-toggle { display: block; margin: 0 auto 20px; }
 
 @media(max-width: 768px) {
