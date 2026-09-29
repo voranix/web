@@ -635,14 +635,15 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
                 <label>Color</label>
                 <input name="colorHex" type="color" value="#7b2cff">
             </div>
-            <div class="field full">
-                <label>Logo</label>
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <input name="logo" type="text" placeholder="Ruta o URL de imagen" style="flex:1;">
-                </div>
+            <div class="field">
+                <label>Logo (URL)</label>
+                <input name="logo" type="text" placeholder="Ruta o URL de imagen">
+            </div>
+            <div class="field">
+                <label>Logo (o subir archivo)</label>
                 <input name="logoFile" type="file" accept="image/*">
             </div>
-            <div class="field full">
+            <div class="field">
                 <label>Lema (opcional)</label>
                 <input name="lema" type="text" placeholder="Ej: Unidos ganamos">
             </div>
@@ -913,11 +914,12 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
                 <label>Detalle / comentario (opcional)</label>
                 <textarea name="detallePantalla" placeholder="Texto más chico debajo del titular"></textarea>
             </div>
-            <div class="field full" data-tipo-config="pantalla ambos codigo">
-                <label>Imagen (opcional)</label>
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <input name="imagen" type="text" placeholder="Ruta o URL de imagen" style="flex:1;">
-                </div>
+            <div class="field" data-tipo-config="pantalla ambos codigo">
+                <label>Imagen (URL, opcional)</label>
+                <input name="imagen" type="text" placeholder="Ruta o URL de imagen">
+            </div>
+            <div class="field" data-tipo-config="pantalla ambos codigo">
+                <label>Imagen (o subir archivo)</label>
                 <input name="imagenFile" type="file" accept="image/*">
             </div>
             <div class="field" data-tipo-config="pantalla ambos codigo">
@@ -956,11 +958,12 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
                 <label>Descripción</label>
                 <input name="descripcion" type="text" placeholder="Ej: 10% de descuento en toda la tienda">
             </div>
-            <div class="field full">
-                <label>Imagen (opcional)</label>
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <input name="imagen" type="text" placeholder="Ruta o URL de imagen" style="flex:1;">
-                </div>
+            <div class="field">
+                <label>Imagen (URL, opcional)</label>
+                <input name="imagen" type="text" placeholder="Ruta o URL de imagen">
+            </div>
+            <div class="field">
+                <label>Imagen (o subir archivo)</label>
                 <input name="imagenFile" type="file" accept="image/*">
             </div>
             <div class="field">
@@ -4763,11 +4766,12 @@ async function renderOverlayGeneralPanel(container){
                 <label>Detalle (opcional)</label>
                 <textarea name="detalle" placeholder="Texto más chico debajo del titular"></textarea>
             </div>
-            <div class="field full">
-                <label>Imagen (opcional)</label>
-                <div style="display:flex;gap:8px;align-items:center;">
-                    <input name="imagen" type="text" placeholder="Ruta o URL de imagen" style="flex:1;">
-                </div>
+            <div class="field">
+                <label>Imagen (URL, opcional)</label>
+                <input name="imagen" type="text" placeholder="Ruta o URL de imagen">
+            </div>
+            <div class="field">
+                <label>Imagen (o subir archivo)</label>
                 <input name="imagenFile" type="file" accept="image/*">
             </div>
             <div class="field">
