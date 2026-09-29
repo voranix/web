@@ -542,6 +542,7 @@ function injectEditorStyles() {
     style.textContent = `
         [data-editor-el]{ outline:2px dashed rgba(255,255,255,.55); outline-offset:3px; cursor:grab; touch-action:none; }
         [data-editor-el]:active{ cursor:grabbing; }
+        [data-editor-el].editor-overlap{ outline-color:#ff3b5c; outline-style:solid; }
         [data-editor-el].editor-empty{ background:rgba(255,255,255,.08) !important; border-radius:8px; }
         [data-editor-el].editor-empty > *:not(.editor-empty-label){ visibility:hidden; }
         .editor-empty-label{
@@ -711,6 +712,30 @@ export async function initEditorMode(orientacion) {
             }
         }
         posicionarHandle(key, el);
+        actualizarSolapes();
+    }
+
+    // Todos los elementos quedan visibles y arrastrables a la vez en el
+    // editor (aunque, en el overlay real, dos de ellos casi nunca se ven
+    // juntos — el banner de comando o el de raid solo aparecen cuando pasa
+    // algo puntual). Eso hace fácil arrastrar uno encima de otro sin darse
+    // cuenta -exactamente lo que se reportó como "se ve cortado"-, así que
+    // acá se detecta la superposición y se resalta en rojo a los
+    // involucrados para que sea obvio y se puedan separar arrastrando.
+    function actualizarSolapes() {
+        const activos = Object.keys(LAYOUT_ELEMENTOS)
+            .map((key) => ({ key, el: LAYOUT_ELEMENTOS[key]() }))
+            .filter(({ el }) => el && el.style.display !== "none")
+            .map(({ key, el }) => ({ key, el, rect: el.getBoundingClientRect() }));
+
+        for (const a of activos) {
+            const solapa = activos.some((b) => b.key !== a.key && !(
+                a.rect.right <= b.rect.left || a.rect.left >= b.rect.right ||
+                a.rect.bottom <= b.rect.top || a.rect.top >= b.rect.bottom
+            ));
+            a.el.classList.toggle("editor-overlap", solapa);
+            a.el.title = solapa ? "Se superpone con otro elemento — arrastralo para separarlo" : "";
+        }
     }
 
     for (const key of Object.keys(LAYOUT_ELEMENTOS)) {
