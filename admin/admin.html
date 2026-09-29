@@ -156,12 +156,12 @@ button{ cursor:pointer; }
 }
 .notif-activar-btn:hover{ background:rgba(123,44,255,.2); }
 .notif-activar-btn:disabled{ opacity:.6; cursor:default; }
-.content{ padding:28px; flex:1 1 auto; overflow-y:auto; }
+.content{ padding:28px; flex:1 1 auto; overflow-y:auto; max-width:1440px; }
 .section-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; }
 .section-head h2{ font-size:26px; margin-bottom:6px; letter-spacing:.3px; }
 .panel{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }
 .table-toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:16px; border-bottom:1px solid var(--border); }
-.table-toolbar input[type="search"]{ flex:1 1 220px; min-width:160px; background:var(--surface); color:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; outline:none; transition:border-color var(--ease); }
+.table-toolbar input[type="search"]{ flex:1 1 220px; min-width:160px; max-width:380px; background:var(--surface); color:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; outline:none; transition:border-color var(--ease); }
 .table-toolbar select{ background:var(--surface); color:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; outline:none; max-width:220px; transition:border-color var(--ease); }
 .table-toolbar input[type="search"]:focus,.table-toolbar select:focus{ border-color:var(--morado); box-shadow:0 0 0 3px rgba(123,44,255,.16); }
 .table-toolbar .count{ color:var(--muted); font-size:12px; white-space:nowrap; margin-left:auto; }
@@ -184,6 +184,10 @@ td img{ width:52px; height:52px; object-fit:cover; border-radius:var(--radius-sm
 .metricas-bar{ width:100%; max-width:34px; border-radius:6px 6px 2px 2px; background:linear-gradient(180deg,var(--morado),var(--naranja)); transition:height var(--ease); }
 .metricas-bar-label{ font-size:10px; font-weight:700; letter-spacing:.5px; color:var(--muted); }
 .empty{ padding:36px 24px; color:var(--muted); text-align:center; font-size:13px; }
+/* .loading se usa en decenas de lugares ("Cargando...", "Todavía no hay
+   X", "No se pudo cargar...") como reemplazo de contenido — no tenía
+   ningún estilo propio y se veía como texto plano sin color ni aire. */
+.loading{ color:var(--muted); font-size:13px; padding:18px 4px; }
 .bulk-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); background:rgba(123,44,255,.08); }
 .bulk-bar .count{ color:#fff; font-size:13px; font-weight:600; }
 td.select-col,th.select-col{ width:40px; text-align:center; }
@@ -199,7 +203,8 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .help{ color:var(--muted); font-size:12px; line-height:1.5; }
 .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; flex-wrap:wrap; }
 .dashboard-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
-.dashboard-card{ padding:22px; }
+.dashboard-card{ padding:22px; border-top:3px solid var(--morado); transition:transform var(--ease), box-shadow var(--ease), border-color var(--ease); }
+.dashboard-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); border-top-color:var(--naranja); }
 .dashboard-card-wide{ grid-column:1 / -1; }
 .dashboard-card h3{ font-size:14px; margin-bottom:16px; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); font-weight:700; }
 .dashboard-list{ display:flex; flex-direction:column; gap:8px; list-style:none; }
@@ -236,7 +241,23 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .comunicados-row-email{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
 .comunicados-tag{ font-size:10px; letter-spacing:.5px; text-transform:uppercase; color:var(--morado-light); background:rgba(123,44,255,.15); border:1px solid rgba(123,44,255,.4); border-radius:20px; padding:2px 9px; white-space:nowrap; flex-shrink:0; font-weight:700; }
 
-.tablero-tabs{ display:flex; gap:10px; margin-bottom:22px; }
+/* Barra de tabs tipo "segmented control" — se usa en Tablero
+   (Ideas/Tareas), Rivals (Alianzas/Actividades/Puntajes/Temporada) y
+   Overlay (General/Comandos/Códigos): antes era una fila suelta de
+   botones .btn normales, que se leía más como un grupo de acciones al
+   azar que como una navegación de pestañas. Ahora vive dentro de un
+   contenedor con fondo propio, y la pestaña inactiva pierde el degradé
+   -queda transparente- para que solo la activa "pese" visualmente.
+*/
+.tablero-tabs{
+    display:inline-flex; flex-wrap:wrap; gap:4px; margin-bottom:22px;
+    padding:4px; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:calc(var(--radius-sm) + 5px);
+}
+.tablero-tabs .btn{ box-shadow:none; }
+.tablero-tabs .btn:not(.secondary):hover{ box-shadow:0 4px 14px rgba(123,44,255,.32); }
+.tablero-tabs .btn.secondary{ background:transparent; border-color:transparent; }
+.tablero-tabs .btn.secondary:hover{ background:var(--surface-hover); border-color:transparent; }
 
 /* Tablero de ideas: pizarra libre (notas, áreas de trabajo, dibujo a mano) */
 .pizarra-toolbar{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
