@@ -449,6 +449,38 @@ const LAYOUT_BASE_TRANSFORM = {
     vertical: { logo: "", social: "translate(0, -50%)", comando: "translate(0, -50%)", raid: "translate(-50%, -50%)", sponsors: "", codigos: "" }
 };
 
+// Contraparte numérica de LAYOUT_BASE_TRANSFORM de arriba (0 = "translate"
+// no le resta nada a ese eje, 0.5 = "translate(-50%)"/"translate(,-50%)" le
+// resta la mitad de su propio ancho/alto): el cálculo de tope al arrastrar
+// o agrandar un elemento necesita saber esto para no dejarlo salirse del
+// canvas por el lado en el que está centrado — si no, un elemento con
+// offset (el banner de raid, y en vertical también redes/comando) puede
+// terminar con parte de su contenido afuera del área visible aunque su
+// x/y "parezca" estar dentro de rango.
+const LAYOUT_ANCHOR_OFFSET = {
+    horizontal: { logo: { x: 0, y: 0 }, social: { x: 0, y: 0 }, comando: { x: 0, y: 0 }, raid: { x: .5, y: 0 }, sponsors: { x: 0, y: 0 }, codigos: { x: 0, y: 0 } },
+    vertical: { logo: { x: 0, y: 0 }, social: { x: 0, y: .5 }, comando: { x: 0, y: .5 }, raid: { x: .5, y: .5 }, sponsors: { x: 0, y: 0 }, codigos: { x: 0, y: 0 } }
+};
+
+// Calcula el x/y (en %) más cercano al pedido que mantiene TODO el
+// elemento -ya escalado y con su offset de centrado si tiene- dentro del
+// canvas. Se usa tanto al arrastrar/agrandar como al aplicar cualquier
+// posición (incluida una ya guardada), así ningún valor -viejo, corregido
+// a mano, o resultado de un resize- puede dejar contenido cortado en un
+// borde.
+function clampPosicionAlCanvas(pos, elWidth, elHeight, native, anchor) {
+    const wPct = (elWidth / native.w) * 100;
+    const hPct = (elHeight / native.h) * 100;
+    const minX = wPct * (anchor?.x || 0);
+    const minY = hPct * (anchor?.y || 0);
+    const maxX = Math.max(minX, 100 - wPct + minX);
+    const maxY = Math.max(minY, 100 - hPct + minY);
+    return {
+        x: Math.max(minX, Math.min(maxX, pos.x)),
+        y: Math.max(minY, Math.min(maxY, pos.y))
+    };
+}
+
 // Si un elemento no tiene posición guardada, se deja tal cual estaba (su
 // CSS original) — así ningún creador que nunca abrió el editor nota ningún
 // cambio en su overlay. Solo se pisan left/top/right/bottom cuando SÍ hay
@@ -662,6 +694,22 @@ export async function initEditorMode(orientacion) {
         el.style.bottom = "auto";
         el.style.display = pos.visible === false ? "none" : "";
         aplicarTransformEditor(el, orientacion, key, pos.scale || 1);
+
+        // Corrige (y deja guardado en el estado) cualquier posición que,
+        // combinada con el tamaño actual del elemento, lo saque del canvas
+        // — cubre tanto un valor viejo ya guardado como el resultado de
+        // haber agrandado el elemento con el agarre de resize.
+        if (pos.visible !== false) {
+            const rect = el.getBoundingClientRect();
+            const anchor = (LAYOUT_ANCHOR_OFFSET[orientacion] || {})[key];
+            const clamped = clampPosicionAlCanvas(pos, rect.width, rect.height, native, anchor);
+            if (clamped.x !== pos.x || clamped.y !== pos.y) {
+                state[key].x = clamped.x;
+                state[key].y = clamped.y;
+                el.style.left = `${clamped.x}%`;
+                el.style.top = `${clamped.y}%`;
+            }
+        }
         posicionarHandle(key, el);
     }
 
@@ -731,6 +779,17 @@ export async function initEditorMode(orientacion) {
             handles[key].addEventListener("pointerup", onUp);
         });
     }
+
+    // La tipografía Orbitron (Google Fonts) puede terminar de cargar
+    // después de esta primera pasada, y el texto real (nombre del canal,
+    // título del banner, etc.) puede ensancharse al pasar de la fuente de
+    // reemplazo a la definitiva — recalcular acá evita que ese cambio de
+    // ancho, ya con la posición "fijada", termine empujando el borde de
+    // algún elemento centrado (raid, y en vertical también redes/comando)
+    // fuera del canvas.
+    document.fonts?.ready?.then(() => {
+        for (const key of Object.keys(LAYOUT_ELEMENTOS)) aplicarPosicion(key);
+    });
 
     window.__editorLayout = {
         getState() { return JSON.parse(JSON.stringify(state)); },
