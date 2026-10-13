@@ -402,6 +402,12 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
 .actividad-bono-row,.actividad-puesto-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
 .actividad-bono-row input[type="text"],.actividad-puesto-row input[type="text"]{ flex:1; }
 .actividad-bono-row input[type="number"],.actividad-puesto-row input[type="number"]{ width:100px; }
+.juego-tuple-row{ display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+.juego-tuple-row input[type="text"]{ flex:1; min-width:0; }
+.juego-advanced{ margin-top:18px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; }
+.juego-advanced summary{ cursor:pointer; color:var(--muted); font-size:13px; }
+.juego-advanced[open] summary{ margin-bottom:12px; color:#fff; }
+.juego-advanced .form-grid{ margin-top:0; }
 .rivals-resultado-alianza-row{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,.03); border-radius:var(--radius-sm); margin-bottom:8px; }
 .rivals-resultado-alianza-row strong{ min-width:140px; color:#fff; }
 .rivals-resultado-alianza-row input[type="number"]{ width:90px; }
@@ -615,6 +621,119 @@ td.select-col,th.select-col{ width:40px; text-align:center; }
         <div class="modal-actions">
             <button class="btn danger small hidden" type="button" id="tarea-delete-btn">Eliminar</button>
             <button class="btn secondary" type="button" id="cancel-tarea-modal">Cancelar</button>
+            <button class="btn" type="submit">Guardar</button>
+        </div>
+    </form>
+</div>
+
+<div id="juego-modal" class="modal hidden">
+    <form id="juego-form" class="modal-card">
+        <div class="modal-head">
+            <h2 id="juego-modal-title">Nuevo Juego</h2>
+            <button class="btn secondary small" type="button" id="close-juego-modal">Cerrar</button>
+        </div>
+        <div class="form-grid">
+            <div class="field">
+                <label>Identificador (id interno, no se puede cambiar después)</label>
+                <input name="id" type="text" required pattern="[a-z0-9]+" placeholder="Ej: leagueoflegends" title="Solo minúsculas y números, sin espacios ni símbolos">
+                <span class="help">Es el valor que va a quedar guardado en usuarios y rosters de este juego. Una vez creado no se puede editar.</span>
+            </div>
+            <div class="field">
+                <label>Nombre</label>
+                <input name="label" type="text" required placeholder="Ej: League of Legends">
+            </div>
+            <div class="field">
+                <label>Nombre corto</label>
+                <input name="labelCorto" type="text" required placeholder="Ej: LoL">
+            </div>
+            <div class="field">
+                <label>Ícono</label>
+                <input name="icono" type="text" placeholder="Emoji, ej: 🔫" maxlength="4">
+            </div>
+            <div class="field">
+                <label>Orden</label>
+                <input name="orden" type="number" step="1" value="1">
+            </div>
+            <div class="field">
+                <label>Activo</label>
+                <select name="activo"><option value="true">Sí</option><option value="false">No</option></select>
+            </div>
+            <div class="field full">
+                <label>Roles del roster</label>
+                <div id="juego-roles-rows"></div>
+                <button type="button" class="btn secondary small" id="juego-rol-add">+ Agregar rol</button>
+                <span class="help">Cada rol es un valor interno (sin espacios, ej: "duelista") y una etiqueta visible (ej: "Duelista").</span>
+            </div>
+            <div class="field">
+                <label>Campo de alineación (etiqueta)</label>
+                <input name="lineupLabel" type="text" placeholder="Ej: Selecciona agente">
+            </div>
+            <div class="field">
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input name="lineupTextoLibre" type="checkbox" style="width:auto;"> Permitir texto libre (sin lista de opciones)
+                </label>
+            </div>
+            <div class="field full" id="juego-lineup-opciones-field">
+                <label>Opciones del campo de alineación (una por línea)</label>
+                <textarea name="lineupOpciones" rows="4" placeholder="Ej: Jett&#10;Raze&#10;Omen"></textarea>
+            </div>
+            <div class="field">
+                <label style="display:flex; align-items:center; gap:8px;">
+                    <input name="lineupTopFragger" type="checkbox" style="width:auto;"> Mostrar el toggle 🎯 Top Fragger al armar la alineación
+                </label>
+            </div>
+        </div>
+        <details class="juego-advanced">
+            <summary>Campos avanzados (rango, tipos de jugador propios, tipo de actividad extra, campo extra)</summary>
+            <div class="form-grid">
+                <div class="field">
+                    <label>Rango</label>
+                    <select name="rangoTipo" id="juego-rango-tipo-select">
+                        <option value="ninguno">No tiene rango</option>
+                        <option value="texto">Texto libre</option>
+                        <option value="escalera">Escalera de rangos (lista fija, ordenada)</option>
+                    </select>
+                </div>
+                <div class="field full hidden" id="juego-escalones-field">
+                    <label>Escalones de rango (del más bajo al más alto)</label>
+                    <div id="juego-escalones-rows"></div>
+                    <button type="button" class="btn secondary small" id="juego-escalon-add">+ Agregar escalón</button>
+                    <span class="help">"Sin rango" se agrega solo, no hace falta cargarlo acá.</span>
+                </div>
+                <div class="field full">
+                    <label style="display:flex; align-items:center; gap:8px;">
+                        <input name="tiposJugadorPropiosActivo" type="checkbox" id="juego-tiposjugador-activo" style="width:auto;"> Usar una lista de tipos de jugador propia (si no, usa la lista general: Titular/Suplente/etc.)
+                    </label>
+                </div>
+                <div class="field full hidden" id="juego-tiposjugador-field">
+                    <label>Tipos de jugador propios</label>
+                    <div id="juego-tiposjugador-rows"></div>
+                    <button type="button" class="btn secondary small" id="juego-tiposjugador-add">+ Agregar tipo</button>
+                </div>
+                <div class="field full">
+                    <label>Tipos de actividad extra (se suman a Torneo/Scrim/Entrenamiento/Reunión)</label>
+                    <div id="juego-tiposactividad-rows"></div>
+                    <button type="button" class="btn secondary small" id="juego-tiposactividad-add">+ Agregar tipo</button>
+                </div>
+                <div class="field full">
+                    <label style="display:flex; align-items:center; gap:8px;">
+                        <input name="campoExtraActivo" type="checkbox" id="juego-campoextra-activo" style="width:auto;"> Agregar un campo extra en el roster (ej: "Personaje principal")
+                    </label>
+                </div>
+                <div class="field hidden" id="juego-campoextra-nombre-field">
+                    <label>Nombre interno del campo</label>
+                    <input name="campoExtraNombre" type="text" placeholder="Ej: personaje">
+                </div>
+                <div class="field hidden" id="juego-campoextra-label-field">
+                    <label>Etiqueta visible del campo</label>
+                    <input name="campoExtraLabel" type="text" placeholder="Ej: Personaje principal">
+                </div>
+            </div>
+        </details>
+        <div id="juego-error" class="error"></div>
+        <div class="modal-actions">
+            <button class="btn danger small hidden" type="button" id="juego-delete-btn">Eliminar</button>
+            <button class="btn secondary" type="button" id="cancel-juego-modal">Cancelar</button>
             <button class="btn" type="submit">Guardar</button>
         </div>
     </form>
@@ -1386,6 +1505,9 @@ const sections = {
     rivals: {
         label: "Voranix Rivals"
     },
+    juegos: {
+        label: "Juegos"
+    },
     streamersMetricas: {
         label: "Métricas Streamers"
     }
@@ -1393,7 +1515,7 @@ const sections = {
 
 const NAV_GROUPS = [
     { label: "Inicio", keys: ["dashboard", "comunicados", "tablero"] },
-    { label: "Esports", keys: ["rivals", "valorant", "valorantsecundario", "fifa", "dbd", "actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
+    { label: "Esports", keys: ["rivals", "juegos", "valorant", "valorantsecundario", "fifa", "dbd", "actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
     { label: "Comunidad y Contenido", keys: ["streamers", "streamersMetricas", "influencers", "staff", "proyectos", "patrocinadores"] },
     { label: "Sistema", keys: ["mensajes", "reportes", "overlay", "users"] }
 ];
@@ -1405,6 +1527,7 @@ const NAV_META = {
     comunicados: { icon: "📣", short: "Comunicados" },
     tablero: { icon: "🗒️", short: "Tablero" },
     rivals: { icon: "⚔️", short: "Rivals" },
+    juegos: { icon: "🎮", short: "Juegos" },
     valorant: { icon: "🔫", short: "Valorant A" },
     valorantsecundario: { icon: "🔫", short: "Valorant B" },
     fifa: { icon: "⚽", short: "FIFA" },
@@ -1488,6 +1611,9 @@ const messageRecipientsInfo = document.getElementById("message-recipients-info")
 const tareaModal = document.getElementById("tarea-modal");
 const tareaForm = document.getElementById("tarea-form");
 const tareaError = document.getElementById("tarea-error");
+const juegoModal = document.getElementById("juego-modal");
+const juegoForm = document.getElementById("juego-form");
+const juegoError = document.getElementById("juego-error");
 const alianzaModal = document.getElementById("alianza-modal");
 const alianzaForm = document.getElementById("alianza-form");
 const alianzaError = document.getElementById("alianza-error");
@@ -1605,9 +1731,13 @@ function buildNav(){
     const keys = visibleSectionKeys();
     const allowed = new Set(keys);
     if(isAdmin()) allowed.add("users");
-    // Rivals (armar Alianzas y cargar puntajes) queda admin-only: Staff no
-    // debería ni ver el ítem en el menú.
-    if(!isAdmin()) allowed.delete("rivals");
+    // Rivals (armar Alianzas y cargar puntajes) y Juegos (estructura de
+    // roles/rangos, no gestión diaria) quedan admin-only: Staff no debería
+    // ni ver esos ítems en el menú.
+    if(!isAdmin()){
+        allowed.delete("rivals");
+        allowed.delete("juegos");
+    }
 
     const navButton = (key) => {
         const meta = NAV_META[key] || {};
@@ -1637,7 +1767,7 @@ function buildNav(){
 
 function selectSection(key){
     const keys = visibleSectionKeys();
-    if(key === "users" || key === "rivals"){
+    if(key === "users" || key === "rivals" || key === "juegos"){
         if(!isAdmin()) key = keys[0] || "dashboard";
     }else if(!keys.includes(key)){
         key = keys[0] || "dashboard";
@@ -1653,6 +1783,7 @@ function selectSection(key){
     else if(key === "comunicados") renderComunicadosSection();
     else if(key === "tablero") renderTableroSection("tareas");
     else if(key === "rivals") renderRivalsSection("alianzas");
+    else if(key === "juegos") renderJuegosSection();
     else if(key === "overlay") renderOverlaySection("general");
     else if(key === "streamersMetricas") renderStreamersMetricas();
     else renderCrudSection(sections[key]);
@@ -3478,6 +3609,249 @@ function renderRivalsSection(tab){
     else if(currentTab === "config") renderRivalsConfigPanel(panel);
     else renderAlianzasPanel(panel);
 }
+
+function addJuegoTupleRow(containerId, tuple, placeholderValor, placeholderEtiqueta){
+    const rowsWrap = document.getElementById(containerId);
+    const row = document.createElement("div");
+    row.className = "juego-tuple-row";
+    row.innerHTML = `
+<input type="text" class="juego-tuple-valor" placeholder="${placeholderValor}" value="${escapeHtml(tuple?.[0] ?? "")}">
+<input type="text" class="juego-tuple-etiqueta" placeholder="${placeholderEtiqueta}" value="${escapeHtml(tuple?.[1] ?? "")}">
+<button type="button" class="btn danger small">✕</button>`;
+    row.querySelector("button").addEventListener("click", () => row.remove());
+    rowsWrap.appendChild(row);
+}
+
+function readJuegoTupleRows(containerId){
+    return Array.from(document.querySelectorAll(`#${containerId} .juego-tuple-row`)).map(row => {
+        const valor = row.querySelector(".juego-tuple-valor").value.trim();
+        const etiqueta = row.querySelector(".juego-tuple-etiqueta").value.trim();
+        return [valor, etiqueta];
+    }).filter(([valor, etiqueta]) => valor || etiqueta);
+}
+
+function renderJuegosSection(){
+    if(unsubscribeList) unsubscribeList();
+    unsubscribeList = null;
+    sectionTitle.textContent = "Juegos";
+    sectionSubtitle.textContent = "Roles, rangos y campos de roster de cada juego.";
+
+    if(!isAdmin()){
+        content.innerHTML = `<p class="rivals-denied">Esta sección es exclusiva de administradores.</p>`;
+        return;
+    }
+
+    content.innerHTML = `
+<div class="section-head">
+    <div>
+        <h2>Juegos</h2>
+        <p class="muted">Cada juego define sus propios roles, rangos, tipo de jugador y campo de alineación.</p>
+    </div>
+</div>
+<div id="juegos-panel"></div>`;
+
+    renderJuegosPanel(document.getElementById("juegos-panel"));
+}
+
+function renderJuegosPanel(container){
+    container.innerHTML = `
+<div class="rivals-toolbar">
+    <button class="btn small" type="button" id="juego-add-btn">+ Nuevo Juego</button>
+</div>
+<div id="juegos-grid" class="rivals-alianzas-grid"><p class="loading">Cargando...</p></div>`;
+
+    document.getElementById("juego-add-btn").addEventListener("click", () => openJuegoModal(null));
+
+    const grid = document.getElementById("juegos-grid");
+    let currentJuegos = [];
+    const unsub = onSnapshot(collection(db, "juegos"), (snapshot) => {
+        currentJuegos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => (Number(a.orden) || 0) - (Number(b.orden) || 0));
+        grid.innerHTML = currentJuegos.length ? currentJuegos.map(juego => `
+<div class="rivals-alianza-card">
+    <div class="rivals-alianza-head">
+        <h4>${juego.icono ? escapeHtml(juego.icono) + " " : ""}${escapeHtml(juego.label) || "Sin nombre"}</h4>
+    </div>
+    <p class="rivals-miembros-count">${escapeHtml(juego.labelCorto || "")} · ${(juego.roles || []).length} rol(es) · ${juego.activo === false ? "Inactivo" : "Activo"}</p>
+    <div class="actions">
+        <button class="btn secondary small" type="button" data-juego-edit="${juego.id}">Editar</button>
+        <button class="btn danger small" type="button" data-juego-delete="${juego.id}">Eliminar</button>
+    </div>
+</div>`).join("") : `<p class="loading">Todavía no hay Juegos creados.</p>`;
+    }, (error) => {
+        console.error(error);
+        grid.innerHTML = `<p class="loading">No se pudieron cargar los Juegos.</p>`;
+    });
+    unsubscribeList = unsub;
+
+    grid.addEventListener("click", async (event) => {
+        const editBtn = event.target.closest("[data-juego-edit]");
+        if(editBtn){
+            const juego = currentJuegos.find(j => j.id === editBtn.dataset.juegoEdit);
+            if(juego) openJuegoModal(juego);
+            return;
+        }
+        const delBtn = event.target.closest("[data-juego-delete]");
+        if(delBtn && confirm("¿Eliminar este Juego? Esto NO borra los rosters/usuarios ya cargados con este juego.")){
+            deleteDoc(doc(db, "juegos", delBtn.dataset.juegoDelete)).catch(error => {
+                console.error(error);
+                alert("No se pudo eliminar el Juego.");
+            });
+        }
+    });
+}
+
+let editingJuegoId = null;
+
+function toggleJuegoAdvancedFields(){
+    document.getElementById("juego-escalones-field").classList.toggle("hidden", juegoForm.rangoTipo.value !== "escalera");
+    document.getElementById("juego-tiposjugador-field").classList.toggle("hidden", !juegoForm.tiposJugadorPropiosActivo.checked);
+    document.getElementById("juego-campoextra-nombre-field").classList.toggle("hidden", !juegoForm.campoExtraActivo.checked);
+    document.getElementById("juego-campoextra-label-field").classList.toggle("hidden", !juegoForm.campoExtraActivo.checked);
+    document.getElementById("juego-lineup-opciones-field").classList.toggle("hidden", juegoForm.lineupTextoLibre.checked);
+}
+
+function openJuegoModal(juego){
+    editingJuegoId = juego ? juego.id : null;
+    document.getElementById("juego-modal-title").textContent = juego ? "Editar Juego" : "Nuevo Juego";
+    juegoError.textContent = "";
+    juegoForm.reset();
+    juegoForm.id.value = juego?.id || "";
+    juegoForm.id.disabled = !!juego;
+    juegoForm.label.value = juego?.label || "";
+    juegoForm.labelCorto.value = juego?.labelCorto || "";
+    juegoForm.icono.value = juego?.icono || "";
+    juegoForm.orden.value = juego?.orden ?? 1;
+    juegoForm.activo.value = juego?.activo === false ? "false" : "true";
+    juegoForm.lineupLabel.value = juego?.lineupSegundoCampo?.label || "";
+    juegoForm.lineupOpciones.value = Array.isArray(juego?.lineupSegundoCampo?.opciones) ? juego.lineupSegundoCampo.opciones.join("\n") : "";
+    juegoForm.lineupTextoLibre.checked = !!juego?.lineupSegundoCampo?.textoLibre;
+    juegoForm.lineupTopFragger.checked = !!juego?.lineupSegundoCampo?.topFragger;
+    juegoForm.rangoTipo.value = juego?.rango?.tipo || "ninguno";
+    juegoForm.tiposJugadorPropiosActivo.checked = Array.isArray(juego?.tiposJugadorPropios);
+    juegoForm.campoExtraActivo.checked = !!juego?.campoExtra;
+    juegoForm.campoExtraNombre.value = juego?.campoExtra?.nombre || "";
+    juegoForm.campoExtraLabel.value = juego?.campoExtra?.label || "";
+    document.getElementById("juego-delete-btn").classList.toggle("hidden", !editingJuegoId);
+
+    document.getElementById("juego-roles-rows").innerHTML = "";
+    (juego?.roles || []).forEach(rol => addJuegoTupleRow("juego-roles-rows", rol, "Valor (ej: duelista)", "Etiqueta (ej: Duelista)"));
+    document.getElementById("juego-escalones-rows").innerHTML = "";
+    (juego?.rango?.escalones || []).forEach(esc => addJuegoTupleRow("juego-escalones-rows", esc, "Valor (ej: radiant)", "Etiqueta (ej: Radiant)"));
+    document.getElementById("juego-tiposjugador-rows").innerHTML = "";
+    (juego?.tiposJugadorPropios || []).forEach(t => addJuegoTupleRow("juego-tiposjugador-rows", t, "Valor (ej: titular)", "Etiqueta (ej: Titular)"));
+    document.getElementById("juego-tiposactividad-rows").innerHTML = "";
+    (juego?.tiposActividadExtra || []).forEach(t => addJuegoTupleRow("juego-tiposactividad-rows", t, "Valor (ej: premier)", "Etiqueta (ej: Premier)"));
+
+    toggleJuegoAdvancedFields();
+    juegoModal.classList.remove("hidden");
+}
+
+function closeJuegoModal(){
+    juegoModal.classList.add("hidden");
+    juegoForm.reset();
+    juegoForm.id.disabled = false;
+    editingJuegoId = null;
+}
+
+document.getElementById("close-juego-modal").addEventListener("click", closeJuegoModal);
+document.getElementById("cancel-juego-modal").addEventListener("click", closeJuegoModal);
+document.getElementById("juego-rol-add").addEventListener("click", () => addJuegoTupleRow("juego-roles-rows", null, "Valor (ej: duelista)", "Etiqueta (ej: Duelista)"));
+document.getElementById("juego-escalon-add").addEventListener("click", () => addJuegoTupleRow("juego-escalones-rows", null, "Valor (ej: radiant)", "Etiqueta (ej: Radiant)"));
+document.getElementById("juego-tiposjugador-add").addEventListener("click", () => addJuegoTupleRow("juego-tiposjugador-rows", null, "Valor (ej: titular)", "Etiqueta (ej: Titular)"));
+document.getElementById("juego-tiposactividad-add").addEventListener("click", () => addJuegoTupleRow("juego-tiposactividad-rows", null, "Valor (ej: premier)", "Etiqueta (ej: Premier)"));
+document.getElementById("juego-rango-tipo-select").addEventListener("change", toggleJuegoAdvancedFields);
+document.getElementById("juego-tiposjugador-activo").addEventListener("change", toggleJuegoAdvancedFields);
+document.getElementById("juego-campoextra-activo").addEventListener("change", toggleJuegoAdvancedFields);
+document.getElementById("juego-form").addEventListener("change", (event) => {
+    if(event.target.name === "lineupTextoLibre") toggleJuegoAdvancedFields();
+});
+
+document.getElementById("juego-delete-btn").addEventListener("click", async () => {
+    if(!editingJuegoId) return;
+    if(!confirm("¿Eliminar este Juego? Esto NO borra los rosters/usuarios ya cargados con este juego.")) return;
+    try{
+        await deleteDoc(doc(db, "juegos", editingJuegoId));
+        closeJuegoModal();
+    }catch(error){
+        console.error(error);
+        alert("No se pudo eliminar el Juego.");
+    }
+});
+
+juegoForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    juegoError.textContent = "";
+
+    const formData = new FormData(juegoForm);
+    const id = String(formData.get("id") || "").trim().toLowerCase();
+    const label = String(formData.get("label") || "").trim();
+    const labelCorto = String(formData.get("labelCorto") || "").trim();
+
+    if(!editingJuegoId && !/^[a-z0-9]+$/.test(id)){
+        juegoError.textContent = "El identificador debe ser solo minúsculas y números, sin espacios.";
+        return;
+    }
+    if(!label || !labelCorto){
+        juegoError.textContent = "Completá nombre y nombre corto.";
+        return;
+    }
+    const roles = readJuegoTupleRows("juego-roles-rows");
+    if(!roles.length){
+        juegoError.textContent = "Agregá al menos un rol.";
+        return;
+    }
+
+    const rangoTipo = String(formData.get("rangoTipo") || "ninguno");
+    const rango = rangoTipo === "escalera"
+        ? { tipo: "escalera", escalones: readJuegoTupleRows("juego-escalones-rows") }
+        : { tipo: rangoTipo };
+    const tiposJugadorPropios = juegoForm.tiposJugadorPropiosActivo.checked
+        ? readJuegoTupleRows("juego-tiposjugador-rows")
+        : null;
+    const campoExtra = juegoForm.campoExtraActivo.checked
+        ? { nombre: String(formData.get("campoExtraNombre") || "").trim(), label: String(formData.get("campoExtraLabel") || "").trim() }
+        : null;
+    const lineupOpciones = String(formData.get("lineupOpciones") || "").split("\n").map(s => s.trim()).filter(Boolean);
+
+    const payload = {
+        label,
+        labelCorto,
+        icono: String(formData.get("icono") || "").trim(),
+        orden: Number(formData.get("orden")) || 0,
+        activo: formData.get("activo") === "true",
+        roles,
+        rango,
+        tiposJugadorPropios,
+        tiposActividadExtra: readJuegoTupleRows("juego-tiposactividad-rows"),
+        campoExtra,
+        lineupSegundoCampo: {
+            label: String(formData.get("lineupLabel") || "").trim(),
+            opciones: lineupOpciones,
+            textoLibre: juegoForm.lineupTextoLibre.checked,
+            topFragger: juegoForm.lineupTopFragger.checked
+        },
+        updatedAt: serverTimestamp()
+    };
+
+    try{
+        if(editingJuegoId){
+            await updateDoc(doc(db, "juegos", editingJuegoId), payload);
+        }else{
+            const existing = await getDoc(doc(db, "juegos", id));
+            if(existing.exists()){
+                juegoError.textContent = "Ya existe un Juego con ese identificador.";
+                return;
+            }
+            payload.createdAt = serverTimestamp();
+            await setDoc(doc(db, "juegos", id), payload);
+        }
+        closeJuegoModal();
+    }catch(error){
+        console.error(error);
+        juegoError.textContent = "No se pudo guardar el Juego.";
+    }
+});
 
 function renderAlianzasPanel(container){
     container.innerHTML = `

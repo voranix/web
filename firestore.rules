@@ -344,6 +344,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Definición de cada juego/roster (roles, rangos, campo de lineup,
+    // etc.) — leída sin login por las páginas públicas de rosters;
+    // crear/editar un juego queda admin-only (no es gestión diaria de
+    // roster, es estructura).
+    match /juegos/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Alertas de raid de Twitch para el overlay: solo las escribe el Admin
     // SDK desde la Cloud Function del webhook de EventSub, nunca un cliente.
     match /raidAlerts/{doc} {
