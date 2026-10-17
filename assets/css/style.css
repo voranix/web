@@ -710,9 +710,11 @@ td{color:#d7d7e5;font-size:12px;}
 td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--border);}
 .actions{display:flex;gap:8px;flex-wrap:wrap;}
 .empty{padding:24px;color:var(--gris);text-align:center;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:18px;z-index:2000;}
 .modal-card{width:min(760px,100%);max-height:90vh;overflow:auto;background:#0c0c1e;border:1px solid var(--border-accent);border-radius:var(--r-md);padding:22px;}
 .modal-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px;}
+.modal-head h2{min-width:0;}
+.modal-head .btn{flex-shrink:0;}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
 .field.full{grid-column:1/-1;}
 .help{color:var(--gris-dark);font-size:11px;line-height:1.5;margin-top:4px;}
@@ -1263,7 +1265,8 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     .features-grid,
     .upcoming-list,
     .roster-grid,
-    .social-grid {
+    .social-grid,
+    .form-grid {
         grid-template-columns: 1fr;
     }
 
