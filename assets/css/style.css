@@ -1131,7 +1131,11 @@ td img{width:50px;height:50px;object-fit:cover;border-radius:var(--r-sm);border:
     /* El menú de escritorio (10 items) ya no entra cómodo desde 1024px para
        abajo, así que el hamburger arranca acá en vez de a los 768px. */
     .menu-toggle { display: block; }
-    .menu-content { gap: 14px; }
+    /* El navbar es position:absolute a este ancho (se despliega debajo del
+       header), así que deja de contar como hijo flex: con solo el hamburger
+       y el logo, "space-between" los empuja a extremos opuestos dejando un
+       hueco enorme en el medio. Acá van juntos a la izquierda. */
+    .menu-content { gap: 14px; justify-content: flex-start; }
     .navbar {
         display: none;
         position: absolute;
