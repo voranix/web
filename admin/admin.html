@@ -3657,10 +3657,12 @@ function renderJuegosPanel(container){
     container.innerHTML = `
 <div class="rivals-toolbar">
     <button class="btn small" type="button" id="juego-add-btn">+ Nuevo Juego</button>
+    <button class="btn secondary small" type="button" id="migrar-juegos-btn">Migrar juegos actuales (Valorant/FIFA/DBD)</button>
 </div>
 <div id="juegos-grid" class="rivals-alianzas-grid"><p class="loading">Cargando...</p></div>`;
 
     document.getElementById("juego-add-btn").addEventListener("click", () => openJuegoModal(null));
+    document.getElementById("migrar-juegos-btn").addEventListener("click", migrarJuegosActuales);
 
     const grid = document.getElementById("juegos-grid");
     let currentJuegos = [];
@@ -6362,6 +6364,101 @@ async function migrarEmailsAPrivado(){
     }catch(error){
         console.error(error);
         alert("No se pudo completar la migración.");
+    }
+}
+
+// Migración única (idempotente, no pisa un juego que ya exista en la
+// colección nueva — si un admin ya lo editó a mano desde "Juegos", correr
+// esto de nuevo no le pisa esos cambios): crea juegos/valorant,
+// valorantsecundario, fifa y dbd con los valores exactos que hoy están
+// hardcodeados en el admin, para que la colección "juegos" arranque
+// idéntica al comportamiento actual antes de que nada dependa de leerla.
+async function migrarJuegosActuales(){
+    if(!confirm("¿Migrar Valorant Principal, Valorant Secundario, FIFA y Dead by Daylight a la colección Juegos? No pisa un juego que ya hayas creado/editado con ese mismo identificador.")) return;
+
+    const valorantRango = { tipo: "escalera", escalones: VALORANT_RANKS.slice(1) };
+    const valorantActividadExtra = [["premier", "Premier"], ["liga", "Liga"]];
+
+    const definiciones = [
+        {
+            id: "valorant",
+            data: {
+                label: "Valorant Principal",
+                labelCorto: "Valorant A",
+                icono: "🔫",
+                orden: 1,
+                activo: true,
+                roles: VALORANT_ROLES,
+                rango: valorantRango,
+                tiposJugadorPropios: null,
+                tiposActividadExtra: valorantActividadExtra,
+                campoExtra: null,
+                lineupSegundoCampo: { label: "Selecciona agente", opciones: VALORANT_AGENTS, textoLibre: false, topFragger: true }
+            }
+        },
+        {
+            id: "valorantsecundario",
+            data: {
+                label: "Valorant Secundario",
+                labelCorto: "Valorant B",
+                icono: "🔫",
+                orden: 2,
+                activo: true,
+                roles: VALORANT_ROLES,
+                rango: valorantRango,
+                tiposJugadorPropios: null,
+                tiposActividadExtra: valorantActividadExtra,
+                campoExtra: null,
+                lineupSegundoCampo: { label: "Selecciona agente", opciones: VALORANT_AGENTS, textoLibre: false, topFragger: true }
+            }
+        },
+        {
+            id: "fifa",
+            data: {
+                label: "FIFA",
+                labelCorto: "FIFA",
+                icono: "⚽",
+                orden: 3,
+                activo: true,
+                roles: FIFA_ROLES,
+                rango: { tipo: "texto" },
+                tiposJugadorPropios: null,
+                tiposActividadExtra: [],
+                campoExtra: null,
+                lineupSegundoCampo: { label: "Selecciona posición", opciones: FIFA_ROLES.filter(([value]) => value).map(([, label]) => label), textoLibre: false, topFragger: false }
+            }
+        },
+        {
+            id: "dbd",
+            data: {
+                label: "Dead by Daylight",
+                labelCorto: "DBD",
+                icono: "🔪",
+                orden: 4,
+                activo: true,
+                roles: DBD_ROLES,
+                rango: { tipo: "ninguno" },
+                tiposJugadorPropios: DBD_TIPO_JUGADOR,
+                tiposActividadExtra: [],
+                campoExtra: { nombre: "personaje", label: "Personaje principal" },
+                lineupSegundoCampo: { label: "Personaje jugado", opciones: [], textoLibre: true, topFragger: false }
+            }
+        }
+    ];
+
+    try{
+        let creados = 0, existentes = 0;
+        for(const juego of definiciones){
+            const ref = doc(db, "juegos", juego.id);
+            const existing = await getDoc(ref);
+            if(existing.exists()){ existentes++; continue; }
+            await setDoc(ref, { ...juego.data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+            creados++;
+        }
+        alert(`Migración de Juegos: ${creados} creado(s), ${existentes} ya existían (sin tocar).`);
+    }catch(error){
+        console.error(error);
+        alert("No se pudo completar la migración de Juegos.");
     }
 }
 
