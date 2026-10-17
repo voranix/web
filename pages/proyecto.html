@@ -191,7 +191,7 @@ function renderProyecto(item) {
 
         ${galeria.length ? `
         <div class="proyecto-gallery">
-            ${galeria.map(url => `<a href="${escapeHtml(assetUrl(url))}" target="_blank" rel="noopener"><img src="${escapeHtml(assetUrl(url))}" alt="" loading="lazy"></a>`).join("")}
+            ${galeria.map(url => `<a href="${escapeHtml(assetUrl(url))}" target="_blank" rel="noopener"><img src="${escapeHtml(assetUrl(url))}" alt="" loading="lazy" onerror="this.closest('a').style.display='none'"></a>`).join("")}
         </div>` : ""}
 
         ${redes.length ? `

@@ -154,7 +154,7 @@ function renderUpcoming(item) {
     ${item.img ? `<img class="upcoming-icon-img" src="${escapeHtml(assetUrl(item.img))}" alt="" onerror="this.remove()">` : '<i class="fas fa-rocket upcoming-icon"></i>'}
     <div>
         <h3>${escapeHtml(item.titulo) || "Sin título"}</h3>
-        ${categoria || item.fecha ? `<p class="meta-line">${[categoria, item.fecha].filter(Boolean).map(escapeHtml).join(" · ")}</p>` : ""}
+        ${categoria || item.fecha ? `<p class="meta-chip">${[categoria, item.fecha].filter(Boolean).map(escapeHtml).join(" · ")}</p>` : ""}
         ${item.descripcion ? `<p>${escapeHtml(item.descripcion)}</p>` : ""}
     </div>
 </a>`;

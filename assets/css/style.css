@@ -405,7 +405,7 @@ button { cursor: pointer; }
 .section-title { text-align:center; margin-bottom:48px; }
 .section-title p { font-size:13px; margin-top:8px; }
 .accent-line { display:block; width:48px; height:2px; background:var(--grad); margin:12px auto; border-radius:2px; }
-.roster-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:20px; }
+.roster-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),240px)); gap:20px; }
 
 /* Streamer card */
 .card {
