@@ -38,6 +38,14 @@ const STYLE = `
 }
 #report-bug-submit:disabled{ opacity:.6; cursor:default; }
 #report-bug-success{ text-align:center; padding:14px 0; color:#00e676; font-size:13px; }
+
+/* El botón flotante queda fijo sobre el contenido; en mobile, donde hay
+   menos aire alrededor, puede terminar tapando el final de una tarjeta o
+   un párrafo que llega hasta el borde inferior. Dejamos un margen extra
+   abajo para que siempre haya con qué hacer scroll y despejarlo. */
+@media (max-width:480px){
+    body{ padding-bottom:64px; }
+}
 `;
 
 function injectStyles() {

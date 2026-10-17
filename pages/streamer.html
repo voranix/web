@@ -286,7 +286,7 @@ function renderJuegosFrecuentes(item) {
         <div class="perfil-juegos-grid">
             ${todos.map(j => `
             <div class="perfil-juego-tile">
-                ${j.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(j.boxArtUrl, 380, 507))}" alt="${escapeHtml(j.nombre)}" loading="lazy">` : `<div class="perfil-juego-sin-arte"><i class="fas fa-gamepad"></i></div>`}
+                ${j.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(j.boxArtUrl, 380, 507))}" alt="${escapeHtml(j.nombre)}" loading="lazy" onerror="window.boxArtError(this)">` : `<div class="perfil-juego-sin-arte"><i class="fas fa-gamepad"></i></div>`}
                 <span>${escapeHtml(j.nombre)}</span>
             </div>`).join("")}
         </div>
@@ -298,6 +298,13 @@ function renderJuegosFrecuentes(item) {
 window.avatarError = function (imgEl) {
     const frame = imgEl.closest(".perfil-avatar-frame");
     if (frame) frame.innerHTML = `<div class="perfil-avatar-fallback"><i class="fas fa-user"></i></div>`;
+};
+
+// Mismo criterio para el box-art de Twitch: si la URL falla (categoría
+// renombrada/eliminada), se reemplaza por el mismo ícono de respaldo que ya
+// se usa cuando la categoría no trae box-art.
+window.boxArtError = function (imgEl) {
+    imgEl.outerHTML = `<div class="perfil-juego-sin-arte"><i class="fas fa-gamepad"></i></div>`;
 };
 
 // Prioridad: lo que el streamer haya cargado a mano desde Mi Tarjeta gana

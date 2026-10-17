@@ -1989,6 +1989,13 @@ ${guildId ? `
         return String(url).replace(/(?:\{width\}|\d+)x(?:\{height\}|\d+)\.jpg/, `${w}x${h}.jpg`);
     }
 
+    // Si el box-art de Twitch falla (categoría renombrada/eliminada), se
+    // reemplaza por el mismo ícono de respaldo que ya se usa cuando la
+    // categoría no trae box-art, en vez de dejar el ícono roto del navegador.
+    window.categoriaTileError = function (imgEl) {
+        imgEl.outerHTML = `<div class="categoria-tile-sin-arte"><i class="fas fa-gamepad"></i></div>`;
+    };
+
     function twitchHandleFromUrl(url){
         if(!url) return "";
         const clean = String(url).trim().replace(/\/+$/, "");
@@ -2383,7 +2390,7 @@ ${guildId ? `
     <div class="categoria-tiles" id="categoria-tiles">
         ${juegosManual.length ? juegosManual.map((j, i) => `
 <div class="categoria-tile">
-    ${j.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(j.boxArtUrl, 380, 507))}" alt="${escapeHtml(j.nombre)}" loading="lazy">` : `<div class="categoria-tile-sin-arte"><i class="fas fa-gamepad"></i></div>`}
+    ${j.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(j.boxArtUrl, 380, 507))}" alt="${escapeHtml(j.nombre)}" loading="lazy" onerror="window.categoriaTileError(this)">` : `<div class="categoria-tile-sin-arte"><i class="fas fa-gamepad"></i></div>`}
     <span>${escapeHtml(j.nombre)}</span>
     <button type="button" class="categoria-tile-quitar" data-quitar-categoria="${i}" aria-label="Quitar categoría"><i class="fas fa-xmark"></i></button>
 </div>`).join("") : `<p class="muted" style="grid-column:1/-1;">Todavía no agregaste categorías a mano.</p>`}
@@ -2565,7 +2572,7 @@ ${guildId ? `
                     categoriaResultados.innerHTML = categorias.length
                         ? categorias.map(c => `
 <div class="categoria-resultado-item" data-agregar-categoria data-id="${escapeHtml(c.id)}" data-nombre="${escapeHtml(c.nombre)}" data-box-art="${escapeHtml(c.boxArtUrl)}">
-    ${c.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(c.boxArtUrl, 76, 100))}" alt="">` : ""}
+    ${c.boxArtUrl ? `<img src="${escapeHtml(boxArtEn(c.boxArtUrl, 76, 100))}" alt="" onerror="this.remove()">` : ""}
     <span>${escapeHtml(c.nombre)}</span>
 </div>`).join("")
                         : `<p class="categoria-resultado-vacio">Sin resultados en Twitch.</p>`;
