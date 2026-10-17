@@ -189,7 +189,7 @@ async function loadProyectos() {
 
         timelineList.innerHTML = realizados.length
             ? realizados.map(renderTimelineItem).join("")
-            : (proximos.length ? "" : `<p class="loading">Todavía no hay proyectos publicados.</p>`);
+            : `<p class="loading">Todavía no hay proyectos realizados.</p>`;
 
         if (!docs.length) {
             timelineList.innerHTML = `<p class="loading">Todavía no hay proyectos publicados.</p>`;

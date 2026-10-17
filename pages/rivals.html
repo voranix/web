@@ -492,9 +492,13 @@ onSnapshot(doc(db, "rivalsConfig", "actual"), (snapshot) => {
     const fechas = [fechaCorta(data.fechaInicio), fechaCorta(data.fechaFin)].filter(Boolean).join(" — ");
     document.getElementById("rivals-temporada-fechas").textContent = fechas;
     const estadoEl = document.getElementById("rivals-temporada-estado");
+    // Sin doc de config todavía no hay nada "activo" que mostrar: ni
+    // "Temporada activa" ni "finalizada" aplican, así que se distingue ese
+    // tercer estado en vez de asumir que está activa por default.
+    const sinConfigurar = !snapshot.exists();
     const finalizada = data.estado === "finalizada";
-    estadoEl.textContent = finalizada ? "Temporada finalizada" : "Temporada activa";
-    estadoEl.classList.toggle("finalizada", finalizada);
+    estadoEl.textContent = sinConfigurar ? "Sin configurar" : (finalizada ? "Temporada finalizada" : "Temporada activa");
+    estadoEl.classList.toggle("finalizada", sinConfigurar || finalizada);
 }, (error) => {
     console.error(error);
 });

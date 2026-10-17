@@ -519,7 +519,7 @@ ${captains.length ? `
 <p class="roster-group-label"><i class="fas fa-crown"></i> Capitán</p>
 <div class="roster-grid roster-grid-captain">${renderGroup(captains)}</div>
 <p class="roster-group-label">Plantilla</p>` : ""}
-<div class="roster-grid">${rest.length ? renderGroup(rest) : (players.length ? "" : `<p class="loading">Todavía no hay jugadores cargados.</p>`)}</div>
+<div class="roster-grid">${rest.length ? renderGroup(rest) : `<p class="loading">${players.length ? "Todavía no hay más jugadores en la plantilla." : "Todavía no hay jugadores cargados."}</p>`}</div>
 ${renderMatchList(actividad, matchView)}`;
 }
 
