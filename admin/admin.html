@@ -12,29 +12,41 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="VX Admin">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
     --morado:#7b2cff; --morado-light:#9d5bff; --naranja:#ff6a00; --bg:#0a0a0f;
     --sidebar:#0d0d18; --card:#111122; --text:#ffffff; --muted:#a9a9bc;
-    --danger:#ff3b5c; --ok:#00c853;
+    --danger:#ff3b5c; --ok:#00c853; --warning:#ffb020;
     /* Superficies consolidadas: antes había ~7 tonos de negro/azulado
        distintos usados sin criterio (#07070d, #151528, #0d0d18, #101020,
        #0b0b16, #1d1d2f...) para el mismo tipo de elemento. Se reducen a 2. */
     --surface:#0a0a14; --surface-2:#151528; --surface-hover:#1a1a30;
     --border:rgba(255,255,255,.09); --border-strong:rgba(123,44,255,.55); --border-2:rgba(255,255,255,.16);
-    --radius-sm:7px; --radius-md:10px; --radius-lg:14px;
-    --shadow-sm:0 2px 10px rgba(0,0,0,.25); --shadow-md:0 10px 30px rgba(0,0,0,.4);
-    --ease:.18s cubic-bezier(.4,0,.2,1);
+    /* Radios más chicos y sombras más secas: el panel es una herramienta
+       de trabajo diaria, no una landing — menos "SaaS redondeado con
+       glow" y más control room. */
+    --radius-sm:3px; --radius-md:5px; --radius-lg:8px;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35); --shadow-md:0 6px 18px rgba(0,0,0,.4);
+    --ease:.15s cubic-bezier(.4,0,.2,1);
+    /* Orbitron queda reservado para momentos de marca (login, logo del
+       sidebar, títulos grandes de sección) en vez de toda la interfaz:
+       usarlo también en botones, tablas y texto de trabajo lo hacía más
+       difícil de leer sin sumar nada. El resto usa una tipografía
+       pensada para pantallas de datos; los valores técnicos (fechas,
+       códigos) van en monoespaciada. */
+    --font-ui:"IBM Plex Sans",sans-serif; --font-display:"Orbitron",sans-serif; --font-mono:"IBM Plex Mono",monospace;
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
+html{ color-scheme:dark; }
 html, body{ height:100%; overflow:hidden; }
-body{ background:var(--bg); color:var(--text); font-family:"Orbitron",sans-serif; }
+body{ background:var(--bg); color:var(--text); font-family:var(--font-ui); }
 img, iframe{ max-width:100%; display:block; }
 button,input,textarea,select{ font:inherit; max-width:100%; }
 button{ cursor:pointer; }
 .hidden{ display:none !important; }
+.mono-value{ font-family:var(--font-mono); letter-spacing:.2px; }
 ::-webkit-scrollbar{ width:8px; height:8px; }
 ::-webkit-scrollbar-track{ background:transparent; }
 ::-webkit-scrollbar-thumb{ background:#2a2a42; border-radius:8px; }
@@ -42,10 +54,10 @@ button{ cursor:pointer; }
 :focus-visible{ outline:2px solid var(--morado-light); outline-offset:2px; }
 .login-screen{
     height:100vh; overflow-y:auto; display:grid; place-items:center; padding:24px;
-    background:radial-gradient(ellipse 70% 60% at 50% 20%, rgba(123,44,255,.14) 0%, transparent 60%), var(--bg);
+    background:var(--bg);
 }
-.login-card{ width:min(420px,100%); background:var(--card); border:1px solid rgba(123,44,255,.45); border-radius:var(--radius-lg); padding:32px; box-shadow:var(--shadow-md), 0 0 40px rgba(123,44,255,.14); }
-.login-card h1{ margin-bottom:10px; font-size:28px; letter-spacing:.5px; }
+.login-card{ width:min(420px,100%); background:var(--card); border:1px solid var(--border-2); border-top:3px solid var(--morado); border-radius:var(--radius-lg); padding:32px; box-shadow:var(--shadow-md); }
+.login-card h1{ margin-bottom:10px; font-size:26px; letter-spacing:.5px; font-family:var(--font-display); }
 .login-card p,.muted{ color:var(--muted); }
 .field{ display:flex; flex-direction:column; gap:8px; margin:16px 0; }
 .field label{ color:var(--muted); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
@@ -103,7 +115,7 @@ button{ cursor:pointer; }
 .sidebar{ background:var(--sidebar); border-right:1px solid var(--border); padding:20px 14px; height:100vh; overflow-y:auto; display:flex; flex-direction:column; }
 .brand{ display:flex; align-items:center; gap:12px; margin-bottom:24px; padding:0 6px; }
 .brand img{ width:42px; height:42px; object-fit:contain; }
-.brand strong{ font-size:17px; letter-spacing:.5px; }
+.brand strong{ font-size:17px; letter-spacing:.5px; font-family:var(--font-display); }
 .nav{ display:flex; flex-direction:column; gap:2px; }
 .nav-group{ margin-bottom:4px; }
 .nav-group:last-child{ margin-bottom:0; }
@@ -171,7 +183,7 @@ button{ cursor:pointer; }
 .notif-activar-btn:disabled{ opacity:.6; cursor:default; }
 .content{ padding:28px; flex:1 1 auto; overflow-y:auto; max-width:1440px; }
 .section-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; }
-.section-head h2{ font-size:26px; margin-bottom:6px; letter-spacing:.3px; }
+.section-head h2{ font-size:26px; margin-bottom:6px; letter-spacing:.3px; font-family:var(--font-display); }
 .panel{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius-md); overflow:hidden; box-shadow:var(--shadow-sm); }
 .table-toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; padding:16px; border-bottom:1px solid var(--border); }
 .table-toolbar input[type="search"]{ flex:1 1 220px; min-width:160px; max-width:380px; background:var(--surface); color:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; outline:none; transition:border-color var(--ease); }
@@ -1816,6 +1828,9 @@ function tableValue(value, type, options){
     const text = escapeHtml(value);
     if(type === "textarea" || String(value).length > 60){
         return `<span class="cell-clamp" title="${text}">${text}</span>`;
+    }
+    if(type === "date" || type === "datetime-local"){
+        return `<span class="mono-value">${text}</span>`;
     }
     return text;
 }
@@ -5409,7 +5424,7 @@ function renderOverlayCodigosPanel(container){
         grid.innerHTML = currentCodigos.length ? currentCodigos.map(cod => `
 <div class="rivals-alianza-card">
     ${cod.imagen ? `<div class="rivals-alianza-head"><img src="${escapeHtml(assetUrl(cod.imagen))}" alt="${escapeHtml(cod.codigo)}"></div>` : ""}
-    <h4>${escapeHtml(cod.codigo) || "Sin código"}</h4>
+    <h4 class="mono-value">${escapeHtml(cod.codigo) || "Sin código"}</h4>
     ${cod.marca ? `<p class="help">${escapeHtml(cod.marca)}</p>` : ""}
     <p class="rivals-miembros-count">${escapeHtml(cod.descripcion) || ""} · ${cod.activo === false ? "Inactivo" : "Activo"}</p>
     <div class="actions">
