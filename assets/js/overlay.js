@@ -490,6 +490,8 @@ export function initCustomLayout(orientacion) {
     const canal = (params.get("canal") || "").toLowerCase().trim();
     if (!canal) return;
 
+    const native = LAYOUT_NATIVE_SIZE[orientacion];
+
     onSnapshot(doc(db, "overlayLayout", canal), (snapshot) => {
         const layout = (snapshot.exists() ? snapshot.data()[orientacion] : null) || {};
         for (const [key, getEl] of Object.entries(LAYOUT_ELEMENTOS)) {
@@ -497,8 +499,6 @@ export function initCustomLayout(orientacion) {
             if (!pos) continue;
             const el = getEl();
             if (!el) continue;
-            el.style.left = `${pos.x}%`;
-            el.style.top = `${pos.y}%`;
             el.style.right = "auto";
             el.style.bottom = "auto";
             el.style.display = pos.visible === false ? "none" : "";
@@ -511,6 +511,25 @@ export function initCustomLayout(orientacion) {
                 const base = (LAYOUT_BASE_TRANSFORM[orientacion] || {})[key] || "";
                 el.style.transformOrigin = "top left";
                 el.style.transform = `${base} scale(${pos.scale})`.trim();
+            }
+            el.style.left = `${pos.x}%`;
+            el.style.top = `${pos.y}%`;
+
+            // El editor (initEditorMode) ya evita que una posición guardada
+            // deje un elemento afuera del canvas, pero esa corrección solo
+            // se aplica ahí — acá, en el overlay real que ve OBS, una
+            // posición vieja (de antes de que existiera ese resguardo) o
+            // directamente inválida se aplicaba tal cual, lo que podía
+            // sacar el elemento del área visible sin que se notara por qué
+            // "no aparecía". Mismo cálculo acá, para que esto nunca pase.
+            if (pos.visible !== false) {
+                const rect = el.getBoundingClientRect();
+                const anchor = (LAYOUT_ANCHOR_OFFSET[orientacion] || {})[key];
+                const clamped = clampPosicionAlCanvas(pos, rect.width, rect.height, native, anchor);
+                if (clamped.x !== pos.x || clamped.y !== pos.y) {
+                    el.style.left = `${clamped.x}%`;
+                    el.style.top = `${clamped.y}%`;
+                }
             }
         }
     }, (error) => console.error("overlayLayout", error));
@@ -793,7 +812,12 @@ export async function initEditorMode(orientacion) {
                 const distX = moveEvent.clientX - anchorX;
                 const distY = moveEvent.clientY - anchorY;
                 const nuevaEscala = Math.max(distX / naturalW, distY / naturalH);
-                state[key].scale = Math.max(1, Math.min(3, nuevaEscala));
+                // Si el elemento medía 0 en el momento de agarrar el handle
+                // (carrera rara con el layout), la división da NaN/Infinity y
+                // Math.min/max lo propaga — un scale inválido hace que el
+                // elemento directamente desaparezca (CSS ignora scale(NaN)).
+                // Mejor quedarse en el tamaño normal que guardar algo roto.
+                state[key].scale = Number.isFinite(nuevaEscala) ? Math.max(1, Math.min(3, nuevaEscala)) : 1;
                 aplicarPosicion(key);
             }
             function onUp() {

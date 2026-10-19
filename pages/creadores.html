@@ -849,7 +849,13 @@
 
     function renderOverlayLinks(profile){
         const content = document.getElementById("overlay-links-content");
-        const twitchLogin = profile.twitchLogin || "";
+        // Siempre en minúscula: overlay.js lee el "canal" de la URL con
+        // .toLowerCase() (ver initCustomLayout/initEditorMode), así que si
+        // acá se arma con otra capitalización, el link que el streamer
+        // pega en OBS y el doc que se guarda/lee en overlayLayout dejan de
+        // coincidir — un Twitch login con mayúsculas bastaba para que el
+        // overlay en vivo nunca encontrara el diseño guardado.
+        const twitchLogin = (profile.twitchLogin || "").toLowerCase().trim();
 
         if(!twitchLogin){
             content.innerHTML = `<p class="muted">Conectá tu cuenta de Twitch en la pestaña "Redes" para generar tus links personalizados de overlay.</p>`;
@@ -1631,7 +1637,7 @@ ${guildId ? `
 
     function renderOverlayEditor(profile){
         const block = document.getElementById("overlay-editor-block");
-        const twitchLogin = profile.twitchLogin || "";
+        const twitchLogin = (profile.twitchLogin || "").toLowerCase().trim();
         if(!twitchLogin){
             block.classList.add("hidden");
             return;
@@ -1650,7 +1656,7 @@ ${guildId ? `
     });
 
     document.getElementById("layout-save-btn").addEventListener("click", async () => {
-        const twitchLogin = currentProfile?.twitchLogin || "";
+        const twitchLogin = (currentProfile?.twitchLogin || "").toLowerCase().trim();
         const msgEl = document.getElementById("layout-msg");
         const iframe = document.getElementById("layout-iframe");
         if(!twitchLogin) return;
@@ -1672,7 +1678,7 @@ ${guildId ? `
     });
 
     document.getElementById("layout-reset-btn").addEventListener("click", async () => {
-        const twitchLogin = currentProfile?.twitchLogin || "";
+        const twitchLogin = (currentProfile?.twitchLogin || "").toLowerCase().trim();
         const msgEl = document.getElementById("layout-msg");
         const iframe = document.getElementById("layout-iframe");
         if(!twitchLogin) return;
