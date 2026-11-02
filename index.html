@@ -192,7 +192,8 @@
                     <i class="fas fa-lock"></i> La postulación se activa el 8 de noviembre
                 </div>
 
-                <form id="erineo-form" class="proximamente-form hidden" action="https://formspree.io/f/mgopqakl" method="POST">
+                <p class="proximamente-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
+                <form id="erineo-form" class="proximamente-form hidden" action="https://formspree.io/f/xaeelvez" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="_subject" value="Postulación Erineo (Minecraft)">
                     <input type="hidden" name="_captcha" value="false">
                     <input type="hidden" name="asunto" value="erineo">
@@ -206,8 +207,64 @@
                         <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft (Java/Bedrock)" required>
                     </div>
                     <div class="input-group">
+                        <select name="plataforma" required>
+                            <option value="" disabled selected>Plataforma principal</option>
+                            <option value="Twitch">Twitch</option>
+                            <option value="YouTube">YouTube</option>
+                            <option value="TikTok">TikTok</option>
+                            <option value="Kick">Kick</option>
+                            <option value="Otra">Otra</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="url" name="canal_url" placeholder="Link a tu canal/perfil principal" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" name="seguidores" placeholder="Seguidores/suscriptores aprox. (ej: 1.200 en Twitch)" required>
+                    </div>
+                    <div class="input-group">
+                        <select name="frecuencia_contenido" required>
+                            <option value="" disabled selected>¿Con qué frecuencia subís contenido o transmitís?</option>
+                            <option value="Diaria">Diaria</option>
+                            <option value="Varias veces por semana">Varias veces por semana</option>
+                            <option value="Semanal">Semanal</option>
+                            <option value="Esporádica">Esporádica</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <select name="experiencia_hardcore" required>
+                            <option value="" disabled selected>Experiencia con Minecraft survival/hardcore</option>
+                            <option value="Mucha">Mucha</option>
+                            <option value="Algo">Algo</option>
+                            <option value="Poca o ninguna">Poca o ninguna</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" name="disponibilidad" placeholder="Disponibilidad horaria (zona horaria + franjas)" required>
+                    </div>
+                    <div class="input-group">
+                        <select name="como_supo" required>
+                            <option value="" disabled selected>¿Cómo te enteraste de Erineo?</option>
+                            <option value="Discord">Discord</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="TikTok">TikTok</option>
+                            <option value="Twitter/X">Twitter/X</option>
+                            <option value="Twitch">Twitch</option>
+                            <option value="Recomendación de otro creador">Recomendación de otro creador</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="file-label" for="erineo-skin">Skin de tu personaje (PNG, opcional)</label>
+                        <input type="file" id="erineo-skin" name="skin" accept="image/png">
+                    </div>
+                    <div class="input-group">
                         <textarea name="mensaje" placeholder="Contanos por qué querés sumarte a Erineo..." required></textarea>
                     </div>
+                    <label class="input-checkbox-row">
+                        <input type="checkbox" name="compromiso" value="Sí" required>
+                        <span>Confirmo que puedo comprometerme a transmitir/grabar contenido durante las 3 semanas del evento.</span>
+                    </label>
                     <button type="submit" id="erineo-submit" class="btn">Postularme</button>
                     <p id="erineo-success" class="proximamente-msg success hidden">✅ ¡Postulación enviada! Te contactamos pronto.</p>
                     <p id="erineo-error" class="proximamente-msg error hidden">⚠️ No se pudo enviar. Probá de nuevo o escribinos por Discord.</p>
@@ -611,12 +668,25 @@ const successMsg = document.getElementById("erineo-success");
 const errorMsg = document.getElementById("erineo-error");
 
 async function enviarAFirestore(formData) {
+    // El archivo de la skin no se puede guardar en Firestore (no soporta
+    // File/Blob como valor de campo) — ese adjunto solo viaja a Formspree;
+    // acá únicamente dejamos registrado si vino uno o no.
+    const skinFile = formData.get("skin");
     await addDoc(collection(db, "mensajes"), {
         nombre: formData.get("nombre") || "",
         email: String(formData.get("email") || "").trim().toLowerCase(),
         asunto: "erineo",
         mensaje: formData.get("mensaje") || "",
         usuarioMinecraft: formData.get("usuario_minecraft") || "",
+        plataforma: formData.get("plataforma") || "",
+        canalUrl: formData.get("canal_url") || "",
+        seguidores: formData.get("seguidores") || "",
+        frecuenciaContenido: formData.get("frecuencia_contenido") || "",
+        experienciaHardcore: formData.get("experiencia_hardcore") || "",
+        disponibilidad: formData.get("disponibilidad") || "",
+        comoSupo: formData.get("como_supo") || "",
+        compromiso: formData.get("compromiso") === "Sí",
+        skinAdjunta: !!(skinFile && skinFile.name),
         leido: false,
         createdAt: serverTimestamp()
     });
