@@ -304,8 +304,9 @@ button { cursor: pointer; }
 .proximamente-locked {
     display:flex; align-items:center; gap:10px;
     background:rgba(255,106,0,0.08); border:1px solid rgba(255,106,0,0.3); color:var(--naranja-light);
-    border-radius:var(--r-md); padding:14px 20px; font-size:13px; font-weight:600;
+    border-radius:var(--r-md); padding:14px 20px; font-size:13px; font-weight:600; line-height:1.6;
 }
+.proximamente-locked a { color:#fff; text-decoration:underline; font-weight:700; }
 .proximamente-form { max-width:480px; text-align:left; }
 .proximamente-form-note {
     display:flex; align-items:center; gap:8px; max-width:480px; font-size:12px; color:var(--morado-light);
@@ -330,6 +331,29 @@ button { cursor: pointer; }
 .proximamente-msg.error { color:#ff5c7a; }
 .proximamente-more { display:inline-flex; align-items:center; gap:8px; margin-top:24px; font-size:13px; font-weight:600; color:var(--morado-light); }
 .proximamente-more:hover { text-decoration:underline; }
+
+.erineo-modal { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; }
+.erineo-modal.hidden { display:none; }
+.erineo-modal-backdrop { position:absolute; inset:0; background:rgba(5,2,15,0.82); backdrop-filter:blur(4px); }
+.erineo-modal-panel {
+    position:relative; width:100%; max-width:520px; max-height:88vh; overflow-y:auto;
+    background:var(--card); border:1px solid var(--border-accent); border-radius:var(--r-lg);
+    padding:32px 28px; box-shadow:0 30px 80px rgba(0,0,0,0.6); animation:erineoModalIn .25s ease;
+}
+.erineo-modal-panel h3 { font-size:1.3rem; margin-bottom:14px; padding-right:30px; }
+.erineo-modal-panel .proximamente-form,
+.erineo-modal-panel .proximamente-form-note { max-width:none; }
+.erineo-modal-close {
+    position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:50%;
+    border:1px solid var(--border); background:rgba(255,255,255,0.04); color:#fff; font-size:20px;
+    line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:var(--ease);
+}
+.erineo-modal-close:hover { border-color:var(--border-accent); background:rgba(255,255,255,0.08); }
+@keyframes erineoModalIn { from { opacity:0; transform:translateY(14px) scale(.98); } to { opacity:1; transform:none; } }
+body.erineo-modal-open { overflow:hidden; }
+@media (max-width:560px) {
+    .erineo-modal-panel { padding:26px 18px; max-height:92vh; }
+}
 
 @media (max-width:860px) {
     .proximamente-card { grid-template-columns:1fr; text-align:center; padding:40px 28px; }

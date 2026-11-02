@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Erineo | VORANIX</title>
-    <meta name="description" content="Erineo: un evento hardcore de Minecraft de VORANIX Studio. 3 semanas, una venganza. Postulaciones abiertas el 8 de noviembre.">
+    <meta name="description" content="Erineo: un evento hardcore de Minecraft de VORANIX Studio. 3 semanas, una venganza. Acceso anticipado para creadores el 3 de noviembre, público general el 4.">
     <link rel="icon" type="image/png" href="/imagenes/logopng.png">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
@@ -87,14 +87,24 @@
                     <div class="countdown-box"><span id="erineo-cd-min">00</span><label>Min</label></div>
                     <div class="countdown-box"><span id="erineo-cd-seg">00</span><label>Seg</label></div>
                 </div>
-                <p class="proximamente-countdown-label">Para que se abra la postulación</p>
+                <p class="proximamente-countdown-label">Para el acceso anticipado de creadores</p>
 
                 <div id="erineo-postulacion-locked" class="proximamente-locked">
-                    <i class="fas fa-lock"></i> La postulación se activa el 8 de noviembre
+                    <i class="fas fa-lock"></i> Acceso anticipado para creadores el 3 de noviembre. Público general: 4 de noviembre.
                 </div>
 
+                <p class="proximamente-form-note hidden" id="erineo-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
+                <button type="button" id="erineo-open-form-btn" class="btn hidden"><i class="fas fa-paper-plane"></i> Postularme</button>
+            </div>
+        </div>
+
+        <div id="erineo-modal" class="erineo-modal hidden">
+            <div id="erineo-modal-backdrop" class="erineo-modal-backdrop"></div>
+            <div class="erineo-modal-panel" role="dialog" aria-modal="true" aria-labelledby="erineo-modal-title">
+                <button type="button" id="erineo-modal-close" class="erineo-modal-close" aria-label="Cerrar">&times;</button>
+                <h3 id="erineo-modal-title">Postulación a Erineo</h3>
                 <p class="proximamente-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
-                <form id="erineo-form" class="proximamente-form hidden" action="https://formspree.io/f/xaeelvez" method="POST" enctype="multipart/form-data">
+                <form id="erineo-form" class="proximamente-form" action="https://formspree.io/f/xaeelvez" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="_subject" value="Postulación Erineo (Minecraft)">
                     <input type="hidden" name="_captcha" value="false">
                     <input type="hidden" name="asunto" value="erineo">
@@ -178,7 +188,7 @@
 <section class="container erineo-detalle reveal">
     <h2>Sobre Erineo</h2>
     <p class="muted">Erineo es el próximo evento de VORANIX Studio: una serie hardcore de Minecraft pensada para jugarse en comunidad a lo largo de 3 semanas, con un hilo narrativo de venganza como eje del mundo que vamos a construir junto a quienes se postulen.</p>
-    <p class="muted">Todavía estamos cerrando los últimos detalles (reglas, formato y fechas de cada etapa) — los iremos anunciando por Discord y redes a medida que se acerque la apertura de postulaciones, el <strong>8 de noviembre</strong>.</p>
+    <p class="muted">Todavía estamos cerrando los últimos detalles (reglas, formato y fechas de cada etapa) — los iremos anunciando por Discord y redes a medida que se acerque la apertura de postulaciones: acceso anticipado para cuentas de creador VORANIX el <strong>3 de noviembre</strong>, público general el <strong>4 de noviembre</strong>.</p>
     <div class="erineo-cta">
         <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener" class="btn btn-outline"><i class="fab fa-discord"></i> Unite al Discord para no perderte nada</a>
         <a href="/pages/proyectos.html" class="btn btn-outline"><i class="fas fa-calendar"></i> Ver todos los eventos</a>
@@ -233,13 +243,37 @@
 <script src="/assets/js/reveal.js"></script>
 
 <script type="module">
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { db } from "/assets/js/firebase-config.js";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { db, auth } from "/assets/js/firebase-config.js";
 
-// Mismo patrón que index.html: cuenta regresiva hasta el 8 de noviembre y
-// swap del trailer en el lugar del póster — duplicado acá porque esta es
-// una página standalone, sin módulo JS compartido con el home.
-const ERINEO_FECHA_ACTIVACION = new Date("2026-11-08T00:00:00");
+// Mismo patrón que index.html: dos ventanas de apertura (acceso anticipado
+// para creadores desde el 3 de noviembre, público desde el 4) y swap del
+// trailer en el lugar del póster — duplicado acá porque esta es una página
+// standalone, sin módulo JS compartido con el home.
+const ERINEO_FECHA_ANTICIPADA = new Date("2026-11-03T00:00:00");
+const ERINEO_FECHA_PUBLICA = new Date("2026-11-04T00:00:00");
+
+let esCreadorActivo = false;
+
+async function chequearCreador(user) {
+    if (!user) {
+        esCreadorActivo = false;
+        actualizarCountdown();
+        return;
+    }
+    try {
+        const snapshot = await getDoc(doc(db, "users", user.uid));
+        const profile = snapshot.exists() ? snapshot.data() : null;
+        const roles = Array.isArray(profile?.roles) ? profile.roles : (profile?.role ? [profile.role] : []);
+        esCreadorActivo = !!profile && profile.active !== false && roles.some(r => ["admin", "editor", "creador"].includes(r));
+    } catch (e) {
+        console.error(e);
+        esCreadorActivo = false;
+    }
+    actualizarCountdown();
+}
+onAuthStateChanged(auth, chequearCreador);
 
 // Dejar vacío hasta tener el link real del trailer (YouTube o mp4 directo).
 const ERINEO_TRAILER_URL = "";
@@ -273,6 +307,8 @@ const countdownEl = document.getElementById("erineo-countdown");
 const countdownLabelEl = document.querySelector(".proximamente-countdown-label");
 const lockedEl = document.getElementById("erineo-postulacion-locked");
 const formEl = document.getElementById("erineo-form");
+const formNoteEl = document.getElementById("erineo-form-note");
+const openFormBtn = document.getElementById("erineo-open-form-btn");
 const diasEl = document.getElementById("erineo-cd-dias");
 const horasEl = document.getElementById("erineo-cd-horas");
 const minEl = document.getElementById("erineo-cd-min");
@@ -280,20 +316,11 @@ const segEl = document.getElementById("erineo-cd-seg");
 
 let countdownInterval = null;
 
-// Permite probar el formulario real (Firestore + Formspree) antes del 8 de
-// noviembre sin tocar la fecha pública: ?preview=erineo en la URL.
+// Permite probar el formulario real (Firestore + Formspree) ya mismo, como
+// si fuera público, sin tocar las fechas reales: ?preview=erineo en la URL.
 const ERINEO_PREVIEW = new URLSearchParams(location.search).get("preview") === "erineo";
 
-function actualizarCountdown() {
-    const diff = ERINEO_PREVIEW ? 0 : ERINEO_FECHA_ACTIVACION.getTime() - Date.now();
-    if (diff <= 0) {
-        countdownEl.classList.add("hidden");
-        countdownLabelEl?.classList.add("hidden");
-        lockedEl.classList.add("hidden");
-        formEl.classList.remove("hidden");
-        if (countdownInterval) clearInterval(countdownInterval);
-        return;
-    }
+function renderCountdown(diff) {
     const pad = (n) => String(n).padStart(2, "0");
     diasEl.textContent = pad(Math.floor(diff / 86400000));
     horasEl.textContent = pad(Math.floor((diff % 86400000) / 3600000));
@@ -301,8 +328,63 @@ function actualizarCountdown() {
     segEl.textContent = pad(Math.floor((diff % 60000) / 1000));
 }
 
+function actualizarCountdown() {
+    const ahora = Date.now();
+    const publicoAbierto = ERINEO_PREVIEW || ahora >= ERINEO_FECHA_PUBLICA.getTime();
+    const anticipadoAbierto = publicoAbierto || ahora >= ERINEO_FECHA_ANTICIPADA.getTime();
+
+    if (publicoAbierto || (anticipadoAbierto && esCreadorActivo)) {
+        countdownEl.classList.add("hidden");
+        countdownLabelEl?.classList.add("hidden");
+        lockedEl.classList.add("hidden");
+        formNoteEl?.classList.remove("hidden");
+        openFormBtn?.classList.remove("hidden");
+        if (countdownInterval) clearInterval(countdownInterval);
+        return;
+    }
+
+    formNoteEl?.classList.add("hidden");
+    openFormBtn?.classList.add("hidden");
+    countdownEl.classList.remove("hidden");
+    countdownLabelEl?.classList.remove("hidden");
+    lockedEl.classList.remove("hidden");
+
+    if (anticipadoAbierto) {
+        countdownLabelEl.textContent = "Para que se abra al público general";
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre.`;
+        renderCountdown(ERINEO_FECHA_PUBLICA.getTime() - ahora);
+    } else {
+        countdownLabelEl.textContent = "Para el acceso anticipado de creadores";
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado para creadores el 3 de noviembre. Público general: 4 de noviembre.`;
+        renderCountdown(ERINEO_FECHA_ANTICIPADA.getTime() - ahora);
+    }
+}
+
 actualizarCountdown();
 countdownInterval = setInterval(actualizarCountdown, 1000);
+
+// Ventana emergente de postulación: el form vive siempre en el DOM
+// (oculto por CSS vía .erineo-modal.hidden), se abre al apretar el botón
+// "Postularme" y se puede cerrar con el botón X, clic afuera o Escape.
+const erineoModalEl = document.getElementById("erineo-modal");
+const erineoModalBackdrop = document.getElementById("erineo-modal-backdrop");
+const erineoModalClose = document.getElementById("erineo-modal-close");
+
+function abrirModalErineo() {
+    erineoModalEl.classList.remove("hidden");
+    document.body.classList.add("erineo-modal-open");
+}
+function cerrarModalErineo() {
+    erineoModalEl.classList.add("hidden");
+    document.body.classList.remove("erineo-modal-open");
+}
+
+openFormBtn?.addEventListener("click", abrirModalErineo);
+erineoModalClose?.addEventListener("click", cerrarModalErineo);
+erineoModalBackdrop?.addEventListener("click", cerrarModalErineo);
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !erineoModalEl.classList.contains("hidden")) cerrarModalErineo();
+});
 
 const submitBtn = document.getElementById("erineo-submit");
 const successMsg = document.getElementById("erineo-success");
@@ -359,6 +441,7 @@ formEl.addEventListener("submit", async (event) => {
     if (ok) {
         successMsg.classList.remove("hidden");
         formEl.reset();
+        setTimeout(cerrarModalErineo, 2500);
     } else {
         errorMsg.classList.remove("hidden");
     }
