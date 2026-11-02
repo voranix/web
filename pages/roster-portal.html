@@ -92,6 +92,24 @@
         .agent-bar-fill{ height:100%; background:linear-gradient(90deg,var(--morado),var(--naranja)); border-radius:4px; }
         .player-agent-row .agent-pct{ font-size:11px; color:var(--gris); text-align:right; }
         .player-no-stats{ font-size:11px; color:var(--gris-dark); font-style:italic; }
+
+        .creadores-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr)); gap:22px; }
+        .tag-chip{
+            display:inline-flex; align-self:flex-start; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+            color:var(--naranja); border:1px solid rgba(255,106,0,0.3); background:rgba(255,106,0,0.06);
+            padding:4px 10px; border-radius:14px; margin-bottom:10px;
+        }
+        .acceso-card{
+            background:var(--card); border-radius:var(--r-lg); overflow:hidden; border:1px solid var(--border);
+            border-top:3px solid var(--morado); transition:var(--ease); display:flex; flex-direction:column;
+        }
+        .acceso-card:hover{ transform:translateY(-6px); border-color:var(--morado); border-top-color:var(--naranja); box-shadow:0 8px 30px var(--morado-glow); }
+        .acceso-img{ width:100%; aspect-ratio:16/9; height:auto; object-fit:cover; display:block; background:var(--bg-2); }
+        .acceso-body{ padding:22px; display:flex; flex-direction:column; gap:10px; flex:1; }
+        .acceso-body h3{ font-size:1.05rem; color:#fff; margin-bottom:0; }
+        .acceso-body > p{ font-size:13px; text-align:left; line-height:1.7; margin:0; }
+        .meta-line{ font-size:11px; color:var(--gris-dark); letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+        .acceso-card .btn{ margin-top:auto; align-self:flex-start; }
         @media (max-width:600px){
             .roster-portal-topbar{ flex-direction:column; }
             .roster-portal-user{ justify-content:flex-start; width:100%; }
@@ -198,6 +216,11 @@
         </div>
     </div>
 
+    <div id="proyectos-block" class="roster-portal-section hidden">
+        <h2><i class="fas fa-diagram-project"></i> Proyectos VORANIX</h2>
+        <div id="proyectos-grid" class="creadores-grid"></div>
+    </div>
+
     <div class="roster-portal-section">
         <div class="actividad-section-head">
             <h2><i class="fas fa-calendar-day"></i> Actividad del equipo</h2>
@@ -294,6 +317,8 @@
     const actividadList = document.getElementById("actividad-list");
     const actividadFiltros = document.getElementById("actividad-filtros");
     const equipoGrid = document.getElementById("equipo-grid");
+    const proyectosBlock = document.getElementById("proyectos-block");
+    const proyectosGrid = document.getElementById("proyectos-grid");
     const statsStrip = document.getElementById("roster-stats-strip");
     const notifBell = initNotificationBell({
         toggleBtn: document.getElementById("notif-bell-btn"),
@@ -304,6 +329,7 @@
     });
 
     let unsubActividad = null;
+    let unsubProyectos = null;
     let currentPlayers = [];
     let currentStats = {};
     let currentItems = [];
@@ -342,7 +368,38 @@
     function stopListeners(){
         if(unsubActividad) unsubActividad();
         unsubActividad = null;
+        if(unsubProyectos) unsubProyectos();
+        unsubProyectos = null;
         notifBell.stop();
+    }
+
+    // Mismo criterio que Portal Creadores / Portal Influencers: proyectos es
+    // pública (allow read: if true), no depende de tener equipo asignado.
+    function renderProyecto(item){
+        const img = assetUrl(item.img);
+        return `
+<div class="acceso-card fade-up">
+    ${img ? `<img class="acceso-img" src="${escapeHtml(img)}" alt="${escapeHtml(item.titulo || "Proyecto")}" onerror="this.style.display='none'">` : ""}
+    <div class="acceso-body">
+        ${item.upcoming ? `<span class="tag-chip">Próximamente</span>` : ""}
+        <h3>${escapeHtml(item.titulo || "Sin título")}</h3>
+        ${item.descripcion ? `<p>${escapeHtml(item.descripcion)}</p>` : ""}
+        ${item.fecha ? `<div class="meta-line">${escapeHtml(item.fecha)}</div>` : ""}
+        ${item.link ? `<a class="btn btn-sm" href="${escapeHtml(item.link)}" target="_blank" rel="noopener">Ver más</a>` : ""}
+    </div>
+</div>`;
+    }
+
+    function loadProyectos(){
+        unsubProyectos = onSnapshot(collection(db, "proyectos"), (snapshot) => {
+            const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            proyectosBlock.classList.toggle("hidden", docs.length === 0);
+            proyectosGrid.innerHTML = docs.map(renderProyecto).join("");
+        }, (error) => {
+            console.error(error);
+            proyectosBlock.classList.remove("hidden");
+            proyectosGrid.innerHTML = `<p class="loading">No se pudieron cargar los proyectos.</p>`;
+        });
     }
 
     function showLogin(){
@@ -592,6 +649,7 @@
             showShell(user, profile);
             loadActividad(profile.equipoJuego);
             loadEquipo(profile.equipoJuego);
+            loadProyectos();
         }catch(error){
             console.error(error);
             loginError.textContent = "No se pudo verificar tu cuenta. Intenta de nuevo.";

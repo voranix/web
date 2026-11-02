@@ -166,51 +166,55 @@
 <section class="home-proximamente">
     <div class="container">
         <div class="proximamente-card reveal">
-            <img src="/imagenes/erineo-poster.webp" alt="Erineo — 3 semanas. Una venganza. Un evento hardcore de Minecraft de VORANIX Studio. Próximamente." class="proximamente-poster">
-            <div class="hero-eyebrow"><span></span>PRÓXIMAMENTE</div>
-            <h2>Erineo</h2>
-            <p class="proximamente-desc">Un evento hardcore de Minecraft: 3 semanas, una venganza. Construcción, supervivencia y comunidad en un mundo que vamos a armar junto a ustedes.</p>
-
-            <div class="proximamente-video">
-                <!-- TODO: reemplazar por el <iframe>/<video> del promocional cuando esté listo. -->
-                <div class="proximamente-video-placeholder">
-                    <i class="fas fa-film"></i>
-                    <span>Video promocional próximamente</span>
-                </div>
+            <div class="proximamente-media">
+                <img id="erineo-poster-img" src="/imagenes/erineo-poster.webp" alt="Erineo — 3 semanas. Una venganza. Un evento hardcore de Minecraft de VORANIX Studio. Próximamente." class="proximamente-poster">
+                <div id="erineo-player" class="proximamente-player hidden"></div>
+                <button type="button" id="erineo-trailer-btn" class="proximamente-trailer-btn">
+                    <i class="fas fa-play"></i> Ver trailer
+                </button>
+                <p id="erineo-trailer-note" class="proximamente-trailer-note hidden">El trailer todavía no está disponible. ¡Vuelve pronto!</p>
             </div>
 
-            <div class="proximamente-countdown" id="erineo-countdown">
-                <div class="countdown-box"><span id="erineo-cd-dias">00</span><label>Días</label></div>
-                <div class="countdown-box"><span id="erineo-cd-horas">00</span><label>Horas</label></div>
-                <div class="countdown-box"><span id="erineo-cd-min">00</span><label>Min</label></div>
-                <div class="countdown-box"><span id="erineo-cd-seg">00</span><label>Seg</label></div>
-            </div>
-            <p class="proximamente-countdown-label">Para que se abra la postulación</p>
+            <div class="proximamente-info">
+                <div class="hero-eyebrow"><span></span>PRÓXIMAMENTE</div>
+                <h2>Erineo</h2>
+                <p class="proximamente-desc">Un evento hardcore de Minecraft: 3 semanas, una venganza. Construcción, supervivencia y comunidad en un mundo que vamos a armar junto a ustedes.</p>
 
-            <div id="erineo-postulacion-locked" class="proximamente-locked">
-                <i class="fas fa-lock"></i> La postulación se activa el 8 de noviembre
-            </div>
+                <div class="proximamente-countdown" id="erineo-countdown">
+                    <div class="countdown-box"><span id="erineo-cd-dias">00</span><label>Días</label></div>
+                    <div class="countdown-box"><span id="erineo-cd-horas">00</span><label>Horas</label></div>
+                    <div class="countdown-box"><span id="erineo-cd-min">00</span><label>Min</label></div>
+                    <div class="countdown-box"><span id="erineo-cd-seg">00</span><label>Seg</label></div>
+                </div>
+                <p class="proximamente-countdown-label">Para que se abra la postulación</p>
 
-            <form id="erineo-form" class="proximamente-form hidden" action="https://formspree.io/f/mgopqakl" method="POST">
-                <input type="hidden" name="_subject" value="Postulación Erineo (Minecraft)">
-                <input type="hidden" name="_captcha" value="false">
-                <input type="hidden" name="asunto" value="erineo">
-                <div class="input-group">
-                    <input type="text" name="nombre" placeholder="Nombre completo" required>
+                <div id="erineo-postulacion-locked" class="proximamente-locked">
+                    <i class="fas fa-lock"></i> La postulación se activa el 8 de noviembre
                 </div>
-                <div class="input-group">
-                    <input type="email" name="email" placeholder="Correo electrónico" required>
-                </div>
-                <div class="input-group">
-                    <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft (Java/Bedrock)" required>
-                </div>
-                <div class="input-group">
-                    <textarea name="mensaje" placeholder="Contanos por qué querés sumarte a Erineo..." required></textarea>
-                </div>
-                <button type="submit" id="erineo-submit" class="btn">Postularme</button>
-                <p id="erineo-success" class="proximamente-msg success hidden">✅ ¡Postulación enviada! Te contactamos pronto.</p>
-                <p id="erineo-error" class="proximamente-msg error hidden">⚠️ No se pudo enviar. Probá de nuevo o escribinos por Discord.</p>
-            </form>
+
+                <form id="erineo-form" class="proximamente-form hidden" action="https://formspree.io/f/mgopqakl" method="POST">
+                    <input type="hidden" name="_subject" value="Postulación Erineo (Minecraft)">
+                    <input type="hidden" name="_captcha" value="false">
+                    <input type="hidden" name="asunto" value="erineo">
+                    <div class="input-group">
+                        <input type="text" name="nombre" placeholder="Nombre completo" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="email" name="email" placeholder="Correo electrónico" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft (Java/Bedrock)" required>
+                    </div>
+                    <div class="input-group">
+                        <textarea name="mensaje" placeholder="Contanos por qué querés sumarte a Erineo..." required></textarea>
+                    </div>
+                    <button type="submit" id="erineo-submit" class="btn">Postularme</button>
+                    <p id="erineo-success" class="proximamente-msg success hidden">✅ ¡Postulación enviada! Te contactamos pronto.</p>
+                    <p id="erineo-error" class="proximamente-msg error hidden">⚠️ No se pudo enviar. Probá de nuevo o escribinos por Discord.</p>
+                </form>
+
+                <a href="/pages/erineo.html" class="proximamente-more">Más sobre Erineo <i class="fas fa-arrow-right"></i></a>
+            </div>
         </div>
     </div>
 </section>
@@ -539,6 +543,34 @@ import { db } from "/assets/js/firebase-config.js";
 // regresiva + el aviso de que todavía no está activa; al llegar la fecha,
 // el formulario real, sin que haga falta recargar la página.
 const ERINEO_FECHA_ACTIVACION = new Date("2026-11-08T00:00:00");
+
+// Dejar vacío hasta tener el link real del trailer (YouTube o mp4 directo).
+const ERINEO_TRAILER_URL = "";
+
+function youtubeEmbedId(url) {
+    const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/);
+    return match ? match[1] : null;
+}
+
+const posterImgEl = document.getElementById("erineo-poster-img");
+const playerEl = document.getElementById("erineo-player");
+const trailerBtnEl = document.getElementById("erineo-trailer-btn");
+const trailerNoteEl = document.getElementById("erineo-trailer-note");
+
+trailerBtnEl?.addEventListener("click", () => {
+    if (!ERINEO_TRAILER_URL) {
+        trailerNoteEl?.classList.remove("hidden");
+        return;
+    }
+    const ytId = youtubeEmbedId(ERINEO_TRAILER_URL);
+    playerEl.innerHTML = ytId
+        ? `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" title="Trailer de Erineo" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>`
+        : `<video src="${ERINEO_TRAILER_URL}" controls autoplay playsinline></video>`;
+    posterImgEl?.classList.add("hidden");
+    trailerBtnEl.classList.add("hidden");
+    trailerNoteEl?.classList.add("hidden");
+    playerEl.classList.remove("hidden");
+});
 
 const countdownEl = document.getElementById("erineo-countdown");
 const countdownLabelEl = document.querySelector(".proximamente-countdown-label");

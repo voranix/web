@@ -147,10 +147,18 @@ const upcomingSection = document.getElementById("upcoming-section");
 const upcomingList = document.getElementById("upcoming-list");
 const timelineList = document.getElementById("timeline-list");
 
+// Si el proyecto trae un link propio (p. ej. una página dedicada al evento
+// como /pages/erineo.html), se usa ese; si no, se cae al detalle genérico.
+function detalleHref(item) {
+    const link = String(item.link || "").trim();
+    if (link.startsWith("/") || /^https?:\/\//.test(link)) return link;
+    return `/pages/proyecto.html?id=${encodeURIComponent(item.id)}`;
+}
+
 function renderUpcoming(item) {
     const categoria = CATEGORIAS[item.categoria] || item.categoria || "";
     return `
-<a class="upcoming-item" href="/pages/proyecto.html?id=${encodeURIComponent(item.id)}">
+<a class="upcoming-item" href="${escapeHtml(detalleHref(item))}">
     ${item.img ? `<img class="upcoming-icon-img" src="${escapeHtml(assetUrl(item.img))}" alt="" onerror="this.remove()">` : '<i class="fas fa-rocket upcoming-icon"></i>'}
     <div>
         <h3>${escapeHtml(item.titulo) || "Sin título"}</h3>
@@ -165,7 +173,7 @@ function renderTimelineItem(item) {
     return `
 <div class="timeline-item">
     <span class="timeline-dot"></span>
-    <a class="timeline-content" href="/pages/proyecto.html?id=${encodeURIComponent(item.id)}">
+    <a class="timeline-content" href="${escapeHtml(detalleHref(item))}">
         ${item.img ? `<img class="timeline-content-img" src="${escapeHtml(assetUrl(item.img))}" alt="" onerror="this.remove()">` : ""}
         <div class="timeline-date">${[categoria, item.fecha].filter(Boolean).map(escapeHtml).join(" · ")}</div>
         <h3>${escapeHtml(item.titulo) || "Sin título"}</h3>
