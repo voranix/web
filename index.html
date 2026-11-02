@@ -162,44 +162,56 @@
     </div>
 </section>
 
-<!-- ================= ROSTERS ================= -->
-<section class="home-rosters">
+<!-- ================= PRÓXIMAMENTE: ERINEO ================= -->
+<section class="home-proximamente">
     <div class="container">
-        <h2 class="reveal">Nuestros Equipos</h2>
-        <div class="rosters-grid reveal-stagger">
-            <a href="/pages/rosters.html#valorant" class="roster-box roster-valorant">
-                <div class="roster-media">
-                    <img src="/imagenes/valorant.jpg" alt="Valorant Team">
-                    <span class="roster-badge valorant">Competitivo</span>
+        <div class="proximamente-card reveal">
+            <img src="/imagenes/logopng.png" alt="VORANIX" class="proximamente-logo">
+            <div class="hero-eyebrow"><span></span>PRÓXIMAMENTE</div>
+            <h2>Erineo</h2>
+            <!-- TODO: ajustar esta descripción con el texto real de la serie. -->
+            <p class="proximamente-desc">Una nueva serie de Minecraft de VORANIX: construcción, historia y comunidad en un mundo que vamos a armar junto a nuestra gente. Muy pronto vas a poder ser parte.</p>
+
+            <div class="proximamente-video">
+                <!-- TODO: reemplazar por el <iframe>/<video> del promocional cuando esté listo. -->
+                <div class="proximamente-video-placeholder">
+                    <i class="fas fa-film"></i>
+                    <span>Video promocional próximamente</span>
                 </div>
-                <div class="roster-content">
-                    <h3>Valorant</h3>
-                    <p>Equipo competitivo enfocado en torneos y ligas.</p>
-                    <span class="roster-link">Ver roster <i class="fas fa-arrow-right"></i></span>
+            </div>
+
+            <div class="proximamente-countdown" id="erineo-countdown">
+                <div class="countdown-box"><span id="erineo-cd-dias">00</span><label>Días</label></div>
+                <div class="countdown-box"><span id="erineo-cd-horas">00</span><label>Horas</label></div>
+                <div class="countdown-box"><span id="erineo-cd-min">00</span><label>Min</label></div>
+                <div class="countdown-box"><span id="erineo-cd-seg">00</span><label>Seg</label></div>
+            </div>
+            <p class="proximamente-countdown-label">Para que se abra la postulación</p>
+
+            <div id="erineo-postulacion-locked" class="proximamente-locked">
+                <i class="fas fa-lock"></i> La postulación se activa el 8 de noviembre
+            </div>
+
+            <form id="erineo-form" class="proximamente-form hidden" action="https://formspree.io/f/mgopqakl" method="POST">
+                <input type="hidden" name="_subject" value="Postulación Erineo (Minecraft)">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="asunto" value="erineo">
+                <div class="input-group">
+                    <input type="text" name="nombre" placeholder="Nombre completo" required>
                 </div>
-            </a>
-            <a href="/pages/rosters.html#fifa" class="roster-box roster-fifa">
-                <div class="roster-media">
-                    <img src="/imagenes/fifa.jpg" alt="EA FC Team">
-                    <span class="roster-badge fc">Competitivo</span>
+                <div class="input-group">
+                    <input type="email" name="email" placeholder="Correo electrónico" required>
                 </div>
-                <div class="roster-content">
-                    <h3>EA FC</h3>
-                    <p>Jugadores competitivos en el ámbito deportivo virtual.</p>
-                    <span class="roster-link">Ver roster <i class="fas fa-arrow-right"></i></span>
+                <div class="input-group">
+                    <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft (Java/Bedrock)" required>
                 </div>
-            </a>
-            <a href="/pages/rosters.html#dbd" class="roster-box roster-dbd">
-                <div class="roster-media">
-                    <img src="/imagenes/dbd.jpg" alt="Dead by Daylight Team">
-                    <span class="roster-badge dbd">Competitivo</span>
+                <div class="input-group">
+                    <textarea name="mensaje" placeholder="Contanos por qué querés sumarte a Erineo..." required></textarea>
                 </div>
-                <div class="roster-content">
-                    <h3>Dead by Daylight</h3>
-                    <p>Equipo competitivo en el survival horror asimétrico.</p>
-                    <span class="roster-link">Ver roster <i class="fas fa-arrow-right"></i></span>
-                </div>
-            </a>
+                <button type="submit" id="erineo-submit" class="btn">Postularme</button>
+                <p id="erineo-success" class="proximamente-msg success hidden">✅ ¡Postulación enviada! Te contactamos pronto.</p>
+                <p id="erineo-error" class="proximamente-msg error hidden">⚠️ No se pudo enviar. Probá de nuevo o escribinos por Discord.</p>
+            </form>
         </div>
     </div>
 </section>
@@ -517,6 +529,103 @@ async function loadLive() {
     }
 }
 loadLive();
+</script>
+
+<script type="module">
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { db } from "/assets/js/firebase-config.js";
+
+// La postulación de Erineo se activa el 8 de noviembre de 2026 (hora local
+// de quien mira la página) — antes de esa fecha se muestra la cuenta
+// regresiva + el aviso de que todavía no está activa; al llegar la fecha,
+// el formulario real, sin que haga falta recargar la página.
+const ERINEO_FECHA_ACTIVACION = new Date("2026-11-08T00:00:00");
+
+const countdownEl = document.getElementById("erineo-countdown");
+const countdownLabelEl = document.querySelector(".proximamente-countdown-label");
+const lockedEl = document.getElementById("erineo-postulacion-locked");
+const formEl = document.getElementById("erineo-form");
+const diasEl = document.getElementById("erineo-cd-dias");
+const horasEl = document.getElementById("erineo-cd-horas");
+const minEl = document.getElementById("erineo-cd-min");
+const segEl = document.getElementById("erineo-cd-seg");
+
+let countdownInterval = null;
+
+function actualizarCountdown() {
+    const diff = ERINEO_FECHA_ACTIVACION.getTime() - Date.now();
+    if (diff <= 0) {
+        countdownEl.classList.add("hidden");
+        countdownLabelEl?.classList.add("hidden");
+        lockedEl.classList.add("hidden");
+        formEl.classList.remove("hidden");
+        if (countdownInterval) clearInterval(countdownInterval);
+        return;
+    }
+    const pad = (n) => String(n).padStart(2, "0");
+    diasEl.textContent = pad(Math.floor(diff / 86400000));
+    horasEl.textContent = pad(Math.floor((diff % 86400000) / 3600000));
+    minEl.textContent = pad(Math.floor((diff % 3600000) / 60000));
+    segEl.textContent = pad(Math.floor((diff % 60000) / 1000));
+}
+
+actualizarCountdown();
+countdownInterval = setInterval(actualizarCountdown, 1000);
+
+// Mismo patrón que pages/contacto.html: Firestore (aparece en Admin →
+// Mensajes, filtrable por asunto "erineo") y Formspree en paralelo, como
+// respaldo — si uno falla el otro igual intenta llegar.
+const submitBtn = document.getElementById("erineo-submit");
+const successMsg = document.getElementById("erineo-success");
+const errorMsg = document.getElementById("erineo-error");
+
+async function enviarAFirestore(formData) {
+    await addDoc(collection(db, "mensajes"), {
+        nombre: formData.get("nombre") || "",
+        email: String(formData.get("email") || "").trim().toLowerCase(),
+        asunto: "erineo",
+        mensaje: formData.get("mensaje") || "",
+        usuarioMinecraft: formData.get("usuario_minecraft") || "",
+        leido: false,
+        createdAt: serverTimestamp()
+    });
+}
+
+async function enviarAFormspree(formData) {
+    const res = await fetch(formEl.action, {
+        method: "POST",
+        body: formData,
+        headers: { "Accept": "application/json" }
+    });
+    if (!res.ok) throw new Error("Formspree respondió " + res.status);
+}
+
+formEl.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    successMsg.classList.add("hidden");
+    errorMsg.classList.add("hidden");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Enviando...";
+
+    const formData = new FormData(formEl);
+    const resultados = await Promise.allSettled([
+        enviarAFirestore(formData),
+        enviarAFormspree(formData)
+    ]);
+    const algunExito = resultados.some(r => r.status === "fulfilled");
+    resultados.forEach((r, i) => {
+        if (r.status === "rejected") console.error(i === 0 ? "Error guardando en Firestore:" : "Error enviando a Formspree:", r.reason);
+    });
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Postularme";
+    if (algunExito) {
+        successMsg.classList.remove("hidden");
+        formEl.reset();
+    } else {
+        errorMsg.classList.remove("hidden");
+    }
+});
 </script>
 <script type="module" src="/assets/js/report-bug.js"></script>
 </body>
