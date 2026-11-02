@@ -264,7 +264,7 @@ button { cursor: pointer; }
     padding:48px; box-shadow:0 0 50px rgba(123,44,255,0.1);
     display:grid; grid-template-columns:minmax(260px,320px) 1fr; gap:48px; align-items:center;
 }
-.proximamente-media { position:relative; }
+.proximamente-media-frame { position:relative; }
 .proximamente-poster { width:100%; display:block; border-radius:var(--r-md); box-shadow:0 20px 50px rgba(123,44,255,0.25); transition:opacity .2s; }
 .proximamente-poster.hidden { display:none; }
 .proximamente-player { aspect-ratio:2/3; width:100%; border-radius:var(--r-md); overflow:hidden; background:#000; box-shadow:0 20px 50px rgba(123,44,255,0.25); }
@@ -278,7 +278,9 @@ button { cursor: pointer; }
 }
 .proximamente-trailer-btn:hover { transform:translateX(-50%) translateY(-2px); }
 .proximamente-trailer-btn.hidden { display:none; }
-.proximamente-trailer-note { margin-top:12px; font-size:12px; color:var(--gris); text-align:center; }
+/* Al frame (relative, tamaño = imagen) para que el botón absoluto no
+   empuje ni se solape con esto, que va siempre debajo, fuera del frame. */
+.proximamente-trailer-note { margin-top:14px; font-size:12px; color:var(--gris); text-align:center; }
 
 .proximamente-info { min-width:0; }
 .proximamente-card h2 { font-size:2.4rem; margin:14px 0 16px; }

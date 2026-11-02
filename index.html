@@ -167,11 +167,13 @@
     <div class="container">
         <div class="proximamente-card reveal">
             <div class="proximamente-media">
-                <img id="erineo-poster-img" src="/imagenes/erineo-poster.webp" alt="Erineo — 3 semanas. Una venganza. Un evento hardcore de Minecraft de VORANIX Studio. Próximamente." class="proximamente-poster">
-                <div id="erineo-player" class="proximamente-player hidden"></div>
-                <button type="button" id="erineo-trailer-btn" class="proximamente-trailer-btn">
-                    <i class="fas fa-play"></i> Ver trailer
-                </button>
+                <div class="proximamente-media-frame">
+                    <img id="erineo-poster-img" src="/imagenes/erineo-poster.webp" alt="Erineo — 3 semanas. Una venganza. Un evento hardcore de Minecraft de VORANIX Studio. Próximamente." class="proximamente-poster">
+                    <div id="erineo-player" class="proximamente-player hidden"></div>
+                    <button type="button" id="erineo-trailer-btn" class="proximamente-trailer-btn">
+                        <i class="fas fa-play"></i> Ver trailer
+                    </button>
+                </div>
                 <p id="erineo-trailer-note" class="proximamente-trailer-note hidden">El trailer todavía no está disponible. ¡Vuelve pronto!</p>
             </div>
 
@@ -640,8 +642,12 @@ const segEl = document.getElementById("erineo-cd-seg");
 
 let countdownInterval = null;
 
+// Permite probar el formulario real (Firestore + Formspree) antes del 8 de
+// noviembre sin tocar la fecha pública: ?preview=erineo en la URL.
+const ERINEO_PREVIEW = new URLSearchParams(location.search).get("preview") === "erineo";
+
 function actualizarCountdown() {
-    const diff = ERINEO_FECHA_ACTIVACION.getTime() - Date.now();
+    const diff = ERINEO_PREVIEW ? 0 : ERINEO_FECHA_ACTIVACION.getTime() - Date.now();
     if (diff <= 0) {
         countdownEl.classList.add("hidden");
         countdownLabelEl?.classList.add("hidden");
