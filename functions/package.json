@@ -2,7 +2,7 @@
   "name": "voranix-functions",
   "description": "Cloud Functions para VORANIX: notificaciones automáticas de contacto",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "index.js",
   "type": "commonjs",
