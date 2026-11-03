@@ -647,7 +647,7 @@ async function chequearCreador(user) {
 onAuthStateChanged(auth, chequearCreador);
 
 // Dejar vacío hasta tener el link real del trailer (YouTube o mp4 directo).
-const ERINEO_TRAILER_URL = "";
+const ERINEO_TRAILER_URL = "https://youtube.com/shorts/fdCceVN-YGI?si=YBtwowAXRkSCXZPH";
 
 function youtubeEmbedId(url) {
     const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{6,})/);
