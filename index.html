@@ -637,12 +637,35 @@ async function chequearCreador(user) {
 }
 onAuthStateChanged(auth, chequearCreador);
 
-// Dejar vacío hasta tener el link real del trailer (YouTube o mp4 directo).
-const ERINEO_TRAILER_URL = "";
+// Link del video promocional subido a X (también acepta YouTube o un mp4 directo).
+const ERINEO_TRAILER_URL = "https://x.com/Voranixstudio/status/2117434271178895709?a=fjPH22fHLSdCd4z4tiA&s=20";
 
 function youtubeEmbedId(url) {
     const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/);
     return match ? match[1] : null;
+}
+
+function esUrlX(url) {
+    return /^https?:\/\/(www\.)?(x\.com|twitter\.com)\//.test(String(url || "").trim());
+}
+
+// X no expone un archivo de video reproducible directamente: hay que usar
+// su propio embed (blockquote + platform.twitter.com/widgets.js), que X
+// reemplaza por un iframe propio con su alto responsivo — se carga una
+// sola vez y solo cuando hace falta (recién al tocar "Ver trailer").
+let twitterWidgetsPromise = null;
+function cargarTwitterWidgets() {
+    if (twitterWidgetsPromise) return twitterWidgetsPromise;
+    twitterWidgetsPromise = new Promise((resolve) => {
+        if (window.twttr?.widgets) { resolve(); return; }
+        const script = document.createElement("script");
+        script.src = "https://platform.twitter.com/widgets.js";
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => resolve();
+        document.head.appendChild(script);
+    });
+    return twitterWidgetsPromise;
 }
 
 const posterImgEl = document.getElementById("erineo-poster-img");
@@ -656,9 +679,15 @@ trailerBtnEl?.addEventListener("click", () => {
         return;
     }
     const ytId = youtubeEmbedId(ERINEO_TRAILER_URL);
-    playerEl.innerHTML = ytId
-        ? `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" title="Trailer de Erineo" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>`
-        : `<video src="${ERINEO_TRAILER_URL}" controls autoplay playsinline></video>`;
+    playerEl.classList.toggle("is-tweet", esUrlX(ERINEO_TRAILER_URL));
+    if (ytId) {
+        playerEl.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" title="Trailer de Erineo" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>`;
+    } else if (esUrlX(ERINEO_TRAILER_URL)) {
+        playerEl.innerHTML = `<blockquote class="twitter-tweet" data-media-max-width="560"><a href="${ERINEO_TRAILER_URL}"></a></blockquote>`;
+        cargarTwitterWidgets().then(() => window.twttr?.widgets?.load(playerEl));
+    } else {
+        playerEl.innerHTML = `<video src="${ERINEO_TRAILER_URL}" controls autoplay playsinline></video>`;
+    }
     posterImgEl?.classList.add("hidden");
     trailerBtnEl.classList.add("hidden");
     trailerNoteEl?.classList.add("hidden");
