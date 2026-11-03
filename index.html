@@ -730,11 +730,13 @@ function actualizarCountdown() {
     if (anticipadoAbierto) {
         // Ventana de creadores ya abierta, pero este visitante no califica.
         countdownLabelEl.textContent = "Para que se abra al público general";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre a las 14:00.`;
+        // El texto va en un <span> porque .proximamente-locked es flex: sin él,
+        // el texto, el link y el resto quedaban como tres columnas separadas.
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre a las 14:00.</span>`;
         renderCountdown(ERINEO_FECHA_PUBLICA.getTime() - ahora);
     } else {
         countdownLabelEl.textContent = "Para el acceso anticipado de creadores";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.`;
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.</span>`;
         renderCountdown(ERINEO_FECHA_ANTICIPADA.getTime() - ahora);
     }
 }
