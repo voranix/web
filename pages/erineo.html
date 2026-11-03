@@ -115,7 +115,16 @@
                         <input type="email" name="email" placeholder="Correo electrónico" required>
                     </div>
                     <div class="input-group">
-                        <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft (Java/Bedrock)" required>
+                        <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft" required>
+                    </div>
+                    <div class="input-group input-switch-row">
+                        <span class="input-switch-question">¿Tu cuenta de Minecraft es premium?</span>
+                        <label class="input-switch">
+                            <input type="checkbox" id="erineo-premium-toggle" aria-label="Cuenta de Minecraft premium">
+                            <span class="input-switch-track"><span class="input-switch-thumb"></span></span>
+                            <span class="input-switch-value" id="erineo-premium-value">No premium</span>
+                        </label>
+                        <input type="hidden" name="minecraft_premium" id="erineo-premium" value="No premium">
                     </div>
                     <div class="input-group">
                         <select name="plataforma" required>
@@ -135,7 +144,7 @@
                     </div>
                     <div class="input-group">
                         <select name="frecuencia_contenido" required>
-                            <option value="" disabled selected>¿Con qué frecuencia subís contenido o transmitís?</option>
+                            <option value="" disabled selected>¿Con qué frecuencia subes contenido o transmitís?</option>
                             <option value="Diaria">Diaria</option>
                             <option value="Varias veces por semana">Varias veces por semana</option>
                             <option value="Semanal">Semanal</option>
@@ -276,10 +285,10 @@ async function chequearCreador(user) {
 onAuthStateChanged(auth, chequearCreador);
 
 // Dejar vacío hasta tener el link real del trailer (YouTube o mp4 directo).
-const ERINEO_TRAILER_URL = "";
+const ERINEO_TRAILER_URL = "https://youtube.com/shorts/fdCceVN-YGI?si=YBtwowAXRkSCXZPH";
 
 function youtubeEmbedId(url) {
-    const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/);
+    const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{6,})/);
     return match ? match[1] : null;
 }
 
@@ -297,6 +306,9 @@ trailerBtnEl?.addEventListener("click", () => {
     playerEl.innerHTML = ytId
         ? `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" title="Trailer de Erineo" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>`
         : `<video src="${ERINEO_TRAILER_URL}" controls autoplay playsinline></video>`;
+    // Los Shorts son verticales (9:16): el recuadro toma esa proporción para
+    // que el video lo llene sin franjas negras a los costados.
+    playerEl.classList.toggle("is-vertical", /youtube\.com\/shorts\//.test(ERINEO_TRAILER_URL));
     posterImgEl?.classList.add("hidden");
     trailerBtnEl.classList.add("hidden");
     trailerNoteEl?.classList.add("hidden");
@@ -386,6 +398,21 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !erineoModalEl.classList.contains("hidden")) cerrarModalErineo();
 });
 
+// Switch premium / no premium: el checkbox no tiene name, así que el valor
+// que viaja a Formspree y Firestore es el del input oculto (siempre presente,
+// incluso cuando el switch está apagado).
+const premiumToggle = document.getElementById("erineo-premium-toggle");
+const premiumInput = document.getElementById("erineo-premium");
+const premiumValueEl = document.getElementById("erineo-premium-value");
+
+function sincronizarPremium() {
+    const valor = premiumToggle.checked ? "Premium" : "No premium";
+    premiumInput.value = valor;
+    premiumValueEl.textContent = valor;
+}
+premiumToggle?.addEventListener("change", sincronizarPremium);
+formEl.addEventListener("reset", () => setTimeout(sincronizarPremium));
+
 const submitBtn = document.getElementById("erineo-submit");
 const successMsg = document.getElementById("erineo-success");
 const errorMsg = document.getElementById("erineo-error");
@@ -401,6 +428,7 @@ async function enviarAFirestore(formData) {
         asunto: "erineo",
         mensaje: formData.get("mensaje") || "",
         usuarioMinecraft: formData.get("usuario_minecraft") || "",
+        minecraftPremium: formData.get("minecraft_premium") === "Premium",
         plataforma: formData.get("plataforma") || "",
         canalUrl: formData.get("canal_url") || "",
         seguidores: formData.get("seguidores") || "",

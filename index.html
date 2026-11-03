@@ -641,7 +641,7 @@ onAuthStateChanged(auth, chequearCreador);
 const ERINEO_TRAILER_URL = "";
 
 function youtubeEmbedId(url) {
-    const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/);
+    const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{6,})/);
     return match ? match[1] : null;
 }
 
@@ -659,6 +659,9 @@ trailerBtnEl?.addEventListener("click", () => {
     playerEl.innerHTML = ytId
         ? `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" title="Trailer de Erineo" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>`
         : `<video src="${ERINEO_TRAILER_URL}" controls autoplay playsinline></video>`;
+    // Los Shorts son verticales (9:16): el recuadro toma esa proporción para
+    // que el video lo llene sin franjas negras a los costados.
+    playerEl.classList.toggle("is-vertical", /youtube\.com\/shorts\//.test(ERINEO_TRAILER_URL));
     posterImgEl?.classList.add("hidden");
     trailerBtnEl.classList.add("hidden");
     trailerNoteEl?.classList.add("hidden");
