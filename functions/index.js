@@ -136,6 +136,7 @@ function construirDiscordEmbedErineo(data) {
         { name: "Nombre", value: data.nombre || "-", inline: true },
         { name: "Email", value: data.email || "-", inline: true },
         { name: "Usuario Minecraft", value: data.usuarioMinecraft || "-", inline: true },
+        { name: "Cuenta premium", value: data.minecraftPremium ? "Sí" : "No", inline: true },
         { name: "Plataforma", value: data.plataforma || "-", inline: true },
         { name: "Seguidores", value: data.seguidores || "-", inline: true },
         { name: "Frecuencia de contenido", value: data.frecuenciaContenido || "-", inline: true },

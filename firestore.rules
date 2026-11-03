@@ -267,7 +267,11 @@ service cloud.firestore {
         let data = request.resource.data;
         return data.keys().hasOnly([
             "nombre", "email", "asunto", "mensaje", "leido", "createdAt",
-            "juego", "nivel", "id_juego", "redes", "descripcion", "equipo", "juego_torneo"
+            "juego", "nivel", "id_juego", "redes", "descripcion", "equipo", "juego_torneo",
+            // Postulación a Erineo (pages/erineo.html e index.html)
+            "usuarioMinecraft", "minecraftPremium", "plataforma", "canalUrl", "seguidores",
+            "frecuenciaContenido", "experienciaHardcore", "disponibilidad", "comoSupo",
+            "compromiso", "skinAdjunta"
           ])
           && data.nombre is string && data.nombre.size() > 0 && data.nombre.size() < 200
           && data.email is string && data.email.size() > 0 && data.email.size() < 200
