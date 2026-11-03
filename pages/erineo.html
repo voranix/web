@@ -307,8 +307,12 @@ trailerBtnEl?.addEventListener("click", () => {
         ? `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" title="Trailer de Erineo" allow="autoplay; encrypted-media" allowfullscreen loading="lazy"></iframe>`
         : `<video src="${ERINEO_TRAILER_URL}" controls autoplay playsinline></video>`;
     // Los Shorts son verticales (9:16): el recuadro toma esa proporción para
-    // que el video lo llene sin franjas negras a los costados.
-    playerEl.classList.toggle("is-vertical", /youtube\.com\/shorts\//.test(ERINEO_TRAILER_URL));
+    // que el video lo llene sin franjas negras a los costados. Va también
+    // inline para que funcione aunque el navegador tenga en caché un
+    // style.css viejo sin la regla .is-vertical.
+    const esShort = /youtube\.com\/shorts\//.test(ERINEO_TRAILER_URL);
+    playerEl.classList.toggle("is-vertical", esShort);
+    playerEl.style.aspectRatio = esShort ? "9 / 16" : "";
     posterImgEl?.classList.add("hidden");
     trailerBtnEl.classList.add("hidden");
     trailerNoteEl?.classList.add("hidden");
