@@ -32,6 +32,9 @@
         "functions/**",
         "scripts/**"
       ],
+      "headers": [
+        { "source": "**/*.@(html|css|js)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+      ],
       "redirects": [
         { "source": "/nosotros.html", "destination": "/pages/nosotros.html", "type": 301 },
         { "source": "/proyectos.html", "destination": "/pages/proyectos.html", "type": 301 },
@@ -56,6 +59,9 @@
         "**/node_modules/**",
         "functions/**",
         "scripts/**"
+      ],
+      "headers": [
+        { "source": "**/*.@(html|css|js)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
       ],
       "redirects": [
         { "source": "/nosotros.html", "destination": "/pages/nosotros.html", "type": 301 },
