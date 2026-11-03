@@ -188,12 +188,13 @@
                     <div class="countdown-box"><span id="erineo-cd-min">00</span><label>Min</label></div>
                     <div class="countdown-box"><span id="erineo-cd-seg">00</span><label>Seg</label></div>
                 </div>
-                <p class="proximamente-countdown-label">Para el acceso anticipado de creadores</p>
+                <p class="proximamente-countdown-label">Para el acceso anticipado</p>
 
                 <div id="erineo-postulacion-locked" class="proximamente-locked">
-                    <i class="fas fa-lock"></i> <span>Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.</span>
+                    <i class="fas fa-lock"></i> <span>Acceso anticipado para cuentas VORANIX desde hoy. Público general: 4 de noviembre a las 14:00.</span>
                 </div>
                 <button type="button" id="erineo-login-btn" class="btn btn-outline btn-sm hidden"><i class="fas fa-right-to-bracket"></i> Iniciar sesión</button>
+                <button type="button" id="erineo-retry-btn" class="btn btn-outline btn-sm hidden"><i class="fas fa-rotate-right"></i> Reintentar</button>
 
                 <p class="proximamente-form-note hidden" id="erineo-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
                 <button type="button" id="erineo-open-form-btn" class="btn hidden"><i class="fas fa-paper-plane"></i> Postularme</button>
@@ -206,8 +207,8 @@
             <div id="erineo-login-modal-backdrop" class="erineo-modal-backdrop"></div>
             <div class="erineo-modal-panel" role="dialog" aria-modal="true" aria-labelledby="erineo-login-modal-title">
                 <button type="button" id="erineo-login-modal-close" class="erineo-modal-close" aria-label="Cerrar">&times;</button>
-                <h3 id="erineo-login-modal-title">Acceso de creador VORANIX</h3>
-                <p class="proximamente-form-note"><i class="fas fa-circle-info"></i> Iniciá sesión con la cuenta de creador que te dio VORANIX para desbloquear la postulación anticipada.</p>
+                <h3 id="erineo-login-modal-title">Acceso con tu cuenta VORANIX</h3>
+                <p class="proximamente-form-note"><i class="fas fa-circle-info"></i> Iniciá sesión con la cuenta que te dio VORANIX para desbloquear la postulación anticipada.</p>
                 <form id="erineo-login-form" class="proximamente-form">
                     <div class="input-group">
                         <input type="email" id="erineo-login-email" placeholder="Correo electrónico" autocomplete="email" required>
@@ -217,7 +218,7 @@
                     </div>
                     <button type="submit" id="erineo-login-submit" class="btn">Iniciar sesión</button>
                     <p id="erineo-login-error" class="proximamente-msg error hidden"></p>
-                    <p class="proximamente-form-note" style="margin-top:14px;"><i class="fas fa-circle-question"></i> ¿No tenés cuenta de creador todavía? Escribinos por Discord.</p>
+                    <p class="proximamente-form-note" style="margin-top:14px;"><i class="fas fa-circle-question"></i> ¿No tenés cuenta de VORANIX todavía? Escribinos por Discord.</p>
                 </form>
             </div>
         </div>
@@ -639,23 +640,30 @@ import { onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gsta
 import { db, auth } from "/assets/js/firebase-config.js";
 
 // Dos ventanas de apertura (hora local de quien mira la página):
-// acceso anticipado solo para cuentas de creador VORANIX desde el 3 de
-// noviembre, público general desde el 4. Se detecta "es creador" igual
-// que en Portal Creadores: sesión de Firebase Auth activa (persiste entre
-// páginas del mismo sitio) + users/{uid}.roles incluye admin/editor/creador.
+// acceso anticipado para cualquier cuenta VORANIX activa (sin importar el
+// rol: creador, influencer, roster, staff...) desde el 3 de noviembre,
+// público general desde el 4. La sesión de Firebase Auth persiste entre
+// páginas del mismo sitio (si ya se logueó en algún portal, ya cuenta acá).
 //
-// authState tiene 3 valores posibles (no es un simple sí/no): "anon" (nadie
-// logueado — ahí se puede mostrar el botón de iniciar sesión acá mismo, sin
-// mandar a la persona a Portal Creadores), "non-creator" (hay una sesión
-// activa pero la cuenta no tiene el rol creador/admin/editor — mostrarle de
-// nuevo el botón de login no sirve de nada, esa cuenta no califica) y
-// "creator" (desbloquea la postulación).
+// authState tiene 4 valores posibles (no es un simple sí/no): "anon" (nadie
+// logueado — ahí se puede mostrar el botón de iniciar sesión acá mismo),
+// "non-creator" (hay una sesión activa pero la cuenta está inactiva o no
+// existe el perfil — mostrarle de nuevo el botón de login no sirve de
+// nada), "creator" (cuenta activa — desbloquea la postulación; el nombre
+// quedó de cuando el acceso era solo para creadores) y "error": la lectura
+// del perfil (getDoc) puede fallar por algo transitorio (mala señal en el
+// celular, Firestore offline un instante) que NO significa que la cuenta
+// no califique — si ese caso se trataba como "non-creator" sin
+// distinguirlo, a alguien con cuenta real y mala conexión le aparecía el
+// mensaje de "tu cuenta no tiene acceso", que es directamente falso.
 const ERINEO_FECHA_ANTICIPADA = new Date("2026-11-03T00:00:00");
 const ERINEO_FECHA_PUBLICA = new Date("2026-11-04T14:00:00");
 
 let authState = "anon";
+let currentAuthUser = null;
 
 async function chequearCreador(user) {
+    currentAuthUser = user;
     if (!user) {
         authState = "anon";
         actualizarCountdown();
@@ -664,12 +672,14 @@ async function chequearCreador(user) {
     try {
         const snapshot = await getDoc(doc(db, "users", user.uid));
         const profile = snapshot.exists() ? snapshot.data() : null;
-        const roles = Array.isArray(profile?.roles) ? profile.roles : (profile?.role ? [profile.role] : []);
-        const esCreador = !!profile && profile.active !== false && roles.some(r => ["admin", "editor", "creador"].includes(r));
-        authState = esCreador ? "creator" : "non-creator";
+        // El acceso anticipado es para cualquier cuenta VORANIX activa, sin
+        // importar el rol (creador, influencer, roster, staff...) — alcanza
+        // con tener cuenta.
+        const tieneAcceso = !!profile && profile.active !== false;
+        authState = tieneAcceso ? "creator" : "non-creator";
     } catch (e) {
         console.error(e);
-        authState = "non-creator";
+        authState = "error";
     }
     actualizarCountdown();
 }
@@ -746,6 +756,7 @@ const formEl = document.getElementById("erineo-form");
 const formNoteEl = document.getElementById("erineo-form-note");
 const openFormBtn = document.getElementById("erineo-open-form-btn");
 const loginBtnEl = document.getElementById("erineo-login-btn");
+const retryBtnEl = document.getElementById("erineo-retry-btn");
 const diasEl = document.getElementById("erineo-cd-dias");
 const horasEl = document.getElementById("erineo-cd-horas");
 const minEl = document.getElementById("erineo-cd-min");
@@ -788,21 +799,28 @@ function actualizarCountdown() {
     lockedEl.classList.remove("hidden");
     // El botón de iniciar sesión solo tiene sentido si todavía no hay nadie
     // logueado: a una cuenta ya logueada que no es de creador, mostrárselo
-    // de nuevo no la ayuda (esa cuenta no califica, necesitaría otra).
-    loginBtnEl?.classList.toggle("hidden", authState !== "anon");
+    // de nuevo no la ayuda (esa cuenta no califica, necesitaría otra). Si
+    // hubo un error de verificación, también se muestra (reintentar con el
+    // mismo login de vuelta re-dispara el chequeo).
+    loginBtnEl?.classList.toggle("hidden", authState !== "anon" && authState !== "error");
+    retryBtnEl?.classList.toggle("hidden", authState !== "error");
 
     if (anticipadoAbierto) {
         // Ventana de creadores ya abierta, pero este visitante no califica.
         countdownLabelEl.textContent = "Para que se abra al público general";
         // El texto va en un <span> porque .proximamente-locked es flex: sin él,
         // el texto y el resto quedaban como columnas separadas.
-        lockedEl.innerHTML = authState === "non-creator"
-            ? `<i class="fas fa-lock"></i> <span>Tu cuenta no tiene acceso anticipado (no es una cuenta de creador VORANIX) — el público general entra el 4 de noviembre a las 14:00.</span>`
-            : `<i class="fas fa-lock"></i> <span>Acceso anticipado exclusivo para cuentas de creador VORANIX — el público general entra el 4 de noviembre a las 14:00.</span>`;
+        if (authState === "non-creator") {
+            lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Tu cuenta no tiene acceso anticipado (está inactiva o no es una cuenta VORANIX) — el público general entra el 4 de noviembre a las 14:00.</span>`;
+        } else if (authState === "error") {
+            lockedEl.innerHTML = `<i class="fas fa-triangle-exclamation"></i> <span>No pudimos verificar tu cuenta (puede ser la conexión). Tocá "Reintentar" — el público general entra igual el 4 de noviembre a las 14:00.</span>`;
+        } else {
+            lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado exclusivo para cuentas VORANIX — el público general entra el 4 de noviembre a las 14:00.</span>`;
+        }
         renderCountdown(ERINEO_FECHA_PUBLICA.getTime() - ahora);
     } else {
-        countdownLabelEl.textContent = "Para el acceso anticipado de creadores";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.</span>`;
+        countdownLabelEl.textContent = "Para el acceso anticipado";
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado para cuentas VORANIX desde hoy. Público general: 4 de noviembre a las 14:00.</span>`;
         renderCountdown(ERINEO_FECHA_ANTICIPADA.getTime() - ahora);
     }
 }
@@ -848,6 +866,7 @@ const loginModal = wireModal(
     document.getElementById("erineo-login-modal-close")
 );
 loginBtnEl?.addEventListener("click", loginModal.abrir);
+retryBtnEl?.addEventListener("click", () => chequearCreador(currentAuthUser));
 
 const loginFormEl = document.getElementById("erineo-login-form");
 const loginSubmitBtn = document.getElementById("erineo-login-submit");
