@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Erineo | VORANIX</title>
-    <meta name="description" content="Erineo: un evento hardcore de Minecraft de VORANIX Studio. 3 semanas, una venganza. Acceso anticipado para creadores el 3 de noviembre, público general el 4.">
+    <meta name="description" content="Erineo: un evento hardcore de Minecraft de VORANIX Studio. 3 semanas, una venganza. Acceso anticipado para creadores desde el 3 de noviembre, público general el 4 de noviembre a las 14:00.">
     <link rel="icon" type="image/png" href="/imagenes/logopng.png">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
@@ -90,7 +90,7 @@
                 <p class="proximamente-countdown-label">Para el acceso anticipado de creadores</p>
 
                 <div id="erineo-postulacion-locked" class="proximamente-locked">
-                    <i class="fas fa-lock"></i> Acceso anticipado para creadores el 3 de noviembre. Público general: 4 de noviembre.
+                    <i class="fas fa-lock"></i> Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.
                 </div>
 
                 <p class="proximamente-form-note hidden" id="erineo-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
@@ -188,7 +188,7 @@
 <section class="container erineo-detalle reveal">
     <h2>Sobre Erineo</h2>
     <p class="muted">Erineo es el próximo evento de VORANIX Studio: una serie hardcore de Minecraft pensada para jugarse en comunidad a lo largo de 3 semanas, con un hilo narrativo de venganza como eje del mundo que vamos a construir junto a quienes se postulen.</p>
-    <p class="muted">Todavía estamos cerrando los últimos detalles (reglas, formato y fechas de cada etapa) — los iremos anunciando por Discord y redes a medida que se acerque la apertura de postulaciones: acceso anticipado para cuentas de creador VORANIX el <strong>3 de noviembre</strong>, público general el <strong>4 de noviembre</strong>.</p>
+    <p class="muted">Todavía estamos cerrando los últimos detalles (reglas, formato y fechas de cada etapa) — los iremos anunciando por Discord y redes a medida que se acerque la apertura de postulaciones: acceso anticipado para cuentas de creador VORANIX desde el <strong>3 de noviembre</strong>, público general el <strong>4 de noviembre a las 14:00</strong>.</p>
     <div class="erineo-cta">
         <a href="https://discord.gg/jZq9gPSW5T" target="_blank" rel="noopener" class="btn btn-outline"><i class="fab fa-discord"></i> Unite al Discord para no perderte nada</a>
         <a href="/pages/proyectos.html" class="btn btn-outline"><i class="fas fa-calendar"></i> Ver todos los eventos</a>
@@ -252,7 +252,7 @@ import { db, auth } from "/assets/js/firebase-config.js";
 // trailer en el lugar del póster — duplicado acá porque esta es una página
 // standalone, sin módulo JS compartido con el home.
 const ERINEO_FECHA_ANTICIPADA = new Date("2026-11-03T00:00:00");
-const ERINEO_FECHA_PUBLICA = new Date("2026-11-04T00:00:00");
+const ERINEO_FECHA_PUBLICA = new Date("2026-11-04T14:00:00");
 
 let esCreadorActivo = false;
 
@@ -351,11 +351,11 @@ function actualizarCountdown() {
 
     if (anticipadoAbierto) {
         countdownLabelEl.textContent = "Para que se abra al público general";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre.`;
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre a las 14:00.`;
         renderCountdown(ERINEO_FECHA_PUBLICA.getTime() - ahora);
     } else {
         countdownLabelEl.textContent = "Para el acceso anticipado de creadores";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado para creadores el 3 de noviembre. Público general: 4 de noviembre.`;
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.`;
         renderCountdown(ERINEO_FECHA_ANTICIPADA.getTime() - ahora);
     }
 }

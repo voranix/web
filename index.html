@@ -191,7 +191,7 @@
                 <p class="proximamente-countdown-label">Para el acceso anticipado de creadores</p>
 
                 <div id="erineo-postulacion-locked" class="proximamente-locked">
-                    <i class="fas fa-lock"></i> Acceso anticipado para creadores el 3 de noviembre. Público general: 4 de noviembre.
+                    <i class="fas fa-lock"></i> Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.
                 </div>
 
                 <p class="proximamente-form-note hidden" id="erineo-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
@@ -614,7 +614,7 @@ import { db, auth } from "/assets/js/firebase-config.js";
 // que en Portal Creadores: sesión de Firebase Auth activa (persiste entre
 // páginas del mismo sitio) + users/{uid}.roles incluye admin/editor/creador.
 const ERINEO_FECHA_ANTICIPADA = new Date("2026-11-03T00:00:00");
-const ERINEO_FECHA_PUBLICA = new Date("2026-11-04T00:00:00");
+const ERINEO_FECHA_PUBLICA = new Date("2026-11-04T14:00:00");
 
 let esCreadorActivo = false;
 
@@ -714,11 +714,11 @@ function actualizarCountdown() {
     if (anticipadoAbierto) {
         // Ventana de creadores ya abierta, pero este visitante no califica.
         countdownLabelEl.textContent = "Para que se abra al público general";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre.`;
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre a las 14:00.`;
         renderCountdown(ERINEO_FECHA_PUBLICA.getTime() - ahora);
     } else {
         countdownLabelEl.textContent = "Para el acceso anticipado de creadores";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado para creadores el 3 de noviembre. Público general: 4 de noviembre.`;
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.`;
         renderCountdown(ERINEO_FECHA_ANTICIPADA.getTime() - ahora);
     }
 }
