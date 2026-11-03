@@ -30,13 +30,17 @@ const SMTP_USER = defineSecret("SMTP_USER");           // ej: notificaciones@gma
 const SMTP_PASS = defineSecret("SMTP_PASS");           // contraseña de aplicación (no la normal)
 const NOTIFY_EMAIL = defineSecret("NOTIFY_EMAIL");     // a quién le llega el aviso (puede ser el mismo SMTP_USER)
 const DISCORD_WEBHOOK_URL = defineSecret("DISCORD_WEBHOOK_URL");
+// Canal de Discord aparte, exclusivo para que el equipo revise postulaciones
+// a Erineo sin que se mezclen con los mensajes de contacto generales.
+const DISCORD_WEBHOOK_ERINEO_URL = defineSecret("DISCORD_WEBHOOK_ERINEO_URL");
 
 const ASUNTOS = {
     roster: "Postulación a roster",
     streamer: "Afiliación de streamer",
     colaboracion: "Colaboración",
     torneo: "Participación en torneo",
-    general: "Consulta general"
+    general: "Consulta general",
+    erineo: "Postulación a Erineo (Minecraft)"
 };
 
 // Mismo criterio que assets/js/firebase-config.js: escapar los campos que
@@ -124,10 +128,40 @@ function construirDiscordEmbed(data) {
     };
 }
 
+// Embed aparte para postulaciones a Erineo: trae los campos propios de ese
+// formulario (verificación de creador/streamer), que no existen en el
+// formulario de contacto general y por eso no están en construirDiscordEmbed.
+function construirDiscordEmbedErineo(data) {
+    const campos = [
+        { name: "Nombre", value: data.nombre || "-", inline: true },
+        { name: "Email", value: data.email || "-", inline: true },
+        { name: "Usuario Minecraft", value: data.usuarioMinecraft || "-", inline: true },
+        { name: "Plataforma", value: data.plataforma || "-", inline: true },
+        { name: "Seguidores", value: data.seguidores || "-", inline: true },
+        { name: "Frecuencia de contenido", value: data.frecuenciaContenido || "-", inline: true },
+        { name: "Experiencia hardcore", value: data.experienciaHardcore || "-", inline: true },
+        { name: "Disponibilidad", value: data.disponibilidad || "-", inline: true },
+        { name: "Cómo se enteró", value: data.comoSupo || "-", inline: true },
+        { name: "Se compromete 3 semanas", value: data.compromiso ? "Sí" : "No", inline: true },
+        { name: "Adjuntó skin", value: data.skinAdjunta ? "Sí (ver Formspree)" : "No", inline: true },
+        { name: "Canal/perfil", value: data.canalUrl || "-", inline: false },
+        { name: "Mensaje", value: (data.mensaje || "-").slice(0, 1000) }
+    ];
+
+    return {
+        embeds: [{
+            title: "🏹 Nueva postulación a Erineo",
+            color: 0xff6a00,
+            fields: campos,
+            timestamp: new Date().toISOString()
+        }]
+    };
+}
+
 exports.onNuevoMensaje = onDocumentCreated(
     {
         document: "mensajes/{mensajeId}",
-        secrets: [SMTP_USER, SMTP_PASS, NOTIFY_EMAIL, DISCORD_WEBHOOK_URL]
+        secrets: [SMTP_USER, SMTP_PASS, NOTIFY_EMAIL, DISCORD_WEBHOOK_URL, DISCORD_WEBHOOK_ERINEO_URL]
     },
     async (event) => {
         const snapshot = event.data;
@@ -138,19 +172,26 @@ exports.onNuevoMensaje = onDocumentCreated(
         const data = snapshot.data();
 
         // --- 1) Notificación a Discord ---
+        // Las postulaciones a Erineo van a su propio canal/webhook (para que
+        // el equipo las revise sin que se mezclen con el contacto general);
+        // todo lo demás sigue yendo al webhook general de siempre.
         try {
-            const webhookUrl = DISCORD_WEBHOOK_URL.value();
+            const esErineo = data.asunto === "erineo";
+            const webhookUrl = esErineo ? DISCORD_WEBHOOK_ERINEO_URL.value() : DISCORD_WEBHOOK_URL.value();
             if (webhookUrl) {
+                const payload = esErineo ? construirDiscordEmbedErineo(data) : construirDiscordEmbed(data);
                 const res = await fetch(webhookUrl, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(construirDiscordEmbed(data))
+                    body: JSON.stringify(payload)
                 });
                 if (!res.ok) {
                     logger.error("Discord webhook respondió con error", res.status, await res.text());
                 }
             } else {
-                logger.warn("DISCORD_WEBHOOK_URL no configurado, se omite notificación a Discord");
+                logger.warn(esErineo
+                    ? "DISCORD_WEBHOOK_ERINEO_URL no configurado, se omite notificación a Discord"
+                    : "DISCORD_WEBHOOK_URL no configurado, se omite notificación a Discord");
             }
         } catch (err) {
             logger.error("Error enviando notificación a Discord", err);
