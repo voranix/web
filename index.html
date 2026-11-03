@@ -191,13 +191,34 @@
                 <p class="proximamente-countdown-label">Para el acceso anticipado de creadores</p>
 
                 <div id="erineo-postulacion-locked" class="proximamente-locked">
-                    <i class="fas fa-lock"></i> Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.
+                    <i class="fas fa-lock"></i> <span>Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.</span>
                 </div>
+                <button type="button" id="erineo-login-btn" class="btn btn-outline btn-sm hidden"><i class="fas fa-right-to-bracket"></i> Iniciar sesión</button>
 
                 <p class="proximamente-form-note hidden" id="erineo-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
                 <button type="button" id="erineo-open-form-btn" class="btn hidden"><i class="fas fa-paper-plane"></i> Postularme</button>
 
                 <a href="/pages/erineo.html" class="proximamente-more">Más sobre Erineo <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+
+        <div id="erineo-login-modal" class="erineo-modal hidden">
+            <div id="erineo-login-modal-backdrop" class="erineo-modal-backdrop"></div>
+            <div class="erineo-modal-panel" role="dialog" aria-modal="true" aria-labelledby="erineo-login-modal-title">
+                <button type="button" id="erineo-login-modal-close" class="erineo-modal-close" aria-label="Cerrar">&times;</button>
+                <h3 id="erineo-login-modal-title">Acceso de creador VORANIX</h3>
+                <p class="proximamente-form-note"><i class="fas fa-circle-info"></i> Iniciá sesión con la cuenta de creador que te dio VORANIX para desbloquear la postulación anticipada.</p>
+                <form id="erineo-login-form" class="proximamente-form">
+                    <div class="input-group">
+                        <input type="email" id="erineo-login-email" placeholder="Correo electrónico" autocomplete="email" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="erineo-login-password" placeholder="Contraseña" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" id="erineo-login-submit" class="btn">Iniciar sesión</button>
+                    <p id="erineo-login-error" class="proximamente-msg error hidden"></p>
+                    <p class="proximamente-form-note" style="margin-top:14px;"><i class="fas fa-circle-question"></i> ¿No tenés cuenta de creador todavía? Escribinos por Discord.</p>
+                </form>
             </div>
         </div>
 
@@ -614,7 +635,7 @@ loadLive();
 
 <script type="module">
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { db, auth } from "/assets/js/firebase-config.js";
 
 // Dos ventanas de apertura (hora local de quien mira la página):
@@ -622,14 +643,21 @@ import { db, auth } from "/assets/js/firebase-config.js";
 // noviembre, público general desde el 4. Se detecta "es creador" igual
 // que en Portal Creadores: sesión de Firebase Auth activa (persiste entre
 // páginas del mismo sitio) + users/{uid}.roles incluye admin/editor/creador.
+//
+// authState tiene 3 valores posibles (no es un simple sí/no): "anon" (nadie
+// logueado — ahí se puede mostrar el botón de iniciar sesión acá mismo, sin
+// mandar a la persona a Portal Creadores), "non-creator" (hay una sesión
+// activa pero la cuenta no tiene el rol creador/admin/editor — mostrarle de
+// nuevo el botón de login no sirve de nada, esa cuenta no califica) y
+// "creator" (desbloquea la postulación).
 const ERINEO_FECHA_ANTICIPADA = new Date("2026-11-03T00:00:00");
 const ERINEO_FECHA_PUBLICA = new Date("2026-11-04T14:00:00");
 
-let esCreadorActivo = false;
+let authState = "anon";
 
 async function chequearCreador(user) {
     if (!user) {
-        esCreadorActivo = false;
+        authState = "anon";
         actualizarCountdown();
         return;
     }
@@ -637,10 +665,11 @@ async function chequearCreador(user) {
         const snapshot = await getDoc(doc(db, "users", user.uid));
         const profile = snapshot.exists() ? snapshot.data() : null;
         const roles = Array.isArray(profile?.roles) ? profile.roles : (profile?.role ? [profile.role] : []);
-        esCreadorActivo = !!profile && profile.active !== false && roles.some(r => ["admin", "editor", "creador"].includes(r));
+        const esCreador = !!profile && profile.active !== false && roles.some(r => ["admin", "editor", "creador"].includes(r));
+        authState = esCreador ? "creator" : "non-creator";
     } catch (e) {
         console.error(e);
-        esCreadorActivo = false;
+        authState = "non-creator";
     }
     actualizarCountdown();
 }
@@ -716,6 +745,7 @@ const lockedEl = document.getElementById("erineo-postulacion-locked");
 const formEl = document.getElementById("erineo-form");
 const formNoteEl = document.getElementById("erineo-form-note");
 const openFormBtn = document.getElementById("erineo-open-form-btn");
+const loginBtnEl = document.getElementById("erineo-login-btn");
 const diasEl = document.getElementById("erineo-cd-dias");
 const horasEl = document.getElementById("erineo-cd-horas");
 const minEl = document.getElementById("erineo-cd-min");
@@ -740,10 +770,11 @@ function actualizarCountdown() {
     const publicoAbierto = ERINEO_PREVIEW || ahora >= ERINEO_FECHA_PUBLICA.getTime();
     const anticipadoAbierto = publicoAbierto || ahora >= ERINEO_FECHA_ANTICIPADA.getTime();
 
-    if (publicoAbierto || (anticipadoAbierto && esCreadorActivo)) {
+    if (publicoAbierto || (anticipadoAbierto && authState === "creator")) {
         countdownEl.classList.add("hidden");
         countdownLabelEl?.classList.add("hidden");
         lockedEl.classList.add("hidden");
+        loginBtnEl?.classList.add("hidden");
         formNoteEl?.classList.remove("hidden");
         openFormBtn?.classList.remove("hidden");
         if (countdownInterval) clearInterval(countdownInterval);
@@ -755,13 +786,19 @@ function actualizarCountdown() {
     countdownEl.classList.remove("hidden");
     countdownLabelEl?.classList.remove("hidden");
     lockedEl.classList.remove("hidden");
+    // El botón de iniciar sesión solo tiene sentido si todavía no hay nadie
+    // logueado: a una cuenta ya logueada que no es de creador, mostrárselo
+    // de nuevo no la ayuda (esa cuenta no califica, necesitaría otra).
+    loginBtnEl?.classList.toggle("hidden", authState !== "anon");
 
     if (anticipadoAbierto) {
         // Ventana de creadores ya abierta, pero este visitante no califica.
         countdownLabelEl.textContent = "Para que se abra al público general";
         // El texto va en un <span> porque .proximamente-locked es flex: sin él,
-        // el texto, el link y el resto quedaban como tres columnas separadas.
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre a las 14:00.</span>`;
+        // el texto y el resto quedaban como columnas separadas.
+        lockedEl.innerHTML = authState === "non-creator"
+            ? `<i class="fas fa-lock"></i> <span>Tu cuenta no tiene acceso anticipado (no es una cuenta de creador VORANIX) — el público general entra el 4 de noviembre a las 14:00.</span>`
+            : `<i class="fas fa-lock"></i> <span>Acceso anticipado exclusivo para cuentas de creador VORANIX — el público general entra el 4 de noviembre a las 14:00.</span>`;
         renderCountdown(ERINEO_FECHA_PUBLICA.getTime() - ahora);
     } else {
         countdownLabelEl.textContent = "Para el acceso anticipado de creadores";
@@ -773,27 +810,75 @@ function actualizarCountdown() {
 actualizarCountdown();
 countdownInterval = setInterval(actualizarCountdown, 1000);
 
-// Ventana emergente de postulación: el form vive siempre en el DOM
-// (oculto por CSS vía .erineo-modal.hidden), se abre al apretar el botón
-// "Postularme" y se puede cerrar con el botón X, clic afuera o Escape.
+// Ventanas emergentes (postulación y login de creador): viven siempre en
+// el DOM (ocultas por CSS vía .erineo-modal.hidden), se abren al apretar su
+// botón y se pueden cerrar con el botón X, clic afuera o Escape. Mismo
+// helper genérico para ambas, abriendo una sola a la vez.
+function wireModal(modalEl, backdropEl, closeEl) {
+    function abrir() {
+        modalEl.classList.remove("hidden");
+        document.body.classList.add("erineo-modal-open");
+    }
+    function cerrar() {
+        modalEl.classList.add("hidden");
+        document.body.classList.remove("erineo-modal-open");
+    }
+    closeEl?.addEventListener("click", cerrar);
+    backdropEl?.addEventListener("click", cerrar);
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !modalEl.classList.contains("hidden")) cerrar();
+    });
+    return { abrir, cerrar };
+}
+
 const erineoModalEl = document.getElementById("erineo-modal");
-const erineoModalBackdrop = document.getElementById("erineo-modal-backdrop");
-const erineoModalClose = document.getElementById("erineo-modal-close");
+const postulacionModal = wireModal(
+    erineoModalEl,
+    document.getElementById("erineo-modal-backdrop"),
+    document.getElementById("erineo-modal-close")
+);
+openFormBtn?.addEventListener("click", postulacionModal.abrir);
+function abrirModalErineo() { postulacionModal.abrir(); }
+function cerrarModalErineo() { postulacionModal.cerrar(); }
 
-function abrirModalErineo() {
-    erineoModalEl.classList.remove("hidden");
-    document.body.classList.add("erineo-modal-open");
-}
-function cerrarModalErineo() {
-    erineoModalEl.classList.add("hidden");
-    document.body.classList.remove("erineo-modal-open");
-}
+const loginModalEl = document.getElementById("erineo-login-modal");
+const loginModal = wireModal(
+    loginModalEl,
+    document.getElementById("erineo-login-modal-backdrop"),
+    document.getElementById("erineo-login-modal-close")
+);
+loginBtnEl?.addEventListener("click", loginModal.abrir);
 
-openFormBtn?.addEventListener("click", abrirModalErineo);
-erineoModalClose?.addEventListener("click", cerrarModalErineo);
-erineoModalBackdrop?.addEventListener("click", cerrarModalErineo);
-document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !erineoModalEl.classList.contains("hidden")) cerrarModalErineo();
+const loginFormEl = document.getElementById("erineo-login-form");
+const loginSubmitBtn = document.getElementById("erineo-login-submit");
+const loginErrorEl = document.getElementById("erineo-login-error");
+
+loginFormEl?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    loginErrorEl.classList.add("hidden");
+    loginSubmitBtn.disabled = true;
+    loginSubmitBtn.textContent = "Ingresando...";
+
+    const email = document.getElementById("erineo-login-email").value.trim();
+    const password = document.getElementById("erineo-login-password").value;
+
+    try {
+        // onAuthStateChanged (arriba) hace el resto: re-chequea el rol y, si
+        // es de creador, actualizarCountdown() desbloquea "Postularme" solo,
+        // sin recargar la página ni mandar a la persona a otro lado.
+        await signInWithEmailAndPassword(auth, email, password);
+        loginModal.cerrar();
+        loginFormEl.reset();
+    } catch (error) {
+        console.error(error);
+        loginErrorEl.textContent = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"].includes(error.code)
+            ? "Email o contraseña incorrectos."
+            : "No se pudo iniciar sesión. Probá de nuevo.";
+        loginErrorEl.classList.remove("hidden");
+    } finally {
+        loginSubmitBtn.disabled = false;
+        loginSubmitBtn.textContent = "Iniciar sesión";
+    }
 });
 
 // Mismo patrón que pages/contacto.html: Firestore (aparece en Admin →

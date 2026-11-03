@@ -312,6 +312,7 @@ button { cursor: pointer; }
     border-radius:var(--r-md); padding:14px 20px; font-size:13px; font-weight:600; line-height:1.6;
 }
 .proximamente-locked a { color:#fff; text-decoration:underline; font-weight:700; }
+#erineo-login-btn { margin-top:14px; }
 .proximamente-form { max-width:480px; text-align:left; }
 .proximamente-form-note {
     display:flex; align-items:center; gap:8px; max-width:480px; font-size:12px; color:var(--morado-light);
