@@ -115,7 +115,16 @@
                         <input type="email" name="email" placeholder="Correo electrónico" required>
                     </div>
                     <div class="input-group">
-                        <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft (Java/Bedrock)" required>
+                        <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft" required>
+                    </div>
+                    <div class="input-group input-switch-row">
+                        <span class="input-switch-question">¿Tu cuenta de Minecraft es premium?</span>
+                        <label class="input-switch">
+                            <input type="checkbox" id="erineo-premium-toggle" aria-label="Cuenta de Minecraft premium">
+                            <span class="input-switch-track"><span class="input-switch-thumb"></span></span>
+                            <span class="input-switch-value" id="erineo-premium-value">No premium</span>
+                        </label>
+                        <input type="hidden" name="minecraft_premium" id="erineo-premium" value="No premium">
                     </div>
                     <div class="input-group">
                         <select name="plataforma" required>
@@ -135,7 +144,7 @@
                     </div>
                     <div class="input-group">
                         <select name="frecuencia_contenido" required>
-                            <option value="" disabled selected>¿Con qué frecuencia subís contenido o transmitís?</option>
+                            <option value="" disabled selected>¿Con qué frecuencia subes contenido o transmitís?</option>
                             <option value="Diaria">Diaria</option>
                             <option value="Varias veces por semana">Varias veces por semana</option>
                             <option value="Semanal">Semanal</option>
@@ -275,11 +284,11 @@ async function chequearCreador(user) {
 }
 onAuthStateChanged(auth, chequearCreador);
 
-// Link del video promocional subido a X (también acepta YouTube o un mp4 directo).
-const ERINEO_TRAILER_URL = "https://x.com/Voranixstudio/status/2117434271178895709?a=fjPH22fHLSdCd4z4tiA&s=20";
+// Link del video promocional (acepta X, YouTube/Shorts o un mp4 directo).
+const ERINEO_TRAILER_URL = "https://youtube.com/shorts/fdCceVN-YGI?si=YBtwowAXRkSCXZPH";
 
 function youtubeEmbedId(url) {
-    const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{6,})/);
+    const match = String(url || "").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{6,})/);
     return match ? match[1] : null;
 }
 
@@ -326,6 +335,13 @@ trailerBtnEl?.addEventListener("click", () => {
     } else {
         playerEl.innerHTML = `<video src="${ERINEO_TRAILER_URL}" controls autoplay playsinline></video>`;
     }
+    // Los Shorts son verticales (9:16): el recuadro toma esa proporción para
+    // que el video lo llene sin franjas negras a los costados. Va también
+    // inline para que funcione aunque el navegador tenga en caché un
+    // style.css viejo sin la regla .is-vertical.
+    const esShort = /youtube\.com\/shorts\//.test(ERINEO_TRAILER_URL);
+    playerEl.classList.toggle("is-vertical", esShort);
+    playerEl.style.aspectRatio = esShort ? "9 / 16" : "";
     posterImgEl?.classList.add("hidden");
     trailerBtnEl.classList.add("hidden");
     trailerNoteEl?.classList.add("hidden");
@@ -380,11 +396,13 @@ function actualizarCountdown() {
 
     if (anticipadoAbierto) {
         countdownLabelEl.textContent = "Para que se abra al público general";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre a las 14:00.`;
+        // El texto va en un <span> porque .proximamente-locked es flex: sin él,
+        // el texto, el link y el resto quedaban como tres columnas separadas.
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado exclusivo para cuentas de creador VORANIX. <a href="/pages/creadores.html">Iniciá sesión acá</a> si tenés una — el público general entra el 4 de noviembre a las 14:00.</span>`;
         renderCountdown(ERINEO_FECHA_PUBLICA.getTime() - ahora);
     } else {
         countdownLabelEl.textContent = "Para el acceso anticipado de creadores";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.`;
+        lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado para creadores desde hoy. Público general: 4 de noviembre a las 14:00.</span>`;
         renderCountdown(ERINEO_FECHA_ANTICIPADA.getTime() - ahora);
     }
 }
@@ -415,6 +433,21 @@ document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !erineoModalEl.classList.contains("hidden")) cerrarModalErineo();
 });
 
+// Switch premium / no premium: el checkbox no tiene name, así que el valor
+// que viaja a Formspree y Firestore es el del input oculto (siempre presente,
+// incluso cuando el switch está apagado).
+const premiumToggle = document.getElementById("erineo-premium-toggle");
+const premiumInput = document.getElementById("erineo-premium");
+const premiumValueEl = document.getElementById("erineo-premium-value");
+
+function sincronizarPremium() {
+    const valor = premiumToggle.checked ? "Premium" : "No premium";
+    premiumInput.value = valor;
+    premiumValueEl.textContent = valor;
+}
+premiumToggle?.addEventListener("change", sincronizarPremium);
+formEl.addEventListener("reset", () => setTimeout(sincronizarPremium));
+
 const submitBtn = document.getElementById("erineo-submit");
 const successMsg = document.getElementById("erineo-success");
 const errorMsg = document.getElementById("erineo-error");
@@ -430,6 +463,7 @@ async function enviarAFirestore(formData) {
         asunto: "erineo",
         mensaje: formData.get("mensaje") || "",
         usuarioMinecraft: formData.get("usuario_minecraft") || "",
+        minecraftPremium: formData.get("minecraft_premium") === "Premium",
         plataforma: formData.get("plataforma") || "",
         canalUrl: formData.get("canal_url") || "",
         seguidores: formData.get("seguidores") || "",
