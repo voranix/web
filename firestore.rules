@@ -188,6 +188,14 @@ service cloud.firestore {
       allow write: if isStaff();
     }
 
+    // Participantes del evento Erineo (pages/erineo.html) — gestionado desde
+    // Admin, con imagen subida a Storage (ver storage.rules: bucketPath =
+    // section.collection, igual que proyectos/staff).
+    match /erineoParticipantes/{doc} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+
     match /sponsors/{doc} {
       allow read: if true;
       allow write: if isStaff();

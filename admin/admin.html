@@ -1473,6 +1473,18 @@ const sections = {
             ["activo", "Activo", "boolean"]
         ]
     },
+    erineoParticipantes: {
+        label: "Participantes Erineo",
+        collection: "erineoParticipantes",
+        note: "Se muestran en la sección \"Participantes\" de pages/erineo.html, ordenados por fecha de carga.",
+        fields: [
+            ["nombre", "Nombre", "text"],
+            ["foto", "Imagen", "image"],
+            ["descripcion", "Descripción corta (ej: Streamer de Twitch)", "text"],
+            ["canalUrl", "Link a su canal/perfil", "url"],
+            ["activo", "Activo", "boolean"]
+        ]
+    },
     mensajes: {
         label: "Mensajes",
         collection: "mensajes",
@@ -1539,7 +1551,7 @@ const sections = {
 const NAV_GROUPS = [
     { label: "Inicio", keys: ["dashboard", "comunicados", "tablero"] },
     { label: "Esports", keys: ["rivals", "juegos", "valorant", "valorantsecundario", "fifa", "dbd", "actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
-    { label: "Comunidad y Contenido", keys: ["streamers", "streamersMetricas", "influencers", "staff", "proyectos", "patrocinadores"] },
+    { label: "Comunidad y Contenido", keys: ["streamers", "streamersMetricas", "influencers", "staff", "proyectos", "erineoParticipantes", "patrocinadores"] },
     { label: "Sistema", keys: ["mensajes", "reportes", "overlay", "users"] }
 ];
 
@@ -1564,6 +1576,7 @@ const NAV_META = {
     influencers: { icon: "⭐", short: "Influencers" },
     staff: { icon: "🛡️", short: "Staff" },
     proyectos: { icon: "📁", short: "Proyectos" },
+    erineoParticipantes: { icon: "🧑‍🤝‍🧑", short: "Erineo" },
     patrocinadores: { icon: "🤝", short: "Sponsors" },
     mensajes: { icon: "✉️", short: "Mensajes" },
     reportes: { icon: "🐞", short: "Reportes" },

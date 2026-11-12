@@ -226,6 +226,12 @@
     </div>
 </section>
 
+<section id="erineo-participantes-section" class="container erineo-detalle reveal hidden">
+    <h2>Participantes</h2>
+    <p class="muted">Quienes ya confirmaron su lugar en Erineo.</p>
+    <div class="roster-grid" id="erineo-participantes-grid"></div>
+</section>
+
 <footer class="footer">
     <div class="footer-inner container">
         <div class="footer-brand">
@@ -274,9 +280,9 @@
 <script src="/assets/js/reveal.js"></script>
 
 <script type="module">
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { db, auth } from "/assets/js/firebase-config.js";
+import { db, auth, escapeHtml } from "/assets/js/firebase-config.js";
 
 // Mismo patrón que index.html: dos ventanas de apertura (acceso anticipado
 // para creadores desde el 3 de noviembre, público desde el 4) y swap del
@@ -602,6 +608,43 @@ formEl.addEventListener("submit", async (event) => {
         errorMsg.classList.remove("hidden");
     }
 });
+
+// Participantes confirmados: se cargan desde Admin → Participantes Erineo
+// (misma colección pública, gestionada con el CRUD genérico del admin).
+// La sección entera queda oculta si todavía no hay nadie publicado, para no
+// mostrar un bloque vacío antes de confirmar participantes.
+function assetUrl(path) {
+    if (!path) return "";
+    return /^https?:\/\//.test(path) || path.startsWith("/") ? path : "/" + path;
+}
+
+function renderParticipante(item, i) {
+    return `
+<div class="card fade-up" style="animation-delay:${i * 0.04}s">
+    <img src="${assetUrl(item.foto) || '/imagenes/logo.jpg'}" alt="${escapeHtml(item.nombre) || 'Participante'}" onerror="this.src='/imagenes/logo.jpg'">
+    <div class="card-body">
+        <h3>${escapeHtml(item.nombre) || "Participante"}</h3>
+        ${item.descripcion ? `<p class="games"><i class="fas fa-user" style="margin-right:6px;color:var(--morado);"></i>${escapeHtml(item.descripcion)}</p>` : ""}
+        ${item.canalUrl ? `<div class="staff-socials"><a href="${escapeHtml(item.canalUrl)}" target="_blank" rel="noopener" title="Ver canal"><i class="fas fa-arrow-up-right-from-square"></i></a></div>` : ""}
+    </div>
+</div>`;
+}
+
+async function loadParticipantesErineo() {
+    try {
+        const snapshot = await getDocs(collection(db, "erineoParticipantes"));
+        const list = snapshot.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(item => item.activo !== false)
+            .sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
+        if (!list.length) return;
+        document.getElementById("erineo-participantes-grid").innerHTML = list.map(renderParticipante).join("");
+        document.getElementById("erineo-participantes-section").classList.remove("hidden");
+    } catch (e) {
+        console.error(e);
+    }
+}
+loadParticipantesErineo();
 </script>
 
 </body>
