@@ -1176,13 +1176,6 @@ const VALORANT_ROLES = [
     ["flex", "Flex"]
 ];
 
-const DBD_ROLES = [
-    ["", "Sin rol"],
-    ["survivor", "Survivor"],
-    ["killer", "Killer"],
-    ["survivor/killer", "Survivor/Killer"]
-];
-
 const TIPO_JUGADOR = [
     ["", "Sin especificar"],
     ["principal", "Jugador Principal"],
@@ -1191,13 +1184,6 @@ const TIPO_JUGADOR = [
     ["igl", "IGL"],
     ["capitan", "Capitán"],
     ["segundocapitan", "Second Caller"]
-];
-
-const DBD_TIPO_JUGADOR = [
-    ["", "Sin especificar"],
-    ["digital", "Digital"],
-    ["presencial", "Presencial"],
-    ["lider_presencial", "Líder/Presencial"]
 ];
 
 const PAISES = [
@@ -1263,9 +1249,7 @@ const VALORANT_AGENTS = [
 // cargar line-up por partida, cada uno con su propio vocabulario).
 const LINEUP_NOUN_BY_GAME = {
     valorant: "agente",
-    valorantsecundario: "agente",
-    fifa: "posición",
-    dbd: "personaje"
+    fifa: "posición"
 };
 
 function ACTIVIDAD_FIELDS(juegoValue, juegoLabel, tipos){
@@ -1307,21 +1291,6 @@ const sections = {
             ["activo", "Activo", "boolean"]
         ]
     },
-    valorantsecundario: {
-        label: "Rosters Valorant Secundario",
-        collection: "rosters",
-        filterValue: "valorantsecundario",
-        fields: [
-            ["nombre", "Nombre", "text"],
-            ["juego", "Juego", "select", [["valorantsecundario", "Valorant Secundario"]]],
-            ["rol", "Rol", "select", VALORANT_ROLES],
-            ["rango", "Rango", "select", VALORANT_RANKS],
-            ["tipoJugador", "Tipo de Jugador", "select", TIPO_JUGADOR],
-            ["pais", "País", "select", PAISES],
-            ["foto", "Imagen", "image"],
-            ["activo", "Activo", "boolean"]
-        ]
-    },
     fifa: {
         label: "Rosters FIFA",
         collection: "rosters",
@@ -1337,40 +1306,11 @@ const sections = {
             ["activo", "Activo", "boolean"]
         ]
     },
-    dbd: {
-        label: "Rosters Dead by Daylight",
-        collection: "rosters",
-        filterValue: "dbd",
-        fields: [
-            ["nombre", "Nombre", "text"],
-            ["juego", "Juego", "select", [["dbd", "Dead by Daylight"]]],
-            ["rol", "Rol", "select", DBD_ROLES],
-            ["personaje", "Personaje principal", "text"],
-            ["tipoJugador", "Tipo de Jugador", "select", DBD_TIPO_JUGADOR],
-            ["pais", "País", "select", PAISES],
-            ["foto", "Imagen", "image"],
-            ["activo", "Activo", "boolean"]
-        ]
-    },
     actividadValorant: {
         label: "Torneos/Scrims Valorant",
         collection: "equipoActividad",
         filterValue: "valorant",
         fields: ACTIVIDAD_FIELDS("valorant", "Valorant", ACTIVIDAD_TIPOS_VALORANT)
-    },
-    // Nombre de la key alineado con "actividad" + capitalize(equipoJuego) que usa
-    // visibleSectionKeys() para mostrarle a un capitán solo su propia sección.
-    actividadValorantsecundario: {
-        label: "Torneos/Scrims Valorant Secundario",
-        collection: "equipoActividad",
-        filterValue: "valorantsecundario",
-        fields: ACTIVIDAD_FIELDS("valorantsecundario", "Valorant Secundario", ACTIVIDAD_TIPOS_VALORANT)
-    },
-    actividadDbd: {
-        label: "Torneos/Scrims DBD",
-        collection: "equipoActividad",
-        filterValue: "dbd",
-        fields: ACTIVIDAD_FIELDS("dbd", "Dead by Daylight")
     },
     actividadFifa: {
         label: "Torneos/Scrims FIFA",
@@ -1550,7 +1490,7 @@ const sections = {
 
 const NAV_GROUPS = [
     { label: "Inicio", keys: ["dashboard", "comunicados", "tablero"] },
-    { label: "Esports", keys: ["rivals", "juegos", "valorant", "valorantsecundario", "fifa", "dbd", "actividadValorant", "actividadValorantsecundario", "actividadDbd", "actividadFifa"] },
+    { label: "Esports", keys: ["rivals", "juegos", "valorant", "fifa", "actividadValorant", "actividadFifa"] },
     { label: "Comunidad y Contenido", keys: ["streamers", "streamersMetricas", "influencers", "staff", "proyectos", "erineoParticipantes", "patrocinadores"] },
     { label: "Sistema", keys: ["mensajes", "reportes", "overlay", "users"] }
 ];
@@ -1564,12 +1504,8 @@ const NAV_META = {
     rivals: { icon: "⚔️", short: "Rivals" },
     juegos: { icon: "🎮", short: "Juegos" },
     valorant: { icon: "🔫", short: "Valorant A" },
-    valorantsecundario: { icon: "🔫", short: "Valorant B" },
     fifa: { icon: "⚽", short: "FIFA" },
-    dbd: { icon: "🔪", short: "DBD" },
     actividadValorant: { icon: "📅", short: "Torneos Val. A" },
-    actividadValorantsecundario: { icon: "📅", short: "Torneos Val. B" },
-    actividadDbd: { icon: "📅", short: "Torneos DBD" },
     actividadFifa: { icon: "📅", short: "Torneos FIFA" },
     streamers: { icon: "📺", short: "Streamers" },
     streamersMetricas: { icon: "📊", short: "Métricas" },
@@ -1611,7 +1547,7 @@ let metricasFiltro = "todos"; // "todos" | "cumple" | "no-cumple"
 let editingId = null;
 let editingData = {};
 let usersCache = [];
-let valorantRosterNamesCache = {}; // keyed por juego: "valorant" | "valorantsecundario"
+let valorantRosterNamesCache = {}; // keyed por juego: "valorant"
 let lastAccessCache = {}; // keyed por uid: { lastSignInTime, creationTime }
 let usersRefreshInterval = null;
 
@@ -2068,7 +2004,7 @@ ${section.fields.map(field => `<td data-label="${escapeHtml(field[1])}">${
     });
 }
 
-const JUEGO_DASH_LABELS = { valorant: "Valorant A", valorantsecundario: "Valorant B", fifa: "FIFA", dbd: "DBD" };
+const JUEGO_DASH_LABELS = { valorant: "Valorant A", fifa: "FIFA" };
 
 function relativeTime(timestamp){
     if(!timestamp || typeof timestamp.toDate !== "function") return "";
@@ -2280,9 +2216,7 @@ const COMUNICADOS_GRUPOS_STAFF = [
     { label: "Todos los capitanes y Second Callers", match: (c) => c.type === "uid" && c.roles.some(r => ["capitan", "segundocapitan"].includes(r)) },
     { label: "Todos los jugadores", match: (c) => c.type === "uid" && c.roles.includes("jugador") },
     { label: "Valorant Principal", match: (c) => c.type === "uid" && c.equipoJuego === "valorant" },
-    { label: "Valorant Secundario", match: (c) => c.type === "uid" && c.equipoJuego === "valorantsecundario" },
     { label: "FIFA", match: (c) => c.type === "uid" && c.equipoJuego === "fifa" },
-    { label: "DBD", match: (c) => c.type === "uid" && c.equipoJuego === "dbd" },
     { label: "Streamers", match: (c) => c.type === "contact" && c.tag === "Streamer" },
     { label: "Influencers", match: (c) => c.type === "contact" && c.tag === "Influencer" },
     { label: "Absolutamente todos", match: () => true }
@@ -3588,7 +3522,7 @@ const RIVALS_CATEGORIAS = [
     ["presencial", "Presencial / en vivo"]
 ];
 
-const JUEGO_LABELS_CORTOS = { valorant: "Valorant A", valorantsecundario: "Valorant B", fifa: "FIFA", dbd: "DBD" };
+const JUEGO_LABELS_CORTOS = { valorant: "Valorant A", fifa: "FIFA" };
 
 // Trae {id, nombre, foto} desde la colección que corresponda a cada tipo de
 // miembro. Sin cache: Alianzas se edita pocas veces por temporada.
@@ -3696,7 +3630,7 @@ function renderJuegosPanel(container){
     container.innerHTML = `
 <div class="rivals-toolbar">
     <button class="btn small" type="button" id="juego-add-btn">+ Nuevo Juego</button>
-    <button class="btn secondary small" type="button" id="migrar-juegos-btn">Migrar juegos actuales (Valorant/FIFA/DBD)</button>
+    <button class="btn secondary small" type="button" id="migrar-juegos-btn">Migrar juegos actuales (Valorant/FIFA)</button>
 </div>
 <div id="juegos-grid" class="rivals-alianzas-grid"><p class="loading">Cargando...</p></div>`;
 
@@ -5960,8 +5894,6 @@ function userFieldHtml(name, value, disabled = false){
     <select name="equipoJuego" ${disabled ? "disabled" : ""}>
         <option value="" ${!safeValue ? "selected" : ""}>Sin equipo</option>
         <option value="valorant" ${safeValue === "valorant" ? "selected" : ""}>Valorant Principal</option>
-        <option value="valorantsecundario" ${safeValue === "valorantsecundario" ? "selected" : ""}>Valorant Secundario</option>
-        <option value="dbd" ${safeValue === "dbd" ? "selected" : ""}>Dead by Daylight</option>
         <option value="fifa" ${safeValue === "fifa" ? "selected" : ""}>EA FC</option>
     </select>
 </div>`;
@@ -6150,14 +6082,10 @@ function createLineupSelect(name, options, selectedValue, placeholderLabel){
 }
 
 // Segunda columna del line-up por juego: Valorant elige agente de una lista
-// fija, FIFA elige posición (mismos valores que el rol de jugador), y DBD
-// queda en texto libre porque el universo de personajes es demasiado grande
-// para curar una lista.
+// fija, FIFA elige posición (mismos valores que el rol de jugador).
 const LINEUP_SECOND_FIELD = {
     valorant: { label: "Selecciona agente", options: VALORANT_AGENTS, freeText: false },
-    valorantsecundario: { label: "Selecciona agente", options: VALORANT_AGENTS, freeText: false },
-    fifa: { label: "Selecciona posición", options: FIFA_ROLES.filter(([value]) => value).map(([, label]) => label), freeText: false },
-    dbd: { label: "Personaje jugado", options: [], freeText: true }
+    fifa: { label: "Selecciona posición", options: FIFA_ROLES.filter(([value]) => value).map(([, label]) => label), freeText: false }
 };
 
 async function initLineupField(fieldName, existingRows, rosterJuego){
@@ -6172,8 +6100,8 @@ async function initLineupField(fieldName, existingRows, rosterJuego){
     // Top Fragger (más eliminaciones de la partida) solo tiene sentido en
     // Valorant, donde ya existe la cultura de distinguirlo del MVP (mejor
     // impacto general, no necesariamente el que más mató). Otros rosters
-    // (FIFA, DBD) se quedan solo con MVP.
-    const mostrarTopFragger = rosterJuego === "valorant" || rosterJuego === "valorantsecundario";
+    // (FIFA) se quedan solo con MVP.
+    const mostrarTopFragger = rosterJuego === "valorant";
 
     function addRow(jugador = "", agente = "", mvp = false, topFragger = false){
         const row = document.createElement("div");
@@ -6408,12 +6336,13 @@ async function migrarEmailsAPrivado(){
 
 // Migración única (idempotente, no pisa un juego que ya exista en la
 // colección nueva — si un admin ya lo editó a mano desde "Juegos", correr
-// esto de nuevo no le pisa esos cambios): crea juegos/valorant,
-// valorantsecundario, fifa y dbd con los valores exactos que hoy están
-// hardcodeados en el admin, para que la colección "juegos" arranque
-// idéntica al comportamiento actual antes de que nada dependa de leerla.
+// esto de nuevo no le pisa esos cambios): crea juegos/valorant y fifa con
+// los valores exactos que hoy están hardcodeados en el admin, para que la
+// colección "juegos" arranque idéntica al comportamiento actual antes de
+// que nada dependa de leerla. Valorant Secundario y Dead by Daylight se
+// sacaron de esta lista junto con sus secciones de gestión.
 async function migrarJuegosActuales(){
-    if(!confirm("¿Migrar Valorant Principal, Valorant Secundario, FIFA y Dead by Daylight a la colección Juegos? No pisa un juego que ya hayas creado/editado con ese mismo identificador.")) return;
+    if(!confirm("¿Migrar Valorant Principal y FIFA a la colección Juegos? No pisa un juego que ya hayas creado/editado con ese mismo identificador.")) return;
 
     const valorantRango = { tipo: "escalera", escalones: VALORANT_RANKS.slice(1) };
     const valorantActividadExtra = [["premier", "Premier"], ["liga", "Liga"]];
@@ -6436,28 +6365,12 @@ async function migrarJuegosActuales(){
             }
         },
         {
-            id: "valorantsecundario",
-            data: {
-                label: "Valorant Secundario",
-                labelCorto: "Valorant B",
-                icono: "🔫",
-                orden: 2,
-                activo: true,
-                roles: VALORANT_ROLES,
-                rango: valorantRango,
-                tiposJugadorPropios: null,
-                tiposActividadExtra: valorantActividadExtra,
-                campoExtra: null,
-                lineupSegundoCampo: { label: "Selecciona agente", opciones: VALORANT_AGENTS, textoLibre: false, topFragger: true }
-            }
-        },
-        {
             id: "fifa",
             data: {
                 label: "FIFA",
                 labelCorto: "FIFA",
                 icono: "⚽",
-                orden: 3,
+                orden: 2,
                 activo: true,
                 roles: FIFA_ROLES,
                 rango: { tipo: "texto" },
@@ -6465,22 +6378,6 @@ async function migrarJuegosActuales(){
                 tiposActividadExtra: [],
                 campoExtra: null,
                 lineupSegundoCampo: { label: "Selecciona posición", opciones: FIFA_ROLES.filter(([value]) => value).map(([, label]) => label), textoLibre: false, topFragger: false }
-            }
-        },
-        {
-            id: "dbd",
-            data: {
-                label: "Dead by Daylight",
-                labelCorto: "DBD",
-                icono: "🔪",
-                orden: 4,
-                activo: true,
-                roles: DBD_ROLES,
-                rango: { tipo: "ninguno" },
-                tiposJugadorPropios: DBD_TIPO_JUGADOR,
-                tiposActividadExtra: [],
-                campoExtra: { nombre: "personaje", label: "Personaje principal" },
-                lineupSegundoCampo: { label: "Personaje jugado", opciones: [], textoLibre: true, topFragger: false }
             }
         }
     ];
