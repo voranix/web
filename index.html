@@ -168,7 +168,7 @@
         <div class="proximamente-card reveal">
             <div class="proximamente-media">
                 <div class="proximamente-media-frame">
-                    <img id="erineo-poster-img" src="/imagenes/erineo-poster.webp" alt="Erineo — 3 semanas. Una venganza. Un evento hardcore de Minecraft de VORANIX Studio. Próximamente." class="proximamente-poster">
+                    <img id="erineo-poster-img" src="/imagenes/erineo-poster.webp" alt="Póster de Erineo: 3 semanas. Una venganza. Un evento hardcore de Minecraft de VORANIX Studio." class="proximamente-poster">
                     <div id="erineo-player" class="proximamente-player hidden"></div>
                     <button type="button" id="erineo-trailer-btn" class="proximamente-trailer-btn">
                         <i class="fas fa-play"></i> Ver trailer
@@ -178,144 +178,22 @@
             </div>
 
             <div class="proximamente-info">
-                <div class="hero-eyebrow"><span></span>PRÓXIMAMENTE</div>
+                <div class="hero-eyebrow"><span></span>POSTULACIONES CERRADAS</div>
                 <h2>Erineo</h2>
                 <p class="proximamente-desc">Un evento hardcore de Minecraft: 3 semanas, una venganza. Construcción, supervivencia y comunidad en un mundo que vamos a armar junto a ustedes.</p>
 
-                <div class="proximamente-countdown" id="erineo-countdown">
-                    <div class="countdown-box"><span id="erineo-cd-dias">00</span><label>Días</label></div>
-                    <div class="countdown-box"><span id="erineo-cd-horas">00</span><label>Horas</label></div>
-                    <div class="countdown-box"><span id="erineo-cd-min">00</span><label>Min</label></div>
-                    <div class="countdown-box"><span id="erineo-cd-seg">00</span><label>Seg</label></div>
+                <div class="erineo-closed">
+                    <i class="fas fa-flag-checkered"></i>
+                    <div>
+                        <strong>Postulaciones cerradas</strong>
+                        <span>Ya tenemos a nuestros participantes. Seguí nuestro Discord para no perderte las novedades de Erineo.</span>
+                    </div>
                 </div>
-                <p class="proximamente-countdown-label">Para el acceso anticipado</p>
-
-                <div id="erineo-postulacion-locked" class="proximamente-locked">
-                    <i class="fas fa-lock"></i> <span>Acceso anticipado para cuentas VORANIX desde hoy. Público general: 4 de noviembre a las 14:00.</span>
-                </div>
-                <button type="button" id="erineo-login-btn" class="btn btn-outline btn-sm hidden"><i class="fas fa-right-to-bracket"></i> Iniciar sesión</button>
-                <button type="button" id="erineo-retry-btn" class="btn btn-outline btn-sm hidden"><i class="fas fa-rotate-right"></i> Reintentar</button>
-
-                <p class="proximamente-form-note hidden" id="erineo-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
-                <button type="button" id="erineo-open-form-btn" class="btn hidden"><i class="fas fa-paper-plane"></i> Postularme</button>
 
                 <a href="/pages/erineo.html" class="proximamente-more">Más sobre Erineo <i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
 
-        <div id="erineo-login-modal" class="erineo-modal hidden">
-            <div id="erineo-login-modal-backdrop" class="erineo-modal-backdrop"></div>
-            <div class="erineo-modal-panel" role="dialog" aria-modal="true" aria-labelledby="erineo-login-modal-title">
-                <button type="button" id="erineo-login-modal-close" class="erineo-modal-close" aria-label="Cerrar">&times;</button>
-                <h3 id="erineo-login-modal-title">Acceso con tu cuenta VORANIX</h3>
-                <p class="proximamente-form-note"><i class="fas fa-circle-info"></i> Iniciá sesión con la cuenta que te dio VORANIX para desbloquear la postulación anticipada.</p>
-                <form id="erineo-login-form" class="proximamente-form">
-                    <div class="input-group">
-                        <input type="email" id="erineo-login-email" placeholder="Correo electrónico" autocomplete="email" required>
-                    </div>
-                    <div class="input-group">
-                        <input type="password" id="erineo-login-password" placeholder="Contraseña" autocomplete="current-password" required>
-                    </div>
-                    <button type="submit" id="erineo-login-submit" class="btn">Iniciar sesión</button>
-                    <p id="erineo-login-error" class="proximamente-msg error hidden"></p>
-                    <p class="proximamente-form-note" style="margin-top:14px;"><i class="fas fa-circle-question"></i> ¿No tenés cuenta de VORANIX todavía? Escribinos por Discord.</p>
-                </form>
-            </div>
-        </div>
-
-        <div id="erineo-modal" class="erineo-modal hidden">
-            <div id="erineo-modal-backdrop" class="erineo-modal-backdrop"></div>
-            <div class="erineo-modal-panel" role="dialog" aria-modal="true" aria-labelledby="erineo-modal-title">
-                <button type="button" id="erineo-modal-close" class="erineo-modal-close" aria-label="Cerrar">&times;</button>
-                <h3 id="erineo-modal-title">Postulación a Erineo</h3>
-                <p class="proximamente-form-note"><i class="fas fa-circle-info"></i> Postulación exclusiva para creadores de contenido y streamers.</p>
-                <form id="erineo-form" class="proximamente-form" action="https://formspree.io/f/xaeelvez" method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="_subject" value="Postulación Erineo (Minecraft)">
-                    <input type="hidden" name="_captcha" value="false">
-                    <input type="hidden" name="asunto" value="erineo">
-                    <div class="input-group">
-                        <input type="text" name="nombre" placeholder="Nombre completo" required>
-                    </div>
-                    <div class="input-group">
-                        <input type="email" name="email" placeholder="Correo electrónico" required>
-                    </div>
-                    <div class="input-group">
-                        <input type="text" name="usuario_minecraft" placeholder="Usuario de Minecraft" required>
-                    </div>
-                    <div class="input-group input-switch-row">
-                        <span class="input-switch-question">¿Tu cuenta de Minecraft es premium?</span>
-                        <label class="input-switch">
-                            <input type="checkbox" id="erineo-premium-toggle" aria-label="Cuenta de Minecraft premium">
-                            <span class="input-switch-track"><span class="input-switch-thumb"></span></span>
-                            <span class="input-switch-value" id="erineo-premium-value">No premium</span>
-                        </label>
-                        <input type="hidden" name="minecraft_premium" id="erineo-premium" value="No premium">
-                    </div>
-                    <div class="input-group">
-                        <select name="plataforma" required>
-                            <option value="" disabled selected>Plataforma principal</option>
-                            <option value="Twitch">Twitch</option>
-                            <option value="YouTube">YouTube</option>
-                            <option value="TikTok">TikTok</option>
-                            <option value="Kick">Kick</option>
-                            <option value="Otra">Otra</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <input type="url" name="canal_url" placeholder="Link a tu canal/perfil principal" required>
-                    </div>
-                    <div class="input-group">
-                        <input type="text" name="seguidores" placeholder="Seguidores/suscriptores aprox. (ej: 1.200 en Twitch)" required>
-                    </div>
-                    <div class="input-group">
-                        <select name="frecuencia_contenido" required>
-                            <option value="" disabled selected>¿Con qué frecuencia subís contenido o transmitís?</option>
-                            <option value="Diaria">Diaria</option>
-                            <option value="Varias veces por semana">Varias veces por semana</option>
-                            <option value="Semanal">Semanal</option>
-                            <option value="Esporádica">Esporádica</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <select name="experiencia_hardcore" required>
-                            <option value="" disabled selected>Experiencia con Minecraft survival/hardcore</option>
-                            <option value="Mucha">Mucha</option>
-                            <option value="Algo">Algo</option>
-                            <option value="Poca o ninguna">Poca o ninguna</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <input type="text" name="disponibilidad" placeholder="Disponibilidad horaria (zona horaria + franjas)" required>
-                    </div>
-                    <div class="input-group">
-                        <select name="como_supo" required>
-                            <option value="" disabled selected>¿Cómo te enteraste de Erineo?</option>
-                            <option value="Discord">Discord</option>
-                            <option value="Instagram">Instagram</option>
-                            <option value="TikTok">TikTok</option>
-                            <option value="Twitter/X">Twitter/X</option>
-                            <option value="Twitch">Twitch</option>
-                            <option value="Recomendación de otro creador">Recomendación de otro creador</option>
-                            <option value="Otro">Otro</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label class="file-label" for="erineo-skin">Skin de tu personaje (PNG, opcional)</label>
-                        <input type="file" id="erineo-skin" name="skin" accept="image/png">
-                    </div>
-                    <div class="input-group">
-                        <textarea name="mensaje" placeholder="Contanos por qué querés sumarte a Erineo..." required></textarea>
-                    </div>
-                    <label class="input-checkbox-row">
-                        <input type="checkbox" name="compromiso" value="Sí" required>
-                        <span>Confirmo que puedo comprometerme a transmitir/grabar contenido durante las 3 semanas del evento.</span>
-                    </label>
-                    <button type="submit" id="erineo-submit" class="btn">Postularme</button>
-                    <p id="erineo-success" class="proximamente-msg success hidden">✅ ¡Postulación enviada! Te contactamos pronto.</p>
-                    <p id="erineo-error" class="proximamente-msg error hidden">⚠️ No se pudo enviar. Probá de nuevo o escribinos por Discord.</p>
-                </form>
-            </div>
-        </div>
     </div>
 </section>
 
@@ -635,57 +513,7 @@ loadLive();
 </script>
 
 <script type="module">
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { db, auth } from "/assets/js/firebase-config.js";
-
-// Dos ventanas de apertura (hora local de quien mira la página):
-// acceso anticipado para cualquier cuenta VORANIX activa (sin importar el
-// rol: creador, influencer, roster, staff...) desde el 3 de noviembre,
-// público general desde el 4. La sesión de Firebase Auth persiste entre
-// páginas del mismo sitio (si ya se logueó en algún portal, ya cuenta acá).
-//
-// authState tiene 4 valores posibles (no es un simple sí/no): "anon" (nadie
-// logueado — ahí se puede mostrar el botón de iniciar sesión acá mismo),
-// "non-creator" (hay una sesión activa pero la cuenta está inactiva o no
-// existe el perfil — mostrarle de nuevo el botón de login no sirve de
-// nada), "creator" (cuenta activa — desbloquea la postulación; el nombre
-// quedó de cuando el acceso era solo para creadores) y "error": la lectura
-// del perfil (getDoc) puede fallar por algo transitorio (mala señal en el
-// celular, Firestore offline un instante) que NO significa que la cuenta
-// no califique — si ese caso se trataba como "non-creator" sin
-// distinguirlo, a alguien con cuenta real y mala conexión le aparecía el
-// mensaje de "tu cuenta no tiene acceso", que es directamente falso.
-const ERINEO_FECHA_ANTICIPADA = new Date("2026-11-03T00:00:00");
-const ERINEO_FECHA_PUBLICA = new Date("2026-11-04T14:00:00");
-
-let authState = "anon";
-let currentAuthUser = null;
-
-async function chequearCreador(user) {
-    currentAuthUser = user;
-    if (!user) {
-        authState = "anon";
-        actualizarCountdown();
-        return;
-    }
-    try {
-        const snapshot = await getDoc(doc(db, "users", user.uid));
-        const profile = snapshot.exists() ? snapshot.data() : null;
-        // El acceso anticipado es para cualquier cuenta VORANIX activa, sin
-        // importar el rol (creador, influencer, roster, staff...) — alcanza
-        // con tener cuenta.
-        const tieneAcceso = !!profile && profile.active !== false;
-        authState = tieneAcceso ? "creator" : "non-creator";
-    } catch (e) {
-        console.error(e);
-        authState = "error";
-    }
-    actualizarCountdown();
-}
-onAuthStateChanged(auth, chequearCreador);
-
-// Link del video promocional (acepta X, YouTube/Shorts o un mp4 directo).
+// Link del video promocional (acepta YouTube/Shorts, X o un mp4 directo).
 const ERINEO_TRAILER_URL = "https://youtube.com/shorts/fdCceVN-YGI?si=YBtwowAXRkSCXZPH";
 
 function youtubeEmbedId(url) {
@@ -697,10 +525,8 @@ function esUrlX(url) {
     return /^https?:\/\/(www\.)?(x\.com|twitter\.com)\//.test(String(url || "").trim());
 }
 
-// X no expone un archivo de video reproducible directamente: hay que usar
-// su propio embed (blockquote + platform.twitter.com/widgets.js), que X
-// reemplaza por un iframe propio con su alto responsivo — se carga una
-// sola vez y solo cuando hace falta (recién al tocar "Ver trailer").
+// X no expone un archivo reproducible directamente: usa su propio embed, que
+// se carga solo cuando hace falta (al tocar "Ver trailer").
 let twitterWidgetsPromise = null;
 function cargarTwitterWidgets() {
     if (twitterWidgetsPromise) return twitterWidgetsPromise;
@@ -736,10 +562,7 @@ trailerBtnEl?.addEventListener("click", () => {
     } else {
         playerEl.innerHTML = `<video src="${ERINEO_TRAILER_URL}" controls autoplay playsinline></video>`;
     }
-    // Los Shorts son verticales (9:16): el recuadro toma esa proporción para
-    // que el video lo llene sin franjas negras a los costados. Va también
-    // inline para que funcione aunque el navegador tenga en caché un
-    // style.css viejo sin la regla .is-vertical.
+    // Los Shorts son verticales (9:16): el recuadro toma esa proporción.
     const esShort = /youtube\.com\/shorts\//.test(ERINEO_TRAILER_URL);
     playerEl.classList.toggle("is-vertical", esShort);
     playerEl.style.aspectRatio = esShort ? "9 / 16" : "";
@@ -747,242 +570,6 @@ trailerBtnEl?.addEventListener("click", () => {
     trailerBtnEl.classList.add("hidden");
     trailerNoteEl?.classList.add("hidden");
     playerEl.classList.remove("hidden");
-});
-
-const countdownEl = document.getElementById("erineo-countdown");
-const countdownLabelEl = document.querySelector(".proximamente-countdown-label");
-const lockedEl = document.getElementById("erineo-postulacion-locked");
-const formEl = document.getElementById("erineo-form");
-const formNoteEl = document.getElementById("erineo-form-note");
-const openFormBtn = document.getElementById("erineo-open-form-btn");
-const loginBtnEl = document.getElementById("erineo-login-btn");
-const retryBtnEl = document.getElementById("erineo-retry-btn");
-const diasEl = document.getElementById("erineo-cd-dias");
-const horasEl = document.getElementById("erineo-cd-horas");
-const minEl = document.getElementById("erineo-cd-min");
-const segEl = document.getElementById("erineo-cd-seg");
-
-let countdownInterval = null;
-
-// Permite probar el formulario real (Firestore + Formspree) ya mismo, como
-// si fuera público, sin tocar las fechas reales: ?preview=erineo en la URL.
-const ERINEO_PREVIEW = new URLSearchParams(location.search).get("preview") === "erineo";
-
-function renderCountdown(diff) {
-    const pad = (n) => String(n).padStart(2, "0");
-    diasEl.textContent = pad(Math.floor(diff / 86400000));
-    horasEl.textContent = pad(Math.floor((diff % 86400000) / 3600000));
-    minEl.textContent = pad(Math.floor((diff % 3600000) / 60000));
-    segEl.textContent = pad(Math.floor((diff % 60000) / 1000));
-}
-
-function actualizarCountdown() {
-    const ahora = Date.now();
-    const publicoAbierto = ERINEO_PREVIEW || ahora >= ERINEO_FECHA_PUBLICA.getTime();
-    const anticipadoAbierto = publicoAbierto || ahora >= ERINEO_FECHA_ANTICIPADA.getTime();
-
-    if (publicoAbierto || (anticipadoAbierto && authState === "creator")) {
-        countdownEl.classList.add("hidden");
-        countdownLabelEl?.classList.add("hidden");
-        lockedEl.classList.add("hidden");
-        loginBtnEl?.classList.add("hidden");
-        formNoteEl?.classList.remove("hidden");
-        openFormBtn?.classList.remove("hidden");
-        if (countdownInterval) clearInterval(countdownInterval);
-        return;
-    }
-
-    formNoteEl?.classList.add("hidden");
-    openFormBtn?.classList.add("hidden");
-    countdownEl.classList.remove("hidden");
-    countdownLabelEl?.classList.remove("hidden");
-    lockedEl.classList.remove("hidden");
-    // El botón de iniciar sesión solo tiene sentido si todavía no hay nadie
-    // logueado: a una cuenta ya logueada que no es de creador, mostrárselo
-    // de nuevo no la ayuda (esa cuenta no califica, necesitaría otra). Si
-    // hubo un error de verificación, también se muestra (reintentar con el
-    // mismo login de vuelta re-dispara el chequeo).
-    loginBtnEl?.classList.toggle("hidden", authState !== "anon" && authState !== "error");
-    retryBtnEl?.classList.toggle("hidden", authState !== "error");
-
-    if (anticipadoAbierto) {
-        // Ventana de creadores ya abierta, pero este visitante no califica.
-        countdownLabelEl.textContent = "Para que se abra al público general";
-        // El texto va en un <span> porque .proximamente-locked es flex: sin él,
-        // el texto y el resto quedaban como columnas separadas.
-        if (authState === "non-creator") {
-            lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Tu cuenta no tiene acceso anticipado (está inactiva o no es una cuenta VORANIX) — el público general entra el 4 de noviembre a las 14:00.</span>`;
-        } else if (authState === "error") {
-            lockedEl.innerHTML = `<i class="fas fa-triangle-exclamation"></i> <span>No pudimos verificar tu cuenta (puede ser la conexión). Tocá "Reintentar" — el público general entra igual el 4 de noviembre a las 14:00.</span>`;
-        } else {
-            lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado exclusivo para cuentas VORANIX — el público general entra el 4 de noviembre a las 14:00.</span>`;
-        }
-        renderCountdown(ERINEO_FECHA_PUBLICA.getTime() - ahora);
-    } else {
-        countdownLabelEl.textContent = "Para el acceso anticipado";
-        lockedEl.innerHTML = `<i class="fas fa-lock"></i> <span>Acceso anticipado para cuentas VORANIX desde hoy. Público general: 4 de noviembre a las 14:00.</span>`;
-        renderCountdown(ERINEO_FECHA_ANTICIPADA.getTime() - ahora);
-    }
-}
-
-actualizarCountdown();
-countdownInterval = setInterval(actualizarCountdown, 1000);
-
-// Ventanas emergentes (postulación y login de creador): viven siempre en
-// el DOM (ocultas por CSS vía .erineo-modal.hidden), se abren al apretar su
-// botón y se pueden cerrar con el botón X, clic afuera o Escape. Mismo
-// helper genérico para ambas, abriendo una sola a la vez.
-function wireModal(modalEl, backdropEl, closeEl) {
-    function abrir() {
-        modalEl.classList.remove("hidden");
-        document.body.classList.add("erineo-modal-open");
-    }
-    function cerrar() {
-        modalEl.classList.add("hidden");
-        document.body.classList.remove("erineo-modal-open");
-    }
-    closeEl?.addEventListener("click", cerrar);
-    backdropEl?.addEventListener("click", cerrar);
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && !modalEl.classList.contains("hidden")) cerrar();
-    });
-    return { abrir, cerrar };
-}
-
-const erineoModalEl = document.getElementById("erineo-modal");
-const postulacionModal = wireModal(
-    erineoModalEl,
-    document.getElementById("erineo-modal-backdrop"),
-    document.getElementById("erineo-modal-close")
-);
-openFormBtn?.addEventListener("click", postulacionModal.abrir);
-function abrirModalErineo() { postulacionModal.abrir(); }
-function cerrarModalErineo() { postulacionModal.cerrar(); }
-
-const loginModalEl = document.getElementById("erineo-login-modal");
-const loginModal = wireModal(
-    loginModalEl,
-    document.getElementById("erineo-login-modal-backdrop"),
-    document.getElementById("erineo-login-modal-close")
-);
-loginBtnEl?.addEventListener("click", loginModal.abrir);
-retryBtnEl?.addEventListener("click", () => chequearCreador(currentAuthUser));
-
-const loginFormEl = document.getElementById("erineo-login-form");
-const loginSubmitBtn = document.getElementById("erineo-login-submit");
-const loginErrorEl = document.getElementById("erineo-login-error");
-
-loginFormEl?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    loginErrorEl.classList.add("hidden");
-    loginSubmitBtn.disabled = true;
-    loginSubmitBtn.textContent = "Ingresando...";
-
-    const email = document.getElementById("erineo-login-email").value.trim();
-    const password = document.getElementById("erineo-login-password").value;
-
-    try {
-        // onAuthStateChanged (arriba) hace el resto: re-chequea el rol y, si
-        // es de creador, actualizarCountdown() desbloquea "Postularme" solo,
-        // sin recargar la página ni mandar a la persona a otro lado.
-        await signInWithEmailAndPassword(auth, email, password);
-        loginModal.cerrar();
-        loginFormEl.reset();
-    } catch (error) {
-        console.error(error);
-        loginErrorEl.textContent = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"].includes(error.code)
-            ? "Email o contraseña incorrectos."
-            : "No se pudo iniciar sesión. Probá de nuevo.";
-        loginErrorEl.classList.remove("hidden");
-    } finally {
-        loginSubmitBtn.disabled = false;
-        loginSubmitBtn.textContent = "Iniciar sesión";
-    }
-});
-
-// Mismo patrón que pages/contacto.html: Firestore (aparece en Admin →
-// Mensajes, filtrable por asunto "erineo") y Formspree en paralelo, como
-// respaldo — si uno falla el otro igual intenta llegar.
-// Switch premium / no premium: el checkbox no tiene name, así que el valor
-// que viaja a Formspree y Firestore es el del input oculto (siempre presente,
-// incluso cuando el switch está apagado).
-const premiumToggle = document.getElementById("erineo-premium-toggle");
-const premiumInput = document.getElementById("erineo-premium");
-const premiumValueEl = document.getElementById("erineo-premium-value");
-
-function sincronizarPremium() {
-    const valor = premiumToggle.checked ? "Premium" : "No premium";
-    premiumInput.value = valor;
-    premiumValueEl.textContent = valor;
-}
-premiumToggle?.addEventListener("change", sincronizarPremium);
-formEl.addEventListener("reset", () => setTimeout(sincronizarPremium));
-
-const submitBtn = document.getElementById("erineo-submit");
-const successMsg = document.getElementById("erineo-success");
-const errorMsg = document.getElementById("erineo-error");
-
-async function enviarAFirestore(formData) {
-    // El archivo de la skin no se puede guardar en Firestore (no soporta
-    // File/Blob como valor de campo) — ese adjunto solo viaja a Formspree;
-    // acá únicamente dejamos registrado si vino uno o no.
-    const skinFile = formData.get("skin");
-    await addDoc(collection(db, "mensajes"), {
-        nombre: formData.get("nombre") || "",
-        email: String(formData.get("email") || "").trim().toLowerCase(),
-        asunto: "erineo",
-        mensaje: formData.get("mensaje") || "",
-        usuarioMinecraft: formData.get("usuario_minecraft") || "",
-        minecraftPremium: formData.get("minecraft_premium") === "Premium",
-        plataforma: formData.get("plataforma") || "",
-        canalUrl: formData.get("canal_url") || "",
-        seguidores: formData.get("seguidores") || "",
-        frecuenciaContenido: formData.get("frecuencia_contenido") || "",
-        experienciaHardcore: formData.get("experiencia_hardcore") || "",
-        disponibilidad: formData.get("disponibilidad") || "",
-        comoSupo: formData.get("como_supo") || "",
-        compromiso: formData.get("compromiso") === "Sí",
-        skinAdjunta: !!(skinFile && skinFile.name),
-        leido: false,
-        createdAt: serverTimestamp()
-    });
-}
-
-async function enviarAFormspree(formData) {
-    const res = await fetch(formEl.action, {
-        method: "POST",
-        body: formData,
-        headers: { "Accept": "application/json" }
-    });
-    if (!res.ok) throw new Error("Formspree respondió " + res.status);
-}
-
-formEl.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    successMsg.classList.add("hidden");
-    errorMsg.classList.add("hidden");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Enviando...";
-
-    const formData = new FormData(formEl);
-    const resultados = await Promise.allSettled([
-        enviarAFirestore(formData),
-        enviarAFormspree(formData)
-    ]);
-    const algunExito = resultados.some(r => r.status === "fulfilled");
-    resultados.forEach((r, i) => {
-        if (r.status === "rejected") console.error(i === 0 ? "Error guardando en Firestore:" : "Error enviando a Formspree:", r.reason);
-    });
-
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Postularme";
-    if (algunExito) {
-        successMsg.classList.remove("hidden");
-        formEl.reset();
-        setTimeout(cerrarModalErineo, 2500);
-    } else {
-        errorMsg.classList.remove("hidden");
-    }
 });
 </script>
 <script type="module" src="/assets/js/report-bug.js"></script>
