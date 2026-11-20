@@ -80,7 +80,7 @@
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { auth, db } from "/assets/js/firebase-config.js";
-import { makeDocId, streamersSeed, rostersSeed, sponsorsSeed } from "/admin/migracion-data.js";
+import { makeDocId, streamersSeed, rostersSeed, sponsorsSeed, erineoParticipantesSeed } from "/admin/migracion-data.js";
 
 const accessState = document.getElementById("access-state");
 const runBtn = document.getElementById("run-migration");
@@ -149,6 +149,9 @@ async function runMigration() {
         const sponsorsInserted = await migrateSeed("sponsors", sponsorsSeed);
         setRowState(sponsorsState, `✔ ${sponsorsInserted} patrocinadores migrados`, "ok");
         log(`✔ ${sponsorsInserted} patrocinadores migrados`, "ok");
+
+        const erineoInserted = await migrateSeed("erineoParticipantes", erineoParticipantesSeed);
+        log(`✔ ${erineoInserted} participantes de Erineo migrados`, "ok");
 
         log("Migración completada sin duplicados.", "ok");
     } catch (error) {

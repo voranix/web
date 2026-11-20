@@ -47,3 +47,44 @@ export const sponsorsSeed = [
     { nombre: "Doraking",    tipo: "patrocinador", descripcion: "Colaborador de la comunidad VORANIX.",      logo: "imagenes/logo.jpg",                    web: "", activo: true },
     { nombre: "Trulu Store", tipo: "patrocinador", descripcion: "Colaborador de la comunidad VORANIX.",      logo: "imagenes/marcas/Logo Trulustore.png",   web: "", activo: true }
 ];
+
+
+// Participantes confirmados de Erineo (cargados desde el Excel de postulantes).
+// Se importan con admin/migrar.html, igual que streamers/rosters/patrocinadores.
+export const erineoParticipantesSeed = [
+    {"nombre": "VS_AniiSeong", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/aniiseong", "activo": true},
+    {"nombre": "DonBenjamilo", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/donbenjamilo", "activo": true},
+    {"nombre": "Charlesg0_", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://twitch.tv/Charlesg0_", "activo": true},
+    {"nombre": "Vicho1500", "descripcion": "Streamer de Kick", "foto": "", "canalUrl": "https://kick.com/vicho1500", "activo": true},
+    {"nombre": "Yessiii_gamer", "descripcion": "Streamer de Kick", "foto": "", "canalUrl": "https://kick.com/yessi_gamer", "activo": true},
+    {"nombre": "ALBAXZS", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/albazxs", "activo": true},
+    {"nombre": "LvkasKL", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://twitch.tv/lvkaskl", "activo": true},
+    {"nombre": "Goship", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/goshiip", "activo": true},
+    {"nombre": "PixiPNJ", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/pixipnj", "activo": true},
+    {"nombre": "AratakiGamer", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/aratakigamer", "activo": true},
+    {"nombre": "Touya_bgmx21", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/touyagmx21", "activo": true},
+    {"nombre": "RyuWP", "descripcion": "Streamer de Kick", "foto": "", "canalUrl": "https://kick.com/ryu-natsukire", "activo": true},
+    {"nombre": "zaltok", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/zaltok", "activo": true},
+    {"nombre": "Pansito_v", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/pansito_v", "activo": true},
+    {"nombre": "Kevobo", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/kevobo", "activo": true},
+    {"nombre": "Cylantrox", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/cylantrox", "activo": true},
+    {"nombre": "StevannKL", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/stevanql", "activo": true},
+    {"nombre": "Sebaitax", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/sebaitax", "activo": true},
+    {"nombre": "Tio_frostty", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/tio_frostty", "activo": true},
+    {"nombre": "CATAM12F", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/just_cataa", "activo": true},
+    {"nombre": "nerupop", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://twitch.tv/nerupop", "activo": true},
+    {"nombre": "McCookis", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/mccookis", "activo": true},
+    {"nombre": "Niicoplease", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/niicoplease", "activo": true},
+    {"nombre": "himiyuu", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/himiyuu", "activo": true},
+    {"nombre": "iGato0", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/igato0_", "activo": true},
+    {"nombre": "Dreewe", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://twitch.tv/dreewe", "activo": true},
+    {"nombre": "ElKrys", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/elkrysoficial", "activo": true},
+    {"nombre": "ChrisFbk", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/chrisfvck", "activo": true},
+    {"nombre": "zyozep", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/zyosep", "activo": true},
+    {"nombre": "Andliuuu", "descripcion": "Streamer de Kick", "foto": "", "canalUrl": "https://kick.com/andliuu", "activo": true},
+    {"nombre": "NanukZz", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/nanukasd", "activo": true},
+    {"nombre": "KatoResenias", "descripcion": "Creador de YouTube", "foto": "", "canalUrl": "https://www.youtube.com/@KatoReseñas", "activo": true},
+    {"nombre": "Zarmiel", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/zarmiel_", "activo": true},
+    {"nombre": "Reksa_l", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://www.twitch.tv/reksa__l", "activo": true},
+    {"nombre": "Xbaar", "descripcion": "Streamer de Twitch", "foto": "", "canalUrl": "https://twitch.tv/xbaar", "activo": true},
+];
